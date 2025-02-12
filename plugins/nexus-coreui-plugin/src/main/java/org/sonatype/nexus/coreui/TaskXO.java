@@ -63,8 +63,6 @@ public class TaskXO
 
   private String alertEmail;
 
-  private boolean runPreviousPlan;
-
   private TaskNotificationCondition notificationCondition;
 
   private Map<String, String> properties;
@@ -250,14 +248,6 @@ public class TaskXO
 
   public void setIsReadOnlyUi(Boolean isReadOnlyUi) {
     this.isReadOnlyUi = isReadOnlyUi;
-  }
-
-  public boolean isRunPreviousPlan() {
-    return runPreviousPlan;
-  }
-
-  public void setIsRunPreviousPlan(boolean runPreviousPlan) {
-    this.runPreviousPlan = runPreviousPlan;
   }
 
   public interface Schedule

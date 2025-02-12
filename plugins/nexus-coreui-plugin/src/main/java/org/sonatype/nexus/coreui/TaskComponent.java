@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -34,7 +35,6 @@ import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
 import javax.ws.rs.NotFoundException;
 
-import org.sonatype.nexus.blobstore.api.tasks.ReconcileTaskConstants;
 import org.sonatype.nexus.coreui.TaskXO.AdvancedSchedule;
 import org.sonatype.nexus.coreui.TaskXO.OnceSchedule;
 import org.sonatype.nexus.coreui.TaskXO.OnceToMonthlySchedule;
@@ -163,9 +163,9 @@ public class TaskComponent
   @RequiresPermissions("nexus:tasks:create")
   @Validate(groups = {Create.class, Default.class})
   public TaskXO create(final @NotNull @Valid TaskXO taskXO) throws Exception {
-    final Schedule schedule = asSchedule(taskXO);
+    Schedule schedule = asSchedule(taskXO);
 
-    final TaskConfiguration taskConfiguration = taskScheduler.createTaskConfigurationInstance(taskXO.getTypeId());
+    TaskConfiguration taskConfiguration = taskScheduler.createTaskConfigurationInstance(taskXO.getTypeId());
     checkState(taskConfiguration.isExposed(), "This task is not allowed to be created");
 
     taskXO.getProperties().forEach(taskConfiguration::setString);
@@ -174,7 +174,7 @@ public class TaskComponent
     taskConfiguration.setName(taskXO.getName());
     taskConfiguration.setEnabled(taskXO.getEnabled());
 
-    final TaskInfo task = scheduleTask(() -> taskScheduler.scheduleTask(taskConfiguration, schedule));
+    TaskInfo task = scheduleTask(() -> taskScheduler.scheduleTask(taskConfiguration, schedule));
     log.debug("Created task with type '{}': {} {}", taskConfiguration.getClass(), taskConfiguration.getName(),
         taskConfiguration.getId());
     return asTaskXO(task);
@@ -198,10 +198,8 @@ public class TaskComponent
     if ("script".equals(task.getTypeId())) {
       validateScriptUpdate(task, taskXO);
     }
-
-    final Schedule schedule = asSchedule(taskXO, task);
-    final TaskConfiguration taskConfiguration = taskScheduler.createTaskConfigurationInstance(taskXO.getTypeId());
-    taskConfiguration.setRunPreviousPlan(taskXO.isRunPreviousPlan());
+    Schedule schedule = asSchedule(taskXO);
+    TaskConfiguration taskConfiguration = taskScheduler.createTaskConfigurationInstance(taskXO.getTypeId());
     taskConfiguration.apply(task.getConfiguration());
     taskConfiguration.setEnabled(taskXO.getEnabled());
     taskConfiguration.setName(taskXO.getName());
@@ -279,7 +277,6 @@ public class TaskComponent
     result.setAlertEmail(configuration.getAlertEmail());
     result.setNotificationCondition(configuration.getNotificationCondition());
     result.setProperties(configuration.asMap());
-    result.setIsRunPreviousPlan(configuration.isRunPreviousPlan());
 
     Schedule schedule = taskInfo.getSchedule();
     if (schedule instanceof Once) {
@@ -316,13 +313,6 @@ public class TaskComponent
     }
     result.setIsReadOnlyUi(configuration.getBoolean(".readOnlyUi", false));
     return result;
-  }
-
-  private Schedule asSchedule(final TaskXO taskXO, final TaskInfo taskInfo) {
-    if (ReconcileTaskConstants.PLAN_RECONCILE_TYPE_ID.equals(taskInfo.getTypeId())) {
-      return taskScheduler.getScheduleFactory().manual();
-    }
-    return asSchedule(taskXO);
   }
 
   private Schedule asSchedule(final TaskXO taskXO) {
