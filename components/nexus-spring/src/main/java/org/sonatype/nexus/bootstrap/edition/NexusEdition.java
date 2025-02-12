@@ -17,18 +17,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Properties;
 
-import org.sonatype.nexus.bootstrap.JavaPrefs;
 import org.sonatype.nexus.spring.application.PropertyMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.prefs.Preferences.userRoot;
 
-/**
- * The edition is calculated while the NexusProperties is building a PropertyMap of properties. so this
- * class CANNOT assume that all the properties have been hoisted into system properties yet
- */
 public abstract class NexusEdition
 {
   static final String NEXUS_EDITION = "nexus-edition";
@@ -43,15 +38,11 @@ public abstract class NexusEdition
 
   private static final String EDITION_PRO_PATH = "edition_pro";
 
-  private final JavaPrefs javaPrefs;
+  public static final String PRO_LICENSE_LOCATION = "/com/sonatype/nexus/professional";
 
   public abstract NexusEditionType getEdition();
 
   public abstract NexusEditionFeature getEditionFeature();
-
-  public NexusEdition(final JavaPrefs javaPrefs) {
-    this.javaPrefs = checkNotNull(javaPrefs);
-  }
 
   /**
    * Determine whether or not we should be booting to the corresponding edition or not, based on the presence of a
@@ -61,6 +52,8 @@ public abstract class NexusEdition
 
   protected abstract void doApply(final PropertyMap properties, final Path workDirPath);
 
+  protected abstract boolean shouldSwitchToFree(final Path workDirPath);
+
   public boolean applies(final PropertyMap properties, final Path workDirPath) {
     return doesApply(properties, workDirPath);
   }
@@ -69,12 +62,12 @@ public abstract class NexusEdition
     doApply(properties, workDirPath);
   }
 
-  protected boolean hasNexusLoadAs(final PropertyMap properties, final String nexusProperty) {
-    return null != properties.get(nexusProperty);
+  protected boolean hasNexusLoadAs(final String nexusProperty) {
+    return null != System.getProperty(nexusProperty);
   }
 
-  public boolean isNexusLoadAs(final PropertyMap properties, final String nexusProperty) {
-    return Boolean.parseBoolean(properties.get(nexusProperty));
+  public boolean isNexusLoadAs(final String nexusProperty) {
+    return Boolean.getBoolean(nexusProperty);
   }
 
   public boolean hasFeature(final Properties properties, final String feature) {
@@ -82,12 +75,22 @@ public abstract class NexusEdition
         .contains(feature);
   }
 
-  protected boolean isNullNexusLicenseFile(final PropertyMap properties) {
-    return properties.get("nexus.licenseFile") == null && System.getenv("NEXUS_LICENSE_FILE") == null;
+  protected boolean isNullNexusLicenseFile() {
+    return System.getProperty("nexus.licenseFile") == null && System.getenv("NEXUS_LICENSE_FILE") == null;
   }
 
-  protected boolean isNullJavaPrefLicensePath() {
-    return !javaPrefs.isLicenseInstalled();
+  protected boolean isNullJavaPrefLicensePath(final String licensePath) {
+    Thread currentThread = Thread.currentThread();
+    ClassLoader tccl = currentThread.getContextClassLoader();
+    // Java prefs spawns a Timer-Task that inherits the current TCCL;
+    // temporarily clear it so we can be GC'd if we bounce the KERNEL
+    currentThread.setContextClassLoader(null);
+    try {
+      return userRoot().node(licensePath).get("license", null) == null;
+    }
+    finally {
+      currentThread.setContextClassLoader(tccl);
+    }
   }
 
   protected File getEditionMarker(final Path workDirPath, NexusEditionType edition) {

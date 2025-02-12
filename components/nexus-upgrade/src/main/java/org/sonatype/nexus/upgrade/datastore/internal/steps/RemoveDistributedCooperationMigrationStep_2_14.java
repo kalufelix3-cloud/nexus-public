@@ -26,6 +26,8 @@ public class RemoveDistributedCooperationMigrationStep_2_14
     extends ComponentSupport
     implements DatabaseMigrationStep
 {
+  private static final String DROP_TABLE_SQL = "DROP TABLE IF EXISTS cooperation_lock";
+
   @Override
   public Optional<String> version() {
     return Optional.of("2.14");
@@ -33,6 +35,7 @@ public class RemoveDistributedCooperationMigrationStep_2_14
 
   @Override
   public void migrate(final Connection connection) throws Exception {
-    // with the decision to NOT completely remove distributed cooperation, we no longer need to do anything here
+    log.info("Dropping unused table cooperation_lock");
+    runStatement(connection, DROP_TABLE_SQL);
   }
 }

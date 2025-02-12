@@ -14,8 +14,6 @@ package org.sonatype.nexus.bootstrap.application;
 
 import javax.inject.Inject;
 
-import org.sonatype.nexus.NexusDirectoryConfiguration;
-
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -28,10 +26,7 @@ import org.springframework.context.event.EventListener;
 public class NexusRepositoryCoreApplication
     extends NexusApplication
 {
-  public static void main(final String[] args) {
-    // Ensure karaf.data is set as logback needs it early
-    NexusDirectoryConfiguration.load();
-
+  public static void main(String[] args) {
     System.setProperty("spring.config.location", "etc/default-application.properties");
     // we don't want Spring to own our logging configuration right now
     // at this phase in the migration, Guice still bears the responsibility for configuring logging

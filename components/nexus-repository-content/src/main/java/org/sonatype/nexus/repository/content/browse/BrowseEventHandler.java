@@ -115,9 +115,6 @@ public class BrowseEventHandler
 
   private final DatabaseCheck databaseCheck;
 
-  // simple flag stating whether or not there is a need to fire flush events
-  private volatile boolean flushQueued;
-
   @Inject
   public BrowseEventHandler(
       final Cooperation2Factory cooperation2Factory,
@@ -227,11 +224,9 @@ public class BrowseEventHandler
       pendingCount.getAndIncrement();
     }
 
-    // don't bother firing another event if one already waiting to be processed
     // if there are lots of pending requests then reduce count by a page and
     // trigger an asynchronous flush event (which will actually do the work)
-    if (!flushQueued && pendingCount.getAndUpdate(c -> c >= flushOnCount ? 0 : c) >= flushOnCount) {
-      flushQueued = true;
+    if (pendingCount.getAndUpdate(c -> c >= flushOnCount ? c - flushOnCount : c) >= flushOnCount) {
       eventManager.post(new FlushEvent());
     }
   }
@@ -278,7 +273,7 @@ public class BrowseEventHandler
     @AllowConcurrentEvents
     @Subscribe
     public void on(final FlushEvent event) {
-      flushAssets();
+      flushPageOfAssets();
     }
 
     @AllowConcurrentEvents
@@ -293,27 +288,24 @@ public class BrowseEventHandler
    */
   void pollBrowseUpdateRequests() {
     if (pendingCount.get() > 0) {
-      flushAssets();
+      flushPageOfAssets();
     }
 
     maybeTrimRepositories();
   }
 
   /**
-   * Grabs pending assets and updates the browse tree.
+   * Grabs a page of assets and updates the browse tree.
    */
-  void flushAssets() {
+  void flushPageOfAssets() {
     Multimap<Repository, EntityId> requestsByRepository = ArrayListMultimap.create();
 
     // only allow one thread to remove entries at a time while still allowing other threads to add entries
     synchronized (flushMutex) {
-      // before we start processing, clear the queue flag so that the next
-      // flush event gets fired as expected
-      flushQueued = false;
 
-      // remove assets and invert them to get mapping from repository to assets
+      // remove page of assets and invert it to get mapping from repository to assets
       Iterator<Entry<String, Repository>> itr = pendingAssets.entrySet().iterator();
-      while (itr.hasNext()) {
+      for (int i = 0; i < flushOnCount && itr.hasNext(); i++) {
         Entry<String, Repository> entry = itr.next();
 
         // these requests are scoped per-repository so it is safe to drop the format here

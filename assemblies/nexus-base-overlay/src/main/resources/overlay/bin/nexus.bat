@@ -115,7 +115,7 @@ set CLASSPATH_INITIAL=%CLASSPATH%
 rem Setup the Java Virtual Machine
 if not "%JAVA%" == "" goto :Check_JAVA_END
     if not "%JAVA_HOME%" == "" goto :TryJDKEnd
-
+        call :warn JAVA_HOME not set; results may vary
 :TryJRE
     start /w regedit /e __reg1.txt "HKEY_LOCAL_MACHINE\SOFTWARE\JavaSoft\Java Runtime Environment"
     if not exist __reg1.txt goto :TryJDK
@@ -368,6 +368,7 @@ if "%KARAF_PROFILER%" == "" goto :RUN
         --add-exports=java.base/sun.security.rsa=ALL-UNNAMED ^
         --add-exports=java.base/sun.security.pkcs=ALL-UNNAMED ^
         -classpath "%CLASSPATH%" ^
+        -Dkaraf.instances="%KARAF_HOME%\instances" ^
         -Dkaraf.home="%KARAF_HOME%" ^
         -Dkaraf.base="%KARAF_BASE%" ^
         -Dkaraf.etc="%KARAF_ETC%" ^

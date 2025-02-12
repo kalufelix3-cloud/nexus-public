@@ -167,7 +167,7 @@ public class NexusLifecycleManager
   {
     try {
       if (components.put(phase, lifecycle)) {
-        log.debug("Start {}: {}", phase, lifecycle);
+        log.info("Start {}: {}", phase, lifecycle);
         lifecycle.start();
       }
     }

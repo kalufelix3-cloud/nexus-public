@@ -224,4 +224,10 @@ public interface FeatureFlags
   String RECONCILE_EXECUTE_CREATED_HOURS_AGO = "${nexus.reconcile.execute.plans.created:-2h}";
 
   String SECRETS_API_ENABLED = "nexus.secrets.api.enabled";
+
+  /* Feature flag to enable/disable s3 logging */
+
+  String S3_LOGGING_ENABLED = "nexus.s3.logging.enabled";
+
+  String S3_LOGGING_ENABLED_ENV = "S3_LOGGING_ENABLED";
 }

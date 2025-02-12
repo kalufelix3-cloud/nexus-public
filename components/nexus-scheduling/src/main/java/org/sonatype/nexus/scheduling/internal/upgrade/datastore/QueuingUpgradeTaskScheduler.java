@@ -14,14 +14,14 @@ package org.sonatype.nexus.scheduling.internal.upgrade.datastore;
 
 import java.time.Duration;
 import java.util.Optional;
-import javax.annotation.Nullable;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
-import org.sonatype.nexus.common.cooperation2.Cooperation2Selector;
+import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -50,7 +50,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 /**
  * An implementation of {@link UpgradeTaskScheduler} which attempts to run tasks scheduled through it in the order which
  * they were provided.
- * <p>
+ *
  * When a task fails, or is canceled the queue will stop until a Nexus node restarts at which point it will resume the
  * executing the queue. Uses events to identify when a task changes state.
  */
@@ -80,17 +80,16 @@ public class QueuingUpgradeTaskScheduler
       final UpgradeTaskStore upgradeTaskStore,
       @Named("${nexus.upgrade.tasks.checkOnStartup:-true}") final boolean checkRequiresMigration,
       @Named("${nexus.upgrade.tasks.delay:-10s}") final Duration delayOnStart,
-      final Cooperation2Selector cooperation2Selector,
-      @Named("distributed") @Nullable final Cooperation2Selector distributedCooperationSelector)
+      final Cooperation2Factory cooperationFactory)
   {
     this.periodicJobService = checkNotNull(periodicJobService);
     this.taskScheduler = checkNotNull(taskScheduler);
     this.upgradeTaskStore = checkNotNull(upgradeTaskStore);
     this.checkRequiresMigration = checkRequiresMigration;
     this.delayOnStart = checkNotNull(delayOnStart);
-    Cooperation2Selector selector =
-        distributedCooperationSelector != null ? distributedCooperationSelector : cooperation2Selector;
-    this.cooperation = checkNotNull(selector.select()).configure().build("reschedule-upgrade-task");
+    this.cooperation = checkNotNull(cooperationFactory)
+        .configure()
+        .build("reschedule-upgrade-task");
   }
 
   @Override
@@ -100,7 +99,7 @@ public class QueuingUpgradeTaskScheduler
 
   /**
    * On startup reschedule
-   *
+   * 
    * @throws Exception
    */
   @Override
@@ -114,8 +113,8 @@ public class QueuingUpgradeTaskScheduler
   }
 
   /**
-   * Listens for local upgrade events, this is used to start the queue after upgrades so tasks aren't invoked during a
-   * rolling upgrade.
+   * Listens for local upgrade events, this is used to start the queue after upgrades so tasks aren't invoked during
+   * a rolling upgrade.
    */
   @Subscribe
   public void on(final UpgradeCompletedEvent event) {
@@ -126,8 +125,8 @@ public class QueuingUpgradeTaskScheduler
   }
 
   /**
-   * Listens for local upgrade events, this is used to start the queue after upgrades so tasks aren't invoked during a
-   * rolling upgrade.
+   * Listens for local upgrade events, this is used to start the queue after upgrades so tasks aren't invoked during
+   * a rolling upgrade.
    */
   @Subscribe
   public void on(final UpgradeFailedEvent event) {

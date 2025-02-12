@@ -12,28 +12,29 @@
  */
 package org.sonatype.nexus.blobstore.file.internal;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeParseException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.DateBasedHelper;
 import org.sonatype.nexus.common.time.UTC;
+
+import org.apache.commons.lang3.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.BlobStoreSupport.CONTENT_PREFIX;
@@ -48,35 +49,49 @@ public class DateBasedWalkFile
   // to support Unix and Windows file separators
   private static final String FILE_SEPARATOR = "[\\\\/]";
 
-  private static final String TWO_DIGIT_MATCHER = "\\d{2}";
+  // to match date, for example "2024/01/01/13/10"
+  private static final String DATE_BASED_MATCHER =
+      "(\\d{4}" + FILE_SEPARATOR + "\\d{2}" + FILE_SEPARATOR + "\\d{2}" + FILE_SEPARATOR + "\\d{2}" + FILE_SEPARATOR
+          + "\\d{2})";
 
-  private static final Pattern DATE_BASED_PATTERN = Pattern.compile(String.join(FILE_SEPARATOR,
-      ".*", CONTENT_PREFIX, "(\\d{4}", TWO_DIGIT_MATCHER, TWO_DIGIT_MATCHER, TWO_DIGIT_MATCHER, TWO_DIGIT_MATCHER + ")",
-      "(.*)\\.(bytes|properties)$"),
-      Pattern.CASE_INSENSITIVE);
+  private static final Pattern DATE_BASED_PATTERN = Pattern.compile(
+      ".*" + CONTENT_PREFIX + FILE_SEPARATOR + DATE_BASED_MATCHER + FILE_SEPARATOR + ".*$", Pattern.CASE_INSENSITIVE);
 
-  private final Path contentDir;
+  private static final String PROPS_EXT = ".properties";
+
+  private static final String BYTES_EXT = ".bytes";
+
+  private final String contentDir;
 
   private final Duration duration;
 
   private final OffsetDateTime fromDateTime;
 
-  public DateBasedWalkFile(final Path contentDir, final Duration duration) {
+  public DateBasedWalkFile(final String contentDir, final Duration duration) {
     this.fromDateTime = null;
-    this.contentDir = contentDir;
+    checkNotNull(contentDir);
+    this.contentDir = StringUtils.appendIfMissing(contentDir, File.separator);
     this.duration = checkNotNull(duration);
   }
 
-  public DateBasedWalkFile(final Path contentDir, final OffsetDateTime fromDateTime) {
+  public DateBasedWalkFile(final String contentDir, final OffsetDateTime fromDateTime) {
     this.duration = null;
     this.fromDateTime = checkNotNull(fromDateTime);
-    this.contentDir = checkNotNull(contentDir);
+    checkNotNull(contentDir);
+    this.contentDir = StringUtils.appendIfMissing(contentDir, File.separator);
   }
 
   public Map<String, OffsetDateTime> getBlobIdToDateRef() {
     OffsetDateTime now = UTC.now();
-    OffsetDateTime from = Optional.ofNullable(duration).map(now::minus).orElse(this.fromDateTime);
-    Path datePathPrefix = contentDir.resolve(DateBasedHelper.getDatePathPrefix(from, now));
+    OffsetDateTime from;
+
+    if (duration != null) {
+      from = now.minusSeconds(duration.getSeconds());
+    }
+    else {
+      from = this.fromDateTime;
+    }
+    String datePathPrefix = contentDir + DateBasedHelper.getDatePathPrefix(from, now);
 
     try {
       return getAllFiles(datePathPrefix, from);
@@ -86,9 +101,9 @@ public class DateBasedWalkFile
     }
   }
 
-  public Map<String, OffsetDateTime> getBlobIdToDateRef(final Path prefix) {
+  public Map<String, OffsetDateTime> getBlobIdToDateRef(String datePathPrefix) {
     try {
-      return getAllFiles(contentDir.resolve(prefix), this.fromDateTime);
+      return getAllFiles(datePathPrefix, this.fromDateTime);
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -96,65 +111,62 @@ public class DateBasedWalkFile
   }
 
   private Map<String, OffsetDateTime> getAllFiles(
-      final Path startPath,
+      final String startDir,
       final OffsetDateTime fromDateTime) throws IOException
   {
-    if (Files.exists(startPath)) {
-      DateBasedFileVisitor visitor = new DateBasedFileVisitor(fromDateTime);
+    Map<String, OffsetDateTime> blobIds = new HashMap<>();
+    Path startPath = Paths.get(startDir);
 
-      Files.walkFileTree(startPath, visitor);
-
-      return visitor.getBlobIds();
-    }
-    return Collections.emptyMap();
-  }
-
-  private class DateBasedFileVisitor
-      extends SimpleFileVisitor<Path>
-  {
-
-    private final OffsetDateTime fromDateTime;
-
-    private final Map<String, OffsetDateTime> blobIds = new HashMap<>();
-
-    public DateBasedFileVisitor(final OffsetDateTime fromDateTime) {
-      this.fromDateTime = checkNotNull(fromDateTime);
-    }
-
-    public Map<String, OffsetDateTime> getBlobIds() {
+    if (!Files.exists(startPath)) {
       return blobIds;
     }
 
-    @Override
-    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-      Matcher matcher = DATE_BASED_PATTERN.matcher(file.toString());
+    Files.walkFileTree(startPath, new SimpleFileVisitor<Path>()
+    {
+      @Override
+      public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+        if (file.toString().endsWith(BYTES_EXT) || file.toString().endsWith(PROPS_EXT)) {
+          OffsetDateTime blobCreated = parseDate(file);
+          if (blobCreated == null) {
+            return FileVisitResult.CONTINUE;
+          }
 
-      if (matcher.matches()) {
-        getDateFromMatch(matcher.group(1))
-            .filter(date -> date.isAfter(this.fromDateTime))
-            .map(date -> blobIds.put(matcher.group(2), date));
+          if (blobCreated.isAfter(fromDateTime)) {
+            String fileName = file.getFileName().toString();
+            // remove file extension
+            int dotIndex = fileName.lastIndexOf('.');
+            String id = fileName.substring(0, dotIndex);
+            blobIds.put(id, blobCreated);
+          }
+        }
+        return FileVisitResult.CONTINUE;
       }
 
-      return FileVisitResult.CONTINUE;
-    }
-
-    @Override
-    public FileVisitResult visitFileFailed(final Path file, final IOException e) {
-      log.error("Failed to access file: {} Error: {}", file, e.getMessage());
-      return FileVisitResult.CONTINUE;
-    }
-
-    private Optional<OffsetDateTime> getDateFromMatch(final String matchPath) {
-      try {
-        LocalDateTime localDateTime = LocalDateTime.parse(matchPath, DATE_TIME_PATH_FORMATTER);
-        return Optional.of(localDateTime.atOffset(ZoneOffset.UTC));
+      @Override
+      public FileVisitResult visitFileFailed(final Path file, final IOException e) {
+        log.error("Failed to access file: {} Error: {}", file, e.getMessage());
+        return FileVisitResult.CONTINUE;
       }
-      catch (DateTimeParseException ex) {
-        // we don't care about the files that are not in the expected format
-        log.debug("Incorrect date format in path: {}", matchPath);
-      }
+    });
 
-      return Optional.empty();
+    return blobIds;
+  }
+
+  private OffsetDateTime parseDate(final Path path) {
+    try {
+      // Extract the date-time part from the path "2024/01/01/13/10/" (from year to minutes)
+      Matcher matcher = DATE_BASED_PATTERN.matcher(path.toString());
+      if (matcher.find()) {
+        LocalDateTime localDateTime = LocalDateTime.parse(matcher.group(1), DATE_TIME_PATH_FORMATTER);
+        return localDateTime.atOffset(ZoneOffset.UTC);
+      }
     }
+    catch (Exception e) {
+      // we don't care about the files that are not in the expected format
+      log.debug("Incorrect date format in path: {}", path);
+      return null;
+    }
+
+    return null;
   }
 }

@@ -19,7 +19,6 @@ import java.security.CodeSource;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -40,9 +39,6 @@ import ch.qos.logback.classic.LoggerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.sonatype.nexus.NexusDirectoryConfiguration.BASEDIR_SYS_PROP;
-import static org.sonatype.nexus.NexusDirectoryConfiguration.DATADIR_SYS_PROP;
-
 /**
  * Nexus bootstrap launcher.
  */
@@ -55,6 +51,10 @@ public class Launcher
   public static final String IGNORE_SHUTDOWN_HELPER = ShutdownHelper.class.getName() + ".ignore";
 
   public static final String SYSTEM_USERID = "*SYSTEM";
+
+  public static final String KARAF_DATA = "karaf.data";
+
+  public static final String KARAF_BASE = "karaf.base";
 
   private final JettyServer server;
 
@@ -74,8 +74,8 @@ public class Launcher
     ClassLoader cl = getClass().getClassLoader();
 
     PropertyMap nexusPropertiesMap = nexusProperties.get();
-    System.getProperties().put(DATADIR_SYS_PROP, nexusPropertiesMap.get(DATADIR_SYS_PROP));
-    System.getProperties().put(BASEDIR_SYS_PROP, nexusPropertiesMap.get(BASEDIR_SYS_PROP));
+    System.getProperties().put(KARAF_DATA, nexusPropertiesMap.get(KARAF_DATA));
+    System.getProperties().put(KARAF_BASE, nexusPropertiesMap.get(KARAF_BASE));
 
     // log critical information about the runtime environment
     Logger log = LoggerFactory.getLogger(Launcher.class);

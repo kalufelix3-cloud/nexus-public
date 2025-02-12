@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.bootstrap.edition;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -21,9 +22,6 @@ import org.sonatype.nexus.spring.application.PropertyMap;
 import com.google.common.annotations.VisibleForTesting;
 
 import static java.lang.Boolean.parseBoolean;
-import static org.sonatype.nexus.NexusDirectoryConfiguration.BASEDIR_SYS_PROP;
-import static org.sonatype.nexus.NexusDirectoryConfiguration.DATADIR_SYS_PROP;
-import static org.sonatype.nexus.NexusDirectoryConfiguration.getDataPath;
 import static org.sonatype.nexus.common.app.FeatureFlags.*;
 
 public class NexusEditionPropertiesConfigurer
@@ -42,10 +40,10 @@ public class NexusEditionPropertiesConfigurer
     nexusProperties.putAll(System.getProperties());
 
     // Ensure required properties exist
-    requireProperty(nexusProperties, BASEDIR_SYS_PROP);
-    requireProperty(nexusProperties, DATADIR_SYS_PROP);
+    requireProperty(nexusProperties, "karaf.base");
+    requireProperty(nexusProperties, "karaf.data");
 
-    Path workDirPath = getDataPath();
+    Path workDirPath = new File(nexusProperties.get("karaf.data")).getCanonicalFile().toPath();
     // DirectoryHelper.mkdir(workDirPath);
 
     NexusEditionFactory.selectActiveEdition(nexusProperties, workDirPath);
@@ -88,6 +86,10 @@ public class NexusEditionPropertiesConfigurer
     // Env variable for secrets encryption
     Optional.ofNullable(System.getenv(SECRETS_FILE_ENV))
         .ifPresent(secretsFilePath -> properties.put(SECRETS_FILE, secretsFilePath));
+
+    // Env variable for enabling s3 logging policy
+    Optional.ofNullable(System.getenv(S3_LOGGING_ENABLED_ENV))
+        .ifPresent(s3LoggingEnabled -> properties.put(S3_LOGGING_ENABLED, s3LoggingEnabled));
   }
 
   private void selectDatastoreFeature(final PropertyMap properties) {

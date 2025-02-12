@@ -40,12 +40,6 @@ realpath() {
   fi
 }
 
-
-# Interpolate variables in INSTALL4J_ADD_VM_PARAMS if it exists
-if [ -n "${INSTALL4J_ADD_VM_PARAMS}" ]; then
-    INSTALL4J_ADD_VM_PARAMS=$(eval echo "${INSTALL4J_ADD_VM_PARAMS}")
-fi
-
 REALNAME=`realpath "$0"`
 DIRNAME=`dirname "${REALNAME}"`
 PROGNAME=`basename "${REALNAME}"`
@@ -243,6 +237,7 @@ locateJava() {
             fi
             JAVA="${JAVA_HOME}/bin/java"
         else
+            warn "JAVA_HOME not set; results may vary"
             JAVA=`command -v java`
             if [ "x${JAVA}" = "x" ]; then
                 die "java command not found"

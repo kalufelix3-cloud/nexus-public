@@ -13,27 +13,16 @@
 package org.sonatype.nexus.bootstrap.edition;
 
 import java.nio.file.Path;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 
-import org.sonatype.nexus.bootstrap.JavaPrefs;
 import org.sonatype.nexus.spring.application.PropertyMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Named
-@Singleton
 public class CoreNexusEdition
     extends NexusEdition
 {
   private static final Logger log = LoggerFactory.getLogger(CoreNexusEdition.class);
-
-  @Inject
-  public CoreNexusEdition(final JavaPrefs javaPrefs) {
-    super(javaPrefs);
-  }
 
   @Override
   public NexusEditionType getEdition() {
@@ -60,5 +49,10 @@ public class CoreNexusEdition
         .replace(NexusEditionFeature.PRO_FEATURE.featureString, getEditionFeature().featureString);
 
     properties.put(NEXUS_FEATURES, updatedNexusFeaturesProps);
+  }
+
+  @Override
+  protected boolean shouldSwitchToFree(final Path workDirPath) {
+    return true;
   }
 }

@@ -114,7 +114,7 @@ public class TaskLogsFilterTest
     LoggingEvent event = new LoggingEvent();
     event.setLoggerName("TaskLogsFilterTest");
     event.setMessage(TEST_MESSAGE);
-    event.setMarker(marker);
+    event.addMarker(marker);
     event.setArgumentArray(TEST_ARGS);
     return event;
   }

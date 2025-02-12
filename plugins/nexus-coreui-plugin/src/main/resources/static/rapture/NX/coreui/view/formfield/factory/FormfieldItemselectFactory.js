@@ -155,7 +155,7 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldItemselectFactory', {
         return selection !== "" && selection !== placeholderRecord[valueField];
       });
       if (selectedValues.length === 0) {
-        if (store !== null && !store.findRecord(valueField, placeholderRecord[valueField])) {
+        if (!store.findRecord(valueField, placeholderRecord[valueField])) {
           store.add(placeholderRecord);
           toField.setStore(store);
         }

@@ -24,7 +24,6 @@ import javax.inject.Named;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
-import org.sonatype.nexus.common.cooperation2.Cooperation2Selector;
 import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
@@ -48,7 +47,6 @@ import org.sonatype.nexus.transaction.TransactionModule;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Provides;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -103,12 +101,6 @@ public class QueuingUpgradeTaskSchedulerTest
   @Mock
   private Cooperation2Factory cooperationFactory;
 
-  @Mock
-  private Cooperation2Selector localCooperationSelector;
-
-  @Mock
-  private Cooperation2Selector distributedCooperationSelector;
-
   private QueuingUpgradeTaskScheduler underTest;
 
   private UpgradeTaskStore upgradeTaskStore;
@@ -131,13 +123,6 @@ public class QueuingUpgradeTaskSchedulerTest
 
     underTest = create(QueuingUpgradeTaskScheduler.class);
     upgradeTaskStore = create(UpgradeTaskStore.class);
-  }
-
-  @After
-  public void stop() {
-    // the default behavior is to use the distributed impl, so we should have selected it and see nothing be done with
-    // the local impl
-    verifyNoInteractions(localCooperationSelector);
   }
 
   /*
@@ -351,9 +336,6 @@ public class QueuingUpgradeTaskSchedulerTest
   }
 
   private void mockCooperation() {
-    when(localCooperationSelector.select()).thenReturn(cooperationFactory);
-    when(distributedCooperationSelector.select()).thenReturn(cooperationFactory);
-
     Cooperation2Factory.Builder cooperationBuilder = mock(Cooperation2Factory.Builder.class);
     when(cooperationFactory.configure()).thenReturn(cooperationBuilder);
 
@@ -426,17 +408,6 @@ public class QueuingUpgradeTaskSchedulerTest
       @Named("${nexus.upgrade.tasks.delay:-10s}")
       Duration getDelay() {
         return Duration.ofSeconds(0);
-      }
-
-      @Provides
-      Cooperation2Selector getLocalCooperationSelector() {
-        return localCooperationSelector;
-      }
-
-      @Provides
-      @Named("distributed")
-      Cooperation2Selector getDistributedCooperationSelector() {
-        return distributedCooperationSelector;
       }
 
       @Provides

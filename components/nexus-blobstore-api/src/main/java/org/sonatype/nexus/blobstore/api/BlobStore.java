@@ -112,14 +112,6 @@ public interface BlobStore
   String REPO_NAME_HEADER = "Bucket.repo-name";
 
   /**
-   * Prefix for the old layout (volume/chapter) in folder structures.
-   * Used as a filter in certain blob store implementations.
-   *
-   * @since 3.79
-   */
-  String VOLUME_PREFIX = "vol-";
-
-  /**
    * Creates a new blob. The header map must contain at least two keys:
    *
    * <ul>

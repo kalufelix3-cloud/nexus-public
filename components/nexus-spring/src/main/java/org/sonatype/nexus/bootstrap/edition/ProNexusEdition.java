@@ -15,27 +15,16 @@ package org.sonatype.nexus.bootstrap.edition;
 
 import java.io.File;
 import java.nio.file.Path;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 
-import org.sonatype.nexus.bootstrap.JavaPrefs;
 import org.sonatype.nexus.spring.application.PropertyMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Named
-@Singleton
 public class ProNexusEdition
     extends NexusEdition
 {
   private static final Logger log = LoggerFactory.getLogger(ProNexusEdition.class);
-
-  @Inject
-  public ProNexusEdition(final JavaPrefs javaPrefs) {
-    super(javaPrefs);
-  }
 
   @Override
   public NexusEditionType getEdition() {
@@ -50,7 +39,8 @@ public class ProNexusEdition
   @Override
   protected boolean doesApply(final PropertyMap properties, final Path workDirPath) {
     return properties.get(NEXUS_FEATURES, "").contains(NexusEditionFeature.PRO_FEATURE.featureString) &&
-        !shouldSwitchToFree(properties, workDirPath);
+        !shouldSwitchToFree(workDirPath) &&
+        !isNexusLoadAs(NEXUS_LOAD_AS_CE_PROP_NAME);
   }
 
   @Override
@@ -59,20 +49,18 @@ public class ProNexusEdition
     createEditionMarker(workDirPath, getEdition());
   }
 
-  protected boolean shouldSwitchToFree(final PropertyMap properties, final Path workDirPath) {
+  @Override
+  protected boolean shouldSwitchToFree(final Path workDirPath) {
     File proEditionMarker = getEditionMarker(workDirPath, NexusEditionType.PRO);
     boolean switchToOss;
-    if (hasNexusLoadAs(properties, NEXUS_LOAD_AS_OSS_PROP_NAME)) {
-      switchToOss = isNexusLoadAs(properties, NEXUS_LOAD_AS_OSS_PROP_NAME);
-    }
-    else if (hasNexusLoadAs(properties, NEXUS_LOAD_AS_CE_PROP_NAME)) {
-      switchToOss = isNexusLoadAs(properties, NEXUS_LOAD_AS_CE_PROP_NAME);
+    if (hasNexusLoadAs(NEXUS_LOAD_AS_OSS_PROP_NAME)) {
+      switchToOss = isNexusLoadAs(NEXUS_LOAD_AS_OSS_PROP_NAME);
     }
     else if (proEditionMarker.exists()) {
       switchToOss = false;
     }
     else {
-      switchToOss = isNullNexusLicenseFile(properties) && isNullJavaPrefLicensePath();
+      switchToOss = isNullNexusLicenseFile() && isNullJavaPrefLicensePath(PRO_LICENSE_LOCATION);
     }
     return switchToOss;
   }

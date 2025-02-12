@@ -7,9 +7,12 @@
       <Arg>
         <New id="RequestLogHandler" class="org.eclipse.jetty.server.handler.RequestLogHandler">
           <Set name="requestLog">
-            <New id="LogbackRequestLog" class="ch.qos.logback.access.jetty.RequestLogImpl2">
-              <Set name="fileName"><Property name="logback.etc"/>/logback-access.xml</Set>
-              <Set name="quiet">true</Set>
+            <New id="RequestLogImpl" class="org.eclipse.jetty.server.NCSARequestLog">
+              <Arg><SystemProperty name="jetty.logs" default="../sonatype-work/nexus3/log"/>/request.log</Arg>
+              <Set name="retainDays">90</Set>
+              <Set name="append">true</Set>
+              <Set name="extended">false</Set>
+              <Set name="LogTimeZone">GMT</Set>
             </New>
           </Set>
         </New>

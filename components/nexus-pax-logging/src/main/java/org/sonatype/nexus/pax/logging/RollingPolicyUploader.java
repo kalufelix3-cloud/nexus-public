@@ -10,32 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.cooperation2.internal;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
-import org.sonatype.nexus.common.cooperation2.Cooperation2Selector;
+package org.sonatype.nexus.pax.logging;
 
 /**
- * Cooperation2Selector implementation that simply returns the default impl from the dependency injector.
+ * Interface for uploading log files to a remote location.
  */
-@Named
-@Singleton
-public class DefaultCooperation2Selector
-    implements Cooperation2Selector
+public interface RollingPolicyUploader
 {
-  private Cooperation2Factory cooperation2Factory;
-
-  @Inject
-  public DefaultCooperation2Selector(final Cooperation2Factory cooperation2Factory) {
-    this.cooperation2Factory = cooperation2Factory;
-  }
-
-  @Override
-  public Cooperation2Factory select() {
-    return cooperation2Factory;
-  }
+  /**
+   * Rollover the given path with the given parameters.
+   *
+   * @param context the context prefix to use in the remote location for the given paths
+   * @param datePath the log date path to use in the remote location for the given paths
+   * @param path the path to the file to upload
+   */
+  void rollover(final String context, final String datePath, final String path);
 }

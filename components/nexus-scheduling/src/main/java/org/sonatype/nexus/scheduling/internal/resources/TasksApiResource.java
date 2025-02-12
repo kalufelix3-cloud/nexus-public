@@ -30,6 +30,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.scheduling.TaskInfo;
@@ -47,11 +48,13 @@ import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 /**
  * @since 3.6
  */
+@FeatureFlag(name = DATASTORE_CLUSTERED_ENABLED, inverse = true, enabledByDefault = true)
 @Named
 @Singleton
 @Path(TasksApiResource.RESOURCE_URI)
@@ -68,7 +71,7 @@ public class TasksApiResource
   private final TaskScheduler taskScheduler;
 
   @Inject
-  public TasksApiResource(final TaskScheduler taskScheduler) {
+  public TasksApiResource(final TaskScheduler taskScheduler)  {
     this.taskScheduler = checkNotNull(taskScheduler);
   }
 
@@ -77,8 +80,7 @@ public class TasksApiResource
   @RequiresAuthentication
   @RequiresPermissions("nexus:tasks:read")
   public Page<TaskXO> getTasks(@QueryParam("type") final String type) {
-    List<TaskXO> taskXOs = taskScheduler.listsTasks()
-        .stream()
+    List<TaskXO> taskXOs = taskScheduler.listsTasks().stream()
         .filter(taskInfo -> taskInfo.getConfiguration().isVisible())
         .filter(taskInfo -> typeParameterMatches(type, taskInfo))
         .map(taskInfo -> TaskXO.fromTaskInfo(taskInfo, taskScheduler.toExternalTaskState(taskInfo)))

@@ -125,9 +125,4 @@ public interface LogManager
    * that might not be yet propagated by DES
    */
   Map<String, LoggerLevel> getEffectiveLoggersUpdatedByFetchedOverrides();
-
-  /**
-   * @return true if Sonatype's custom RemoteTimeBasedRollingPolicy is enabled
-   */
-  boolean isRemoteTimeBasedRollingPolicyEnabled();
 }
