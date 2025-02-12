@@ -88,6 +88,7 @@
     <module>nexus-validation</module>
     <module>nexus-webhooks</module>
     <module>nexus-webresources-api</module>
+    <module>nexus-self-hosted</module>
   </modules>
 
   <dependencyManagement>

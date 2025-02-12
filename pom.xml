@@ -488,6 +488,12 @@
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-self-hosted</artifactId>
+        <version>3.79.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-servlet</artifactId>
         <version>3.79.0-SNAPSHOT</version>
       </dependency>
@@ -569,7 +575,7 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-pax-exam</artifactId>
-        <version>3.78.0-SNAPSHOT</version>
+        <version>3.79.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
@@ -591,39 +597,6 @@
       </dependency>
 
       <!-- assemblies -->
-
-      <dependency>
-        <groupId>org.sonatype.nexus.assemblies</groupId>
-        <artifactId>nexus-startup-feature</artifactId>
-        <version>3.78.0-SNAPSHOT</version>
-        <classifier>features</classifier>
-        <type>xml</type>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus.assemblies</groupId>
-        <artifactId>nexus-boot-feature</artifactId>
-        <version>3.78.0-SNAPSHOT</version>
-        <classifier>features</classifier>
-        <type>xml</type>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus.assemblies</groupId>
-        <artifactId>nexus-base-feature</artifactId>
-        <version>3.78.0-SNAPSHOT</version>
-        <classifier>features</classifier>
-        <type>xml</type>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus.assemblies</groupId>
-        <artifactId>nexus-core-feature</artifactId>
-        <version>3.78.0-SNAPSHOT</version>
-        <classifier>features</classifier>
-        <type>xml</type>
-      </dependency>
-
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-base-overlay</artifactId>

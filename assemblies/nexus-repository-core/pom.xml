@@ -267,6 +267,10 @@
     </dependency>
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-self-hosted</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-servlet</artifactId>
     </dependency>
     <dependency>
