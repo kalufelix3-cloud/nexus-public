@@ -31,7 +31,7 @@ Ext.define('NX.coreui.view.repository.recipe.PyPiProxy', {
     'NX.coreui.view.repository.facet.HttpClientFacet',
     'NX.coreui.view.repository.facet.NegativeCacheFacet',
     'NX.coreui.view.repository.facet.CleanupPolicyFacet',
-    'NX.coreui.view.repository.facet.PypiProxyFacet'
+    'NX.coreui.view.repository.facet.PyPiProxyFacet'
   ],
 
   /**

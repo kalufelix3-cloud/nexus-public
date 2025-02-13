@@ -19,7 +19,7 @@
 /**
  * Configuration specific to pypi proxy repos
  */
-Ext.define('NX.coreui.view.repository.facet.PypiProxyFacet', {
+Ext.define('NX.coreui.view.repository.facet.PyPiProxyFacet', {
   extend: 'Ext.form.FieldContainer',
   alias: 'widget.nx-coreui-repository-pypi-proxy-facet',
   requires: [
