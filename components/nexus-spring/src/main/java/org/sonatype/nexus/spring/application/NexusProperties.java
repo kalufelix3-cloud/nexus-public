@@ -83,6 +83,8 @@ public class NexusProperties
       resolveAnyImplicitDefaults(nexusProperties);
       LOG.info("nexus.properties: {}", nexusProperties);
       new NexusEditionPropertiesConfigurer().applyPropertiesFromConfiguration(nexusProperties);
+
+      nexusProperties.forEach(System::setProperty);
     }
     return nexusProperties;
   }

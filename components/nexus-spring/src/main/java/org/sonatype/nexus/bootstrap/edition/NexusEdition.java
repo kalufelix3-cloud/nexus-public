@@ -52,8 +52,6 @@ public abstract class NexusEdition
 
   protected abstract void doApply(final PropertyMap properties, final Path workDirPath);
 
-  protected abstract boolean shouldSwitchToFree(final Path workDirPath);
-
   public boolean applies(final PropertyMap properties, final Path workDirPath) {
     return doesApply(properties, workDirPath);
   }
@@ -62,12 +60,12 @@ public abstract class NexusEdition
     doApply(properties, workDirPath);
   }
 
-  protected boolean hasNexusLoadAs(final String nexusProperty) {
-    return null != System.getProperty(nexusProperty);
+  protected boolean hasNexusLoadAs(final PropertyMap properties, final String nexusProperty) {
+    return null != properties.get(nexusProperty);
   }
 
-  public boolean isNexusLoadAs(final String nexusProperty) {
-    return Boolean.getBoolean(nexusProperty);
+  public boolean isNexusLoadAs(final PropertyMap properties, final String nexusProperty) {
+    return Boolean.parseBoolean(properties.get(nexusProperty));
   }
 
   public boolean hasFeature(final Properties properties, final String feature) {

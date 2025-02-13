@@ -37,8 +37,13 @@ public class CommunityNexusEdition
 
   @Override
   protected boolean doesApply(final PropertyMap properties, final Path workDirPath) {
-    return properties.get(NEXUS_FEATURES, "").contains(NexusEditionFeature.COMMUNITY_FEATURE.featureString) &&
-        !shouldSwitchToFree(workDirPath);
+    // only matches if instance is either PRO or COMMUNITY configured. Or one of the loadAs properties is set. Note that
+    // at this point the doesApply check on ProNexusEdition has failed, or we wouldn't be here, so no need to check
+    // license again
+    return (properties.get(NEXUS_FEATURES, "").contains(NexusEditionFeature.PRO_FEATURE.featureString) ||
+        properties.get(NEXUS_FEATURES, "").contains(NexusEditionFeature.COMMUNITY_FEATURE.featureString)) ||
+        isNexusLoadAs(properties, NEXUS_LOAD_AS_CE_PROP_NAME) ||
+        isNexusLoadAs(properties, NEXUS_LOAD_AS_OSS_PROP_NAME);
   }
 
   @Override
@@ -46,12 +51,9 @@ public class CommunityNexusEdition
     log.info("Loading Community Edition");
     properties.put(NEXUS_EDITION, NexusEditionType.COMMUNITY.editionString);
     String updatedNexusFeaturesProps = properties.get(NEXUS_FEATURES)
-        .replace(NexusEditionFeature.PRO_FEATURE.featureString, getEditionFeature().featureString);
+        .replace(
+            NexusEditionFeature.PRO_FEATURE.featureString,
+            getEditionFeature().featureString);
     properties.put(NEXUS_FEATURES, updatedNexusFeaturesProps);
-  }
-
-  @Override
-  protected boolean shouldSwitchToFree(final Path workDirPath) {
-    return false;
   }
 }

@@ -50,9 +50,4 @@ public class CoreNexusEdition
 
     properties.put(NEXUS_FEATURES, updatedNexusFeaturesProps);
   }
-
-  @Override
-  protected boolean shouldSwitchToFree(final Path workDirPath) {
-    return true;
-  }
 }
