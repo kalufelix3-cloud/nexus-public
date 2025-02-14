@@ -76,11 +76,13 @@ public class DatastoreDeadBlobFinder
     this.blobStoreManager = blobStoreManager;
   }
 
+  @Override
   public void findAndProcessBatch(
       @NotNull final Repository repository,
       final boolean ignoreMissingBlobRefs,
       final int batchSize,
-      final Consumer<DeadBlobResult<Asset>> resultProcessor) {
+      final Consumer<DeadBlobResult<Asset>> resultProcessor)
+  {
     checkNotNull(repository);
     checkNotNull(resultProcessor);
 
@@ -109,7 +111,8 @@ public class DatastoreDeadBlobFinder
   /**
    * Based on the db metadata, confirm that all Blobs exist and sha1 values match. Can optionally ignore any records
    * that don't have a blobRef, which is expected for NuGet search results.
-   * @parem repository  The Repository to inspect
+   * 
+   * @parem repository The Repository to inspect
    * @param ignoreMissingBlobRefs (defaults to true)
    */
   @Override
@@ -140,14 +143,14 @@ public class DatastoreDeadBlobFinder
     List<DeadBlobResult<Asset>> deadBlobCandidates = fluentAssets
         .peek(a -> blobsExamined.incrementAndGet())
         .map(asset -> {
-            if (!asset.blob().isPresent() && ignoreMissingBlobRefs) {
-              log.trace("Set to ignore missing blobRef on {}", asset);
-              return null;
-            }
-            else {
-              return checkAsset(repository.getName(), asset);
-            }
-          })
+          if (!asset.blob().isPresent() && ignoreMissingBlobRefs) {
+            log.trace("Set to ignore missing blobRef on {}", asset);
+            return null;
+          }
+          else {
+            return checkAsset(repository.getName(), asset);
+          }
+        })
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
 
@@ -182,12 +185,13 @@ public class DatastoreDeadBlobFinder
             }
             else {
               log.debug(
-                  "Asset {} corrected from error state {} during inspection", candidateResult.getAsset().path(), candidateResult.getResultState());
+                  "Asset {} corrected from error state {} during inspection", candidateResult.getAsset().path(),
+                  candidateResult.getResultState());
               return null;
             }
           })
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
+          .filter(Objects::nonNull)
+          .collect(Collectors.toList());
 
       if (!batchMode) {
         log.info("Followup inspection of repository {} took {}ms for " + "{} assets and identified {} incorrect Assets",
@@ -207,7 +211,8 @@ public class DatastoreDeadBlobFinder
       return new DeadBlobResult<>(repositoryName, null, ASSET_DELETED, "Asset was deleted during inspection");
     }
     try {
-      Blob blob = asset.blob().map(AssetBlob::blobRef)
+      Blob blob = asset.blob()
+          .map(AssetBlob::blobRef)
           .map(blobRef -> blobStoreManager.get(blobRef.getStore()).get(blobRef.getBlobId()))
           .orElseThrow(() -> new IllegalStateException("Blob not found."));
       verifyBlob(blob, asset);
@@ -225,10 +230,15 @@ public class DatastoreDeadBlobFinder
       return new DeadBlobResult<>(repositoryName, asset, SHA1_DISAGREEMENT, pae.getMessage());
     }
     catch (BlobUnavilableException e) {
-      return new DeadBlobResult<>(repositoryName, asset, UNAVAILABLE_BLOB, e.getMessage() == null ? "Blob inputstream unavailable" : e.getMessage());
+      return new DeadBlobResult<>(repositoryName, asset, UNAVAILABLE_BLOB,
+          e.getMessage() == null ? "Blob inputstream unavailable" : e.getMessage());
     }
     catch (Exception e) {
-      return new DeadBlobResult<>(repositoryName, asset, UNKNOWN, e.getMessage());
+      String message = e.getMessage();
+      if (message == null) {
+        message = e.getClass().getSimpleName();
+      }
+      return new DeadBlobResult<>(repositoryName, asset, UNKNOWN, message);
     }
     return null;
   }
@@ -236,7 +246,10 @@ public class DatastoreDeadBlobFinder
   /**
    * Verify that the Blob exists and is in agreement with the stored Asset metadata.;
    */
-  private void verifyBlob(final Blob blob, final Asset asset) throws MismatchedSHA1Exception, BlobUnavilableException, IOException {
+  private void verifyBlob(
+      final Blob blob,
+      final Asset asset) throws MismatchedSHA1Exception, BlobUnavilableException, IOException
+  {
     BlobMetrics metrics = blob.getMetrics();
 
     String assetChecksum =
@@ -258,13 +271,16 @@ public class DatastoreDeadBlobFinder
   private void logResults(final DeadBlobResult<Asset> firstResult, final DeadBlobResult<Asset> secondResult) {
     log.info("Possible bad data found in Asset: {}", secondResult.getAsset());
     if (lastUpdated(firstResult) != lastUpdated(secondResult)) {
-      log.info("Asset metadata was updated during inspection between {} and {}",  lastUpdated(firstResult), lastUpdated(secondResult));
+      log.info("Asset metadata was updated during inspection between {} and {}", lastUpdated(firstResult),
+          lastUpdated(secondResult));
     }
     if (firstResult.getResultState() != secondResult.getResultState()) {
-      log.info("Error state changed from {} to {} during inspection", firstResult.getResultState(), secondResult.getResultState());
+      log.info("Error state changed from {} to {} during inspection", firstResult.getResultState(),
+          secondResult.getResultState());
     }
     if (blobUpdated(firstResult) != blobUpdated(secondResult)) {
-      log.info("Asset blob was updated during inspection between {} and {}", blobUpdated(firstResult), blobUpdated(secondResult));
+      log.info("Asset blob was updated during inspection between {} and {}", blobUpdated(firstResult),
+          blobUpdated(secondResult));
     }
   }
 

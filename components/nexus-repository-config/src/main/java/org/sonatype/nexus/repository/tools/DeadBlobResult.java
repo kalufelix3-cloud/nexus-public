@@ -38,7 +38,7 @@ public class DeadBlobResult<T>
     this.repositoryName = checkNotNull(repositoryName);
     this.asset = asset;
     this.resultState = checkNotNull(resultState);
-    this.errorMessage = checkNotNull(errorMessage);
+    this.errorMessage = errorMessage;
   }
 
   public String getRepositoryName() {
