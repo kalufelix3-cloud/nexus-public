@@ -45,6 +45,7 @@ import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.common.log.LoggerLevelChangedEvent;
 import org.sonatype.nexus.common.log.LoggerOverridesReloadEvent;
 import org.sonatype.nexus.common.log.LoggersResetEvent;
+import org.sonatype.nexus.common.log.RollingPolicyUploader;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.internal.log.overrides.datastore.LoggerOverridesEvent;
@@ -56,6 +57,8 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.FileAppender;
+import ch.qos.logback.core.rolling.RollingFileAppender;
+import ch.qos.logback.core.rolling.RollingPolicy;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.ByteStreams;
@@ -418,6 +421,20 @@ public class LogbackLogManager
   public LoggerLevel getLoggerEffectiveLevel(final String name) {
     Level level = loggerContext().getLogger(name).getEffectiveLevel();
     return LogbackLevels.convert(level);
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public boolean isRemoteTimeBasedRollingPolicyEnabled() {
+    for (Appender<ILoggingEvent> appender : appenders()) {
+      if (appender instanceof RollingFileAppender<ILoggingEvent> rollingFileAppender) {
+        RollingPolicy rollingPolicy = rollingFileAppender.getRollingPolicy();
+        if (rollingPolicy instanceof RollingPolicyUploader) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
