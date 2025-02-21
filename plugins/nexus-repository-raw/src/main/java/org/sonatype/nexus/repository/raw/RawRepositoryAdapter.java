@@ -20,6 +20,7 @@ import org.sonatype.nexus.repository.raw.internal.RawFormat;
 import org.sonatype.nexus.repository.rest.api.SimpleApiRepositoryAdapter;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
+import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 
@@ -41,32 +42,36 @@ public class RawRepositoryAdapter
 
   @Override
   public AbstractApiRepository adapt(final Repository repository) {
-    switch (repository.getType().toString()) {
-      case HostedType.NAME:
-        return new RawHostedApiRepository(
-            repository.getName(),
-            repository.getUrl(),
-            repository.getConfiguration().isOnline(),
-            getHostedStorageAttributes(repository),
-            getCleanupPolicyAttributes(repository),
-            getComponentAttributes(repository),
-            createRawAttributes(repository));
-      case ProxyType.NAME:
-        return new RawProxyApiRepository(
-            repository.getName(),
-            repository.getUrl(),
-            repository.getConfiguration().isOnline(),
-            getHostedStorageAttributes(repository),
-            getCleanupPolicyAttributes(repository),
-            getProxyAttributes(repository),
-            getNegativeCacheAttributes(repository),
-            getHttpClientAttributes(repository),
-            getRoutingRuleName(repository),
-            getReplicationAttributes(repository),
-            createRawAttributes(repository));
-      default:
-        return super.adapt(repository);
-    }
+    return switch (repository.getType().toString()) {
+      case HostedType.NAME -> new RawHostedApiRepository(
+          repository.getName(),
+          repository.getUrl(),
+          repository.getConfiguration().isOnline(),
+          getHostedStorageAttributes(repository),
+          getCleanupPolicyAttributes(repository),
+          getComponentAttributes(repository),
+          createRawAttributes(repository));
+      case ProxyType.NAME -> new RawProxyApiRepository(
+          repository.getName(),
+          repository.getUrl(),
+          repository.getConfiguration().isOnline(),
+          getHostedStorageAttributes(repository),
+          getCleanupPolicyAttributes(repository),
+          getProxyAttributes(repository),
+          getNegativeCacheAttributes(repository),
+          getHttpClientAttributes(repository),
+          getRoutingRuleName(repository),
+          getReplicationAttributes(repository),
+          createRawAttributes(repository));
+      case GroupType.NAME -> new RawGroupApiRepository(
+          repository.getName(),
+          repository.getUrl(),
+          repository.getConfiguration().isOnline(),
+          getHostedStorageAttributes(repository),
+          getGroupAttributes(repository),
+          createRawAttributes(repository));
+      default -> throw new IllegalArgumentException("Unsupported repository type: " + repository.getType());
+    };
   }
 
   private RawAttributes createRawAttributes(final Repository repository) {

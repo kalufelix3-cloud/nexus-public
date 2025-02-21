@@ -24,7 +24,6 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.internal.RepositoryImpl;
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
-import org.sonatype.nexus.repository.rest.api.model.SimpleApiGroupRepository;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
@@ -40,8 +39,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.mockito.AdditionalMatchers.not;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -65,10 +63,12 @@ public class RawRepositoryAdapterTest
     Repository repository = createRepository(new GroupType());
     Configuration configuration = repository.getConfiguration();
     configuration.attributes("group").set("memberNames", Arrays.asList("a", "b"));
+    configuration.attributes("raw").set("contentDisposition", ContentDisposition.ATTACHMENT.toString());
     repository.update(configuration);
 
-    SimpleApiGroupRepository groupRepository = (SimpleApiGroupRepository) adapter.adapt(repository);
+    RawGroupApiRepository groupRepository = (RawGroupApiRepository) adapter.adapt(repository);
     assertRepository(groupRepository, "group", true);
+    assertThat(groupRepository.getRaw().getContentDisposition(), is("ATTACHMENT"));
   }
 
   @Test
@@ -99,7 +99,9 @@ public class RawRepositoryAdapterTest
   }
 
   private static void assertRepository(
-      final AbstractApiRepository repository, final String type, final Boolean online)
+      final AbstractApiRepository repository,
+      final String type,
+      final Boolean online)
   {
     assertThat(repository.getFormat(), is("raw"));
     assertThat(repository.getName(), is("my-repo"));
@@ -112,7 +114,7 @@ public class RawRepositoryAdapterTest
     Configuration configuration = mock(Configuration.class);
     when(configuration.isOnline()).thenReturn(true);
     when(configuration.getRepositoryName()).thenReturn(repositoryName);
-    when(configuration.attributes(not(eq("raw")))).thenReturn(new NestedAttributesMap("dummy", newHashMap()));
+    when(configuration.attributes(any())).thenReturn(new NestedAttributesMap("dummy", newHashMap()));
     return configuration;
   }
 
@@ -123,7 +125,8 @@ public class RawRepositoryAdapterTest
   }
 
   private static Repository createRepository(
-      final Type type, final ContentDisposition contentDisposition) throws Exception
+      final Type type,
+      final ContentDisposition contentDisposition) throws Exception
   {
     Repository repository = new RepositoryImpl(Mockito.mock(EventManager.class), type, new RawFormat());
 
