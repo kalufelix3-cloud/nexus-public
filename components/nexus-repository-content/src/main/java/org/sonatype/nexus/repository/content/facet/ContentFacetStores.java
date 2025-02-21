@@ -45,10 +45,11 @@ public class ContentFacetStores
 
   public final AssetBlobStore<?> assetBlobStore;
 
-  public ContentFacetStores(final BlobStoreManager blobStoreManager,
-                            final String blobStoreName,
-                            final FormatStoreManager formatStoreManager,
-                            final String contentStoreName)
+  public ContentFacetStores(
+      final BlobStoreManager blobStoreManager,
+      final String blobStoreName,
+      final FormatStoreManager formatStoreManager,
+      final String contentStoreName)
   {
     this.blobStoreName = checkNotNull(blobStoreName);
     // We have to use Provider here because the blobstore may be not initialized after conversion to group.
@@ -59,5 +60,9 @@ public class ContentFacetStores
     this.componentStore = formatStoreManager.componentStore(contentStoreName);
     this.assetStore = formatStoreManager.assetStore(contentStoreName);
     this.assetBlobStore = formatStoreManager.assetBlobStore(contentStoreName);
+  }
+
+  public AssetStore<?> assetStore() {
+    return assetStore;
   }
 }

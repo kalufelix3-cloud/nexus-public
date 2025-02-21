@@ -17,26 +17,27 @@ import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.task.DeletionProgress;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class DeleteCleanupMethodTest
-    extends TestSupport
+class DeleteCleanupMethodTest
+    extends Test5Support
 {
   private static final int BATCH_SIZE = 500;
 
@@ -51,21 +52,21 @@ public class DeleteCleanupMethodTest
 
   private DeleteCleanupMethod underTest;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     System.setProperty("nexus.continuation.browse.limit", String.valueOf(BATCH_SIZE));
     underTest = new DeleteCleanupMethod();
     when(repository.facet(ContentMaintenanceFacet.class)).thenReturn(contentMaintenanceFacet);
   }
 
-  @Test(expected = TaskInterruptedException.class)
-  public void testRunFailsIfTaskIsCancelled() {
+  @Test
+  void testRunFailsIfTaskIsCancelled() {
     when(cancelledCheck.getAsBoolean()).thenReturn(true);
-    underTest.run(repository, getRandomStream(1000), cancelledCheck);
+    assertThrows(TaskInterruptedException.class, () -> underTest.run(repository, getRandomStream(1000), cancelledCheck));
   }
 
   @Test
-  public void testRunReBatchStream() {
+  void testRunReBatchStream() {
     when(cancelledCheck.getAsBoolean()).thenReturn(false);
     when(contentMaintenanceFacet.deleteComponents(any(Stream.class)))
         .thenAnswer(invocation -> {
@@ -89,10 +90,6 @@ public class DeleteCleanupMethodTest
 
     for (int i = 1; i <= size; i++) {
       FluentComponent fluentComponent = mock(FluentComponent.class);
-      when(fluentComponent.namespace()).thenReturn("test");
-      when(fluentComponent.name()).thenReturn("random-component-" + i);
-      when(fluentComponent.version()).thenReturn(String.format("%s.0.0", i));
-
       resultList.add(fluentComponent);
     }
 

@@ -51,7 +51,11 @@ public class FluentComponentImpl
     this(facet, component, null);
   }
 
-  public FluentComponentImpl(final ContentFacetSupport facet, final Component component, @Nullable final Collection<FluentAsset> assets) {
+  public FluentComponentImpl(
+      final ContentFacetSupport facet,
+      final Component component,
+      @Nullable final Collection<FluentAsset> assets)
+  {
     this.facet = checkNotNull(facet);
     this.component = checkNotNull(component);
     this.assets = assets == null ? null : Collections.unmodifiableCollection(assets);
@@ -124,13 +128,13 @@ public class FluentComponentImpl
       return assets;
     }
 
-    return transform(facet.stores().assetStore.browseComponentAssets(component),
+    return transform(facet.stores().assetStore().browseComponentAssets(component),
         asset -> new FluentAssetImpl(facet, asset));
   }
 
   @Override
   public Collection<FluentAsset> assets(boolean useCache) {
-    if(useCache && component instanceof ComponentData && ((ComponentData) component).getAssets() != null){
+    if (useCache && component instanceof ComponentData && ((ComponentData) component).getAssets() != null) {
       return transform(((ComponentData) component).getAssets(), asset -> new FluentAssetImpl(facet, asset));
     }
     return assets();
