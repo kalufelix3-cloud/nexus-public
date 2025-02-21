@@ -76,7 +76,7 @@ Ext.define('NX.coreui.view.repository.facet.GroupFacet', {
 
     me.repositoryStore = Ext.create('NX.coreui.store.RepositoryReference', {remote: true, sorters: undefined});
     me.repositoryStore.filter([
-      {property: 'format', value: me.format}
+      {property: 'format', value: me.format, exactMatch: true}
     ]);
     me.repositoryStore.load(function() {
       //TODO - KR hackity hack, but it appears that the store loading somehow unsets values?
