@@ -57,7 +57,7 @@ public interface ApplicationLicense
    * Could be an empty-map if no license was installed.
    *
    */
-  Map<String,Object> getAttributes();
+  Map<String, Object> getAttributes();
 
   /**
    * Returns the license finger-print, or {@code null} if not installed.
@@ -75,7 +75,8 @@ public interface ApplicationLicense
   /**
    * Keys for Attribute values associated with this license.
    */
-  enum Attributes {
+  enum Attributes
+  {
     EVAL("evaluation"),
     USERS("users"),
     FEATURES("features"),
@@ -85,7 +86,9 @@ public interface ApplicationLicense
     CONTACT_NAME("contactName"),
     CONTACT_EMAIL("contactEmail"),
     CONTACT_COMPANY("contactCompany"),
-    CONTACT_COUNTRY("contactCountry");
+    CONTACT_COUNTRY("contactCountry"),
+    MAX_REPO_COMPONENTS("maxRepoComponents"),
+    MAX_REPO_REQUESTS("maxRepoRequests");
 
     private final String key;
 
