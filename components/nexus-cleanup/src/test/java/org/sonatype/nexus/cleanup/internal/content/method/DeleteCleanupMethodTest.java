@@ -28,8 +28,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -39,8 +39,6 @@ import static org.mockito.Mockito.when;
 class DeleteCleanupMethodTest
     extends Test5Support
 {
-  private static final int BATCH_SIZE = 500;
-
   @Mock
   private Repository repository;
 
@@ -54,7 +52,6 @@ class DeleteCleanupMethodTest
 
   @BeforeEach
   void setUp() {
-    System.setProperty("nexus.continuation.browse.limit", String.valueOf(BATCH_SIZE));
     underTest = new DeleteCleanupMethod();
     when(repository.facet(ContentMaintenanceFacet.class)).thenReturn(contentMaintenanceFacet);
   }
@@ -79,8 +76,8 @@ class DeleteCleanupMethodTest
     DeletionProgress deleted = underTest.run(repository, input, cancelledCheck);
 
     //validate stream is batched and cancel check is verified for each batch
-    verify(contentMaintenanceFacet, times(10)).deleteComponents(any(Stream.class));
-    verify(cancelledCheck, times(10)).getAsBoolean();
+    verify(contentMaintenanceFacet, times(5)).deleteComponents(any(Stream.class));
+    verify(cancelledCheck, times(5)).getAsBoolean();
 
     assertEquals(5000, deleted.getComponentCount());
   }
