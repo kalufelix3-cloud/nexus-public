@@ -81,9 +81,9 @@ export default function LicenseDetails({service}) {
                         <NxReadOnly.Data key={type}>{type}</NxReadOnly.Data>
                     )}
                   </NxReadOnly.Item>
-                  <NxReadOnly.Item>
+                  {licensedUsers > 0 && (<NxReadOnly.Item>
                     <ReadOnlyField label={LABELS.NUMBER_OF_USERS.LABEL} value={licensedUsers}/>
-                  </NxReadOnly.Item>
+                  </NxReadOnly.Item>)}
                   <NxReadOnly.Item>
                     <ReadOnlyField label={LABELS.FINGERPRINT.LABEL} value={fingerprint}/>
                   </NxReadOnly.Item>

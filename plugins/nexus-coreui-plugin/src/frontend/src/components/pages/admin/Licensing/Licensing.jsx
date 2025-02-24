@@ -30,6 +30,7 @@ import Machine from './LicenseMachine';
 import UIStrings from '../../../../constants/UIStrings';
 
 import './Licensing.scss';
+import LicensedUsage from "./LicensedUsage";
 
 const {LICENSING: {MENU}} = UIStrings;
 
@@ -38,6 +39,7 @@ export default function Licensing() {
 
   const {data, loadError} = state.context;
   const showDetails = !loadError && data.contactCompany;
+  const showLicensedUsage = !loadError && data?.maxRepoRequests && data?.maxRepoComponents;
 
   return <Page>
     <PageHeader>
@@ -49,6 +51,7 @@ export default function Licensing() {
     </PageHeader>
     <ContentBody className="nxrm-licensing">
       {showDetails && <LicenseDetails service={service}/>}
+      {showLicensedUsage && <LicensedUsage maxRepoRequests={data.maxRepoRequests} maxRepoComponents={data.maxRepoComponents}/>}
       <InstallLicense service={service}/>
     </ContentBody>
   </Page>;

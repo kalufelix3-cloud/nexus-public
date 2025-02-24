@@ -59,8 +59,11 @@ const selectors = {
   licenseType: () => screen.getByText(DETAILS.LICENSE_TYPES.LABEL),
   licensedUsers: () => screen.getByText(DETAILS.NUMBER_OF_USERS.LABEL).nextSibling,
   fingerprint: () => screen.getByText(DETAILS.FINGERPRINT.LABEL).nextSibling,
+  maxRepoRequests: () => screen.getByText(DETAILS.REQUESTS_PER_MONTH.LABEL).nextSibling,
+  maxRepoComponents: () => screen.getByText(DETAILS.TOTAL_COMPONENTS.LABEL).nextSibling,
   detailsSection: () => screen.queryByRole('heading', {name: LICENSING.SECTIONS.DETAILS, level: 2}),
   installSection: () => screen.queryByRole('heading', {name: LICENSING.SECTIONS.INSTALL, level: 2}),
+  licensedUsageSection: () => screen.queryByRole('heading', {name: LICENSING.SECTIONS.USAGE, level: 2}),
   uploadInput: () => screen.queryByLabelText(INSTALL.LABEL, {hidden: true}),
   uploadButton: () => screen.queryByText(INSTALL.BUTTONS.UPLOAD),
   readOnlyWarning: () => screen.queryByText(UIStrings.SETTINGS.READ_ONLY.WARNING),
@@ -81,6 +84,8 @@ const DATA = {
   fingerprint: '53274cced19cs2e5208s73801g4a9160a960684',
   licenseType: 'Nexus IQ Server, Nexus Repository Pro, Nexus Firewall',
   licensedUsers: '1001',
+  maxRepoRequests: '60000',
+  maxRepoComponents: '200000'
 };
 
 describe('Licensing', () => {
@@ -104,7 +109,6 @@ describe('Licensing', () => {
       expect(licenseTypeValue).toHaveTextContent(type);
       licenseTypeValue = licenseTypeValue.nextSibling;
     });
-    expect(licensedUsers()).toHaveTextContent(data.licensedUsers);
     expect(fingerprint()).toHaveTextContent(data.fingerprint);
   };
 
@@ -123,6 +127,7 @@ describe('Licensing', () => {
 
     await renderComponent();
 
+    expect(detailsSection()).toBeInTheDocument();
     expect(detailsSection()).toBeInTheDocument();
     expect(installSection()).toBeInTheDocument();
 
@@ -176,13 +181,14 @@ describe('Licensing', () => {
   });
 
   it('installs license', async function() {
-    const {detailsSection, uploadButton, uploadInput, agreement: {modal, acceptButton, declineButton}} = selectors;
+    const {detailsSection, licensedUsageSection, uploadButton, uploadInput, agreement: {modal, acceptButton, declineButton}} = selectors;
 
     when(Axios.get).calledWith(licenseUrl).mockRejectedValue({message: 'Error'});
 
     await renderComponent();
 
     expect(detailsSection()).not.toBeInTheDocument();
+    expect(licensedUsageSection()).not.toBeInTheDocument();
     expect(uploadInput()).not.toBeDisabled();
     expect(uploadButton()).toBeDisabled();
 
