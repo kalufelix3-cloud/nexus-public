@@ -15,10 +15,10 @@ package org.sonatype.nexus.repository.rest.internal.resources;
 import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.io.Hex;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.elasticsearch.index.query.QueryBuilder;
 
@@ -26,7 +26,6 @@ import static java.lang.Integer.parseInt;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
-import static org.sonatype.nexus.repository.http.HttpStatus.NOT_ACCEPTABLE;
 
 /**
  * @since 3.4
@@ -40,26 +39,41 @@ public class TokenEncoder
     if (continuationToken == null) {
       return 0;
     }
-    else {
-      String decoded = new String(Hex.decode(continuationToken), UTF_8);
-      String[] decodedParts = decoded.split(":");
-      if (decodedParts.length != 2) {
-        throw new WebApplicationException(format("Unable to parse token %s", continuationToken), NOT_ACCEPTABLE);
-      }
-      if (!decodedParts[1].equals(getHashCode(query))) {
-        throw new WebApplicationException(
-            format("Continuation token %s does not match this query", continuationToken), NOT_ACCEPTABLE);
-      }
+
+    String decoded = decodeContinuationToken(continuationToken);
+    String[] decodedParts = decoded.split(":");
+    if (decodedParts.length != 2) {
+      throw new ValidationErrorsException(format("Unable to parse token %s", continuationToken));
+    }
+    if (!decodedParts[1].equals(getHashCode(query))) {
+      throw new ValidationErrorsException(
+          format("Continuation token %s does not match this query", continuationToken));
+    }
+    try {
       return parseInt(decodedParts[0]);
+    }
+    catch (NumberFormatException nfe) {
+      throw new ValidationErrorsException(
+          format("Continuation token %s is not valid. index must be a valid integer.", continuationToken));
+    }
+  }
+
+  private String decodeContinuationToken(final String continuationToken) {
+    try {
+      return new String(Hex.decode(continuationToken), UTF_8);
+    }
+    catch (IllegalArgumentException iaExcp) {
+      throw new ValidationErrorsException(
+          format("Continuation token %s is not valid.", continuationToken));
     }
   }
 
   public String encode(final int lastFrom, final int pageSize, final QueryBuilder query) {
     int index = lastFrom + pageSize;
-    return Hex.encode(format("%s:%s", Integer.toString(index), getHashCode(query)).getBytes(UTF_8));
+    return Hex.encode(format("%s:%s", index, getHashCode(query)).getBytes(UTF_8));
   }
 
-  private String getHashCode(final QueryBuilder query) {
+  String getHashCode(final QueryBuilder query) {
     return MD5.function().hashString(query.toString(), UTF_8).toString();
   }
 }
