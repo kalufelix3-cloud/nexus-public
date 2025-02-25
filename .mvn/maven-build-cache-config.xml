@@ -29,7 +29,20 @@
                 <include>src/frontend</include>
                 <include>src/main/art</include>
                 <include>src/main/baseapp</include>
+                <include>src/assembly</include>
+                <include>src/main/assembly</include>
             </includes>
         </global>
     </input>
+    <executionControl>
+        <runAlways>
+            <goalsLists>
+                <goalsList groupId="org.apache.maven.plugins" artifactId="maven-surefire-plugin">
+                    <goals>
+                        <goal>test</goal>
+                    </goals>
+                </goalsList>
+            </goalsLists>
+        </runAlways>
+    </executionControl>
 </cache>
