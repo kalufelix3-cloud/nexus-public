@@ -280,12 +280,14 @@ public class RepositoryManagerRESTAdapterImplTest
     xo.setName(REPOSITORY_NAME);
     xo.setFormat(REPOSITORY_FORMAT);
     xo.setUrl("http://nexus-url/repository/repoName");
+    xo.setSize(0L);
     xo.setAttributes(Collections.emptyMap());
 
     RepositoryXO xo2 = new RepositoryXO();
     xo2.setName(REPOSITORY_NAME_2);
     xo2.setFormat(REPOSITORY_FORMAT_2);
     xo2.setUrl("http://nexus-url/repository/repoNameTwo");
+    xo2.setSize(0L);
     xo2.setAttributes(Collections.emptyMap());
 
     assertThat(underTest.getRepositories(), is(asList(xo, xo2)));

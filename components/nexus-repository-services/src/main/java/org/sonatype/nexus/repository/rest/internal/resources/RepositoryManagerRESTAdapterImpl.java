@@ -100,11 +100,11 @@ public class RepositoryManagerRESTAdapterImpl
     Repository repository = toRepository(repositoryId);
 
     if (repositoryPermissionChecker.userCanReadOrBrowse(repository)) {
-      //browse or read implies complete access to the repository.
+      // browse or read implies complete access to the repository.
       return repository;
     }
     else {
-      //repository exists but user does not have the appropriate permission to browse, return a 403
+      // repository exists but user does not have the appropriate permission to browse, return a 403
       throw new WebApplicationException(FORBIDDEN);
     }
   }
@@ -122,14 +122,14 @@ public class RepositoryManagerRESTAdapterImpl
       throw new WebApplicationException(FORBIDDEN);
     }
 
-    //browse or read implies complete access to the repository.
+    // browse or read implies complete access to the repository.
     return repository;
   }
 
   private boolean userCanReadOrBrowseOrGroupPermissions(final Repository repository) {
-    //  Given - repository = raw-hosted
-    //  nx-repository-view-raw-raw-hosted-read - allowed
-    //  nx-repository-view-raw-raw-group-read(raw-group contains raw-hosted as a member) - allowed
+    // Given - repository = raw-hosted
+    // nx-repository-view-raw-raw-hosted-read - allowed
+    // nx-repository-view-raw-raw-group-read(raw-group contains raw-hosted as a member) - allowed
     List<String> repositories = new ArrayList<>(repositoryManager.findContainingGroups(repository.getName()));
     repositories.add(repository.getName());
 
@@ -143,10 +143,13 @@ public class RepositoryManagerRESTAdapterImpl
   @Override
   public List<RepositoryXO> getRepositories() {
     Configuration[] configurations = configurationStore.list().toArray(new Configuration[0]);
-    Map<String, Long> repositorySizes = repositoryMetricsService.
-        map(s -> s.list().stream().collect(
-            toMap(RepositoryMetricsDTO::getName, RepositoryMetricsDTO::getSize))).orElse(null);
-    return repositoryPermissionChecker.userCanBrowseRepositories(configurations).stream()
+    Map<String, Long> repositorySizes = repositoryMetricsService.map(s -> s.list()
+        .stream()
+        .collect(
+            toMap(RepositoryMetricsDTO::getName, RepositoryMetricsDTO::getSize)))
+        .orElse(null);
+    return repositoryPermissionChecker.userCanBrowseRepositories(configurations)
+        .stream()
         .map(c -> asRepository(c, repositorySizes))
         .collect(Collectors.toList());
   }
@@ -199,11 +202,13 @@ public class RepositoryManagerRESTAdapterImpl
     xo.setAttributes(attributes(configuration));
 
     if (sizeMap != null) {
-      xo.setSize(sizeMap.getOrDefault(repositoryName, null));
+      xo.setSize(sizeMap.getOrDefault(repositoryName, 0L));
+    }
+    else {
+      xo.setSize(0L);
     }
 
     return xo;
   }
-
 
 }
