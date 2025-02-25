@@ -590,7 +590,7 @@ public class BlobStoreManagerImpl
 
   @Override
   public boolean existBlobFile(final BlobId blobId, final BlobStore blobStore) {
-    return blobStore.exists(blobId);
+    return blobStore.bytesExists(blobId);
   }
 
   @Override
