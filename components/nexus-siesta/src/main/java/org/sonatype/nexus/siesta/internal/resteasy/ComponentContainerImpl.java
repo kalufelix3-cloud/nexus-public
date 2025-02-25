@@ -15,6 +15,9 @@ package org.sonatype.nexus.siesta.internal.resteasy;
 import java.io.IOException;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -40,15 +43,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.0
  */
+@Named
+@Singleton
 public class ComponentContainerImpl
-  extends HttpServletDispatcher
-  implements ComponentContainer
+    extends HttpServletDispatcher
+    implements ComponentContainer
 {
   private static final Logger log = LoggerFactory.getLogger(ComponentContainerImpl.class);
 
-  private transient final ResteasyDeployment deployment = new SisuResteasyDeployment();
+  private final transient ResteasyDeployment deployment;
 
-  public ComponentContainerImpl() {
+  @Inject
+  public ComponentContainerImpl(final ResteasyDeployment deployment) {
+    this.deployment = deployment;
     // Register RESTEasy with JAX-RS as early as possible
     RuntimeDelegate.setInstance(checkNotNull(deployment.getProviderFactory()));
   }
@@ -69,8 +76,9 @@ public class ComponentContainerImpl
     deployment.start();
 
     servletConfig.getServletContext().setAttribute(ResteasyDeployment.class.getName(), deployment);
-    servletConfig.getServletContext().setAttribute(
-        SiestaResourceMethodFinder.class.getName(), new SiestaResourceMethodFinder(this, deployment));
+    servletConfig.getServletContext()
+        .setAttribute(
+            SiestaResourceMethodFinder.class.getName(), new SiestaResourceMethodFinder(this, deployment));
 
     super.init(servletConfig);
 
@@ -105,8 +113,9 @@ public class ComponentContainerImpl
    * Promotes {@link HttpServletDispatcher#service(HttpServletRequest, HttpServletResponse)} to public access.
    */
   @Override
-  public void service(final HttpServletRequest request, final HttpServletResponse response)
-      throws ServletException, IOException
+  public void service(
+      final HttpServletRequest request,
+      final HttpServletResponse response) throws ServletException, IOException
   {
     super.service(request, response);
   }

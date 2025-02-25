@@ -13,10 +13,12 @@
 package org.sonatype.nexus.siesta;
 
 import org.sonatype.nexus.siesta.internal.resteasy.ComponentContainerImpl;
+import org.sonatype.nexus.siesta.internal.resteasy.SisuResteasyDeployment;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import org.jboss.resteasy.core.Dispatcher;
+import org.jboss.resteasy.spi.ResteasyDeployment;
 
 /**
  * RESTEasy module.
@@ -24,11 +26,12 @@ import org.jboss.resteasy.core.Dispatcher;
  * @since 3.0
  */
 public class ResteasyModule
-  extends AbstractModule
+    extends AbstractModule
 {
   @Override
   protected void configure() {
     // eager binding so we can register RESTEasy with JAX-RS as early as possible
+    bind(ResteasyDeployment.class).to(SisuResteasyDeployment.class).asEagerSingleton();
     bind(ComponentContainer.class).to(ComponentContainerImpl.class).asEagerSingleton();
   }
 
@@ -37,6 +40,6 @@ public class ResteasyModule
    */
   @Provides
   public Dispatcher dispatcher(final ComponentContainer container) {
-    return ((ComponentContainerImpl)container).getDispatcher();
+    return ((ComponentContainerImpl) container).getDispatcher();
   }
 }

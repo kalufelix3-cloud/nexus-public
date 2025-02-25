@@ -18,23 +18,21 @@ import javax.servlet.DispatcherType;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 
-import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.goodies.testsupport.Test5Support;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.GuiceServletContextListener;
 import org.eclipse.jetty.servlet.ServletTester;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 /**
  * Support for Siesta tests.
  */
 public class SiestaTestSupport
-    extends TestSupport
+    extends Test5Support
 {
   private ServletTester servletTester;
 
@@ -42,11 +40,8 @@ public class SiestaTestSupport
 
   private Client client;
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
-
-  @Before
-  public void startJetty() throws Exception {
+  @BeforeEach
+  void startJetty() throws Exception {
     servletTester = new ServletTester();
     servletTester.getContext().addEventListener(new GuiceServletContextListener()
     {
@@ -66,8 +61,8 @@ public class SiestaTestSupport
     client = ClientBuilder.newClient();
   }
 
-  @After
-  public void stopJetty() throws Exception {
+  @AfterEach
+  void stopJetty() throws Exception {
     if (servletTester != null) {
       servletTester.stop();
     }

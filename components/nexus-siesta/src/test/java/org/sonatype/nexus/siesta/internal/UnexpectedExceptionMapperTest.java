@@ -10,34 +10,35 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.siesta;
+package org.sonatype.nexus.siesta.internal;
 
-import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.nexus.rest.ExceptionMapperSupport;
+import org.sonatype.nexus.siesta.SiestaTestSupport;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 
-/**
- * Tests error handling.
- */
-class ErrorsIT
+class UnexpectedExceptionMapperTest
     extends SiestaTestSupport
 {
-  @Test
-  void errorResponseHasFaultId() {
-    WebTarget target = client().target(url("errors/406"));
-    Response response = target.request().get(Response.class);
-    log("Status: {}", response.getStatusInfo());
+  private UnexpectedExceptionMapper mapper;
 
-    assertThat(response.getStatusInfo().getStatusCode(), equalTo(406));
-    String faultId = response.getHeaderString(ExceptionMapperSupport.X_SIESTA_FAULT_ID);
-    log("Fault ID: {}", faultId);
-    assertThat(faultId, notNullValue());
+  @BeforeEach
+  void setup() {
+    mapper = new UnexpectedExceptionMapper();
+  }
+
+  @Test
+  void testConvert() {
+    Throwable exception = new RuntimeException("Unexpected error");
+    try (Response response = mapper.convert(exception, "testId")) {
+      assertThat(response.getStatus(), is(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+      assertThat(response.getEntity().toString(), containsString("ERROR: (ID testId)"));
+    }
   }
 }

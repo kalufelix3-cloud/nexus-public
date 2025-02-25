@@ -10,34 +10,37 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.siesta;
+package org.sonatype.nexus.siesta.internal;
 
-import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.nexus.rest.ExceptionMapperSupport;
+import org.sonatype.nexus.common.app.FrozenException;
+import org.sonatype.nexus.siesta.SiestaTestSupport;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.is;
 
-/**
- * Tests error handling.
- */
-class ErrorsIT
+class FrozenExceptionMapperTest
     extends SiestaTestSupport
 {
-  @Test
-  void errorResponseHasFaultId() {
-    WebTarget target = client().target(url("errors/406"));
-    Response response = target.request().get(Response.class);
-    log("Status: {}", response.getStatusInfo());
+  private FrozenExceptionMapper mapper;
 
-    assertThat(response.getStatusInfo().getStatusCode(), equalTo(406));
-    String faultId = response.getHeaderString(ExceptionMapperSupport.X_SIESTA_FAULT_ID);
-    log("Fault ID: {}", faultId);
-    assertThat(faultId, notNullValue());
+  @BeforeEach
+  void setup() {
+    mapper = new FrozenExceptionMapper();
+  }
+
+  @Test
+  void testConvert() {
+    try (Response response = mapper.convert(new FrozenException("test frozen exception"), null)) {
+      assertThat(response.getStatus(), is(SERVICE_UNAVAILABLE.getStatusCode()));
+      assertThat(response.getEntity(), is("Nexus Repository Manager is in read-only mode: (ID null)"));
+      assertThat(response.getMediaType().toString(), is(TEXT_PLAIN));
+    }
   }
 }

@@ -20,7 +20,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status.Family;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
@@ -32,10 +32,10 @@ import static org.hamcrest.Matchers.notNullValue;
 /**
  * Tests related to happy paths for a resource.
  */
-public class UserIT
+class UserIT
     extends SiestaTestSupport
 {
-  private void put_happyPath(final MediaType mediaType) throws Exception {
+  private void put_happyPath(final MediaType mediaType) {
     UserXO sent = new UserXO().withName(UUID.randomUUID().toString());
 
     WebTarget target = client().target(url("user"));
@@ -52,16 +52,12 @@ public class UserIT
   }
 
   @Test
-  public void put_happyPath_XML()
-      throws Exception
-  {
+  void put_happyPath_XML() {
     put_happyPath(APPLICATION_XML_TYPE);
   }
 
   @Test
-  public void put_happyPath_JSON()
-      throws Exception
-  {
+  void put_happyPath_JSON() {
     put_happyPath(APPLICATION_JSON_TYPE);
   }
 }

@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.siesta.internal.resteasy;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
 import org.jboss.resteasy.spi.ResteasyDeployment;
 
 /**
@@ -19,9 +23,12 @@ import org.jboss.resteasy.spi.ResteasyDeployment;
  *
  * @since 3.0
  */
+@Named
+@Singleton
 public class SisuResteasyDeployment
     extends ResteasyDeployment
 {
+  @Inject
   public SisuResteasyDeployment() {
     providerFactory = new SisuResteasyProviderFactory();
   }
