@@ -314,7 +314,8 @@ Ext.define('NX.coreui.controller.Search', {
    * Store a message to be displayed along with the store results
    */
   setResponseMessage: function() {
-    var rawData = this.getSearchResultStore().proxy.reader.rawData,
+    var store = this.getSearchResultStore(),
+        rawData = store.proxy.reader.rawData,
         limited = rawData && rawData.limited,
         format = Ext.util.Format.numberRenderer('0,000');
 
@@ -328,6 +329,20 @@ Ext.define('NX.coreui.controller.Search', {
     }
 
     this.showHideResponseMessage();
+
+    // No filter keys indicates the user navigated to the page and this event was for the initial store
+    if (Object.keys(store.getFilters().map) && window.aptrinsic) {
+        var properties = { results : store.getCount() };
+
+        // Indicate which filters were used
+        Object.keys(store.getFilters().map).forEach(function (key) { properties[key] = true; });
+
+        // Set the format
+        var formatFilter = store.getFilters().map['format'];
+        properties.format = formatFilter ? formatFilter['_value'] :  'keyword';
+
+        aptrinsic('track', 'Search', properties);
+    }
   },
 
   /**

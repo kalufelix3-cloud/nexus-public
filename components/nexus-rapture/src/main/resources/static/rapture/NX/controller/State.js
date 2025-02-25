@@ -371,8 +371,29 @@ Ext.define('NX.controller.State', {
         (!clustered && !me.reloadWhenServerIdChanged(serverId, oldServerId)) ) {
       me.setValues(state);
     }
+    me.trackUser();
     // TODO: Fire global refresh event
   },
+
+  trackUser: function() {
+    var userType;
+    return function() {
+      if (window.aptrinsic) {
+        const user = this.getValue('user');
+        var newUserType;
+        if (!user) {
+          newUserType = 'anonymous';
+        }
+        else if (user.authenticatedRealms) {
+          newUserType = user.administrator ? 'administrator' : 'user';
+        }
+        if (newUserType && userType != newUserType) {
+          userType = newUserType;
+          window.aptrinsic('set', 'globalContext', { 'usertype': newUserType });
+        }
+      }
+    };
+  }(),
 
   /**
    * Called when state pooling failed.
