@@ -168,6 +168,7 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
         taskTypeModel = NX.getApplication().getStore('TaskType').getById(model.get('typeId')),
         settingsFieldSet = me.down('nx-coreui-formfield-settingsfieldset'),
         scheduleFieldSet = me.down('nx-coreui-task-schedulefieldset'),
+        previousPlan = me.down('nx-coreui-task-reconcile-plan'),
         formFields;
 
     this.callParent(arguments);
@@ -187,8 +188,10 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
 
       if (taskTypeModel.get('id') === 'blobstore.planReconciliation') {
         scheduleFieldSet.setHidden(true);
+        previousPlan.setVisible(true);
       } else {
         scheduleFieldSet.setHidden(false);
+        previousPlan.setVisible(false);
       }
 
       Ext.each(formFields, function(field) {
