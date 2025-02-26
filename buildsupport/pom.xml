@@ -60,13 +60,4 @@
     <module>nexus-feature-flags</module>
   </modules>
 
-  <profiles>
-    <profile>
-      <id>include-scripts</id>
-      <modules>
-        <module>scripts</module>
-      </modules>
-    </profile>
-  </profiles>
-
 </project>
