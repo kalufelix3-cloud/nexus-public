@@ -451,6 +451,54 @@ public class DatastoreQuartzSchedulerSPITest
     verify(tasks.get(5), never()).runNow();
   }
 
+  @Test
+  public void testAttachJobListener_WhenTriggerIsNull() throws Exception {
+    Scheduler localScheduler = mock(Scheduler.class);
+    QuartzSchedulerProvider schedulerProvider = mock(QuartzSchedulerProvider.class);
+    when(schedulerProvider.get()).thenReturn(localScheduler);
+    DatastoreQuartzSchedulerSPI custom = new DatastoreQuartzSchedulerSPI(
+        mock(EventManager.class),
+        mock(NodeAccess.class),
+        mock(Provider.class),
+        schedulerProvider,
+        mock(LastShutdownTimeService.class),
+        mock(DatabaseStatusDelayedExecutor.class),
+        true);
+    custom.setScheduler(localScheduler);
+
+    when(localScheduler.getTrigger(any(TriggerKey.class))).thenReturn(null);
+    when(localScheduler.getJobDetail(any(JobKey.class))).thenReturn(mock(JobDetail.class));
+
+    JobKey jobKey = new JobKey("testJob", "testGroup");
+    Optional<QuartzTaskJobListener> result = custom.attachJobListener(jobKey);
+
+    assertThat(result, equalTo(Optional.empty()));
+  }
+
+  @Test
+  public void testAttachJobListener_WhenJobDetailIsNull() throws Exception {
+    Scheduler localScheduler = mock(Scheduler.class);
+    QuartzSchedulerProvider schedulerProvider = mock(QuartzSchedulerProvider.class);
+    when(schedulerProvider.get()).thenReturn(localScheduler);
+    DatastoreQuartzSchedulerSPI custom = new DatastoreQuartzSchedulerSPI(
+        mock(EventManager.class),
+        mock(NodeAccess.class),
+        mock(Provider.class),
+        schedulerProvider,
+        mock(LastShutdownTimeService.class),
+        mock(DatabaseStatusDelayedExecutor.class),
+        true);
+    custom.setScheduler(localScheduler);
+
+    when(localScheduler.getTrigger(any(TriggerKey.class))).thenReturn(mock(Trigger.class));
+    when(localScheduler.getJobDetail(any(JobKey.class))).thenReturn(null);
+
+    JobKey jobKey = new JobKey("testJob", "testGroup");
+    Optional<QuartzTaskJobListener> result = custom.attachJobListener(jobKey);
+
+    assertThat(result, equalTo(Optional.empty()));
+  }
+
   private static TaskInfo taskInfo(
       final String id,
       final String typeId,

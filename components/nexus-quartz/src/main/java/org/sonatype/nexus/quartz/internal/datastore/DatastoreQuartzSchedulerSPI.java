@@ -119,12 +119,19 @@ public class DatastoreQuartzSchedulerSPI
     return false;
   }
 
-  private Optional<QuartzTaskJobListener> attachJobListener(final JobKey jobKey) {
+  Optional<QuartzTaskJobListener> attachJobListener(final JobKey jobKey) {
     try {
       TriggerKey triggerKey = triggerKey(jobKey.getName(), jobKey.getGroup());
+      // getTrigger and/or getJobDetail may return null
       Trigger trigger = scheduler.getTrigger(triggerKey);
       JobDetail jobDetail = scheduler.getJobDetail(jobKey);
-      return Optional.of(attachJobListener(jobDetail, trigger));
+      if (trigger != null && jobDetail != null) {
+        return Optional.of(attachJobListener(jobDetail, trigger));
+      }
+      else {
+        log.debug("Missing trigger or jobDetail for key {}, trigger: {}, jobDetail: {}", jobKey, trigger, jobDetail);
+        return Optional.empty();
+      }
     }
     catch (SchedulerException e) {
       log.warn("Unable to attach listener for task '{}' cause {}", jobKey, e.getMessage(),
