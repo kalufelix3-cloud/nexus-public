@@ -189,41 +189,5 @@
         </plugins>
       </build>
     </profile>
-
-    <profile>
-      <id>driver</id>
-
-      <dependencies>
-        <dependency>
-          <groupId>com.sencha</groupId>
-          <artifactId>ext</artifactId>
-          <classifier>commercial</classifier>
-          <type>zip</type>
-        </dependency>
-      </dependencies>
-
-      <build>
-        <defaultGoal>initialize</defaultGoal>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.gmavenplus</groupId>
-            <artifactId>gmavenplus-plugin</artifactId>
-            <executions>
-              <execution>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>execute</goal>
-                </goals>
-                <configuration>
-                  <scripts>
-                    <script>${project.baseUri}/src/main/script/driver.groovy</script>
-                  </scripts>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
   </profiles>
 </project>
