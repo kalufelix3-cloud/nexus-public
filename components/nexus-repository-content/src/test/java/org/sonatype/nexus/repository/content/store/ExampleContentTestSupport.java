@@ -51,6 +51,7 @@ import org.sonatype.nexus.testdb.DataSessionRule;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
@@ -59,7 +60,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Integer.toHexString;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.UUID.randomUUID;
@@ -153,44 +153,44 @@ public class ExampleContentTestSupport
 
   protected void generateRandomNamespaces(final int maxNamespaces) {
     Set<String> uniqueNamespaces = new HashSet<>();
-    StringBuilder buf = new StringBuilder();
-    while (uniqueNamespaces.size() < maxNamespaces) {
-      buf.append(random.nextBoolean() ? "com" : "org");
-      for (int i = 0, maxSegments = random.nextInt(10); i < maxSegments; i++) {
-        buf.append('.').append(toHexString(random.nextInt()));
-      }
-      uniqueNamespaces.add(buf.toString());
-      buf.setLength(0);
+
+    String randomBase = (random.nextBoolean() ? "com." : "org.") + RandomStringUtils.randomAlphabetic(16);
+    for (int i = 0; i < maxNamespaces; i++) {
+      // example will be "com.abcdefghijklmnop-0", "com.abcdefghijklmnop-1", "com.abcdefghijklmnop-2", ...
+      String buf = randomBase + "-" + i;
+      uniqueNamespaces.add(buf);
     }
     namespaces = ImmutableList.copyOf(uniqueNamespaces);
   }
 
   protected void generateRandomNames(final int maxNames) {
     Set<String> uniqueNames = new HashSet<>();
-    while (uniqueNames.size() < maxNames) {
-      uniqueNames.add(toHexString(random.nextInt()));
+    String randomBase = RandomStringUtils.randomAlphabetic(8);
+    for (int i = 0; i < maxNames; i++) {
+      // example will be "abcdefgh-0", "abcdefgh-1", "abcdefgh-2", ...
+      uniqueNames.add(randomBase + "-" + i);
     }
     names = ImmutableList.copyOf(uniqueNames);
   }
 
   protected void generateRandomVersions(final int maxVersions) {
     Set<String> uniqueVersions = new HashSet<>();
-    while (uniqueVersions.size() < maxVersions) {
-      uniqueVersions.add(random.nextInt(1000) + "." + random.nextInt(1000) + "." + random.nextInt(1000));
+    String randomMajor = RandomStringUtils.randomNumeric(2);
+    String randomMinor = RandomStringUtils.randomNumeric(2);
+    for (int i = 0; i < maxVersions; i++) {
+      // example will be "12.34.0", "12.34.1", "12.34.2", ...
+      uniqueVersions.add(randomMajor + "." + randomMinor + "." + i);
     }
     versions = ImmutableList.copyOf(uniqueVersions);
   }
 
   protected void generateRandomPaths(final int maxPaths) {
     Set<String> uniquePaths = new HashSet<>();
-    StringBuilder buf = new StringBuilder();
-    while (uniquePaths.size() < maxPaths) {
-      buf.append(random.nextBoolean() ? "/com" : "/org");
-      for (int i = 0, maxSegments = random.nextInt(10); i < maxSegments; i++) {
-        buf.append('/').append(toHexString(random.nextInt()));
-      }
-      uniquePaths.add(buf.toString());
-      buf.setLength(0);
+    String randomBase = (random.nextBoolean() ? "/com/" : "/org/") + RandomStringUtils.randomAlphabetic(16);
+    for (int i = 0; i < maxPaths; i++) {
+      // example will be "/com/abcdefghijklmnop/subfolder-0", "/com/abcdefghijklmnop/subfolder-1",
+      // "/com/abcdefghijklmnop/subfolder-2", ...
+      uniquePaths.add(randomBase + "/subfolder-" + i);
     }
     paths = ImmutableList.copyOf(uniquePaths);
   }
@@ -232,12 +232,17 @@ public class ExampleContentTestSupport
     }
   }
 
-  protected void generateRandomContent(final int maxComponents, final int maxAssets, final boolean entityVersionEnabled) {
+  protected void generateRandomContent(
+      final int maxComponents,
+      final int maxAssets,
+      final boolean entityVersionEnabled)
+  {
     components = new ArrayList<>();
     while (components.size() < maxComponents) {
       int repositoryId = repositories.get(random.nextInt(repositories.size())).repositoryId;
       ComponentData component = randomComponent(repositoryId);
-      if (doCommit(session -> session.access(TestComponentDAO.class).createComponent(component, entityVersionEnabled))) {
+      if (doCommit(
+          session -> session.access(TestComponentDAO.class).createComponent(component, entityVersionEnabled))) {
         components.add(component);
       }
     }
@@ -282,7 +287,8 @@ public class ExampleContentTestSupport
     for (String componentName : componentNames) {
       int repositoryId = repositories.get(random.nextInt(repositories.size())).repositoryId;
       ComponentData component = randomComponent(repositoryId, componentName);
-      if (doCommit(session -> session.access(TestComponentDAO.class).createComponent(component, entityVersionEnabled))) {
+      if (doCommit(
+          session -> session.access(TestComponentDAO.class).createComponent(component, entityVersionEnabled))) {
         components.add(component);
       }
     }
@@ -308,13 +314,17 @@ public class ExampleContentTestSupport
     }
   }
 
-  protected void generateProvidedContent(final List<ComponentData> providedComponents, final boolean entityVersionEnabled) {
+  protected void generateProvidedContent(
+      final List<ComponentData> providedComponents,
+      final boolean entityVersionEnabled)
+  {
     List<ComponentData> components = new ArrayList<>(providedComponents.size());
     providedComponents.forEach(component -> {
-      if (doCommit(session -> session.access(TestComponentDAO.class).createComponent(component, entityVersionEnabled))) {
-            components.add(component);
-          }
-        });
+      if (doCommit(
+          session -> session.access(TestComponentDAO.class).createComponent(component, entityVersionEnabled))) {
+        components.add(component);
+      }
+    });
 
     assets = new ArrayList<>(components.size());
     assetBlobs = new ArrayList<>(components.size());
@@ -370,7 +380,13 @@ public class ExampleContentTestSupport
     component.setKind("aKind");
     return component;
   }
-  protected ComponentData component(final int repositoryId, final String namespace, final String name, final String version) {
+
+  protected ComponentData component(
+      final int repositoryId,
+      final String namespace,
+      final String name,
+      final String version)
+  {
     ComponentData component = new ComponentData();
     component.setRepositoryId(repositoryId);
     component.setNamespace(namespace);
@@ -412,8 +428,8 @@ public class ExampleContentTestSupport
     assetBlob.setAddedToRepository(blobCreated);
     return assetBlob;
   }
-  
-  protected AssetBlobData randomAssetBlob(){
+
+  protected AssetBlobData randomAssetBlob() {
     return randomAssetBlob(UTC.now().minusMinutes(120));
   }
 
