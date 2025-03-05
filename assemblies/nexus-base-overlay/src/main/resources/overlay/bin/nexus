@@ -2,7 +2,7 @@
 
 realpath() {
   # Use in priority xpg4 awk or nawk on SunOS as standard awk is outdated
-  AWK=awk
+  AWK="awk"
   if ${solaris}; then
       if [ -x /usr/xpg4/bin/awk ]; then
           AWK=/usr/xpg4/bin/awk
@@ -61,18 +61,13 @@ die() {
 detectOS() {
     # OS specific support (must be 'true' or 'false').
     cygwin=false;
-    mingw=false;
     darwin=false;
     aix=false;
     os400=false;
-    hpux=false;
     solaris=false;
     case "`uname`" in
         CYGWIN*)
             cygwin=true
-            ;;
-        MINGW*)
-            mingw=true
             ;;
         Darwin*)
             darwin=true
@@ -87,7 +82,6 @@ detectOS() {
             os400=true
             ;;
         HP-UX*)
-            hpux=true
             # For HP-UX, set an environment variable
             export PS_PREFIX="UNIX95= "
             echo "${PS_PREFIX}"
@@ -147,7 +141,7 @@ locateBase() {
             die "KARAF_BASE is not valid: ${KARAF_BASE}"
         fi
     else
-        KARAF_BASE=${KARAF_HOME}
+        KARAF_BASE="${KARAF_HOME}"
     fi
 }
 
@@ -157,7 +151,7 @@ locateData() {
             die "KARAF_DATA is not valid: ${KARAF_DATA}"
         fi
     else
-        KARAF_DATA=${KARAF_BASE}/../sonatype-work/nexus3
+        KARAF_DATA="${KARAF_BASE}/../sonatype-work/nexus3"
     fi
 }
 
@@ -167,7 +161,7 @@ locateEtc() {
             die "KARAF_ETC is not valid: ${KARAF_ETC}"
         fi
     else
-        KARAF_ETC=${KARAF_BASE}/etc/karaf
+        KARAF_ETC="${KARAF_BASE}/etc/karaf"
     fi
 }
 
@@ -177,7 +171,7 @@ locateLog() {
             die "KARAF_LOG is not valid: ${KARAF_LOG}"
         fi
     else
-        KARAF_LOG=${KARAF_DATA}/log
+        KARAF_LOG="${KARAF_DATA}/log"
     fi
 }
 
@@ -267,7 +261,7 @@ detectJVM() {
 
 checkJvmVersion() {
     # Use in priority xpg4 awk or nawk on SunOS as standard awk is outdated
-    AWK=awk
+    AWK="awk"
     if ${solaris}; then
         if [ -x /usr/xpg4/bin/awk ]; then
             AWK=/usr/xpg4/bin/awk
@@ -323,10 +317,10 @@ setupDefaults() {
         export DIRECT_MAX_MEM
     fi
 
-    DEFAULT_JAVA_OPTS="-Xms${JAVA_MIN_MEM} -Xmx${JAVA_MAX_MEM} -XX:MaxDirectMemorySize=${DIRECT_MAX_MEM} -XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogFile=${KARAF_LOG}/jvm.log -XX:-OmitStackTraceInFastThrow "
+    DEFAULT_JAVA_OPTS="-Xms${JAVA_MIN_MEM} -Xmx${JAVA_MAX_MEM} -XX:MaxDirectMemorySize=${DIRECT_MAX_MEM} -XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogFile="${KARAF_LOG}/jvm.log" -XX:-OmitStackTraceInFastThrow "
     #Set the JVM_VENDOR specific JVM flags
     if [ "${JVM_VENDOR}" = "SUN" ]; then
-        if [ "${darwin}" = "true" ] && [ `ulimit -n` -gt 10240 ]; then
+        if [ "${darwin}" = "true" ] && [ "`ulimit -n`" -gt 10240 ]; then
             # NEXUS-14184 - Open up OSX file descriptor limit
             DEFAULT_JAVA_OPTS="${DEFAULT_JAVA_OPTS} -XX:-MaxFDLimit "
         fi
@@ -464,7 +458,7 @@ run() {
 
     # use KARAF_EXEC if it's set to anything (even empty string) otherwise use 'exec'
     if [ "${KARAF_EXEC+set}" != "set" ]; then
-        KARAF_EXEC=exec
+        KARAF_EXEC="exec"
     fi
 
     debug=false
@@ -593,7 +587,7 @@ run() {
 }
 
 launch() {
-    if [ ${NOHUP} ] ; then
+    if [ "${NOHUP}" ] ; then
         ${KARAF_EXEC} nohup "$@" > /dev/null 2>&1 &
     else
         ${KARAF_EXEC} "$@"

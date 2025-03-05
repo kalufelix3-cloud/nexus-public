@@ -16,9 +16,9 @@
 if not "%ECHO%" == "" echo %ECHO%
 
 setlocal
-set DIRNAME=%~dp0%
-set PROGNAME=%~nx0%
-set ARGS=%*
+set "DIRNAME=%~dp0%"
+set "PROGNAME=%~nx0%"
+set "ARGS=%*"
 
 rem Check console window title. Set to Karaf by default
 if not "%KARAF_TITLE%" == "" (
@@ -29,13 +29,13 @@ if not "%KARAF_TITLE%" == "" (
 
 rem Check/Set up some easily accessible MIN/MAX params for JVM mem usage
 if "%JAVA_MIN_MEM%" == "" (
-    set JAVA_MIN_MEM=2703m
+    set "JAVA_MIN_MEM=2703m"
 )
 if "%JAVA_MAX_MEM%" == "" (
-    set JAVA_MAX_MEM=2703m
+    set "JAVA_MAX_MEM=2703m"
 )
 if "%DIRECT_MAX_MEM%" == "" (
-    set DIRECT_MAX_MEM=2703m
+    set "DIRECT_MAX_MEM=2703m"
 )
 
 goto BEGIN
@@ -51,7 +51,7 @@ rem # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 if not "%KARAF_HOME%" == "" (
     call :warn Ignoring predefined value for KARAF_HOME
 )
-set KARAF_HOME=%DIRNAME%..
+set "KARAF_HOME=%DIRNAME%.."
 if not exist "%KARAF_HOME%" (
     call :warn KARAF_HOME is not valid: "%KARAF_HOME%"
     goto END
@@ -97,20 +97,20 @@ if "%KARAF_LOG%" == "" (
     set "KARAF_LOG=%KARAF_DATA%\log"
 )
 
-set LOCAL_CLASSPATH=%CLASSPATH%
+set "LOCAL_CLASSPATH=%CLASSPATH%"
 
-set CLASSPATH=%LOCAL_CLASSPATH%;%KARAF_BASE%\etc
-set DEFAULT_JAVA_DEBUG_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
-set DEFAULT_JAVA_DEBUGS_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005
+set "CLASSPATH=%LOCAL_CLASSPATH%;%KARAF_BASE%\etc"
+set "DEFAULT_JAVA_DEBUG_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+set "DEFAULT_JAVA_DEBUGS_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"
 
 if "%LOCAL_CLASSPATH%" == "" goto :KARAF_CLASSPATH_EMPTY
-    set CLASSPATH=%LOCAL_CLASSPATH%;%KARAF_BASE%\etc
+    set "CLASSPATH=%LOCAL_CLASSPATH%;%KARAF_BASE%\etc"
     goto :KARAF_CLASSPATH_END
 :KARAF_CLASSPATH_EMPTY
-    set CLASSPATH=%KARAF_BASE%\etc
+    set "CLASSPATH=%KARAF_BASE%\etc"
 :KARAF_CLASSPATH_END
 
-set CLASSPATH_INITIAL=%CLASSPATH%
+set "CLASSPATH_INITIAL=%CLASSPATH%"
 
 rem Setup the Java Virtual Machine
 if not "%JAVA%" == "" goto :Check_JAVA_END
@@ -123,20 +123,20 @@ if not "%JAVA%" == "" goto :Check_JAVA_END
     if errorlevel 1 goto :TryJDK
     for /f "tokens=2 delims==" %%x in (__reg2.txt) do set JavaTemp=%%~x
     if errorlevel 1 goto :TryJDK
-    set JavaTemp=%JavaTemp%##
-    set JavaTemp=%JavaTemp:                ##=##%
-    set JavaTemp=%JavaTemp:        ##=##%
-    set JavaTemp=%JavaTemp:    ##=##%
-    set JavaTemp=%JavaTemp:  ##=##%
-    set JavaTemp=%JavaTemp: ##=##%
-    set JavaTemp=%JavaTemp:##=%
+    set "JavaTemp=%JavaTemp%##"
+    set "JavaTemp=%JavaTemp:                ##=##%"
+    set "JavaTemp=%JavaTemp:        ##=##%"
+    set "JavaTemp=%JavaTemp:    ##=##%"
+    set "JavaTemp=%JavaTemp:  ##=##%"
+    set "JavaTemp=%JavaTemp: ##=##%"
+    set "JavaTemp=%JavaTemp:##=%"
     del __reg1.txt
     del __reg2.txt
     start /w regedit /e __reg1.txt "HKEY_LOCAL_MACHINE\SOFTWARE\JavaSoft\Java Runtime Environment\%JavaTemp%"
     if not exist __reg1.txt goto :TryJDK
     type __reg1.txt | find "JavaHome" > __reg2.txt
     if errorlevel 1 goto :TryJDK
-    for /f "tokens=2 delims==" %%x in (__reg2.txt) do set JAVA_HOME=%%~x
+    for /f "tokens=2 delims==" %%x in (__reg2.txt) do set "JAVA_HOME=%%~x"
     if errorlevel 1 goto :TryJDK
     del __reg1.txt
     del __reg2.txt
@@ -150,17 +150,17 @@ if not "%JAVA%" == "" goto :Check_JAVA_END
     if errorlevel 1 (
         goto TryRegJRE
     )
-    for /f "tokens=2 delims==" %%x in (__reg2.txt) do set JavaTemp=%%~x
+    for /f "tokens=2 delims==" %%x in (__reg2.txt) do set "JavaTemp=%%~x"
     if errorlevel 1 (
         goto TryRegJRE
     )
-    set JavaTemp=%JavaTemp%##
-    set JavaTemp=%JavaTemp:                ##=##%
-    set JavaTemp=%JavaTemp:        ##=##%
-    set JavaTemp=%JavaTemp:    ##=##%
-    set JavaTemp=%JavaTemp:  ##=##%
-    set JavaTemp=%JavaTemp: ##=##%
-    set JavaTemp=%JavaTemp:##=%
+    set "JavaTemp=%JavaTemp%##"
+    set "JavaTemp=%JavaTemp:                ##=##%
+    set "JavaTemp=%JavaTemp:        ##=##%"
+    set "JavaTemp=%JavaTemp:    ##=##%"
+    set "JavaTemp=%JavaTemp:  ##=##%"
+    set "JavaTemp=%JavaTemp: ##=##%"
+    set "JavaTemp=%JavaTemp:##=%"
     del __reg1.txt
     del __reg2.txt
     start /w regedit /e __reg1.txt "HKEY_LOCAL_MACHINE\SOFTWARE\JavaSoft\Java Development Kit\%JavaTemp%"
@@ -171,7 +171,7 @@ if not "%JAVA%" == "" goto :Check_JAVA_END
     if errorlevel 1 (
         goto TryRegJRE
     )
-    for /f "tokens=2 delims==" %%x in (__reg2.txt) do set JAVA_HOME=%%~x
+    for /f "tokens=2 delims==" %%x in (__reg2.txt) do set "JAVA_HOME=%%~x"
     if errorlevel 1 (
         goto TryRegJRE
     )
@@ -180,10 +180,10 @@ if not "%JAVA%" == "" goto :Check_JAVA_END
 :TryRegJRE
     rem try getting the JAVA_HOME from registry
     FOR /F "usebackq tokens=3*" %%A IN (`REG QUERY "HKLM\Software\JavaSoft\Java Runtime Environment" /v CurrentVersion`) DO (
-       set JAVA_VERSION=%%A
+       set "JAVA_VERSION=%%A"
     )
     FOR /F "usebackq tokens=3*" %%A IN (`REG QUERY "HKLM\Software\JavaSoft\Java Runtime Environment\%JAVA_VERSION%" /v JavaHome`) DO (
-       set JAVA_HOME=%%A %%B
+       set "JAVA_HOME=%%A %%B"
     )
     if not exist "%JAVA_HOME%" (
        goto TryRegJDK
@@ -192,10 +192,10 @@ if not "%JAVA%" == "" goto :Check_JAVA_END
 :TryRegJDK
     rem try getting the JAVA_HOME from registry
     FOR /F "usebackq tokens=3*" %%A IN (`REG QUERY "HKLM\Software\JavaSoft\Java Development Kit" /v CurrentVersion`) DO (
-       set JAVA_VERSION=%%A
+       set "JAVA_VERSION=%%A"
     )
     FOR /F "usebackq tokens=3*" %%A IN (`REG QUERY "HKLM\Software\JavaSoft\Java Development Kit\%JAVA_VERSION%" /v JavaHome`) DO (
-       set JAVA_HOME=%%A %%B
+       set "JAVA_HOME=%%A %%B"
     )
     if not exist "%JAVA_HOME%" (
        call :warn Unable to retrieve JAVA_HOME from Registry
@@ -206,12 +206,12 @@ if not "%JAVA%" == "" goto :Check_JAVA_END
         call :warn JAVA_HOME is not valid: "%JAVA_HOME%"
         goto END
     )
-    set JAVA=%JAVA_HOME%\bin\java
+    set "JAVA=%JAVA_HOME%\bin\java"
 :Check_JAVA_END
 
 rem Retrieve java version
 for /f tokens^=2-5^ delims^=.-_+^" %%j in ('"%JAVA%" -fullversion 2^>^&1') do (
-    if %%j==1 (set JAVA_VERSION=%%k) else (set JAVA_VERSION=%%j)
+    if %%j==1 (set "JAVA_VERSION=%%k") else (set "JAVA_VERSION=%%j")
 )
 
 if not exist "%JAVA_HOME%\bin\server\jvm.dll" (
@@ -221,12 +221,12 @@ if not exist "%JAVA_HOME%\bin\server\jvm.dll" (
         echo For more details see http://java.sun.com/products/hotspot/whitepaper.html#client
     )
 )
-set DEFAULT_JAVA_OPTS=-Xms%JAVA_MIN_MEM% -Xmx%JAVA_MAX_MEM% -XX:MaxDirectMemorySize=%DIRECT_MAX_MEM% -XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogFile=%KARAF_LOG%\jvm.log -XX:-OmitStackTraceInFastThrow
+set DEFAULT_JAVA_OPTS=-Xms%JAVA_MIN_MEM% -Xmx%JAVA_MAX_MEM% -XX:MaxDirectMemorySize=%DIRECT_MAX_MEM% -XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogFile="%KARAF_LOG%\jvm.log" -XX:-OmitStackTraceInFastThrow
 
-if "%JAVA_OPTS%" == "" set JAVA_OPTS=%DEFAULT_JAVA_OPTS%
+if "%JAVA_OPTS%" == "" set "JAVA_OPTS=%DEFAULT_JAVA_OPTS%"
 
 if "%EXTRA_JAVA_OPTS%" == "" goto :KARAF_EXTRA_JAVA_OPTS_END
-    set JAVA_OPTS=%JAVA_OPTS% %EXTRA_JAVA_OPTS%
+    set "JAVA_OPTS=%JAVA_OPTS% %EXTRA_JAVA_OPTS%"
 :KARAF_EXTRA_JAVA_OPTS_END
 
 if "%KARAF_DEBUG%" == "" goto :KARAF_DEBUG_END
@@ -234,9 +234,9 @@ if "%KARAF_DEBUG%" == "" goto :KARAF_DEBUG_END
     if "%1" == "client" goto :KARAF_DEBUG_END
     if "%1" == "status" goto :KARAF_DEBUG_END
     rem Use the defaults if JAVA_DEBUG_OPTS was not set
-    if "%JAVA_DEBUG_OPTS%" == "" set JAVA_DEBUG_OPTS=%DEFAULT_JAVA_DEBUG_OPTS%
+    if "%JAVA_DEBUG_OPTS%" == "" set "JAVA_DEBUG_OPTS=%DEFAULT_JAVA_DEBUG_OPTS%"
 
-    set JAVA_OPTS=%JAVA_DEBUG_OPTS% %JAVA_OPTS%
+    set "JAVA_OPTS=%JAVA_DEBUG_OPTS% %JAVA_OPTS%"
     call :warn Enabling Java debug options: %JAVA_DEBUG_OPTS%
 :KARAF_DEBUG_END
 
@@ -245,14 +245,14 @@ if "%KARAF_DEBUGS%" == "" goto :KARAF_DEBUGS_END
     if "%1" == "client" goto :KARAF_DEBUGS_END
     if "%1" == "status" goto :KARAF_DEBUGS_END
     rem Use the defaults if JAVA_DEBUG_OPTS was not set
-    if "%JAVA_DEBUG_OPTS%" == "" set JAVA_DEBUG_OPTS=%DEFAULT_JAVA_DEBUGS_OPTS%
+    if "%JAVA_DEBUG_OPTS%" == "" set "JAVA_DEBUG_OPTS=%DEFAULT_JAVA_DEBUGS_OPTS%"
 
-    set JAVA_OPTS=%JAVA_DEBUG_OPTS% %JAVA_OPTS%
+    set "JAVA_OPTS=%JAVA_DEBUG_OPTS% %JAVA_OPTS%"
     call :warn Enabling Java debug options: %JAVA_DEBUG_OPTS%
 :KARAF_DEBUGS_END
 
 if "%KARAF_PROFILER%" == "" goto :KARAF_PROFILER_END
-    set KARAF_PROFILER_SCRIPT=%KARAF_HOME%\conf\profiler\%KARAF_PROFILER%.cmd
+    set "KARAF_PROFILER_SCRIPT=%KARAF_HOME%\conf\profiler\%KARAF_PROFILER%.cmd"
 
     if exist "%KARAF_PROFILER_SCRIPT%" goto :KARAF_PROFILER_END
     call :warn Missing configuration for profiler '%KARAF_PROFILER%': %KARAF_PROFILER_SCRIPT%
@@ -266,9 +266,9 @@ popd
 goto CLASSPATH_END
 
 : APPEND_TO_CLASSPATH
-set filename=%~1
-set suffix=%filename:~-4%
-if %suffix% equ .jar set CLASSPATH=%CLASSPATH%;%KARAF_HOME%\bin\%filename%
+set "filename=%~1"
+set "suffix=%filename:~-4%"
+if %suffix% equ .jar set "CLASSPATH=%CLASSPATH%;%KARAF_HOME%\bin\%filename%"
 goto :EOF
 
 :CLASSPATH_END
@@ -280,8 +280,8 @@ if "%KARAF_PROFILER%" == "" goto :RUN
     call %KARAF_PROFILER_SCRIPT%
 
 :RUN
-    SET MAIN=org.springframework.boot.loader.launch.PropertiesLauncher
-    SET SHIFT=false
+    SET "MAIN=org.springframework.boot.loader.launch.PropertiesLauncher"
+    SET "SHIFT=false"
 
 :RUN_LOOP
     if "%1" == "stop" goto :EXECUTE_STOP
@@ -298,12 +298,12 @@ if "%KARAF_PROFILER%" == "" goto :RUN
     goto :EXECUTE
 
 :EXECUTE_STOP
-    SET MAIN=org.apache.karaf.main.Stop
+    SET "MAIN=org.apache.karaf.main.Stop"
     shift
     goto :RUN_LOOP
 
 :EXECUTE_STATUS
-    SET MAIN=org.apache.karaf.main.Status
+    SET "MAIN=org.apache.karaf.main.Status"
     shift
     goto :RUN_LOOP
 
@@ -316,7 +316,7 @@ if "%KARAF_PROFILER%" == "" goto :RUN
     goto :RUN_LOOP
 
 :EXECUTE_DAEMON
-    SET KARAF_DAEMON=true
+    SET "KARAF_DAEMON=true"
     shift
     goto :RUN_LOOP
 
@@ -330,53 +330,58 @@ if "%KARAF_PROFILER%" == "" goto :RUN
     goto :RUN_LOOP
 
 :EXECUTE_DEBUG
-    if "%JAVA_DEBUG_OPTS%" == "" set JAVA_DEBUG_OPTS=%DEFAULT_JAVA_DEBUG_OPTS%
-    set JAVA_OPTS=%JAVA_DEBUG_OPTS% %JAVA_OPTS%
-    set DEBUG=true
+    if "%JAVA_DEBUG_OPTS%" == "" set "JAVA_DEBUG_OPTS=%DEFAULT_JAVA_DEBUG_OPTS%"
+    set "JAVA_OPTS=%JAVA_DEBUG_OPTS% %JAVA_OPTS%"
+    set "DEBUG=true"
     shift
     goto :RUN_LOOP
 
 :EXECUTE_DEBUGS
-    if "%JAVA_DEBUG_OPTS%" == "" set JAVA_DEBUG_OPTS=%DEFAULT_JAVA_DEBUGS_OPTS%
-    set JAVA_OPTS=%JAVA_DEBUG_OPTS% %JAVA_OPTS%
-    set DEBUG=true
+    if "%JAVA_DEBUG_OPTS%" == "" set "JAVA_DEBUG_OPTS=%DEFAULT_JAVA_DEBUGS_OPTS%"
+    set "JAVA_OPTS=%JAVA_DEBUG_OPTS% %JAVA_OPTS%"
+    set "DEBUG=true"
     shift
     goto :RUN_LOOP
 
 :EXECUTE
-    SET ARGS=%1 %2 %3 %4 %5 %6 %7 %8
+    SET "ARGS=%1 %2 %3 %4 %5 %6 %7 %8"
     rem Execute the Java Virtual Machine
     cd "%KARAF_BASE%"
 
-    if not "%DEBUG%" == "true" set JAVA_OPTS=%JAVA_NON_DEBUG_OPTS% %JAVA_OPTS%
+    if not "%DEBUG%" == "true" set "JAVA_OPTS=%JAVA_NON_DEBUG_OPTS% %JAVA_OPTS%"
 
-    "%JAVA%" %JAVA_OPTS% %OPTS% ^
-        --add-reads=java.xml=java.logging ^
-        --add-opens java.base/java.security=ALL-UNNAMED ^
-        --add-opens java.base/java.net=ALL-UNNAMED ^
-        --add-opens java.base/java.lang=ALL-UNNAMED ^
-        --add-opens java.base/java.util=ALL-UNNAMED ^
-        --add-opens java.naming/javax.naming.spi=ALL-UNNAMED ^
-        --add-opens java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED ^
-        --add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED ^
-        --add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED ^
-        --add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED ^
-        --add-exports=jdk.xml.dom/org.w3c.dom.html=ALL-UNNAMED ^
-        --add-exports=jdk.naming.rmi/com.sun.jndi.url.rmi=ALL-UNNAMED ^
-        --add-exports java.security.sasl/com.sun.security.sasl=ALL-UNNAMED ^
-        --add-exports=java.base/sun.security.x509=ALL-UNNAMED ^
-        --add-exports=java.base/sun.security.rsa=ALL-UNNAMED ^
-        --add-exports=java.base/sun.security.pkcs=ALL-UNNAMED ^
-        -classpath "%CLASSPATH%" ^
-        -Dkaraf.home="%KARAF_HOME%" ^
-        -Dkaraf.base="%KARAF_BASE%" ^
-        -Dkaraf.etc="%KARAF_ETC%" ^
-        -Dkaraf.log="%KARAF_LOG%" ^
-        -Dkaraf.restart.jvm.supported=true ^
-        -Djava.io.tmpdir="%KARAF_DATA%\tmp" ^
-        -Dkaraf.data="%KARAF_DATA%" ^
-        -Djava.util.logging.config.file="%KARAF_BASE%\etc\java.util.logging.properties" ^
-        %KARAF_SYSTEM_OPTS% %KARAF_OPTS% %MAIN% %ARGS%
+    "%JAVA%"^
+     %JAVA_OPTS%^
+     %OPTS%^
+     --add-reads java.xml=java.logging^
+     --add-opens java.base/java.security=ALL-UNNAMED^
+     --add-opens java.base/java.net=ALL-UNNAMED^
+     --add-opens java.base/java.lang=ALL-UNNAMED^
+     --add-opens java.base/java.util=ALL-UNNAMED^
+     --add-opens java.naming/javax.naming.spi=ALL-UNNAMED^
+     --add-opens java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED^
+     --add-exports java.base/sun.net.www.protocol.http=ALL-UNNAMED^
+     --add-exports java.base/sun.net.www.protocol.https=ALL-UNNAMED^
+     --add-exports java.base/sun.net.www.protocol.jar=ALL-UNNAMED^
+     --add-exports jdk.xml.dom/org.w3c.dom.html=ALL-UNNAMED^
+     --add-exports jdk.naming.rmi/com.sun.jndi.url.rmi=ALL-UNNAMED^
+     --add-exports java.security.sasl/com.sun.security.sasl=ALL-UNNAMED^
+     --add-exports=java.base/sun.security.x509=ALL-UNNAMED^
+     --add-exports=java.base/sun.security.rsa=ALL-UNNAMED^
+     --add-exports=java.base/sun.security.pkcs=ALL-UNNAMED^
+     -classpath "%CLASSPATH%"^
+     -Dkaraf.home="%KARAF_HOME%"^
+     -Dkaraf.base="%KARAF_BASE%"^
+     -Dkaraf.etc="%KARAF_ETC%"^
+     -Dkaraf.log="%KARAF_LOG%"^
+     -Dkaraf.restart.jvm.supported=true^
+     -Djava.io.tmpdir="%KARAF_DATA%\tmp"^
+     -Dkaraf.data="%KARAF_DATA%"^
+     -Djava.util.logging.config.file="%KARAF_BASE%\etc\java.util.logging.properties"^
+     %KARAF_SYSTEM_OPTS%^
+     %KARAF_OPTS%^
+     %MAIN%^
+     %ARGS%
 
     rem If KARAF_DAEMON is defined, auto-restart is bypassed and control given
     rem back to the operating system
