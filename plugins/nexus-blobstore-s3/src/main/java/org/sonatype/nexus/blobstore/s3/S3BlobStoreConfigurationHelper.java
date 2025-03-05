@@ -71,7 +71,8 @@ public class S3BlobStoreConfigurationHelper
   }
 
   /**
-   * Returns the configured region for the bucket, if failover buckets are configured then the choice will depend on the EC2 region.
+   * Returns the configured region for the bucket, if failover buckets are configured then the choice will depend on the
+   * EC2 region.
    */
   public static String getConfiguredRegion(final BlobStoreConfiguration blobStoreConfiguration) {
     return Iterables.getOnlyElement(getBucketConfiguration(blobStoreConfiguration).keySet());
@@ -96,15 +97,14 @@ public class S3BlobStoreConfigurationHelper
     log.debug("Detected region {} choosing from {}", currentRegion, regionMapping);
 
     return Optional.ofNullable(regionMapping.get(currentRegion))
-      .map(Object::toString)
-      .map(bucketName -> Collections.singletonMap(currentRegion, bucketName))
-      .orElse(Collections.singletonMap(primaryRegion, primaryBucket));
+        .map(Object::toString)
+        .map(bucketName -> Collections.singletonMap(currentRegion, bucketName))
+        .orElse(Collections.singletonMap(primaryRegion, primaryBucket));
   }
 
   public static int getConfiguredExpirationInDays(final BlobStoreConfiguration blobStoreConfiguration) {
     return Integer.parseInt(
-        blobStoreConfiguration.attributes(CONFIG_KEY).get(EXPIRATION_KEY, DEFAULT_EXPIRATION_IN_DAYS).toString()
-    );
+        blobStoreConfiguration.attributes(CONFIG_KEY).get(EXPIRATION_KEY, DEFAULT_EXPIRATION_IN_DAYS).toString());
   }
 
   public static String getBucketPrefix(final BlobStoreConfiguration blobStoreConfiguration) {
@@ -115,7 +115,7 @@ public class S3BlobStoreConfigurationHelper
   }
 
   @VisibleForTesting
-  static boolean regionLoaded;
+  public static boolean regionLoaded;
 
   @VisibleForTesting
   static String region;

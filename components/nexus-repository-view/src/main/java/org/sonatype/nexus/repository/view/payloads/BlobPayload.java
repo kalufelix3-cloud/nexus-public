@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.view.payloads;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 
@@ -53,6 +55,11 @@ public class BlobPayload
   @Override
   public String getContentType() {
     return contentType;
+  }
+
+  @Override
+  public Optional<URL> getRedirectUrl(final String name) {
+    return blob.getRedirectUrl(name, contentType);
   }
 
   @Override

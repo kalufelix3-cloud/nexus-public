@@ -28,15 +28,19 @@ import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketS
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiEncryption;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiFailoverBucket;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiModel;
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 import org.junit.Test;
+import org.mockito.Mock;
 
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.Integer.parseInt;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.LIMIT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.TYPE_KEY;
@@ -84,11 +88,15 @@ public class S3BlobStoreApiModelMapperTest
 
   private static final int MAX_CONNECTION_POOL_SIZE = 3;
 
+  @Mock
+  private ApplicationVersion applicationVersion;
+
   @Test
   public void testShouldCopyNonNullAttributesOnly() {
     S3BlobStoreApiModel model = aMinimalS3BlobStoreApiModel();
 
-    BlobStoreConfiguration configuration = S3BlobStoreApiModelMapper.map(new MockBlobStoreConfiguration(), model);
+    BlobStoreConfiguration configuration =
+        S3BlobStoreApiModelMapper.map(new MockBlobStoreConfiguration(), model, applicationVersion);
     NestedAttributesMap s3BucketAttributes = configuration.attributes(CONFIG_KEY);
     NestedAttributesMap softQuotaAttributes = configuration.attributes(ROOT_KEY);
 
@@ -101,13 +109,41 @@ public class S3BlobStoreApiModelMapperTest
     assertThat(configuration.getName(), is(BLOB_STORE_NAME));
     assertThat(softQuotaAttributes.get(TYPE_KEY), nullValue());
     assertThat(softQuotaAttributes.get(LIMIT_KEY), nullValue());
+    assertThat(s3BucketAttributes.get(PRE_SIGNED_URL_ENABLED), is(nullValue()));
+  }
+
+  @Test
+  public void shouldSetPreSignedUrlEnabledWhenIsTrueInModelAndEditionIsPro() {
+    S3BlobStoreApiModel model = new S3BlobStoreApiModel(BLOB_STORE_NAME, null, aS3BlobStoreBucketConfiguration(true));
+
+    when(applicationVersion.getEdition()).thenReturn("PRO");
+
+    final MockBlobStoreConfiguration blobStoreConfiguration = new MockBlobStoreConfiguration();
+    BlobStoreConfiguration configuration =
+        S3BlobStoreApiModelMapper.map(blobStoreConfiguration, model, applicationVersion);
+    NestedAttributesMap s3BucketAttributes = configuration.attributes(CONFIG_KEY);
+
+    assertThat(s3BucketAttributes.get(PRE_SIGNED_URL_ENABLED), is(true));
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenPreSignedUrlIsTrueAndEditionIsNotPro() {
+    S3BlobStoreApiModel model = new S3BlobStoreApiModel(BLOB_STORE_NAME, null,
+        aS3BlobStoreBucketConfiguration(true));
+
+    when(applicationVersion.getEdition()).thenReturn("NOT PRO");
+
+    final MockBlobStoreConfiguration blobStoreConfiguration = new MockBlobStoreConfiguration();
+    assertThrows(PreSignedUrlNotAllowedException.class,
+        () -> S3BlobStoreApiModelMapper.map(blobStoreConfiguration, model, applicationVersion));
   }
 
   @Test
   public void testShouldConvertToConfiguration() {
     S3BlobStoreApiModel model = aFullySetS3BlobStoreApiModel();
 
-    BlobStoreConfiguration  configuration = S3BlobStoreApiModelMapper.map(new MockBlobStoreConfiguration(), model);
+    BlobStoreConfiguration configuration =
+        S3BlobStoreApiModelMapper.map(new MockBlobStoreConfiguration(), model, applicationVersion);
     NestedAttributesMap s3BucketAttributes = configuration.attributes(CONFIG_KEY);
 
     assertThat(configuration.getType(), is(TYPE));
@@ -125,7 +161,7 @@ public class S3BlobStoreApiModelMapperTest
     return new S3BlobStoreApiModel(BLOB_STORE_NAME,
         null,
         new S3BlobStoreApiBucketConfiguration(anS3BlobStoreBucket(),
-            null, null, null, null, null));
+            null, null, null, null, null, null));
   }
 
   private static S3BlobStoreApiBucket anS3BlobStoreBucket() {
@@ -136,21 +172,21 @@ public class S3BlobStoreApiModelMapperTest
     BlobStoreApiSoftQuota quota = new BlobStoreApiSoftQuota();
     quota.setType(QUOTA_TYPE);
     quota.setLimit(QUOTA_LIMIT);
-    return new S3BlobStoreApiModel(BLOB_STORE_NAME, quota, aS3BlobStoreBucketConfiguration());
+    return new S3BlobStoreApiModel(BLOB_STORE_NAME, quota, aS3BlobStoreBucketConfiguration(null));
   }
 
-  private static S3BlobStoreApiBucketConfiguration aS3BlobStoreBucketConfiguration() {
+  private static S3BlobStoreApiBucketConfiguration aS3BlobStoreBucketConfiguration(final Boolean preSignedUrlEnabled) {
     return new S3BlobStoreApiBucketConfiguration(anS3BlobStoreBucket(),
         anS3BlobStoreBucketSecurity(),
         anS3BlobStoreEncryption(),
         anAdvancedBucketConnection(),
         anS3FailoverBuckets(),
-        mainRegion()
-    );
+        mainRegion(), preSignedUrlEnabled);
   }
 
   private static S3BlobStoreApiBucketSecurity anS3BlobStoreBucketSecurity() {
-    return new S3BlobStoreApiBucketSecurity(AN_IAM_ACCESS_KEY, AN_IAM_SECRET_ACCESS_KEY, AN_IAM_ROLE, AN_IAM_SESSION_TOKEN);
+    return new S3BlobStoreApiBucketSecurity(AN_IAM_ACCESS_KEY, AN_IAM_SECRET_ACCESS_KEY, AN_IAM_ROLE,
+        AN_IAM_SESSION_TOKEN);
   }
 
   private static S3BlobStoreApiEncryption anS3BlobStoreEncryption() {
@@ -162,8 +198,7 @@ public class S3BlobStoreApiModelMapperTest
         S3_ENDPOINT_URL,
         S3_SIGNER_TYPE,
         FORCE_PATH_STYLE,
-        MAX_CONNECTION_POOL_SIZE
-    );
+        MAX_CONNECTION_POOL_SIZE);
   }
 
   private static List<S3BlobStoreApiFailoverBucket> anS3FailoverBuckets() {

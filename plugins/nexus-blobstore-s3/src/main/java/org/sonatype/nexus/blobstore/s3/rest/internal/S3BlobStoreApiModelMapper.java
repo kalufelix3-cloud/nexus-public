@@ -24,6 +24,7 @@ import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketS
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiEncryption;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiFailoverBucket;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiModel;
+import org.sonatype.nexus.common.app.ApplicationVersion;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -34,21 +35,31 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public final class S3BlobStoreApiModelMapper
 {
+  public static final String PRO = "PRO";
+
   public static BlobStoreConfiguration map(
       final BlobStoreConfiguration blobStoreConfiguration,
-      final S3BlobStoreApiModel request)
+      final S3BlobStoreApiModel request,
+      final ApplicationVersion applicationVersion)
   {
     checkNotNull(blobStoreConfiguration);
     checkNotNull(request);
     final S3BlobStoreApiBucketConfiguration bucketConfiguration = checkNotNull(request.getBucketConfiguration());
     S3BlobStoreApiBucket bucket = checkNotNull(bucketConfiguration.getBucket(), "Missing bucket configuration");
 
+    final Boolean preSignedUrlEnabled = bucketConfiguration.getPreSignedUrlEnabled();
+    if (Boolean.TRUE.equals(preSignedUrlEnabled) && !PRO.equals(applicationVersion.getEdition())) {
+      throw new PreSignedUrlNotAllowedException(
+          "Pre-signed URL feature is only available in Nexus Repository Manager Pro");
+    }
+
     S3BlobStoreConfigurationBuilder builder =
         S3BlobStoreConfigurationBuilder.builder(blobStoreConfiguration, request.getName())
-        .bucket(bucket.getName())
-        .region(bucket.getRegion())
-        .expiration(bucket.getExpiration())
-        .prefix(bucket.getPrefix());
+            .bucket(bucket.getName())
+            .region(bucket.getRegion())
+            .expiration(bucket.getExpiration())
+            .prefix(bucket.getPrefix())
+            .preSignedUrlEnabled(preSignedUrlEnabled);
 
     S3BlobStoreApiBucketSecurity bucketSecurity = bucketConfiguration.getBucketSecurity();
     if (bucketSecurity != null) {

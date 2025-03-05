@@ -52,8 +52,7 @@ public final class S3BlobStoreApiConfigurationMapper
     return new S3BlobStoreApiModel(
         configuration.getName(),
         createSoftQuota(configuration),
-        createS3BlobStoreBucketConfiguration(configuration)
-    );
+        createS3BlobStoreBucketConfiguration(configuration));
   }
 
   private static BlobStoreApiSoftQuota createSoftQuota(final BlobStoreConfiguration configuration) {
@@ -75,7 +74,9 @@ public final class S3BlobStoreApiConfigurationMapper
     return Objects.toString(attributes.get(key), null);
   }
 
-  private static S3BlobStoreApiBucketConfiguration createS3BlobStoreBucketConfiguration(final BlobStoreConfiguration configuration) {
+  private static S3BlobStoreApiBucketConfiguration createS3BlobStoreBucketConfiguration(
+      final BlobStoreConfiguration configuration)
+  {
     final NestedAttributesMap s3BucketAttributes = configuration.attributes(CONFIG_KEY);
     return new S3BlobStoreApiBucketConfiguration(
         buildS3BlobStoreBucket(s3BucketAttributes),
@@ -83,7 +84,8 @@ public final class S3BlobStoreApiConfigurationMapper
         buildS3BlobStoreEncryption(s3BucketAttributes),
         buildS3BlobStoreAdvancedBucketConnection(s3BucketAttributes),
         buildS3BlobStoreFailoverBuckets(s3BucketAttributes),
-        buildS3BlobStoreActiveRegion(configuration));
+        buildS3BlobStoreActiveRegion(configuration),
+        configuration.attributes(CONFIG_KEY).get("preSignedUrlEnabled", Boolean.class));
   }
 
   private static S3BlobStoreApiBucket buildS3BlobStoreBucket(final NestedAttributesMap attributes) {
@@ -92,8 +94,7 @@ public final class S3BlobStoreApiConfigurationMapper
         getValue(attributes, REGION_KEY),
         getValue(attributes, BUCKET_KEY),
         getValue(attributes, BUCKET_PREFIX_KEY),
-        Integer.valueOf(nonNull(expiration) ? expiration : "0")
-    );
+        Integer.valueOf(nonNull(expiration) ? expiration : "0"));
   }
 
   private static S3BlobStoreApiBucketSecurity buildS3BlobStoreBucketSecurity(final NestedAttributesMap attributes) {
@@ -124,13 +125,17 @@ public final class S3BlobStoreApiConfigurationMapper
     return null;
   }
 
-  private static S3BlobStoreApiAdvancedBucketConnection buildS3BlobStoreAdvancedBucketConnection(final NestedAttributesMap attributes) {
+  private static S3BlobStoreApiAdvancedBucketConnection buildS3BlobStoreAdvancedBucketConnection(
+      final NestedAttributesMap attributes)
+  {
     final String endpoint = getValue(attributes, ENDPOINT_KEY);
     final String signerType = getValue(attributes, SIGNERTYPE_KEY);
     final String forcePathStyle = getValue(attributes, FORCE_PATH_STYLE_KEY);
     Integer maxConnectionPoolSize =
-        Optional.ofNullable(getValue(attributes, MAX_CONNECTION_POOL_KEY)).filter(val -> !"".equals(val))
-            .map(Integer::valueOf).orElse(null);
+        Optional.ofNullable(getValue(attributes, MAX_CONNECTION_POOL_KEY))
+            .filter(val -> !"".equals(val))
+            .map(Integer::valueOf)
+            .orElse(null);
 
     if (anyNonNull(endpoint, signerType, forcePathStyle, maxConnectionPoolSize)) {
       return new S3BlobStoreApiAdvancedBucketConnection(endpoint, signerType, Boolean.valueOf(forcePathStyle),
@@ -143,7 +148,9 @@ public final class S3BlobStoreApiConfigurationMapper
       final NestedAttributesMap attributes)
   {
     if (attributes.contains(FAILOVER_BUCKETS_KEY)) {
-      return attributes.child(FAILOVER_BUCKETS_KEY).entries().stream()
+      return attributes.child(FAILOVER_BUCKETS_KEY)
+          .entries()
+          .stream()
           .map(entry -> new S3BlobStoreApiFailoverBucket(entry.getKey(), entry.getValue().toString()))
           .collect(Collectors.toList());
     }

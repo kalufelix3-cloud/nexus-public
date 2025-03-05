@@ -13,7 +13,11 @@
 package org.sonatype.nexus.blobstore.api;
 
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Map;
+import java.util.Optional;
+
+import javax.annotation.Nullable;
 
 /**
  * A handle for binary data stored within a {@link BlobStore}.
@@ -49,4 +53,11 @@ public interface Blob
    *           {@link BlobStore#delete hard deleted}.
    */
   BlobMetrics getMetrics();
+
+  /**
+   * Provides a URL for direct access (i.e. not through Nexus Repository) to the blob's content.
+   */
+  default Optional<URL> getRedirectUrl(final String name, @Nullable final String contentType) {
+    return Optional.empty();
+  }
 }

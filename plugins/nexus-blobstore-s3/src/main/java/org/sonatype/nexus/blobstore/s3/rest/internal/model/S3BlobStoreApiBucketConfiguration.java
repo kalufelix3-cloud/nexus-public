@@ -53,12 +53,19 @@ public class S3BlobStoreApiBucketConfiguration
 
   @Valid
   @Nullable
-  @ApiModelProperty(value = "A list of secondary buckets which have bidirectional replication enabled and should be used when Nexus is running in the region", accessMode = AccessMode.READ_WRITE)
+  @ApiModelProperty(
+      value = "A list of secondary buckets which have bidirectional replication enabled and should be used when Nexus is running in the region",
+      accessMode = AccessMode.READ_WRITE)
   private final List<S3BlobStoreApiFailoverBucket> failoverBuckets;
 
   @Nullable
-  @ApiModelProperty(value = "The active region based on bucket configuration, failover buckets, and EC2 region Nexus is running.", accessMode = AccessMode.READ_ONLY)
+  @ApiModelProperty(
+      value = "The active region based on bucket configuration, failover buckets, and EC2 region Nexus is running.",
+      accessMode = AccessMode.READ_ONLY)
   private final String activeRegion;
+
+  @ApiModelProperty(value = "Whether pre assigned URL is enabled or not.", example = "true")
+  private Boolean preSignedUrlEnabled;
 
   public S3BlobStoreApiBucketConfiguration(
       @JsonProperty("bucket") final S3BlobStoreApiBucket bucket,
@@ -66,7 +73,8 @@ public class S3BlobStoreApiBucketConfiguration
       @JsonProperty("encryption") final S3BlobStoreApiEncryption encryption,
       @JsonProperty("advancedConnection") final S3BlobStoreApiAdvancedBucketConnection advancedBucketConnection,
       @Nullable @JsonProperty(FAILOVER_BUCKETS) final List<S3BlobStoreApiFailoverBucket> failoverBuckets,
-      @Nullable @JsonProperty(ACTIVE_REGION) final String activeRegion)
+      @Nullable @JsonProperty(ACTIVE_REGION) final String activeRegion,
+      @Nullable @JsonProperty("preSignedUrlEnabled") final Boolean preSignedUrlEnabled)
   {
     this.bucket = bucket;
     this.bucketSecurity = bucketSecurity;
@@ -74,6 +82,7 @@ public class S3BlobStoreApiBucketConfiguration
     this.advancedBucketConnection = advancedBucketConnection;
     this.failoverBuckets = failoverBuckets;
     this.activeRegion = activeRegion;
+    this.preSignedUrlEnabled = preSignedUrlEnabled;
   }
 
   public S3BlobStoreApiBucket getBucket() {
@@ -100,5 +109,9 @@ public class S3BlobStoreApiBucketConfiguration
   @Nullable
   public String getActiveRegion() {
     return activeRegion;
+  }
+
+  public Boolean getPreSignedUrlEnabled() {
+    return preSignedUrlEnabled;
   }
 }

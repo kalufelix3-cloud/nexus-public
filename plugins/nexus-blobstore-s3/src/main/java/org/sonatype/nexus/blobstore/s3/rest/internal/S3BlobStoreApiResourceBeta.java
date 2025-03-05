@@ -18,6 +18,7 @@ import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 
 import io.swagger.annotations.Api;
@@ -37,15 +38,17 @@ import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 @Path(RESOURCE_URI)
 @Deprecated
 public class S3BlobStoreApiResourceBeta
-  extends S3BlobStoreApiResource
+    extends S3BlobStoreApiResource
 {
   static final String RESOURCE_URI = BETA_API_PREFIX + "/blobstores/s3";
 
   @Inject
-  public S3BlobStoreApiResourceBeta(final BlobStoreManager blobStoreManager,
-                                    final S3BlobStoreApiUpdateValidation validation,
-                                    final SecretsFactory secretsFactory)
+  public S3BlobStoreApiResourceBeta(
+      final BlobStoreManager blobStoreManager,
+      final S3BlobStoreApiUpdateValidation validation,
+      final SecretsFactory secretsFactory,
+      final ApplicationVersion applicationVersion)
   {
-    super(blobStoreManager, validation, secretsFactory);
+    super(blobStoreManager, validation, secretsFactory, applicationVersion);
   }
 }

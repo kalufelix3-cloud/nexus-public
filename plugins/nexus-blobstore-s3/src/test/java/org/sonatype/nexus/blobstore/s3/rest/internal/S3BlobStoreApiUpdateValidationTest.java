@@ -148,7 +148,7 @@ public class S3BlobStoreApiUpdateValidationTest
 
     S3BlobStoreApiBucketConfiguration bucketConfig = new S3BlobStoreApiBucketConfiguration(
         anS3BlobStoreApiBucket("us-east-1", "use-bucket"), null, null, null,
-        s3BlobStoreApiFailoverBuckets("us-east-1", "us-east-1", "default"), null);
+        s3BlobStoreApiFailoverBuckets("us-east-1", "us-east-1", "default"), null, null);
     S3BlobStoreApiModel model = new S3BlobStoreApiModel(BLOB_STORE_NAME, null, bucketConfig);
 
     ValidationErrorsException exception = assertThrows(ValidationErrorsException.class, () ->
@@ -169,7 +169,7 @@ public class S3BlobStoreApiUpdateValidationTest
 
     S3BlobStoreApiBucketConfiguration bucketConfig = new S3BlobStoreApiBucketConfiguration(
         anS3BlobStoreApiBucket("us-east-1", "use-bucket"), null, null, null,
-        s3BlobStoreApiFailoverBuckets("us-east-1", "us-east-1", "default"), null);
+        s3BlobStoreApiFailoverBuckets("us-east-1", "us-east-1", "default"), null, null);
     S3BlobStoreApiModel model = new S3BlobStoreApiModel(BLOB_STORE_NAME, null, bucketConfig);
 
     ValidationErrorsException exception = assertThrows(ValidationErrorsException.class, () ->
@@ -201,7 +201,8 @@ public class S3BlobStoreApiUpdateValidationTest
   }
 
   private static List<S3BlobStoreApiFailoverBucket> s3BlobStoreApiFailoverBuckets(final String... regions) {
-    return Arrays.asList(regions).stream()
+    return Arrays.asList(regions)
+        .stream()
         .map(region -> new S3BlobStoreApiFailoverBucket(region, "bucket-" + region))
         .collect(Collectors.toList());
   }

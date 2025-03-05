@@ -79,6 +79,7 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
@@ -140,6 +141,8 @@ public class S3BlobStore
   public static final String ENCRYPTION_TYPE = "encryption_type";
 
   public static final String ENCRYPTION_KEY = "encryption_key";
+
+  public static final String PRE_SIGNED_URL_ENABLED = "preSignedUrlEnabled";
 
   public static final String BUCKET_REGEX =
       "^([a-z]|(\\d(?!\\d{0,2}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})))([a-z\\d]|(\\.(?!(\\.|-)))|(-(?!\\.))){1,61}[a-z\\d]$";
@@ -242,7 +245,7 @@ public class S3BlobStore
       metadata.setProperty(TYPE_KEY, TYPE_V1);
       metadata.store();
     }
-    liveBlobs = CacheBuilder.newBuilder().weakValues().build(from(S3Blob::new));
+    liveBlobs = CacheBuilder.newBuilder().weakValues().build(from(s3BlobInitializer()));
     metricsService.init(this);
 
     blobStoreQuotaUsageChecker.setBlobStore(this);
@@ -252,6 +255,10 @@ public class S3BlobStore
       this.executorService = newFixedThreadPool(8,
           new NexusThreadFactory("s3-blobstore", "async-ops"));
     }
+  }
+
+  protected Function<BlobId, S3Blob> s3BlobInitializer() {
+    return S3Blob::new;
   }
 
   @Override
@@ -268,7 +275,7 @@ public class S3BlobStore
   /**
    * Returns path for blob-id content file relative to root directory.
    */
-  private String contentPath(final BlobId id) {
+  protected String contentPath(final BlobId id) {
     return getLocation(id) + BLOB_FILE_CONTENT_SUFFIX;
   }
 
@@ -705,7 +712,7 @@ public class S3BlobStore
     s3.deleteObject(getConfiguredBucket(), path);
   }
 
-  String getConfiguredBucket() {
+  protected String getConfiguredBucket() {
     return S3BlobStoreConfigurationHelper.getConfiguredBucket(blobStoreConfiguration);
   }
 
@@ -713,7 +720,7 @@ public class S3BlobStore
     return S3BlobStoreConfigurationHelper.getBucketPrefix(blobStoreConfiguration);
   }
 
-  AmazonS3 getS3() {
+  protected AmazonS3 getS3() {
     return s3;
   }
 
@@ -769,10 +776,10 @@ public class S3BlobStore
     }
   }
 
-  class S3Blob
+  protected class S3Blob
       extends BlobSupport
   {
-    S3Blob(final BlobId blobId) {
+    protected S3Blob(final BlobId blobId) {
       super(blobId);
     }
 

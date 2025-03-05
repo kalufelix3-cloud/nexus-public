@@ -26,6 +26,7 @@ import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
@@ -68,7 +69,10 @@ public class S3BlobStoreConfigurationBuilder
 
   private Optional<Boolean> forcePathStyle = Optional.empty();
 
+  private Boolean preSignedUrlEnabled;
+
   // Uses a linkedhashmap to maintain order
+
   private Map<String, String> failover = new LinkedHashMap<>();
 
   private S3BlobStoreConfigurationBuilder(final Supplier<BlobStoreConfiguration> configuration, final String name) {
@@ -96,7 +100,15 @@ public class S3BlobStoreConfigurationBuilder
    * Set a prefix to use when storing blobs. This can allow multiple blobstores within the same bucket.
    */
   public S3BlobStoreConfigurationBuilder prefix(@Nullable final String prefix) {
-    this.prefix = Optional.ofNullable(prefix);
+    this.prefix = ofNullable(prefix);
+    return this;
+  }
+
+  /**
+   * Indicate whether pre signed url is enabled or not
+   */
+  public S3BlobStoreConfigurationBuilder preSignedUrlEnabled(final Boolean preSignedUrlEnabled) {
+    this.preSignedUrlEnabled = preSignedUrlEnabled;
     return this;
   }
 
@@ -124,7 +136,7 @@ public class S3BlobStoreConfigurationBuilder
    * Set the authentication access key.
    */
   public S3BlobStoreConfigurationBuilder accessKey(@Nullable final String accessKey) {
-    this.accessKey = Optional.ofNullable(accessKey);
+    this.accessKey = ofNullable(accessKey);
     return this;
   }
 
@@ -132,7 +144,7 @@ public class S3BlobStoreConfigurationBuilder
    * Set the authentication access secret.
    */
   public S3BlobStoreConfigurationBuilder accessSecret(@Nullable final String accessSecret) {
-    this.accessSecret = Optional.ofNullable(accessSecret);
+    this.accessSecret = ofNullable(accessSecret);
     return this;
   }
 
@@ -140,7 +152,7 @@ public class S3BlobStoreConfigurationBuilder
    * Set the AWS role to assume.
    */
   public S3BlobStoreConfigurationBuilder assumeRole(@Nullable final String assumeRole) {
-    this.assumeRole = Optional.ofNullable(assumeRole);
+    this.assumeRole = ofNullable(assumeRole);
     return this;
   }
 
@@ -148,7 +160,7 @@ public class S3BlobStoreConfigurationBuilder
    * Set the session token key.
    */
   public S3BlobStoreConfigurationBuilder sessionTokenKey(@Nullable final String sessionTokenKey) {
-    this.sessionTokenKey = Optional.ofNullable(sessionTokenKey);
+    this.sessionTokenKey = ofNullable(sessionTokenKey);
     return this;
   }
 
@@ -156,7 +168,7 @@ public class S3BlobStoreConfigurationBuilder
    * Set the encryption key.
    */
   public S3BlobStoreConfigurationBuilder encryptionKey(@Nullable final String encryptionKey) {
-    this.encryptionKey = Optional.ofNullable(encryptionKey);
+    this.encryptionKey = ofNullable(encryptionKey);
     return this;
   }
 
@@ -164,7 +176,7 @@ public class S3BlobStoreConfigurationBuilder
    * Set the encryption type.
    */
   public S3BlobStoreConfigurationBuilder encryptionType(@Nullable final String encryptionType) {
-    this.encryptionType = Optional.ofNullable(encryptionType);
+    this.encryptionType = ofNullable(encryptionType);
     return this;
   }
 
@@ -172,12 +184,12 @@ public class S3BlobStoreConfigurationBuilder
    * Set the endpoint for S3. This overrides the the S3 URL.
    */
   public S3BlobStoreConfigurationBuilder endpoint(@Nullable final String endpoint) {
-    this.endpoint = Optional.ofNullable(endpoint);
+    this.endpoint = ofNullable(endpoint);
     return this;
   }
 
   public S3BlobStoreConfigurationBuilder signerType(@Nullable final String signerType) {
-    this.signerType = Optional.ofNullable(signerType);
+    this.signerType = ofNullable(signerType);
     return this;
   }
 
@@ -185,7 +197,7 @@ public class S3BlobStoreConfigurationBuilder
    * Set the maximum number of threads used by the connection pool to S3.
    */
   public S3BlobStoreConfigurationBuilder maxConnectionPool(@Nullable final String maxConnectionPool) {
-    this.maxConnectionPool = Optional.ofNullable(maxConnectionPool);
+    this.maxConnectionPool = ofNullable(maxConnectionPool);
     return this;
   }
 
@@ -193,7 +205,7 @@ public class S3BlobStoreConfigurationBuilder
    * Set the maximum number of threads used by the connection pool to S3.
    */
   public S3BlobStoreConfigurationBuilder maxConnectionPool(@Nullable final Integer maxConnectionPool) {
-    this.maxConnectionPool = Optional.ofNullable(maxConnectionPool)
+    this.maxConnectionPool = ofNullable(maxConnectionPool)
         .map(String::valueOf);
     return this;
   }
@@ -202,7 +214,7 @@ public class S3BlobStoreConfigurationBuilder
    * Force path-style URLs, this is deprecated with AWS but fake S3 appliances may need it.
    */
   public S3BlobStoreConfigurationBuilder forcePathStyle(@Nullable final Boolean forcePathStyle) {
-    this.forcePathStyle = Optional.ofNullable(forcePathStyle);
+    this.forcePathStyle = ofNullable(forcePathStyle);
     return this;
   }
 
@@ -214,7 +226,7 @@ public class S3BlobStoreConfigurationBuilder
       this.forcePathStyle = Optional.empty();
     }
     else {
-      this.forcePathStyle = Optional.ofNullable(Boolean.valueOf(forcePathStyle));
+      this.forcePathStyle = ofNullable(Boolean.valueOf(forcePathStyle));
     }
     return this;
   }
@@ -238,6 +250,8 @@ public class S3BlobStoreConfigurationBuilder
     s3.set(EXPIRATION_KEY, checkNotNull(expiration, "Missing expiration"));
 
     prefix.ifPresent(set(s3, BUCKET_PREFIX_KEY));
+
+    ofNullable(preSignedUrlEnabled).ifPresent(set(s3, PRE_SIGNED_URL_ENABLED));
 
     // Authentication
     accessKey.ifPresent(set(s3, ACCESS_KEY_ID_KEY));

@@ -18,6 +18,7 @@ import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 
 import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiResourceV1.RESOURCE_URI;
@@ -32,15 +33,17 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 @Singleton
 @Path(RESOURCE_URI)
 public class S3BlobStoreApiResourceV1
-  extends S3BlobStoreApiResource
+    extends S3BlobStoreApiResource
 {
   static final String RESOURCE_URI = V1_API_PREFIX + "/blobstores";
 
   @Inject
-  public S3BlobStoreApiResourceV1(final BlobStoreManager blobStoreManager,
-                                  final S3BlobStoreApiUpdateValidation validation,
-                                  final SecretsFactory secretsFactory)
+  public S3BlobStoreApiResourceV1(
+      final BlobStoreManager blobStoreManager,
+      final S3BlobStoreApiUpdateValidation validation,
+      final SecretsFactory secretsFactory,
+      final ApplicationVersion applicationVersion)
   {
-    super(blobStoreManager, validation, secretsFactory);
+    super(blobStoreManager, validation, secretsFactory, applicationVersion);
   }
 }

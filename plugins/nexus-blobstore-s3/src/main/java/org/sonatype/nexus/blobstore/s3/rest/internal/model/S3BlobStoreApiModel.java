@@ -46,8 +46,7 @@ public class S3BlobStoreApiModel
   public S3BlobStoreApiModel(
       @JsonProperty("name") final String name,
       @JsonProperty("softQuota") final BlobStoreApiSoftQuota softQuota,
-      @JsonProperty("bucketConfiguration")
-      final S3BlobStoreApiBucketConfiguration bucketConfiguration)
+      @JsonProperty("bucketConfiguration") final S3BlobStoreApiBucketConfiguration bucketConfiguration)
   {
     this.name = name;
     this.softQuota = softQuota;
@@ -67,5 +66,8 @@ public class S3BlobStoreApiModel
   }
 
   @ApiModelProperty(value = "The blob store type.", readOnly = true, example = TYPE)
-  public String getType() {return TYPE;}
+  public String getType() {
+    return TYPE;
+  }
+
 }

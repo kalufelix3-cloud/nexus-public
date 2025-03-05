@@ -125,10 +125,22 @@ public class S3BlobStoreApiConfigurationMapperTest
     assertThat(model.getName(), is(BLOB_STORE_NAME));
     assertRequiredBucketDetails(bucketConfiguration.getBucket());
     assertThat(model.getSoftQuota(), nullValue());
+    assertThat(bucketConfiguration.getPreSignedUrlEnabled(), nullValue());
     assertThat(bucketConfiguration.getBucketSecurity(), nullValue());
     assertThat(bucketConfiguration.getEncryption(), nullValue());
     assertThat(bucketConfiguration.getAdvancedBucketConnection(), nullValue());
     assertThat(bucketConfiguration.getActiveRegion(), is(AWS_REGION));
+  }
+
+  @Test
+  public void shouldCopyPreSignedUrlWhenItIsSet() {
+    BlobStoreConfiguration configuration = aMinimalBlobStoreConfiguration();
+
+    configuration.attributes(CONFIG_KEY).set(PRE_SIGNED_URL_ENABLED, true);
+    assertThat(underTest.apply(configuration).getBucketConfiguration().getPreSignedUrlEnabled(), is(true));
+
+    configuration.attributes(CONFIG_KEY).set(PRE_SIGNED_URL_ENABLED, false);
+    assertThat(underTest.apply(configuration).getBucketConfiguration().getPreSignedUrlEnabled(), is(false));
   }
 
   @Test
@@ -256,11 +268,14 @@ public class S3BlobStoreApiConfigurationMapperTest
   }
 
   private static void fillFailoverBucketDetails(final NestedAttributesMap bucketAttributes) {
-    Map<String, String> failoverBuckets = ImmutableMap.of(FAIL_OVER_REGION_1, "bucket-1", FAIL_OVER_REGION_2, "bucket-2");
+    Map<String, String> failoverBuckets =
+        ImmutableMap.of(FAIL_OVER_REGION_1, "bucket-1", FAIL_OVER_REGION_2, "bucket-2");
     bucketAttributes.set(FAILOVER_BUCKETS_KEY, failoverBuckets);
   }
 
-  private static void fillBucketAdvancedConnectionDetailsEmptyStringMaxConnection(final NestedAttributesMap bucketAttributes) {
+  private static void fillBucketAdvancedConnectionDetailsEmptyStringMaxConnection(
+      final NestedAttributesMap bucketAttributes)
+  {
     bucketAttributes.set(ENDPOINT_KEY, S3_ENDPOINT_URL);
     bucketAttributes.set(SIGNERTYPE_KEY, S3_SIGNER_TYPE);
     bucketAttributes.set(FORCE_PATH_STYLE_KEY, FORCE_PATH_STYLE);
