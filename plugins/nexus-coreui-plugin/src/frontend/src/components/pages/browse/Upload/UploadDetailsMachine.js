@@ -136,20 +136,20 @@ function mkFieldStates(uploadDefinition) {
  * Transform nested data structure into flat iteration of pairs with dot-separated key strings
  */
 function * flattenDataForSubmit(data) {
-  for (const [key, val] of toPairs(data)) {
-    if (typeof val === 'object' && !(val instanceof FileList)) {
-      for (const [subkey, val] of flattenDataForSubmit(val)) {
+  for (const [key, value] of toPairs(data)) {
+    if (typeof value === 'object' && !(value instanceof FileList)) {
+      for (const [subkey, subValue] of flattenDataForSubmit(value)) {
         if (subkey === COMPOUND_FIELD_PARENT_NAME) {
           // The _ subkey is treated as the value of the parent key
-          yield [key, val];
+          yield [key, subValue];
         }
         else {
-          yield [`${key}.${subkey}`, val];
+          yield [`${key}.${subkey}`, subValue];
         }
       }
     }
     else {
-      yield [key, val];
+      yield [key, value];
     }
   }
 }

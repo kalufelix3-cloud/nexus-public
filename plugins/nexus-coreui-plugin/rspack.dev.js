@@ -16,25 +16,15 @@
  */
 const {merge} = require('webpack-merge');
 const path = require('path');
-const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
-const TerserPlugin = require('terser-webpack-plugin');
 
-const common = require('./webpack.common');
+const common = require('./rspack.common');
 
 module.exports = merge(common, {
-  mode: 'production',
-  devtool: 'source-map',
+  mode: 'development',
+  devtool: 'eval-source-map',
 
   output: {
-    filename: '[name].js',
+    filename: '[name].debug.js',
     path: path.resolve(__dirname, 'target', 'classes', 'static')
-  },
-
-  optimization: {
-    minimize: true,
-    minimizer: [
-      new CssMinimizerPlugin(),
-      new TerserPlugin()
-    ]
   }
 });

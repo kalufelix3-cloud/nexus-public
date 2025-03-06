@@ -14,20 +14,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-module.exports = {
-  presets: [
-    '@babel/preset-react',
-    [
-      '@babel/preset-env',
-      {
-        // see https://help.sonatype.com/repomanager3/system-requirements#SystemRequirements-WebBrowser
-        targets: 'last 1 Chrome version, last 1 Firefox version, Firefox ESR, last 1 Safari version, ie >= 11, last 1 Edge version'
-      }
+const {merge} = require('webpack-merge');
+const path = require('path');
+const {rspack} = require('@rspack/core');
+
+const common = require('./rspack.common');
+
+module.exports = merge(common, {
+  mode: 'production',
+  devtool: 'source-map',
+
+  output: {
+    filename: '[name].js',
+    path: path.resolve(__dirname, 'target', 'classes', 'static')
+  },
+
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new rspack.SwcJsMinimizerRspackPlugin(),
+      new rspack.LightningCssMinimizerRspackPlugin()
     ]
-  ],
-  plugins: [
-    '@babel/plugin-proposal-optional-chaining',
-    '@babel/plugin-proposal-class-properties',
-    '@babel/plugin-transform-runtime'
-  ]
-};
+  }
+});

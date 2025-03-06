@@ -16,15 +16,24 @@
  */
 const {merge} = require('webpack-merge');
 const path = require('path');
+const {rspack} = require('@rspack/core');
 
-const common = require('./webpack.common');
+const common = require('./rspack.common');
 
 module.exports = merge(common, {
-  mode: 'development',
-  devtool: 'eval-source-map',
+  mode: 'production',
+  devtool: 'source-map',
 
   output: {
-    filename: '[name].debug.js',
+    filename: '[name].js',
     path: path.resolve(__dirname, 'target', 'classes', 'static')
+  },
+
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new rspack.SwcJsMinimizerRspackPlugin(),
+      new rspack.LightningCssMinimizerRspackPlugin()
+    ]
   }
 });
