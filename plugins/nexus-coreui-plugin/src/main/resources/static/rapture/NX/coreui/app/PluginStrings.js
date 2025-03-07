@@ -503,7 +503,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_ProxyFacet_Rubygems_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://rubygems.org',
     Repository_Facet_ProxyFacet_Yum_Remote_HelpText: 'Location of the remote repository being proxied, e.g.  http://mirror.centos.org/centos/',
     Repository_Facet_CargoFacet_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://index.crates.io',
-    Repository_Facet_ComposerFacet_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://packagist.org',
+    Repository_Facet_ComposerFacet_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://repo.packagist.org',
     Repository_Facet_ProxyFacet_Conan_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://center.conan.io',
     Ssl_SslUseTrustStore_BoxLabel: 'Use the Nexus Repository truststore',
     Ssl_SslUseTrustStore_Certificate_Button: 'View certificate',
