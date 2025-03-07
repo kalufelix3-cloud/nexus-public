@@ -96,7 +96,7 @@ public class NexusLogFilterTest
     LoggingEvent event = new LoggingEvent();
     event.setLoggerName("NexusLogFilterTest");
     event.setMessage("Test Message");
-    event.addMarker(marker);
+    event.setMarker(marker);
     return event;
   }
 }
