@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,17 +52,15 @@ public class SimpleFileOperations
     // Ensure path exists for new blob
     Path dir = path.getParent();
     checkNotNull(dir, "Null parent for path: %s", path);
-    DirectoryHelper.mkdir(dir);
+    if (!Files.isDirectory(dir)) {
+      DirectoryHelper.mkdir(dir);
+    }
 
     final MetricsInputStream input = new MetricsInputStream(data);
-    try {
+    try (data) {
       try (final OutputStream output = Files.newOutputStream(path, StandardOpenOption.CREATE_NEW)) {
         ByteStreams.copy(input, output);
       }
-    }
-    finally {
-      // FIXME: Revisit closing stream which is passed in as parameter, this should be the responsibility of the caller
-      data.close();
     }
 
     return input.getMetrics();
@@ -223,22 +220,32 @@ public class SimpleFileOperations
     Files.deleteIfExists(directory);
   }
 
+  public boolean isDirectoryEmpty(final Path directory) {
+    if (Files.isDirectory(directory)) {
+      try (var stream = Files.list(directory)) {
+        return stream.findAny().isEmpty();
+      }
+      catch (IOException e) {
+        log.debug("Unable to check if directory is empty {}", directory, e);
+      }
+    }
+    return false;
+  }
+
   /**
    * Removes the directory if and only if the directory is empty.
    */
   @Override
-  public boolean deleteEmptyDirectory(final Path directory) {
+  public synchronized boolean deleteEmptyDirectory(final Path directory) {
     try {
-      Files.deleteIfExists(directory);
-      return true;
-    }
-    catch (DirectoryNotEmptyException e) {
-      log.debug("Cannot remove non-empty directory {}", directory, e);
-      return false;
+      if (isDirectoryEmpty(directory)) {
+        Files.deleteIfExists(directory);
+        return true;
+      }
     }
     catch (IOException e) {
       log.debug("Unable to remove directory {}", directory, e);
-      return false;
     }
+    return false;
   }
 }

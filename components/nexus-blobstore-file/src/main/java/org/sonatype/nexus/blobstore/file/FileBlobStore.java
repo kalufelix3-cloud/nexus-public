@@ -635,7 +635,6 @@ public class FileBlobStore
 
       if (blobDeleted && contentSize != null) {
         metricsService.recordDeletion(contentSize);
-        fileOperations.deleteEmptyDirectory(blobPath.getParent());
       }
 
       return blobDeleted;
