@@ -237,7 +237,6 @@ locateJava() {
             fi
             JAVA="${JAVA_HOME}/bin/java"
         else
-            warn "JAVA_HOME not set; results may vary"
             JAVA=`command -v java`
             if [ "x${JAVA}" = "x" ]; then
                 die "java command not found"

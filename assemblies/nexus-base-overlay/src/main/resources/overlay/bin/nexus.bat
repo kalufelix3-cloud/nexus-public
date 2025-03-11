@@ -115,7 +115,7 @@ set "CLASSPATH_INITIAL=%CLASSPATH%"
 rem Setup the Java Virtual Machine
 if not "%JAVA%" == "" goto :Check_JAVA_END
     if not "%JAVA_HOME%" == "" goto :TryJDKEnd
-        call :warn JAVA_HOME not set; results may vary
+
 :TryJRE
     start /w regedit /e __reg1.txt "HKEY_LOCAL_MACHINE\SOFTWARE\JavaSoft\Java Runtime Environment"
     if not exist __reg1.txt goto :TryJDK
