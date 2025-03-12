@@ -18,22 +18,3 @@
 export function isPageHashIncluding(paths) {
   return paths.some(path => window.location.hash.includes(path));
 }
-
-export function scrollToUsageCenter() {
-  const targetPath = '#browse/welcome';
-  const targetElementId = 'nxrm-usage-center';
-
-  function scrollToElement() {
-    const usageCenterElement = document.getElementById(targetElementId);
-    if (usageCenterElement) {
-      usageCenterElement.scrollIntoView({ behavior: 'smooth' });
-    }
-  }
-
-  if (window.location.hash !== targetPath) {
-    window.location.hash = targetPath;
-    setTimeout(scrollToElement, 200);
-  } else {
-    scrollToElement();
-  }
-}

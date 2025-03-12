@@ -93,16 +93,16 @@ describe('Usage Center', () => {
     await renderView();
 
     const totalComponentsCard = selectors.getCard('Total Components'),
-        monthlyMetricsCard = selectors.getCard('Requests Per Month'),
+        uniqueLoginsCard = selectors.getCard('Unique Logins'),
         reqsPerDayCard = selectors.getCard('Requests Per Day');
 
     let infoIcon = selectors.getCardInfoIcon(totalComponentsCard);
     await TestUtils.expectToSeeTooltipOnHover(infoIcon,
         'Community Edition tracks the total components stored in this instance. If usage exceeds the 100,000 component limit, the date will be displayed, and write restrictions will apply until usage is reduced.');
 
-    infoIcon = selectors.getCardInfoIcon(monthlyMetricsCard);
+    infoIcon = selectors.getCardInfoIcon(uniqueLoginsCard);
     await TestUtils.expectToSeeTooltipOnHover(infoIcon,
-        'Requests Per Month Metrics: Total Requests: Total requests for the current month. Average requests: Average monthly requests for the last 12 months. Highest recorded count: Highest monthly requests in the last 12 months. *Calculations are based on UTC time.');
+        'Unique successful logins to this Sonatype Nexus Repository instance in the last 30 days.');
 
     infoIcon = selectors.getCardInfoIcon(reqsPerDayCard);
     await TestUtils.expectToSeeTooltipOnHover(infoIcon,
@@ -129,16 +129,13 @@ describe('Usage Center', () => {
 
       expectCardToRender(card1, card1Header, totalComponents);
 
-      // card 2 of monthly metrics
-      const card2 = selectors.getCard('Peak Requests Per Month'),
-          card2Header = selectors.getCardHeader(card2,'Peak Requests Per Month'),
-          totalRequests = selectors.getCardContent(card2, 'Past 12 months');
+      // card 3 of peak requests per minute
+      const card2 = selectors.getCard('Peak Requests Per Minute'),
+          card2Header = selectors.getCardHeader(card2, 'Peak Requests Per Minute'),
+          card2SubTitle = selectors.getCardContent(card2, 'Past 24 hours'),
+          peakReqPerMin = selectors.getCardContent(card2, '1,236');
 
-      expectCardToRender(
-          card2,
-          card2Header,
-          totalRequests
-      );
+      expectCardToRender(card2, card2Header, card2SubTitle, peakReqPerMin);
 
       // card 3 of peak requests per day
       const card3 = selectors.getCard('Peak Requests Per Day'),
@@ -149,13 +146,13 @@ describe('Usage Center', () => {
       expectCardToRender(card3, card3Header, card3SubTitle, peakReqPerDay);
     });
 
-    it('does not render peak requests per minute card when Pro edition', async () => {
+    it('does not render unique logins card when Pro edition', async () => {
       await renderView(USAGE_CENTER_CONTENT_PRO);
 
       expect(selectors.getAllCards().length).toBe(3);
 
       expect(selectors.getCard('Total Components')).toBeInTheDocument();
-      expect(selectors.getCard('Peak Requests Per Month')).toBeInTheDocument();
+      expect(selectors.getCard('Peak Requests Per Minute')).toBeInTheDocument();
       expect(selectors.getCard('Peak Requests Per Day')).toBeInTheDocument();
     });
   });
@@ -229,19 +226,21 @@ describe('Usage Center', () => {
           card1LastExceededDate
       );
   
-      // card 2 of monthly metrics
-      const card2 = selectors.getCard('Requests Per Month'),
-          card2Header = selectors.getCardHeader(card2,'Requests Per Month'),
-          totalRequests = selectors.getCardContent(card2, `Total requests in ${new Date().toLocaleString('default', { month: 'long' })}`),
-          averageRequests = selectors.getCardContent(card2, 'Average requests (12 months)'),
-          highestRequests = selectors.getCardContent(card2, 'Highest recorded count (12 months)');
+      // card 2 of unique logins - no meter and threshold
+      const card2 = selectors.getCard('Unique Logins'),
+          card2Header = selectors.getCardHeader(card2,'Unique Logins'),
+          card2SubTitle = selectors.getCardContent(card2,'Last 24 hours'),
+          uniqueLogins24H = selectors.getCardContent(card2, '26'),
+          uniqueLogins30DTitle = selectors.getCardContent(card2, 'Last 30 days'),
+          uniqueLogins30D = selectors.getCardContent(card2, '52');
   
       expectCardToRender(
           card2,
           card2Header,
-          totalRequests,
-          averageRequests,
-          highestRequests
+          card2SubTitle,
+          uniqueLogins24H,
+          uniqueLogins30DTitle,
+          uniqueLogins30D
       );
   
       // card 3 of requests per day

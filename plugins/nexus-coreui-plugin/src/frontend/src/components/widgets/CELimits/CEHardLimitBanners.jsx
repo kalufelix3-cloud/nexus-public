@@ -25,7 +25,6 @@ import './CEHardLimitsBanners.scss';
 import CEHardLimitBannersMachine from './CEHardLimitBannersMachine';
 
 import {helperFunctions} from './UsageHelper';
-import { scrollToUsageCenter } from '../../../interfaces/LocationUtils';
 
 const {
   useGracePeriodEndDate,
@@ -60,6 +59,25 @@ export default function CEHardLimitBanners({onClose}) {
   const daysUntilGracePeriodEnds = useDaysUntilGracePeriodEnds();
 
   const {isUnderEndGraceDismissed} = state.context;
+
+  function scrollToUsageCenter() {
+    const targetPath = '#browse/welcome';
+    const targetElementId = 'nxrm-usage-center';
+  
+    function scrollToElement() {
+      const usageCenterElement = document.getElementById(targetElementId);
+      if (usageCenterElement) {
+        usageCenterElement.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  
+    if (window.location.hash !== targetPath) {
+      window.location.hash = targetPath;
+      setTimeout(scrollToElement, 200);
+    } else {
+      scrollToElement();
+    }
+  }
 
   function ContactLinks() {
     return <>

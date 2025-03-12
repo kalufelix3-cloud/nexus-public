@@ -41,22 +41,23 @@ import static java.lang.Boolean.TRUE;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
-import static org.sonatype.nexus.NexusDirectoryConfiguration.BASEDIR_SYS_PROP;
-import static org.sonatype.nexus.NexusDirectoryConfiguration.DATADIR_SYS_PROP;
-import static org.sonatype.nexus.NexusDirectoryConfiguration.getBasePath;
-import static org.sonatype.nexus.NexusDirectoryConfiguration.getDataPath;
 
 @Configuration
 public class NexusProperties
 {
-  private static final String INTERNAL_DEFAULT_PATH = "default.properties";
+  // launch scripts set basedir to "../"
+  public static final String BASEDIR = "";
 
-  private static final File EXTERNAL_DEFAULT_NEXUS_PROPERTIES_FILEPATH =
-      getBasePath("etc", "nexus-default.properties").toFile();
+  public static final String DATADIR = "../sonatype-work/nexus3/";
 
-  private static final File EXTERNAL_NEXUS_PROPERTIES_FILEPATH = getDataPath("etc", "nexus.properties").toFile();
+  public static final String INTERNAL_DEFAULT_PATH = "default.properties";
 
-  private static final File EXTERNAL_NODENAME_FILEPATH = getDataPath("etc", "nexus-nodename.properties").toFile();
+  public static final File EXTERNAL_DEFAULT_NEXUS_PROPERTIES_FILEPATH =
+      new File(BASEDIR + "etc/nexus-default.properties");
+
+  public static final File EXTERNAL_NEXUS_PROPERTIES_FILEPATH = new File(DATADIR + "etc/nexus.properties");
+
+  public static final File EXTERNAL_NODENAME_FILEPATH = new File(DATADIR + "etc/nexus-nodename.properties");
 
   private static final Logger LOG = LoggerFactory.getLogger(NexusProperties.class);
 
@@ -75,9 +76,9 @@ public class NexusProperties
 
       interpolate();
 
-      canonicalize(nexusProperties, BASEDIR_SYS_PROP);
+      canonicalize(nexusProperties, "karaf.base");
       canonicalize(nexusProperties, "karaf.etc");
-      canonicalize(nexusProperties, DATADIR_SYS_PROP);
+      canonicalize(nexusProperties, "karaf.data");
 
       resolveAnyImplicitDefaults(nexusProperties);
       LOG.info("nexus.properties: {}", nexusProperties);

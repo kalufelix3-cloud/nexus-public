@@ -12,18 +12,16 @@
  */
 package org.sonatype.nexus.bootstrap.edition;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Optional;
+
 import org.sonatype.nexus.spring.application.PropertyMap;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.nio.file.Path;
-import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static java.lang.Boolean.parseBoolean;
-import static org.sonatype.nexus.NexusDirectoryConfiguration.BASEDIR_SYS_PROP;
-import static org.sonatype.nexus.NexusDirectoryConfiguration.DATADIR_SYS_PROP;
-import static org.sonatype.nexus.NexusDirectoryConfiguration.getDataPath;
 import static org.sonatype.nexus.common.app.FeatureFlags.*;
 
 public class NexusEditionPropertiesConfigurer
@@ -34,22 +32,18 @@ public class NexusEditionPropertiesConfigurer
 
   private static final String NEXUS_EXCLUDE_FEATURES = "nexus-exclude-features";
 
-  private static final String COMMUNITY = "nexus-community-edition";
-
   private static final String TRUE = Boolean.TRUE.toString();
 
   private static final String FALSE = Boolean.FALSE.toString();
 
-  private static final Logger log = LoggerFactory.getLogger(NexusEditionPropertiesConfigurer.class);
-
-  public void applyPropertiesFromConfiguration(final PropertyMap nexusProperties) {
+  public void applyPropertiesFromConfiguration(final PropertyMap nexusProperties) throws IOException {
     nexusProperties.putAll(System.getProperties());
 
     // Ensure required properties exist
-    requireProperty(nexusProperties, BASEDIR_SYS_PROP);
-    requireProperty(nexusProperties, DATADIR_SYS_PROP);
+    requireProperty(nexusProperties, "karaf.base");
+    requireProperty(nexusProperties, "karaf.data");
 
-    Path workDirPath = getDataPath();
+    Path workDirPath = new File(nexusProperties.get("karaf.data")).getCanonicalFile().toPath();
     // DirectoryHelper.mkdir(workDirPath);
 
     NexusEditionFactory.selectActiveEdition(nexusProperties, workDirPath);
@@ -94,8 +88,7 @@ public class NexusEditionPropertiesConfigurer
         .ifPresent(secretsFilePath -> properties.put(SECRETS_FILE, secretsFilePath));
   }
 
-  @VisibleForTesting
-  void selectDatastoreFeature(final PropertyMap properties) {
+  private void selectDatastoreFeature(final PropertyMap properties) {
     // table search should only be turned on via clustered flag
     if (parseBoolean(properties.get(
         DATASTORE_CLUSTERED_ENABLED,
@@ -136,15 +129,6 @@ public class NexusEditionPropertiesConfigurer
     if (!parseBoolean(properties.get(DATASTORE_DEVELOPER, FALSE))) {
       // exclude unfinished format features
       properties.put(NEXUS_EXCLUDE_FEATURES, properties.get(NEXUS_EXCLUDE_FEATURES, ""));
-    }
-
-    // If edition is CE, ensure analytics is always enabled
-    if (COMMUNITY.equals(properties.get(NexusEdition.NEXUS_EDITION))) {
-      if (FALSE.equals(properties.get("nexus.analytics.enabled"))) {
-        log.warn(
-            "Attempt to disable analytics in Community Edition detected. Analytics will remain enabled as this is required for CE.");
-      }
-      properties.put("nexus.analytics.enabled", TRUE);
     }
 
     selectDbFeature(properties);

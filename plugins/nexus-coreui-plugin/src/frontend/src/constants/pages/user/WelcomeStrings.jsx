@@ -104,13 +104,21 @@ export default {
         TOTAL_COMPONENTS: {
           TITLE: 'Total Components',
           SUB_TITLE: 'Current',
-          SUB_TITLE_PRO_POSTGRESQL: 'Stored in this instance',
           HIGHEST_RECORDED_COUNT: 'Highest Recorded Count (30 days)',
           METRIC_NAME: 'component_total_count',
           METRIC_NAME_PRO_POSTGRESQL: 'component_total_count',
           AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
           TOOLTIP_PRO: 'Sonatype Nexus Repository Pro using an embedded database performs best when your total component counts remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.',
           TOOLTIP_CE: 'Community Edition tracks the total components stored in this instance. If usage exceeds the 100,000 component limit, the date will be displayed, and write restrictions will apply until usage is reduced.'
+        },
+        UNIQUE_LOGINS: {
+          TITLE: 'Unique Logins',
+          SUB_TITLE: 'Last 24 hours',
+          HIGHEST_RECORDED_COUNT: 'Last 30 days',
+          METRIC_NAME: 'successful_last_24h',
+          AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
+          TOOLTIP: 'Measures unique users who login over a period of time.',
+          TOOLTIP_CE: 'Unique successful logins to this Sonatype Nexus Repository instance in the last 30 days.'
         },
         REQUESTS_PER_MINUTE: {
           TITLE: 'Requests Per Minute',
@@ -135,34 +143,6 @@ export default {
           AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
           TOOLTIP_PRO: 'Sonatype Nexus Repository Pro using an embedded database performs best when your requests per day remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.',
           TOOLTIP_CE: 'Community Edition tracks the total daily requests to this instance. If usage exceeds the 200,000 request limit, the date will be displayed, and write restrictions will apply until usage is reduced.'
-        },
-        MONTHLY_REQUESTS: {
-          TITLE: 'Requests Per Month',
-          TITLE_PRO_POSTGRESQL: 'Peak Requests Per Month',
-          METRIC_NAME: 'highestMonthlyRequestMetrics',
-          METRIC_NAME_PRO_POSTGRESQL: 'highestMonthlyRequestMetrics',
-          SUB_TITLE_PRO_POSTGRESQL: 'Past 12 months',
-          TOTAL: {
-            SUB_TITLE: (currentMonth) => `Total requests in ${currentMonth}`,
-            METRIC_NAME: 'totalMonthlyRequestMetrics'
-          },
-          AVERAGE: {
-            SUB_TITLE: 'Average requests (12 months)',
-            METRIC_NAME: 'averageMonthlyRequestMetrics'
-          },
-          HIGHEST: {
-            SUB_TITLE: 'Highest recorded count (12 months)',
-            METRIC_NAME: 'highestMonthlyRequestMetrics'
-          },
-          TOOLTIP: <>
-              Requests Per Month Metrics:
-              <ul>
-                <li>Total Requests: Total requests for the current month.</li>
-                <li>Average requests: Average monthly requests for the last 12 months.</li>
-                <li>Highest recorded count: Highest monthly requests in the last 12 months.</li>
-              </ul>
-              *Calculations are based on UTC time.
-            </>
         },
         CARD_PRO_LABELS: {
           THRESHOLD: 'Threshold',
