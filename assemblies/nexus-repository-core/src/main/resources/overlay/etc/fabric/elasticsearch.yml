@@ -1,10 +1,10 @@
 cluster.name: nexus
 
 path:
-  home: .
-  conf: etc/fabric
-  data: ../sonatype-work/nexus3/elasticsearch
-  logs: ../sonatype-work/nexus3/log
+  home: ${karaf.base}
+  conf: ${fabric.etc}
+  data: ${karaf.data}/elasticsearch
+  logs: ${karaf.data}/log
   work: ${java.io.tmpdir}/elasticsearch
 
 node.data: true

@@ -17,26 +17,26 @@
   </appender>
 
   <appender name="logfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <File>../sonatype-work/nexus3/log/nexus.log</File>
+    <File>${karaf.data}/log/nexus.log</File>
     <Append>true</Append>
     <encoder class="org.sonatype.nexus.pax.logging.NexusLayoutEncoder">
       <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %node %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
     </encoder>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>../sonatype-work/nexus3/log/nexus-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+      <fileNamePattern>${karaf.data}/log/nexus-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
       <maxHistory>90</maxHistory>
     </rollingPolicy>
     <filter class="org.sonatype.nexus.pax.logging.NexusLogFilter" />
   </appender>
 
   <appender name="clusterlogfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <File>../sonatype-work/nexus3/log/nexus_cluster.log</File>
+    <File>${karaf.data}/log/nexus_cluster.log</File>
     <Append>true</Append>
     <encoder class="org.sonatype.nexus.pax.logging.NexusLayoutEncoder">
       <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %node %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
     </encoder>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>../sonatype-work/nexus3/log/nexus_cluster-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+      <fileNamePattern>${karaf.data}/log/nexus_cluster-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
       <maxHistory>90</maxHistory>
     </rollingPolicy>
     <filter class="org.sonatype.nexus.pax.logging.ClusterLogFilter" />
@@ -50,7 +50,7 @@
     </discriminator>
     <sift>
       <appender name="taskAppender" class="ch.qos.logback.core.FileAppender">
-        <file>../sonatype-work/nexus3/log/tasks/${taskIdAndDate}.log</file>
+        <file>${karaf.data}/log/tasks/${taskIdAndDate}.log</file>
         <encoder class="org.sonatype.nexus.pax.logging.NexusLayoutEncoder">
           <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %node %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
         </encoder>
@@ -66,12 +66,12 @@
     </discriminator>
     <sift>
       <appender name="replicationAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>../sonatype-work/nexus3/log/replication/replication-${repositoryName}.log</file>
+        <file>${karaf.data}/log/replication/replication-${repositoryName}.log</file>
         <encoder class="org.sonatype.nexus.pax.logging.NexusLayoutEncoder">
           <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %node %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-          <fileNamePattern>../sonatype-work/nexus3/log/replication/replication-${repositoryName}-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+          <fileNamePattern>${karaf.data}/log/replication/replication-${repositoryName}-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
           <maxHistory>90</maxHistory>
         </rollingPolicy>
       </appender>
@@ -79,14 +79,14 @@
   </appender>
 
   <appender name="outboundRequestslogfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <File>../sonatype-work/nexus3/log/outbound-request.log</File>
+    <File>${karaf.data}/log/outbound-request.log</File>
     <Append>true</Append>
     <encoder>
       <pattern>%msg%n</pattern>
     </encoder>
     <filter class="org.sonatype.nexus.pax.logging.OutboundRequestsLogFilter" />
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>../sonatype-work/nexus3/log/outbound-request-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+      <fileNamePattern>${karaf.data}/log/outbound-request-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
       <maxHistory>90</maxHistory>
     </rollingPolicy>
   </appender>
@@ -95,14 +95,14 @@
   </logger>
 
   <appender name="auditlogfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <File>../sonatype-work/nexus3/log/audit/audit.log</File>
+    <File>${karaf.data}/log/audit/audit.log</File>
     <Append>true</Append>
     <encoder>
       <pattern>%msg%n</pattern>
     </encoder>
     <filter class="org.sonatype.nexus.pax.logging.AuditLogFilter"/>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>../sonatype-work/nexus3/log/audit/audit-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+      <fileNamePattern>${karaf.data}/log/audit/audit-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
       <maxHistory>90</maxHistory>
     </rollingPolicy>
   </appender>
@@ -141,7 +141,7 @@
   <logger name="com.amazonaws.internal.InstanceMetadataServiceResourceFetcher" level="ERROR"/>
   <logger name="com.amazonaws.util.EC2MetadataUtils" level="ERROR"/>
 
-  <include file="../sonatype-work/nexus3/etc/logback/logback-tasklogfile-appender-override.xml" optional="true"/>
+  <include file="${karaf.data}/etc/logback/logback-tasklogfile-appender-override.xml" optional="true"/>
 
   <root level="${root.level:-INFO}">
     <appender-ref ref="console"/>
