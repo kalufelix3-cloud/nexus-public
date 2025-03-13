@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.bootstrap.edition;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -22,6 +21,9 @@ import org.sonatype.nexus.spring.application.PropertyMap;
 import com.google.common.annotations.VisibleForTesting;
 
 import static java.lang.Boolean.parseBoolean;
+import static org.sonatype.nexus.NexusDirectoryConfiguration.BASEDIR_SYS_PROP;
+import static org.sonatype.nexus.NexusDirectoryConfiguration.DATADIR_SYS_PROP;
+import static org.sonatype.nexus.NexusDirectoryConfiguration.getDataPath;
 import static org.sonatype.nexus.common.app.FeatureFlags.*;
 
 public class NexusEditionPropertiesConfigurer
@@ -40,10 +42,10 @@ public class NexusEditionPropertiesConfigurer
     nexusProperties.putAll(System.getProperties());
 
     // Ensure required properties exist
-    requireProperty(nexusProperties, "karaf.base");
-    requireProperty(nexusProperties, "karaf.data");
+    requireProperty(nexusProperties, BASEDIR_SYS_PROP);
+    requireProperty(nexusProperties, DATADIR_SYS_PROP);
 
-    Path workDirPath = new File(nexusProperties.get("karaf.data")).getCanonicalFile().toPath();
+    Path workDirPath = getDataPath();
     // DirectoryHelper.mkdir(workDirPath);
 
     NexusEditionFactory.selectActiveEdition(nexusProperties, workDirPath);
