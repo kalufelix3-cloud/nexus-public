@@ -15,9 +15,11 @@ package org.sonatype.nexus.bootstrap.edition;
 
 import java.io.File;
 import java.nio.file.Path;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.bootstrap.JavaPrefs;
 import org.sonatype.nexus.spring.application.PropertyMap;
 
 import org.slf4j.Logger;
@@ -29,6 +31,11 @@ public class ProNexusEdition
     extends NexusEdition
 {
   private static final Logger log = LoggerFactory.getLogger(ProNexusEdition.class);
+
+  @Inject
+  public ProNexusEdition(final JavaPrefs javaPrefs) {
+    super(javaPrefs);
+  }
 
   @Override
   public NexusEditionType getEdition() {
@@ -65,7 +72,7 @@ public class ProNexusEdition
       switchToOss = false;
     }
     else {
-      switchToOss = isNullNexusLicenseFile() && isNullJavaPrefLicensePath(PRO_LICENSE_LOCATION);
+      switchToOss = isNullNexusLicenseFile(properties) && isNullJavaPrefLicensePath();
     }
     return switchToOss;
   }

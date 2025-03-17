@@ -15,6 +15,7 @@ package org.sonatype.nexus.bootstrap.edition;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.sonatype.nexus.bootstrap.JavaPrefs;
 import org.sonatype.nexus.spring.application.PropertyMap;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -26,8 +27,12 @@ public class NexusEditionFactory
     throw new IllegalStateException("NexusEditionFactory is a Utility class");
   }
 
+  private static final JavaPrefs javaPrefs = new JavaPrefs();
+
   private static final List<NexusEdition> editions =
-      ImmutableList.of(new ProNexusEdition(), new CommunityNexusEdition(), new CoreNexusEdition());
+      ImmutableList.of(new ProNexusEdition(javaPrefs),
+          new CommunityNexusEdition(javaPrefs),
+          new CoreNexusEdition(javaPrefs));
 
   public static void selectActiveEdition(final PropertyMap properties, final Path workDirPath) {
     NexusEdition nexusEdition = findActiveEdition(editions, properties, workDirPath);
@@ -43,6 +48,6 @@ public class NexusEditionFactory
     return editions.stream()
         .filter(edition -> edition.applies(properties, workDirPath))
         .findFirst()
-        .orElse(new CoreNexusEdition());
+        .orElse(new CoreNexusEdition(javaPrefs));
   }
 }

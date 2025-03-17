@@ -14,16 +14,27 @@
 package org.sonatype.nexus.bootstrap.edition;
 
 import java.nio.file.Path;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
+import org.sonatype.nexus.bootstrap.JavaPrefs;
 import org.sonatype.nexus.spring.application.PropertyMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Named
+@Singleton
 public class CommunityNexusEdition
     extends NexusEdition
 {
   private static final Logger log = LoggerFactory.getLogger(CommunityNexusEdition.class);
+
+  @Inject
+  public CommunityNexusEdition(final JavaPrefs javaPrefs) {
+    super(javaPrefs);
+  }
 
   @Override
   public NexusEditionType getEdition() {

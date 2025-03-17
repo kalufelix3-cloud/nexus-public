@@ -17,13 +17,18 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Properties;
 
+import org.sonatype.nexus.bootstrap.JavaPrefs;
 import org.sonatype.nexus.spring.application.PropertyMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static java.util.prefs.Preferences.userRoot;
+import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * The edition is calculated while the NexusProperties is building a PropertyMap of properties. so this
+ * class CANNOT assume that all the properties have been hoisted into system properties yet
+ */
 public abstract class NexusEdition
 {
   static final String NEXUS_EDITION = "nexus-edition";
@@ -38,11 +43,15 @@ public abstract class NexusEdition
 
   private static final String EDITION_PRO_PATH = "edition_pro";
 
-  public static final String PRO_LICENSE_LOCATION = "/com/sonatype/nexus/professional";
+  private final JavaPrefs javaPrefs;
 
   public abstract NexusEditionType getEdition();
 
   public abstract NexusEditionFeature getEditionFeature();
+
+  public NexusEdition(final JavaPrefs javaPrefs) {
+    this.javaPrefs = checkNotNull(javaPrefs);
+  }
 
   /**
    * Determine whether or not we should be booting to the corresponding edition or not, based on the presence of a
@@ -73,22 +82,12 @@ public abstract class NexusEdition
         .contains(feature);
   }
 
-  protected boolean isNullNexusLicenseFile() {
-    return System.getProperty("nexus.licenseFile") == null && System.getenv("NEXUS_LICENSE_FILE") == null;
+  protected boolean isNullNexusLicenseFile(final PropertyMap properties) {
+    return properties.get("nexus.licenseFile") == null && System.getenv("NEXUS_LICENSE_FILE") == null;
   }
 
-  protected boolean isNullJavaPrefLicensePath(final String licensePath) {
-    Thread currentThread = Thread.currentThread();
-    ClassLoader tccl = currentThread.getContextClassLoader();
-    // Java prefs spawns a Timer-Task that inherits the current TCCL;
-    // temporarily clear it so we can be GC'd if we bounce the KERNEL
-    currentThread.setContextClassLoader(null);
-    try {
-      return userRoot().node(licensePath).get("license", null) == null;
-    }
-    finally {
-      currentThread.setContextClassLoader(tccl);
-    }
+  protected boolean isNullJavaPrefLicensePath() {
+    return !javaPrefs.isLicenseInstalled();
   }
 
   protected File getEditionMarker(final Path workDirPath, NexusEditionType edition) {
