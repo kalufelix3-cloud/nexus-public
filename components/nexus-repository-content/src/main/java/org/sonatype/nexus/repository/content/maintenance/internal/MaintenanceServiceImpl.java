@@ -115,6 +115,8 @@ public class MaintenanceServiceImpl
       throw new AuthorizationException();
     }
 
+    deleteBrowseNode(repository, component);
+
     return maintenanceFacet(repository).deleteComponent(component);
   }
 
@@ -207,12 +209,22 @@ public class MaintenanceServiceImpl
     }
   }
 
-  private void deleteBrowseNode(final Repository repository, final Asset asset) {
+  protected void deleteBrowseNode(final Repository repository, final Asset asset) {
     if (isPostgresql()) {
       Integer internalAssetId = InternalIds.internalAssetId(asset);
 
       repository.optionalFacet(BrowseFacet.class)
           .ifPresent(facet -> facet.deleteByAssetIdAndPath(internalAssetId, asset.path()));
+    }
+  }
+
+  private void deleteBrowseNode(final Repository repository, final Component component) {
+    if (isPostgresql()) {
+      repository.optionalFacet(ContentFacet.class)
+          .ifPresent(contentFacet -> contentFacet.components()
+              .with(component)
+              .assets()
+              .forEach(asset -> deleteBrowseNode(repository, asset)));
     }
   }
 

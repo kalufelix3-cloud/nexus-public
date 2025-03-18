@@ -20,15 +20,23 @@ import java.util.concurrent.ExecutorService;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
+import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetStores;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.fluent.FluentComponents;
+import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
+import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
+import org.sonatype.nexus.selector.VariableSource;
 import org.sonatype.nexus.test.util.Whitebox;
 
 import org.junit.Before;
@@ -38,9 +46,13 @@ import org.mockito.Mock;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class MaintenanceServiceImplTest
@@ -75,6 +87,9 @@ public class MaintenanceServiceImplTest
 
   @Mock
   private AssetStore assetStore;
+
+  @Mock
+  private ContentMaintenanceFacet contentMaintenanceFacet;
 
   private MaintenanceServiceImpl underTest;
 
@@ -116,5 +131,76 @@ public class MaintenanceServiceImplTest
     Set<String> result = underTest.deleteAssets(repository, List.of());
 
     assertEquals(0, result.size());
+  }
+
+  @Test
+  public void testDeleteComponent() {
+    MaintenanceServiceImpl underTestSpy = spy(underTest);
+    Component component = mock(Component.class);
+    Format format = mock(Format.class);
+    FluentAsset asset = mock(FluentAsset.class);
+    FluentComponent fluentComponent = mock(FluentComponent.class);
+    FluentComponents fluentComponents = mock(FluentComponents.class);
+    ContentFacet contentFacet = mock(ContentFacet.class);
+    VariableResolverAdapter variableResolverAdapter = mock(VariableResolverAdapter.class);
+
+    setupCommonMocks(component, format, asset, fluentComponent, fluentComponents, contentFacet,
+        variableResolverAdapter);
+
+    when(databaseCheck.isPostgresql()).thenReturn(true);
+    doNothing().when(underTestSpy).deleteBrowseNode(any(Repository.class), any(FluentAsset.class));
+
+    Set<String> result = underTestSpy.deleteComponent(repository, component);
+
+    verify(underTestSpy).deleteBrowseNode(any(Repository.class), any(FluentAsset.class));
+    assertEquals(Set.of("asset1", "asset2"), result);
+  }
+
+  @Test
+  public void testDeleteComponentNotPostgres() {
+    MaintenanceServiceImpl underTestSpy = spy(underTest);
+    Component component = mock(Component.class);
+    Format format = mock(Format.class);
+    FluentAsset asset = mock(FluentAsset.class);
+    FluentComponent fluentComponent = mock(FluentComponent.class);
+    FluentComponents fluentComponents = mock(FluentComponents.class);
+    ContentFacet contentFacet = mock(ContentFacet.class);
+    VariableResolverAdapter variableResolverAdapter = mock(VariableResolverAdapter.class);
+
+    setupCommonMocks(component, format, asset, fluentComponent, fluentComponents, contentFacet,
+        variableResolverAdapter);
+
+    when(databaseCheck.isPostgresql()).thenReturn(false);
+
+    Set<String> result = underTestSpy.deleteComponent(repository, component);
+
+    verify(underTestSpy, never()).deleteBrowseNode(any(Repository.class), any(FluentAsset.class));
+    assertEquals(Set.of("asset1", "asset2"), result);
+  }
+
+  private void setupCommonMocks(
+      Component component,
+      Format format,
+      FluentAsset asset,
+      FluentComponent fluentComponent,
+      FluentComponents fluentComponents,
+      ContentFacet contentFacet,
+      VariableResolverAdapter variableResolverAdapter)
+  {
+    when(format.getValue()).thenReturn("raw");
+    when(asset.path()).thenReturn("/foo/bar");
+    when(fluentComponent.assets()).thenReturn(Set.of(asset));
+    when(fluentComponents.with(component)).thenReturn(fluentComponent);
+    when(contentFacet.components()).thenReturn(fluentComponents);
+    when(variableResolverAdapter.fromPath(anyString(), anyString())).thenReturn(mock(VariableSource.class));
+    when(repository.facet(ContentMaintenanceFacet.class)).thenReturn(contentMaintenanceFacet);
+    when(repository.optionalFacet(ContentFacet.class)).thenReturn(Optional.of(contentFacet));
+    when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
+    when(repository.getFormat()).thenReturn(format);
+    when(repository.getName()).thenReturn("raw-repo");
+    when(contentPermissionChecker.isPermitted(anyString(), anyString(), anyString(),
+        any(VariableSource.class))).thenReturn(true);
+    when(contentMaintenanceFacet.deleteComponent(any(Component.class))).thenReturn(Set.of("asset1", "asset2"));
+    when(variableResolverAdapterManager.get(any())).thenReturn(variableResolverAdapter);
   }
 }
