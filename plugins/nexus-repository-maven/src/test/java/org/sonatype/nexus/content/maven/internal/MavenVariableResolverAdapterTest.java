@@ -30,8 +30,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import static com.google.common.collect.ImmutableMap.of;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -80,7 +80,7 @@ public class MavenVariableResolverAdapterTest
 
   @Test
   public void addFromSourceLookupShouldAddCoordinatesToVariableSourceBuilder() {
-    mavenVariableResolverAdapter.addFromSourceLookup(builder, null, asset);
+    mavenVariableResolverAdapter.addFromSourceLookup(builder, asset);
 
     verifyCoordinatesSet();
   }
@@ -98,7 +98,7 @@ public class MavenVariableResolverAdapterTest
   public void addFromSourceLookupShouldNotAddNullCoordinates() {
     when(mavenPath.getCoordinates()).thenReturn(null);
 
-    mavenVariableResolverAdapter.addFromSourceLookup(builder, null, asset);
+    mavenVariableResolverAdapter.addFromSourceLookup(builder, asset);
 
     verify(builder, never()).addResolver(any(VariableResolver.class));
   }

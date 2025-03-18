@@ -23,8 +23,6 @@ import org.sonatype.nexus.selector.PropertiesResolver;
 import org.sonatype.nexus.selector.VariableSource;
 import org.sonatype.nexus.selector.VariableSourceBuilder;
 
-import org.elasticsearch.search.lookup.SourceLookup;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -33,10 +31,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.1
  */
 public abstract class VariableResolverAdapterSupport
-  implements VariableResolverAdapter
+    implements VariableResolverAdapter
 {
   protected static final String NAME = "name";
+
   protected static final String PATH = "path";
+
   protected static final String FORMAT = "format";
 
   @Override
@@ -63,13 +63,13 @@ public abstract class VariableResolverAdapterSupport
   }
 
   @Override
-  public VariableSource fromSourceLookup(final SourceLookup sourceLookup, final Map<String, Object> asset) {
+  public VariableSource fromSourceLookup(final String format, final Map<String, Object> asset) {
     VariableSourceBuilder builder = new VariableSourceBuilder();
     builder.addResolver(
         new ConstantVariableResolver(checkNotNull((String) asset.get(NAME)), PATH));
     builder.addResolver(
-        new ConstantVariableResolver(checkNotNull(sourceLookup.get(FORMAT)), FORMAT));
-    addFromSourceLookup(builder, sourceLookup, asset);
+        new ConstantVariableResolver(format, FORMAT));
+    addFromSourceLookup(builder, asset);
 
     return builder.build();
   }
@@ -85,9 +85,9 @@ public abstract class VariableResolverAdapterSupport
     return builder.build();
   }
 
-  protected abstract void addFromSourceLookup(VariableSourceBuilder builder,
-                                              SourceLookup sourceLookup,
-                                              Map<String, Object> asset);
+  protected abstract void addFromSourceLookup(
+      VariableSourceBuilder builder,
+      Map<String, Object> asset);
 
   protected abstract void addFromSearchResults(
       VariableSourceBuilder builder,

@@ -21,8 +21,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.elasticsearch.ElasticSearchExtension;
-
-import org.elasticsearch.search.SearchHit;
+import org.sonatype.nexus.repository.search.elasticsearch.ElasticSearchHit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
@@ -36,14 +35,14 @@ public class Maven2SearchExtension
     implements ElasticSearchExtension
 {
   @Override
-  public void updateComponent(final ComponentSearchResult component, final SearchHit hit) {
+  public void updateComponent(final ComponentSearchResult component, final ElasticSearchHit hit) {
     if (Maven2Format.NAME.equals(component.getFormat())) {
       getBaseVersion(hit)
           .ifPresent(baseVersion -> component.addAnnotation(P_BASE_VERSION, baseVersion));
     }
   }
 
-  private static Optional<String> getBaseVersion(final SearchHit hit) {
+  private static Optional<String> getBaseVersion(final ElasticSearchHit hit) {
     Map<String, Object> source = checkNotNull(hit.getSource());
 
     return Optional.ofNullable(source.get("attributes"))

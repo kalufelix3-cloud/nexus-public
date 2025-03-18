@@ -19,7 +19,6 @@ import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cleanup.content.search.CleanupBrowseServiceFactory;
-import org.sonatype.nexus.repository.cleanup.CleanupFeatureCheck;
 import org.sonatype.nexus.cleanup.content.search.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
@@ -27,6 +26,7 @@ import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.repository.cleanup.CleanupFeatureCheck;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -35,7 +35,6 @@ import org.sonatype.nexus.repository.types.GroupType;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.elasticsearch.search.SearchContextMissingException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -121,7 +120,7 @@ public class CleanupServiceImplTest
 
   private boolean useRetainCleanup;
 
-  public CleanupServiceImplTest(Boolean useRetainCleanup) {
+  public CleanupServiceImplTest(final Boolean useRetainCleanup) {
     this.useRetainCleanup = useRetainCleanup;
   }
 
@@ -164,7 +163,7 @@ public class CleanupServiceImplTest
   public void fetchPolicyForEachRepositoryAndRunCleanup() throws Exception {
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+    verify(cleanupMethod).run(eq(repository1), argThat(streamContains(component1, component2)), eq(cancelledCheck));
     verify(cleanupMethod).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
   }
 
@@ -198,7 +197,7 @@ public class CleanupServiceImplTest
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+    verify(cleanupMethod).run(eq(repository1), argThat(streamContains(component1, component2)), eq(cancelledCheck));
   }
 
   @Test
@@ -219,7 +218,7 @@ public class CleanupServiceImplTest
     when(cleanupFeatureCheck.isRetainSupported(any())).thenReturn(false);
     when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1));
     when(cleanupPolicy1.getCriteria()).thenReturn(
-            ImmutableMap.of(LAST_BLOB_UPDATED_KEY, "1", "retain", "3", "sortBy", "version"));
+        ImmutableMap.of(LAST_BLOB_UPDATED_KEY, "1", "retain", "3", "sortBy", "version"));
 
     underTest.cleanup(cancelledCheck);
 
@@ -262,7 +261,7 @@ public class CleanupServiceImplTest
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+    verify(cleanupMethod).run(eq(repository1), argThat(streamContains(component1, component2)), eq(cancelledCheck));
     verify(cleanupMethod, never()).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
   }
 
@@ -313,7 +312,7 @@ public class CleanupServiceImplTest
   @Test
   public void cleanupRetriedOnScrollTimeout() {
     when(cleanupMethod.run(any(), any(), any()))
-        .thenThrow(new RuntimeException(new SearchContextMissingException(10L))).thenReturn(deletionProgress);
+        .thenThrow(new RuntimeException()).thenReturn(deletionProgress);
 
     underTest.cleanup(cancelledCheck);
 
@@ -334,7 +333,7 @@ public class CleanupServiceImplTest
   @Test
   public void cleanupFailedSearchContextMissingException() {
     when(cleanupMethod.run(any(), any(), any()))
-        .thenThrow(new SearchContextMissingException(10L));
+        .thenThrow(new RuntimeException());
     underTest.cleanup(cancelledCheck);
 
     verify(cleanupMethod, times(3)).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
@@ -358,10 +357,12 @@ public class CleanupServiceImplTest
     return setupComponents(repository, policyNames);
   }
 
-  private Stream<FluentComponent> setupComponents(final Repository repository,
-                                           final String... policyNames)
+  private Stream<FluentComponent> setupComponents(
+      final Repository repository,
+      final String... policyNames)
   {
-    Stream<FluentComponent> components = ImmutableList.of(mock(FluentComponent.class), mock(FluentComponent.class)).stream();
+    Stream<FluentComponent> components =
+        ImmutableList.of(mock(FluentComponent.class), mock(FluentComponent.class)).stream();
 
     asList(policyNames).forEach(policyName -> {
       CleanupPolicy cleanupPolicy = mock(CleanupPolicy.class);

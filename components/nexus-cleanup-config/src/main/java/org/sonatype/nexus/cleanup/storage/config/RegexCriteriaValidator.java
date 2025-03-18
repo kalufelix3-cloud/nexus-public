@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.cleanup.storage.config;
 
-import org.apache.lucene.util.automaton.RegExp;
+import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 
@@ -32,9 +32,9 @@ public class RegexCriteriaValidator
    */
   public static String validate(final String expression) {
     try {
-      new RegExp(expression);
+      Pattern.compile(expression);
     }
-    catch (IllegalArgumentException e) {  // NOSONAR
+    catch (Exception e) { // NOSONAR
       throw new InvalidExpressionException(
           format("Invalid regular expression pattern: %s", e.getMessage()));
     }

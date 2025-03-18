@@ -20,10 +20,9 @@ import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.VariableSource;
 
-import org.elasticsearch.search.lookup.SourceLookup;
-
 /**
  * Generate a variable source from a context, to be used for content selector evaluation
+ * 
  * @since 3.1
  */
 public interface VariableResolverAdapter
@@ -33,7 +32,7 @@ public interface VariableResolverAdapter
   /**
    * Creates a {@link VariableSource} from an ES-indexed asset.
    */
-  VariableSource fromSourceLookup(SourceLookup sourceLookup, Map<String, Object> asset);
+  VariableSource fromSourceLookup(String format, Map<String, Object> asset);
 
   /**
    * @since 3.8

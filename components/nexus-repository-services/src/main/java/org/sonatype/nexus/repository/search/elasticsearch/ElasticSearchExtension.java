@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.search.elasticsearch;
 
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
 
-import org.elasticsearch.search.SearchHit;
-
 /**
  * Extension point for search based on ElasticSearchs
  *
@@ -24,7 +22,7 @@ import org.elasticsearch.search.SearchHit;
 public interface ElasticSearchExtension
 {
   /**
-   * Annotate the {@link ComponentSearchResult} with data from the {@link SearchHit}
+   * Annotate the {@link ComponentSearchResult} with data from the {@link ElasticSearchHit}
    */
-  void updateComponent(ComponentSearchResult component, SearchHit hit);
+  void updateComponent(ComponentSearchResult component, ElasticSearchHit hit);
 }

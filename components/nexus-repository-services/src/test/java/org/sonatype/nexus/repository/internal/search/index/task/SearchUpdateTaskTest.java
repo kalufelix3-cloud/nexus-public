@@ -20,8 +20,6 @@ import org.sonatype.nexus.repository.search.index.SearchUpdateService;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
-import org.elasticsearch.cluster.metadata.ProcessClusterEventTimeoutException;
-import org.elasticsearch.common.unit.TimeValue;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -106,9 +104,9 @@ public class SearchUpdateTaskTest
 
   @Test
   public void runOnMultipleRepositoriesButFailRebuildingIndex() {
-    doThrow(new ProcessClusterEventTimeoutException(
-        new TimeValue(30000), "failed to process cluster event (delete-index)"))
-        .when(searchIndexFacet1).rebuildIndex();
+    doThrow(new RuntimeException("failed to process cluster event (delete-index)"))
+        .when(searchIndexFacet1)
+        .rebuildIndex();
     configuration.setString("repositoryNames", "repository1,repository2");
     underTest.configure(configuration);
     underTest.execute();

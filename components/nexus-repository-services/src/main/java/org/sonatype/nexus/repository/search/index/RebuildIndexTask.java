@@ -18,8 +18,6 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.scheduling.Cancelable;
 
-import org.elasticsearch.ElasticsearchException;
-
 /**
  * Internal task to rebuild index of given repository.
  *
@@ -34,7 +32,8 @@ public class RebuildIndexTask
   protected void execute(final Repository repository) {
     try {
       repository.facet(SearchIndexFacet.class).rebuildIndex();
-    } catch (ElasticsearchException e) {
+    }
+    catch (Exception e) {
       log.error("Could not perform rebuild index for repo {}, {}", repository.getName(), e.getMessage());
     }
   }

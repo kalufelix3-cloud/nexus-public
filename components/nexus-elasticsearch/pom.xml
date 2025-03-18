@@ -33,6 +33,21 @@
     </dependency>
 
     <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-repository-content</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-repository-services</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.elasticsearch</groupId>
       <artifactId>elasticsearch</artifactId>
     </dependency>
@@ -40,6 +55,12 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-testsupport</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

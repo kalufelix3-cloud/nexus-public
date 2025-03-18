@@ -24,8 +24,6 @@ import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.VariableSourceBuilder;
 
-import org.elasticsearch.search.lookup.SourceLookup;
-
 /**
  * Simple implementation that will expose the path/format variable resolvers.
  *
@@ -42,10 +40,7 @@ public class SimpleVariableResolverAdapter
   }
 
   @Override
-  protected void addFromSourceLookup(final VariableSourceBuilder builder,
-                                     final SourceLookup sourceLookup,
-                                     final Map<String, Object> asset)
-  {
+  protected void addFromSourceLookup(final VariableSourceBuilder builder, final Map<String, Object> asset) {
     // no-op the simple impl just allows for the path/format variable resolvers in the support class
   }
 

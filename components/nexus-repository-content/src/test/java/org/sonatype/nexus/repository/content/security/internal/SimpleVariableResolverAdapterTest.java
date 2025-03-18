@@ -21,7 +21,6 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.VariableSource;
 
-import org.elasticsearch.search.lookup.SourceLookup;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -45,9 +44,6 @@ public class SimpleVariableResolverAdapterTest
 
   @Mock
   Request request;
-
-  @Mock
-  SourceLookup sourceLookup;
 
   @Mock
   Map<String, Object> sourceLookupAsset;
@@ -88,10 +84,9 @@ public class SimpleVariableResolverAdapterTest
   @Test
   public void testFromSourceLookup() throws Exception {
     when(sourceLookupAsset.get("name")).thenReturn(TEST_PATH_WITHOUT_SLASH);
-    when(sourceLookup.get("format")).thenReturn(TEST_FORMAT);
 
     SimpleVariableResolverAdapter simpleVariableResolverAdapter = new SimpleVariableResolverAdapter();
-    VariableSource source = simpleVariableResolverAdapter.fromSourceLookup(sourceLookup, sourceLookupAsset);
+    VariableSource source = simpleVariableResolverAdapter.fromSourceLookup(TEST_FORMAT, sourceLookupAsset);
 
     assertThat(source.getVariableSet(), containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(TEST_FORMAT));

@@ -25,7 +25,6 @@ import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import com.google.common.collect.ImmutableMap;
-import org.elasticsearch.ElasticsearchException;
 
 import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
@@ -48,9 +47,11 @@ public class SearchUpdateTask
   private final TaskScheduler taskScheduler;
 
   @Inject
-  public SearchUpdateTask(final RepositoryManager repositoryManager,
-                          final SearchUpdateService searchUpdateService,
-                          final TaskScheduler taskScheduler) {
+  public SearchUpdateTask(
+      final RepositoryManager repositoryManager,
+      final SearchUpdateService searchUpdateService,
+      final TaskScheduler taskScheduler)
+  {
     this.repositoryManager = requireNonNull(repositoryManager);
     this.searchUpdateService = requireNonNull(searchUpdateService);
     this.taskScheduler = taskScheduler;
@@ -69,7 +70,7 @@ public class SearchUpdateTask
 
     String[] repositoryNames = getRepositoryNamesField();
 
-    for(String name : repositoryNames) {
+    for (String name : repositoryNames) {
       Repository repository = repositoryManager.get(name);
       if (repository != null) {
         try {
@@ -78,7 +79,8 @@ public class SearchUpdateTask
           searchIndexFacet.rebuildIndex();
           searchUpdateService.doneReindexing(repository);
           log.info("Completed update of search index for repo {}", name);
-        } catch (ElasticsearchException e) {
+        }
+        catch (Exception e) {
           log.error("Could not perform search index update for repo {}, {}", name, e.getMessage());
         }
       }
@@ -99,8 +101,7 @@ public class SearchUpdateTask
     String value = getConfiguration().getString(REPOSITORY_NAMES_FIELD_ID);
     if (value != null) {
       return value.split(",");
-    } else {
-      return new String[]{};
     }
+    return new String[]{};
   }
 }
