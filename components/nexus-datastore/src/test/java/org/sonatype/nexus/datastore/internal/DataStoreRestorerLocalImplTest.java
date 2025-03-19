@@ -43,6 +43,11 @@ import static org.mockito.Mockito.when;
 public class DataStoreRestorerLocalImplTest
     extends TestSupport
 {
+
+  private static final String RESTORE_FROM_BACKUP = "restore-from-backup";
+
+  private static final String DB = "db";
+
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -60,6 +65,8 @@ public class DataStoreRestorerLocalImplTest
   public void setup() throws IOException {
     workDirectory = temporaryFolder.newFolder();
     when(directories.getWorkDirectory(any())).thenAnswer(i -> new File(workDirectory, (String) i.getArguments()[0]));
+    when(directories.getWorkDirectory(DB, false))
+        .thenReturn(new File(workDirectory, DB));
     when(dataStoreConfiguration.getName()).thenReturn("foo");
 
     underTest = new DataStoreRestorerLocalImpl(directories);
@@ -67,13 +74,13 @@ public class DataStoreRestorerLocalImplTest
 
   @Test
   public void testMaybeRestore() throws IOException {
-    makeWorkDirectory("restore-from-backup");
+    makeWorkDirectory(RESTORE_FROM_BACKUP);
     createBackup("foo");
 
     assertTrue(underTest.maybeRestore(dataStoreConfiguration));
 
     // check no file was unzipped
-    File dbDir = directories.getWorkDirectory("db");
+    File dbDir = directories.getWorkDirectory(DB);
     assertThat(dbDir.list(), arrayContaining("foo.mv.db"));
   }
 
@@ -85,16 +92,24 @@ public class DataStoreRestorerLocalImplTest
 
   @Test
   public void testMaybeRestore_existingDb() throws IOException {
-    makeWorkDirectory("db");
+    makeWorkDirectory(DB);
     directories.getWorkDirectory("db/foo.mv.db").createNewFile();
-    makeWorkDirectory("restore-from-backup");
+    makeWorkDirectory(RESTORE_FROM_BACKUP);
     createBackup("foo");
 
     assertFalse(underTest.maybeRestore(dataStoreConfiguration));
 
     // check no file was unzipped
-    File dbDir = directories.getWorkDirectory("db");
+    File dbDir = directories.getWorkDirectory(DB);
     assertThat(dbDir.listFiles(), arrayWithSize(1));
+  }
+
+  @Test
+  public void testMaybeRestore_noRestoreDirectory() throws IOException {
+    makeWorkDirectory(RESTORE_FROM_BACKUP);
+    assertFalse(underTest.maybeRestore(dataStoreConfiguration));
+    File dbDir = directories.getWorkDirectory(DB);
+    assertFalse(dbDir.exists());
   }
 
   private File makeWorkDirectory(final String path) throws IOException {
@@ -104,7 +119,7 @@ public class DataStoreRestorerLocalImplTest
   }
 
   private void createBackup(final String name) throws FileNotFoundException, IOException {
-    File restoreDirectory = makeWorkDirectory("restore-from-backup");
+    File restoreDirectory = makeWorkDirectory(RESTORE_FROM_BACKUP);
     restoreDirectory.mkdirs();
     File zip = new File(restoreDirectory, name);
     try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zip))) {

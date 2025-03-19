@@ -10,13 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.datastore;
+package org.sonatype.nexus.self.hosted.datastore;
 
 import javax.annotation.Priority;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.datastore.DataStoreConfigurationSource;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 
 import com.google.common.collect.ImmutableMap;
@@ -24,7 +25,7 @@ import com.google.common.collect.ImmutableSet;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.Integer.MIN_VALUE;
-import static org.sonatype.nexus.datastore.DataStoreConfigurationDefaultSource.LOCAL;
+import static org.sonatype.nexus.self.hosted.datastore.DataStoreConfigurationDefaultSource.LOCAL;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**

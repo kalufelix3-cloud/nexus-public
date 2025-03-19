@@ -448,14 +448,14 @@ public class MyBatisDataStore
   }
 
   private boolean isOrientDbPresent() {
-    Path dbPath = directories.getWorkDirectory("db").toPath();
+    Path dbPath = directories.getWorkDirectory("db", false).toPath();
     Set<String> orientFolderNames = ImmutableSet.of("config", "security", "component");
 
     return FileFinder.pathContainsFolder(dbPath, orientFolderNames);
   }
 
   private boolean isH2DbPresent() {
-    Path dbPath = directories.getWorkDirectory("db").toPath();
+    Path dbPath = directories.getWorkDirectory("db", false).toPath();
     Path h2Db = dbPath.resolve("nexus.mv.db");
 
     return Files.exists(h2Db);

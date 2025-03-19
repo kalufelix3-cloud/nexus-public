@@ -87,7 +87,7 @@ public class LocalFreezeService
       final List<Freezable> freezables,
       final EventManager eventManager)
   {
-    this.markerFile = new File(directories.getWorkDirectory("db"), MARKER_FILE);
+    this.markerFile = new File(directories.getWorkDirectory("db", false), MARKER_FILE);
     this.clientInfoProvider = checkNotNull(clientInfoProvider);
     this.freezables = checkNotNull(freezables);
     this.eventManager = checkNotNull(eventManager);
@@ -248,7 +248,10 @@ public class LocalFreezeService
           "frozenAt", request.frozenAt().toString(),
           "frozenBy", request.frozenBy().orElse(null),
           "frozenByIp", request.frozenByIp().orElse(null));
-
+      File dbDir = markerFile.getParentFile();
+      if (!dbDir.exists() && !dbDir.mkdirs()) {
+        throw new IllegalStateException("Unable to create db directory: " + dbDir.getAbsolutePath());
+      }
       mapper.writeValue(markerFile, json);
     }
     catch (Exception e) {

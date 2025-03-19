@@ -134,7 +134,7 @@ public class DbDiagnostics
   }
 
   public Path getH2DB() {
-    Path dbPath = directories.getWorkDirectory("db").toPath();
+    Path dbPath = directories.getWorkDirectory("db", false).toPath();
     Path h2Db = dbPath.resolve("nexus.mv.db");
 
     if (Files.exists(h2Db)) {

@@ -41,11 +41,12 @@ public class RestoreHelper
 
   @Inject
   public RestoreHelper(final ApplicationDirectories applicationDirectories) {
-    this.dbPath = checkNotNull(applicationDirectories).getWorkDirectory(DB_FOLDER_NAME).toPath();
+    this.dbPath = checkNotNull(applicationDirectories).getWorkDirectory(DB_FOLDER_NAME, false).toPath();
   }
 
   /**
    * Get the absolute path to the DB directory.
+   * 
    * @return the DB path
    */
   public Path getDbPath() {

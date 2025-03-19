@@ -61,7 +61,7 @@ public class H2WebConsole
     checkNotNull(applicationDirectories);
     this.httpListenerEnabled = httpListenerEnabled;
     this.httpListenerPort = httpListenerPort;
-    databasesDir = applicationDirectories.getWorkDirectory("db");
+    databasesDir = applicationDirectories.getWorkDirectory("db", false);
   }
 
   @Override

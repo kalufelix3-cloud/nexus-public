@@ -66,10 +66,6 @@ public class DataStoreRestorerLocalImpl
       final File restoreDirectory,
       final DataStoreConfiguration dataStoreConfiguration)
   {
-    if (!dbDirectory.exists() && !dbDirectory.mkdirs()) {
-      log.error("Unable to restore from backup");
-      throw new RuntimeException("Unable to create database directory: " + dbDirectory.getAbsolutePath());
-    }
 
     String dataStoreFileName = dataStoreConfiguration.getName().concat(".mv.db");
     Path dbPath = dbDirectory.toPath();
@@ -82,6 +78,11 @@ public class DataStoreRestorerLocalImpl
     if (files == null) {
       log.debug("Could not list files in restore directory '{}', skipping.", restoreDirectory.getAbsolutePath());
       return false;
+    }
+
+    if (files.length > 0 && !dbDirectory.exists() && !dbDirectory.mkdirs()) {
+      log.error("Unable to restore from backup");
+      throw new RuntimeException("Unable to create database directory: " + dbDirectory.getAbsolutePath());
     }
 
     for (File backup : files) {
@@ -115,7 +116,7 @@ public class DataStoreRestorerLocalImpl
   }
 
   private File getDbDirectory() {
-    return applicationDirectories.getWorkDirectory("db");
+    return applicationDirectories.getWorkDirectory("db", false);
   }
 
   private File getRestoreDirectory() {
