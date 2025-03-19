@@ -17,7 +17,7 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-
+import javax.annotation.Nullable;
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -104,7 +104,7 @@ public class DataStoreManagerImpl
       final Map<String, Provider<DataStore<?>>> dataStorePrototypes,
       final DataStoreConfigurationManager configurationManager,
       final Provider<DataStoreUsageChecker> usageChecker,
-      final DataStoreRestorer restorer,
+      @Nullable final DataStoreRestorer restorer,
       final BeanLocator beanLocator)
   {
     this.enabled = true;
@@ -115,7 +115,7 @@ public class DataStoreManagerImpl
     this.configurationManager = checkNotNull(configurationManager);
     this.usageChecker = checkNotNull(usageChecker);
     this.beanLocator = checkNotNull(beanLocator);
-    this.restorer = checkNotNull(restorer);
+    this.restorer = restorer;
   }
 
   @Override
@@ -171,7 +171,9 @@ public class DataStoreManagerImpl
 
   private void tryRestore(final DataStoreConfiguration configuration) {
     try {
-      restorer.maybeRestore(configuration);
+      if (restorer != null) {
+        restorer.maybeRestore(configuration);
+      }
       doCreate(configuration);
     }
     catch (Exception e) {
