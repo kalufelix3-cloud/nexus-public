@@ -163,6 +163,7 @@ public class SecurityConfigurationSourceImplTest
     }).getInstance(SecurityConfigurationSourceImpl.class);
 
     UnitOfWork.beginBatch(() -> sessionRule.openSession(DEFAULT_DATASTORE_NAME));
+    when(defaultSource.getConfiguration(any())).thenReturn(defaults);
     underTest.start();
     underTest.loadConfiguration();
   }

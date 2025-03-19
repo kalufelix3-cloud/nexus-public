@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.security.config;
 
-import java.io.IOException;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 
 import org.apache.shiro.authc.credential.PasswordService;
@@ -24,7 +22,6 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,59 +32,37 @@ public class StaticSecurityConfigurationSourceTest
   private PasswordService passwordService;
 
   @Mock
-  private AdminPasswordFileManager adminPasswordFileManager;
+  private AdminPasswordSource adminPasswordSource;
 
   private StaticSecurityConfigurationSource underTest;
 
   @Before
   public void setup() throws Exception {
-    underTest = new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, true);
+    underTest = new StaticSecurityConfigurationSource(passwordService, adminPasswordSource, true);
     when(passwordService.encryptPassword(any())).thenReturn("encrypted");
-    when(adminPasswordFileManager.readFile()).thenReturn(null);
   }
 
   @Test
-  public void shouldGetPasswordFromEnvironmentVariable() throws IOException {
+  public void shouldGetPasswordFromEnvironmentVariable() {
     String password = "supersecretpassword";
 
-    underTest = new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, false, password);
+    underTest = new StaticSecurityConfigurationSource(passwordService, adminPasswordSource, false, password);
 
     SecurityConfiguration configuration = underTest.getConfiguration();
     CUser user = configuration.getUser("admin");
     assertThat(user.getPassword(), is("encrypted"));
     verify(passwordService).encryptPassword(password);
-    verify(adminPasswordFileManager, never()).writeFile(any());
   }
 
   @Test
-  public void testGetConfiguration_argNonRandom() throws IOException {
-    underTest = new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, false);
-
+  public void shouldGeneratePassword() {
     SecurityConfiguration configuration = underTest.getConfiguration();
-    CUser user = configuration.getUser("admin");
-    assertThat(user.getPassword(), is("encrypted"));
-    verify(passwordService).encryptPassword("admin123");
-    verify(adminPasswordFileManager, never()).writeFile(any());
-  }
 
-  @Test
-  public void testGetConfiguration_randomGeneration() throws IOException {
-    when(adminPasswordFileManager.readFile()).thenReturn(null);
-    SecurityConfiguration configuration = underTest.getConfiguration();
     CUser user = configuration.getUser("admin");
+
     assertThat(user.getPassword(), is("encrypted"));
+    verify(adminPasswordSource).getPassword(true);
     verify(passwordService).encryptPassword(any());
-    verify(adminPasswordFileManager).writeFile(any());
-  }
-
-  @Test
-  public void testGetConfiguration_randomGenerationWriteFails() throws IOException {
-    when(adminPasswordFileManager.readFile()).thenReturn(null);
-    when(adminPasswordFileManager.writeFile(any())).thenReturn(false);
-    SecurityConfiguration configuration = underTest.getConfiguration();
-    CUser user = configuration.getUser("admin");
-    assertThat(user.getPassword(), is("encrypted"));
-    verify(passwordService).encryptPassword("admin123");
   }
 
   @Test
@@ -99,22 +74,9 @@ public class StaticSecurityConfigurationSourceTest
 
   @Test
   public void testGetConfiguration_adminUserStatusCheckNonRandom() {
-    underTest = new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, false);
+    underTest = new StaticSecurityConfigurationSource(passwordService, adminPasswordSource, false);
     SecurityConfiguration configuration = underTest.getConfiguration();
     CUser user = configuration.getUser("admin");
     assertThat(user.getStatus(), is(CUser.STATUS_ACTIVE));
-  }
-
-  /*
-   * this test ensures that we don't inadvertently overwrite the serialized password from the first run
-   */
-  @Test
-  public void testGetConfiguration_reloads() throws IOException {
-    when(adminPasswordFileManager.readFile()).thenReturn(null).thenReturn("password");
-    underTest.getConfiguration();
-    underTest.getConfiguration();
-
-    //should only write once
-    verify(adminPasswordFileManager).writeFile(any());
   }
 }

@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.internal.security.model;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -27,6 +31,8 @@ import org.sonatype.nexus.security.config.SecurityConfigurationSource;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
+import static org.sonatype.nexus.security.config.StaticSecurityConfigurationSource.ADMIN;
+import static org.sonatype.nexus.security.config.StaticSecurityConfigurationSource.ANONYMOUS;
 
 /**
  * Default implementation of {@link SecurityConfigurationSource}.
@@ -55,50 +61,66 @@ public class SecurityConfigurationSourceImpl
 
   @Override
   protected void doStart() throws Exception {
-    addDefaultUsers();
-    addDefaultRoles();
-    addDefaultPrivileges();
-    addDefaultUserRoleMappings();
+    addDefaultConfigurations();
   }
 
-  private void addDefaultUsers() {
-    log.info("Initializing default users");
+  public void addDefaultConfigurations() {
+    final Set<String> defaultUserIds = getDefaultUserIds();
+    final SecurityConfiguration defaultConfigurations = securityDefaults.getConfiguration(defaultUserIds);
 
-    for (CUser user : securityDefaults.getConfiguration().getUsers()) {
+    addDefaultUsers(defaultConfigurations);
+    addDefaultRoles(defaultConfigurations);
+    addDefaultPrivileges(defaultConfigurations);
+    addDefaultUserRoleMappings(defaultConfigurations);
+  }
+
+  private void addDefaultUsers(final SecurityConfiguration defaultConfigurations) {
+    log.info("Initializing default users");
+    for (CUser user : defaultConfigurations.getUsers()) {
       if (securityConfiguration.getUser(user.getId()) == null) {
         securityConfiguration.addUser(user);
       }
     }
   }
 
-  private void addDefaultRoles() {
+  private void addDefaultRoles(final SecurityConfiguration defaultConfigurations) {
     log.info("Initializing default roles");
 
-    for (CRole role : securityDefaults.getConfiguration().getRoles()) {
+    for (CRole role : defaultConfigurations.getRoles()) {
       if (securityConfiguration.getRole(role.getId()) == null) {
         securityConfiguration.addRole(role);
       }
     }
   }
 
-  private void addDefaultPrivileges() {
+  private void addDefaultPrivileges(final SecurityConfiguration defaultConfigurations) {
     log.info("Initializing default privileges");
 
-    for (CPrivilege privilege : securityDefaults.getConfiguration().getPrivileges()) {
+    for (CPrivilege privilege : defaultConfigurations.getPrivileges()) {
       if (securityConfiguration.getPrivilege(privilege.getId()) == null) {
         securityConfiguration.addPrivilege(privilege);
       }
     }
   }
 
-  private void addDefaultUserRoleMappings() {
+  private void addDefaultUserRoleMappings(final SecurityConfiguration defaultConfigurations) {
     log.info("Initializing default user/role mappings");
 
-    for (CUserRoleMapping mapping : securityDefaults.getConfiguration().getUserRoleMappings()) {
+    for (CUserRoleMapping mapping : defaultConfigurations.getUserRoleMappings()) {
       if (securityConfiguration.getUserRoleMapping(mapping.getUserId(), mapping.getSource()) == null) {
         securityConfiguration.addUserRoleMapping(mapping);
       }
     }
+  }
+
+  private Set<String> getDefaultUserIds() {
+    Set<String> requiredDefaultConfigs = new HashSet<>();
+    for (String userId : List.of(ADMIN, ANONYMOUS)) {
+      if (securityConfiguration.getUser(userId) == null) {
+        requiredDefaultConfigs.add(userId);
+      }
+    }
+    return requiredDefaultConfigs;
   }
 
   @Override

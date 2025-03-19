@@ -59,7 +59,7 @@ public class MemoryCUser
 
   @Override
   public String getPassword() {
-    return this.password;
+    return password;
   }
 
   @Override

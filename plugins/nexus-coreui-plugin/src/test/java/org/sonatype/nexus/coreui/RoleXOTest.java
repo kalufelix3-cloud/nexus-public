@@ -23,18 +23,20 @@ import javax.validation.Validator;
 import org.sonatype.goodies.testsupport.inject.InjectedTestSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.security.Roles;
 import org.sonatype.nexus.security.WebSecurityModule;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
+import org.sonatype.nexus.security.config.CUser;
+import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfigurationSource;
-import org.sonatype.nexus.security.config.StaticSecurityConfigurationSource;
+import org.sonatype.nexus.security.config.memory.MemoryCUser;
+import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping;
 import org.sonatype.nexus.validation.ValidationModule;
 
 import com.google.inject.Binder;
 import org.apache.shiro.authc.credential.PasswordService;
 import org.eclipse.sisu.space.BeanScanning;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -42,13 +44,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class RoleXOTest
-  extends InjectedTestSupport
+    extends InjectedTestSupport
 {
+
   @Inject
   Validator validator;
-
-  @Rule
-  public TemporaryFolder tmp = new TemporaryFolder();
 
   @Override
   public void configure(final Binder binder) {
@@ -57,12 +57,13 @@ public class RoleXOTest
     binder.install(new WebSecurityModule(mock(ServletContext.class)));
     binder.bind(EventManager.class).toInstance(mock(EventManager.class));
     binder.bind(AnonymousManager.class).toInstance(mock(AnonymousManager.class));
-    binder.bind(SecurityConfigurationSource.class).to(StaticSecurityConfigurationSource.class);
+    SecurityConfigurationSource securityConfigurationSource = mock(SecurityConfigurationSource.class);
+    when(securityConfigurationSource.loadConfiguration()).thenReturn(getMemorySecurityConfiguration());
+    binder.bind(SecurityConfigurationSource.class).toInstance(securityConfigurationSource);
 
     binder.bind(PasswordService.class).toInstance(mock(PasswordService.class));
 
     ApplicationDirectories directories = mock(ApplicationDirectories.class);
-    when(directories.getWorkDirectory()).thenAnswer(i -> tmp.newFolder());
     binder.bind(ApplicationDirectories.class).toInstance(directories);
   }
 
@@ -95,5 +96,34 @@ public class RoleXOTest
     assertThat(errors.size(), is(1));
     assertThat(errors.iterator().next().getMessage(),
         is("A role cannot contain itself directly or indirectly through other roles."));
+  }
+
+  private static MemorySecurityConfiguration getMemorySecurityConfiguration() {
+    return new MemorySecurityConfiguration().withUsers(
+        new MemoryCUser()
+            .withId("admin")
+            .withPassword("encryptedPassword")
+            .withFirstName("Administrator")
+            .withLastName("User")
+            .withStatus(CUser.STATUS_ACTIVE)
+            .withEmail("admin@example.org"),
+        new MemoryCUser()
+            .withId("anonymous")
+            // password="anonymous"
+            .withPassword(
+                "$shiro1$SHA-512$1024$CPJm1XWdYNg5eCAYp4L4HA==$HIGwnJhC07ZpgeVblZcFRD1F6KH+xPG8t7mIcEMbfycC+n5Ljudyoj9dzdinrLmChTrmKMCw2/z29F7HeLbTbQ==")
+            .withFirstName("Anonymous")
+            .withLastName("User")
+            .withStatus(CUser.STATUS_ACTIVE)
+            .withEmail("anonymous@example.org"))
+        .withUserRoleMappings(
+            new MemoryCUserRoleMapping()
+                .withUserId("admin")
+                .withSource("default")
+                .withRoles(Roles.ADMIN_ROLE_ID),
+            new MemoryCUserRoleMapping()
+                .withUserId("anonymous")
+                .withSource("default")
+                .withRoles(Roles.ANONYMOUS_ROLE_ID));
   }
 }

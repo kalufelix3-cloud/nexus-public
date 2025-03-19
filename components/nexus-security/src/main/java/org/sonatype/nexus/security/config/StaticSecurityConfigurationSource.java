@@ -12,10 +12,10 @@
  */
 package org.sonatype.nexus.security.config;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.annotation.Priority;
@@ -23,11 +23,11 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.security.Roles;
 import org.sonatype.nexus.security.config.memory.MemoryCUser;
 import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.authc.credential.PasswordService;
 
@@ -46,9 +46,13 @@ public class StaticSecurityConfigurationSource
 {
   private static final String NEXUS_SECURITY_INITIAL_PASSWORD = "NEXUS_SECURITY_INITIAL_PASSWORD";
 
+  public static final String ADMIN = "admin";
+
+  public static final String ANONYMOUS = "anonymous";
+
   private final PasswordService passwordService;
 
-  private final AdminPasswordFileManager adminPasswordFileManager;
+  private final AdminPasswordSource adminPasswordSource;
 
   private final boolean randomPassword;
 
@@ -59,20 +63,20 @@ public class StaticSecurityConfigurationSource
   @Inject
   public StaticSecurityConfigurationSource(
       final PasswordService passwordService,
-      final AdminPasswordFileManager adminPasswordFileManager,
+      @Nullable final AdminPasswordSource adminPasswordSource,
       @Named("${nexus.security.randompassword:-true}") final boolean randomPassword)
   {
-    this(passwordService, adminPasswordFileManager, randomPassword, System.getenv(NEXUS_SECURITY_INITIAL_PASSWORD));
+    this(passwordService, adminPasswordSource, randomPassword, System.getenv(NEXUS_SECURITY_INITIAL_PASSWORD));
   }
 
   public StaticSecurityConfigurationSource(
       final PasswordService passwordService,
-      final AdminPasswordFileManager adminPasswordFileManager,
+      final AdminPasswordSource adminPasswordSource,
       final boolean randomPassword,
       @Nullable final String password)
   {
     this.passwordService = passwordService;
-    this.adminPasswordFileManager = adminPasswordFileManager;
+    this.adminPasswordSource = adminPasswordSource;
     this.password = password;
 
     if (StringUtils.isBlank(password)) {
@@ -95,62 +99,84 @@ public class StaticSecurityConfigurationSource
   }
 
   @Override
-  public synchronized SecurityConfiguration loadConfiguration() {
-    String encryptedPassword = passwordService.encryptPassword(getPassword());
+  public SecurityConfiguration getConfiguration(final Set<String> userIds) {
+    final List<MemoryCUserRoleMapping> roleMappings = new ArrayList<>();
+    final List<MemoryCUser> users = new ArrayList<>();
+    MemorySecurityConfiguration memorySecurityConfiguration = new MemorySecurityConfiguration();
 
-    return new MemorySecurityConfiguration().withUsers(
-        new MemoryCUser()
-            .withId("admin")
-            .withPassword(encryptedPassword)
-            .withFirstName("Administrator")
-            .withLastName("User")
-            .withStatus(randomPassword ? CUser.STATUS_CHANGE_PASSWORD : CUser.STATUS_ACTIVE)
-            .withEmail("admin@example.org"),
-        new MemoryCUser()
-            .withId("anonymous")
-            // password="anonymous"
-            .withPassword(
-                "$shiro1$SHA-512$1024$CPJm1XWdYNg5eCAYp4L4HA==$HIGwnJhC07ZpgeVblZcFRD1F6KH+xPG8t7mIcEMbfycC+n5Ljudyoj9dzdinrLmChTrmKMCw2/z29F7HeLbTbQ==")
-            .withFirstName("Anonymous")
-            .withLastName("User")
-            .withStatus(CUser.STATUS_ACTIVE)
-            .withEmail("anonymous@example.org"))
-        .withUserRoleMappings(
-            new MemoryCUserRoleMapping()
-                .withUserId("admin")
-                .withSource("default")
-                .withRoles(Roles.ADMIN_ROLE_ID),
-            new MemoryCUserRoleMapping()
-                .withUserId("anonymous")
-                .withSource("default")
-                .withRoles(Roles.ANONYMOUS_ROLE_ID));
+    for (String userId : userIds) {
+      if (ADMIN.equals(userId)) {
+        users.add(getAdminUser());
+        roleMappings.add(getAdminRoleMapping());
+      }
+      if (ANONYMOUS.equals(userId)) {
+        users.add(getAnonymousUser());
+        roleMappings.add(getAnonymousRoleMapping());
+      }
+    }
+    return memorySecurityConfiguration
+        .withUsers(users.toArray(MemoryCUser[]::new))
+        .withUserRoleMappings(roleMappings.toArray(MemoryCUserRoleMapping[]::new));
   }
 
-  private String getPassword() {
+  @Override
+  public synchronized SecurityConfiguration loadConfiguration() {
+    configuration = new MemorySecurityConfiguration().withUsers(
+        getAdminUser(),
+        getAnonymousUser())
+        .withUserRoleMappings(
+            getAdminRoleMapping(),
+            getAnonymousRoleMapping());
+    return configuration;
+  }
+
+  private MemoryCUser getAdminUser() {
+    String encryptedPassword = passwordService.encryptPassword(getPassword());
+    return new MemoryCUser()
+        .withId(ADMIN)
+        .withPassword(encryptedPassword)
+        .withFirstName("Administrator")
+        .withLastName("User")
+        .withStatus(randomPassword ? CUser.STATUS_CHANGE_PASSWORD : CUser.STATUS_ACTIVE)
+        .withEmail("admin@example.org");
+  }
+
+  private static MemoryCUser getAnonymousUser() {
+    return new MemoryCUser()
+        .withId(ANONYMOUS)
+        // password="anonymous"
+        .withPassword(
+            "$shiro1$SHA-512$1024$CPJm1XWdYNg5eCAYp4L4HA==$HIGwnJhC07ZpgeVblZcFRD1F6KH+xPG8t7mIcEMbfycC+n5Ljudyoj9dzdinrLmChTrmKMCw2/z29F7HeLbTbQ==")
+        .withFirstName("Anonymous")
+        .withLastName("User")
+        .withStatus(CUser.STATUS_ACTIVE)
+        .withEmail("anonymous@example.org");
+  }
+
+  private static MemoryCUserRoleMapping getAdminRoleMapping() {
+    return new MemoryCUserRoleMapping()
+        .withUserId(ADMIN)
+        .withSource("default")
+        .withRoles(Roles.ADMIN_ROLE_ID);
+  }
+
+  private static MemoryCUserRoleMapping getAnonymousRoleMapping() {
+    return new MemoryCUserRoleMapping()
+        .withUserId(ANONYMOUS)
+        .withSource("default")
+        .withRoles(Roles.ANONYMOUS_ROLE_ID);
+  }
+
+  @VisibleForTesting
+  protected String getPassword() {
     if (StringUtils.isNotBlank(password)) {
       return password;
     }
 
-    try {
-      String savedPassword = adminPasswordFileManager.readFile();
-
-      if (!Strings2.isBlank(savedPassword)) {
-        return savedPassword;
-      }
-      else if (!randomPassword) {
-        return "admin123";
-      }
-
-      savedPassword = UUID.randomUUID().toString();
-
-      // failure writing file to disk, revert to using default
-      if (!adminPasswordFileManager.writeFile(savedPassword)) {
-        savedPassword = "admin123";
-      }
-      return savedPassword;
+    if (adminPasswordSource != null) {
+      return adminPasswordSource.getPassword(randomPassword);
     }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    throw new IllegalStateException(
+        "No password source available. Please set the NEXUS_SECURITY_INITIAL_PASSWORD environment variable.");
   }
 }
