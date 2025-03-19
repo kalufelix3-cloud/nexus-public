@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.node;
+package org.sonatype.nexus.self.hosted.node;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -27,7 +27,7 @@ import com.google.common.annotations.VisibleForTesting;
  *
  * @since 3.0
  */
-@Named(KeyStoreManagerImpl.NAME)
+@Named(NodeKeyStoreManagerImpl.NAME)
 @Singleton
 public class KeyStoreManagerConfigurationImpl
     extends KeyStoreManagerConfigurationSupport

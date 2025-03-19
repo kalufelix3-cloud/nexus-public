@@ -10,35 +10,41 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.node;
+package org.sonatype.nexus.self.hosted.node;
+
+import java.io.File;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.crypto.CryptoHelper;
-import org.sonatype.nexus.ssl.KeyStoreManager;
-import org.sonatype.nexus.ssl.KeyStoreManagerConfiguration;
+import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
 import org.sonatype.nexus.ssl.spi.KeyStoreStorageManager;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
- * Node {@link KeyStoreManager}.
- *
- * @since 3.0
+ * Implementation of {@link KeyStoreStorageManager} for the node identity. Uses local filesystem as backing storage so
+ * that node identity is specific to each node.
+ * 
+ * @since 3.1
  */
-@Named(KeyStoreManagerImpl.NAME)
+@Named(NodeKeyStoreManagerImpl.NAME)
 @Singleton
-public class KeyStoreManagerImpl
-    extends org.sonatype.nexus.ssl.KeyStoreManagerImpl
+public class KeyStoreStorageManagerImpl
+    implements KeyStoreStorageManager
 {
-  public static final String NAME = "node";
+  private final File basedir;
 
   @Inject
-  public KeyStoreManagerImpl(
-      final CryptoHelper crypto,
-      @Named(NAME) final KeyStoreStorageManager storageManager,
-      @Named(NAME) final KeyStoreManagerConfiguration config)
-  {
-    super(crypto, storageManager, config);
+  public KeyStoreStorageManagerImpl(final ApplicationDirectories directories) {
+    this.basedir = new File(directories.getWorkDirectory("keystores"), NodeKeyStoreManagerImpl.NAME);
+  }
+
+  @Override
+  public KeyStoreStorage createStorage(final String keyStoreName) {
+    checkNotNull(keyStoreName);
+    return new FileKeyStoreStorage(new File(basedir, keyStoreName));
   }
 }

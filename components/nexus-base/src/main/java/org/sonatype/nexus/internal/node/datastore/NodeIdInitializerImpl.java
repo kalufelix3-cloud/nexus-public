@@ -21,7 +21,6 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.internal.node.KeyStoreManagerImpl;
 import org.sonatype.nexus.internal.node.NodeIdEncoding;
 import org.sonatype.nexus.internal.node.NodeIdInitializer;
 import org.sonatype.nexus.node.datastore.NodeIdStore;
@@ -40,13 +39,15 @@ public class NodeIdInitializerImpl
     extends ComponentSupport
     implements NodeIdInitializer
 {
+  private static final String NODE_KEY_STORE_TYPE = "node";
+
   private final NodeIdStore nodeIdStore;
 
   private final Provider<KeyStoreManager> keyStoreProvider;
 
   @Inject
   public NodeIdInitializerImpl(
-      @Named(KeyStoreManagerImpl.NAME) final Provider<KeyStoreManager> keyStoreProvider,
+      @Named(NODE_KEY_STORE_TYPE) final Provider<KeyStoreManager> keyStoreProvider,
       final NodeIdStore nodeIdStore)
   {
     this.nodeIdStore = checkNotNull(nodeIdStore);
@@ -63,7 +64,7 @@ public class NodeIdInitializerImpl
     log.info("No node-id found. Attempting to migrate from KeyStore");
     KeyStoreManager keyStoreManager = keyStoreProvider.get();
 
-    if (!keyStoreManager.isKeyPairInitialized()) {
+    if (keyStoreManager == null || !keyStoreManager.isKeyPairInitialized()) {
       generateNodeId();
       return;
     }

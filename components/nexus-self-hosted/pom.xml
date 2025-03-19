@@ -36,5 +36,9 @@
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-blobstore</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-ssl</artifactId>
+    </dependency>
   </dependencies>
 </project>
