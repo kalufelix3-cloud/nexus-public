@@ -19,6 +19,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 import org.sonatype.nexus.common.entity.ContinuationAware;
 import org.sonatype.nexus.repository.content.AssetBlob;
 
@@ -46,6 +47,9 @@ public class AssetBlobData
   private OffsetDateTime blobCreated;
 
   private OffsetDateTime addedToRepository;
+
+  @Nullable
+  private ExternalMetadata externalMetadata;
 
   @Nullable
   private String createdBy;
@@ -93,6 +97,11 @@ public class AssetBlobData
   @Override
   public OffsetDateTime addedToRepository() {
     return addedToRepository;
+  }
+
+  @Override
+  public ExternalMetadata externalMetadata() {
+    return externalMetadata;
   }
 
   // MyBatis setters + validation
@@ -162,6 +171,13 @@ public class AssetBlobData
     this.createdByIp = createdByIp;
   }
 
+  /**
+   * Set the external metadata
+   */
+  public void setExternalMetadata(@Nullable final ExternalMetadata externalMetadata) {
+    this.externalMetadata = externalMetadata;
+  }
+
   // ContinuationAware
 
   @Override
@@ -180,6 +196,7 @@ public class AssetBlobData
         ", blobCreated=" + blobCreated +
         ", createdBy='" + createdBy + '\'' +
         ", createdByIp='" + createdByIp + '\'' +
+        ", externalMetadata='" + externalMetadata + '\'' +
         '}';
   }
 }

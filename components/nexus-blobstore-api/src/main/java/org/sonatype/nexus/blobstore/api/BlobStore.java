@@ -18,9 +18,11 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
@@ -439,4 +441,11 @@ public interface BlobStore
    * @since 3.31
    */
   RawObjectAccess getRawObjectAccess();
+
+  /**
+   * @return an Optional containing the external metadata if supported, empty otherwise
+   */
+  default Optional<ExternalMetadata> getExternalMetadata(final BlobRef blobRef) {
+    return Optional.empty();
+  }
 }

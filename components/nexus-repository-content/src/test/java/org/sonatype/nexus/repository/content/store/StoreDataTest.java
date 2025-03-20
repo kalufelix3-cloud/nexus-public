@@ -18,11 +18,14 @@ import java.util.Collections;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 
 public class StoreDataTest
@@ -38,6 +41,8 @@ public class StoreDataTest
 
   @Before
   public void setUp() throws Exception {
+    OffsetDateTime time = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+
     BlobRef blobRef = new BlobRef("some-node", "some-store", "some-blob");
     assetBlob = new AssetBlobData();
     assetBlob.setAssetBlobId(1);
@@ -45,15 +50,16 @@ public class StoreDataTest
     assetBlob.setBlobSize(1L);
     assetBlob.setContentType("some-contentType");
     assetBlob.setChecksums(Collections.singletonMap("some-algo", "some-checksum"));
-    assetBlob.setBlobCreated(OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC));
+    assetBlob.setBlobCreated(time);
     assetBlob.setCreatedBy("some-user");
     assetBlob.setCreatedByIp("some-ip-address");
+    assetBlob.setExternalMetadata(new ExternalMetadata("my-etag", time));
     asset = new AssetData();
     asset.setAssetId(1);
     asset.setPath("/some-path");
     asset.setKind("some-kind");
     asset.setAssetBlob(assetBlob);
-    asset.setLastDownloaded(OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC));
+    asset.setLastDownloaded(time);
     component = new ComponentData();
     component.setComponentId(1);
     component.setNamespace("some-namespace");
@@ -68,9 +74,21 @@ public class StoreDataTest
 
   @Test
   public void shouldHaveMeaningfulToString() {
-    assertEquals("AssetBlobData{assetBlobId=1, blobRef=some-store@some-blob, blobSize=1, contentType='some-contentType', checksums={some-algo=some-checksum}, blobCreated=1970-01-01T00:00Z, createdBy='some-user', createdByIp='some-ip-address'}", assetBlob.toString());
-    assertEquals("AssetData{assetId=1, path='/some-path', kind='some-kind', componentId=1, component=ComponentData{componentId=1, namespace='some-namespace', name='some-name', kind='some-kind', version='some-version', normalizedVersion='some-normalized-version', entityVersion='null'} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}, assetBlobId=1, assetBlob=AssetBlobData{assetBlobId=1, blobRef=some-store@some-blob, blobSize=1, contentType='some-contentType', checksums={some-algo=some-checksum}, blobCreated=1970-01-01T00:00Z, createdBy='some-user', createdByIp='some-ip-address'}, lastDownloaded=1970-01-01T00:00Z, assetSize=0} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}", asset.toString());
-    assertEquals("ComponentData{componentId=1, namespace='some-namespace', name='some-name', kind='some-kind', version='some-version', normalizedVersion='some-normalized-version', entityVersion='null'} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}", component.toString());
-    assertEquals("ContentRepositoryData{configRepositoryId=DetachedEntityId{value='some-id'}} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}", contentRepository.toString());
+    String expectedAssetBlob =
+        "AssetBlobData{assetBlobId=1, blobRef=some-store@some-blob, blobSize=1, contentType='some-contentType',"
+            + " checksums={some-algo=some-checksum}, blobCreated=1970-01-01T00:00Z, createdBy='some-user',"
+            + " createdByIp='some-ip-address', externalMetadata='ExternalMetadata[etag=my-etag, lastModified=1970-01-01T00:00Z]'}";
+    String expectedComponent =
+        "ComponentData{componentId=1, namespace='some-namespace', name='some-name', kind='some-kind', version='some-version', normalizedVersion='some-normalized-version', entityVersion='null'} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}";
+    String expectedAsset =
+        "AssetData{assetId=1, path='/some-path', kind='some-kind', componentId=1, component=%s, assetBlobId=1, assetBlob=%s, lastDownloaded=1970-01-01T00:00Z, assetSize=0} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}"
+            .formatted(expectedComponent, expectedAssetBlob);
+
+    assertThat(assetBlob.toString(), is(expectedAssetBlob));
+    assertThat(asset.toString(), is(expectedAsset));
+    assertThat(component.toString(), is(expectedComponent));
+    assertEquals(
+        "ContentRepositoryData{configRepositoryId=DetachedEntityId{value='some-id'}} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}",
+        contentRepository.toString());
   }
 }

@@ -17,11 +17,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AssetBlob;
@@ -204,6 +206,13 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   @Transactional
   public void setCreatedByIP(final AssetBlob blob, final String createdByIP) {
     dao().setCreatedByIP(blob.blobRef(), createdByIP);
+  }
+
+  /**
+   */
+  @Transactional
+  public void setExternalMetadata(final AssetBlob blob, final ExternalMetadata metadata) {
+    dao().setExternalMetadata(blob.blobRef(), metadata);
   }
 
   /**

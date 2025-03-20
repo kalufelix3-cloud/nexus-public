@@ -43,10 +43,12 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.PaginatedResult;
@@ -57,6 +59,7 @@ import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
@@ -1064,6 +1067,22 @@ public class S3BlobStore
   @VisibleForTesting
   public void flushMetrics() throws IOException {
     metricsService.flush();
+  }
+
+  @Override
+  public Optional<ExternalMetadata> getExternalMetadata(final BlobRef blobRef) {
+    String path = contentPath(blobRef.getBlobId());
+
+    try {
+      ObjectMetadata object = s3.getObjectMetadata(getConfiguredBucket(), path);
+
+      return Optional.of(new ExternalMetadata(object.getETag(), DateHelper.toOffsetDateTime(object.getLastModified())));
+    }
+    catch (Exception e) {
+      log.warn("Unable to retrieve remote metadata for blobref {} cause {}", blobRef, e.getMessage(),
+          log.isDebugEnabled() ? e : null);
+    }
+    return Optional.empty();
   }
 
   private S3BlobAttributes writeBlobAttributes(

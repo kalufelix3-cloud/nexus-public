@@ -17,9 +17,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
@@ -157,6 +159,11 @@ public interface AssetBlobDAO
    * Sets the 'created by IP' on the asset
    */
   void setCreatedByIP(@Param("blobRef") BlobRef blobRef, @Param("createdByIP") String createdByIP);
+
+  /**
+   * Set the external metadata, generally this is done when the AssetBlob is created
+   */
+  void setExternalMetadata(@Param("blobRef") BlobRef blobRef, @Param("externalMetadata") ExternalMetadata metadata);
 
   /**
    * Browse asset blobs with legacy blobRef format {@code store-name:blob-id@node-id} in a paged fashion.

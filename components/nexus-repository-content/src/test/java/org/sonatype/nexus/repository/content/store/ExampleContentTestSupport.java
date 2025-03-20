@@ -35,6 +35,7 @@ import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
+import org.sonatype.nexus.datastore.mybatis.handlers.ExternalMetadataTypeHandler;
 import org.sonatype.nexus.repository.config.ConfigurationDAO;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.content.Asset;
@@ -82,7 +83,8 @@ public class ExampleContentTestSupport
       .access(TestComponentDAO.class)
       .access(TestAssetBlobDAO.class)
       .access(TestAssetDAO.class)
-      .access(ConfigurationDAO.class);
+      .access(ConfigurationDAO.class)
+      .handle(new ExternalMetadataTypeHandler());
 
   private Random random = new Random();
 
@@ -476,7 +478,7 @@ public class ExampleContentTestSupport
   protected static Matcher<AssetBlob> sameBlob(final AssetBlob expected) {
     return new FieldMatcher<>(expected, AssetBlob::blobRef, AssetBlob::blobSize, AssetBlob::contentType,
         assetBlob -> assetBlob.blobCreated().truncatedTo(ChronoUnit.SECONDS),
-        AssetBlob::createdBy, AssetBlob::createdByIp);
+        AssetBlob::createdBy, AssetBlob::createdByIp, AssetBlob::externalMetadata);
   }
 
   protected static Matcher<Asset> sameLastDownloaded(final Asset expected) {

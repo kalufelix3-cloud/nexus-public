@@ -65,4 +65,8 @@ public class ContentFacetStores
   public AssetStore<?> assetStore() {
     return assetStore;
   }
+
+  public AssetBlobStore<?> assetBlobStore() {
+    return assetBlobStore;
+  }
 }

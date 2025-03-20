@@ -65,6 +65,7 @@ import org.sonatype.nexus.datastore.mybatis.handlers.AttributesTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.DateTimeTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.EncryptedStringTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.EntityUUIDTypeHandler;
+import org.sonatype.nexus.datastore.mybatis.handlers.ExternalMetadataTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.LenientUUIDTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.ListTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.MapTypeHandler;
@@ -125,12 +126,12 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.common.text.Strings2.lower;
 import static org.sonatype.nexus.common.thread.TcclBlock.begin;
+import static org.sonatype.nexus.crypto.PhraseService.LEGACY_PHRASE_SERVICE;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.ADVANCED;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.JDBC_URL;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.SCHEMA;
 import static org.sonatype.nexus.datastore.mybatis.PlaceholderTypes.configurePlaceholderTypes;
 import static org.sonatype.nexus.datastore.mybatis.SensitiveAttributes.buildSensitiveAttributeFilter;
-import static org.sonatype.nexus.crypto.PhraseService.LEGACY_PHRASE_SERVICE;
 
 /**
  * MyBatis {@link DataStore}.
@@ -573,6 +574,7 @@ public class MyBatisDataStore
     register(new MapTypeHandler());
     register(new DateTimeTypeHandler());
     register(new OffsetDateTimeTypeHandler());
+    register(new ExternalMetadataTypeHandler());
 
     // mapping of entity ids needs some extra handling
     TypeHandler entityIdHandler = new EntityUUIDTypeHandler(lenient);

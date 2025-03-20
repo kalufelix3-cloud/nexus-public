@@ -16,8 +16,11 @@ import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 
 /**
  * Details of the {@link Blob} containing the binary content of an {@link Asset}.
@@ -70,4 +73,7 @@ public interface AssetBlob
    * The client IP that triggered creation of this blob; empty if it was an internal request.
    */
   Optional<String> createdByIp();
+
+  @Nullable
+  ExternalMetadata externalMetadata();
 }

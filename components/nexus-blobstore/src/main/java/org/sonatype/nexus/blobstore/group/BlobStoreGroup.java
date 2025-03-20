@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.cache.Cache;
 import javax.cache.configuration.MutableConfiguration;
@@ -39,6 +40,7 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobSession;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -46,6 +48,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
+import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.PaginatedResult;
@@ -569,6 +572,15 @@ public class BlobStoreGroup
         "name='" + name + "'," +
         "members='" + members.get() + '\'' +
         '}';
+  }
+
+  @Override
+  public Optional<ExternalMetadata> getExternalMetadata(final BlobRef blobRef) {
+    return members.get()
+        .stream()
+        .filter(candidate -> candidate.getBlobStoreConfiguration().getName().equals(blobRef.getStore()))
+        .findAny()
+        .flatMap(store -> store.getExternalMetadata(blobRef));
   }
 
   /**

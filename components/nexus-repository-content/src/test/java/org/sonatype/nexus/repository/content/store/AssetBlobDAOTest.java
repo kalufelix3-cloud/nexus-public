@@ -15,11 +15,13 @@ package org.sonatype.nexus.repository.content.store;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.UUID;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.time.UTC;
@@ -38,6 +40,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -59,6 +62,8 @@ public class AssetBlobDAOTest
   public void testCrudOperations() {
 
     AssetBlobData assetBlob1 = randomAssetBlob();
+    assetBlob1.setExternalMetadata(
+        new ExternalMetadata("my-etag", OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC)));
     AssetBlobData assetBlob2 = randomAssetBlob();
 
     BlobRef blobRef1 = assetBlob1.blobRef();
@@ -324,6 +329,35 @@ public class AssetBlobDAOTest
       String path = dao.getPathByBlobRef(blobRef);
       assertNotNull(path);
       assertFalse(path.isEmpty());
+    }
+  }
+
+  @Test
+  public void testSetExternalMetadata() {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
+
+      AssetBlobData assetBlobToChange = randomAssetBlob();
+      dao.createAssetBlob(assetBlobToChange);
+      dao.createAssetBlob(randomAssetBlob());
+
+      // update
+      ExternalMetadata external =
+          new ExternalMetadata("my-etag", OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC));
+      dao.setExternalMetadata(assetBlobToChange.blobRef(), external);
+
+      Continuation<AssetBlob> assetBlobs = dao.browseAssetBlobs(3, null);
+
+      assertThat(assetBlobs, hasSize(2));
+
+      assetBlobs.forEach(assetBlob -> {
+        if (assetBlob.blobRef().equals(assetBlobToChange.blobRef())) {
+          assertThat(assetBlob.externalMetadata(), is(external));
+        }
+        else {
+          assertThat(assetBlob.externalMetadata(), nullValue());
+        }
+      });
     }
   }
 
