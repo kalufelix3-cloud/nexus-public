@@ -136,10 +136,11 @@ public class SearchResource
       @Context final UriInfo uriInfo)
   {
     SearchResponse response = doSearch(continuationToken, sort, direction, seconds, uriInfo);
-
+    List<SearchFilter> searchFilters = searchUtils.getSearchFilters(uriInfo);
+    Optional<String> repositoryName = tryExtractRepositoryFromSearch(searchFilters);
     List<ComponentXO> componentXOs = response.getSearchResults()
         .stream()
-        .map(this::toComponent)
+        .map(componentHit -> this.toComponent(componentHit, repositoryName.orElse(null)))
         .collect(toList());
 
     return new Page<>(componentXOs, response.getContinuationToken());
@@ -193,11 +194,14 @@ public class SearchResource
 
     MultivaluedMap<String, String> assetParams = getAssetParams(uriInfo);
 
+    Optional<String> repositoryName = tryExtractRepositoryFromSearch(searchUtils.getSearchFilters(uriInfo));
+
     // Filter Assets by the criteria
     List<AssetXO> assets = response.getSearchResults()
         .stream()
         .flatMap(component -> searchResultFilterUtils.filterComponentAssets(component, assetParams))
-        .map(asset -> AssetXO.from(asset, searchUtils.getRepository(asset.getRepository()), assetDescriptors))
+        .map(asset -> AssetXO.from(asset, searchUtils.getRepository(repositoryName.orElse(asset.getRepository())),
+            assetDescriptors))
         .collect(toList());
 
     return new Page<>(assets, response.getContinuationToken());
@@ -230,15 +234,16 @@ public class SearchResource
     return searchService.search(request);
   }
 
-  private ComponentXO toComponent(final ComponentSearchResult componentHit) {
+  private ComponentXO toComponent(final ComponentSearchResult componentHit, final String optionalRepository) {
     ComponentXO componentXO = componentXOFactory.createComponentXO();
-    Repository repository = searchUtils.getRepository(componentHit.getRepositoryName());
+    Repository repository =
+        searchUtils.getRepository(optionalRepository != null ? optionalRepository : componentHit.getRepositoryName());
 
     componentXO.setGroup(componentHit.getGroup());
     componentXO.setName(componentHit.getName());
     componentXO.setVersion(componentHit.getVersion());
     componentXO.setId(new RepositoryItemIDXO(repository.getName(), componentHit.getId()).getValue());
-    componentXO.setRepository(componentHit.getRepositoryName());
+    componentXO.setRepository(repository.getName());
     componentXO.setFormat(componentHit.getFormat());
 
     List<AssetXO> assets = componentHit.getAssets()
@@ -275,5 +280,17 @@ public class SearchResource
 
   private void fireSearchEvent(final Collection<SearchFilter> searchFilters) {
     eventManager.post(new SearchEvent(searchFilters, SearchEventSource.REST));
+  }
+
+  /**
+   * If we have specified a specific Repository for a Search, extract the name of that Repository.
+   * This is necessary to ensure that downloadUrls for Group Repositories don't expose details of internal members.
+   */
+  private static Optional<String> tryExtractRepositoryFromSearch(final List<SearchFilter> searchFilters) {
+    return searchFilters
+        .stream()
+        .filter(filter -> filter.getProperty().equals("repository_name"))
+        .findFirst()
+        .map(SearchFilter::getValue);
   }
 }
