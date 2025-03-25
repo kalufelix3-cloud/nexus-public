@@ -28,7 +28,9 @@ Ext.define('NX.controller.Unlicensed', {
     'NX.Messages',
     'NX.I18n'
   ],
-  
+  statics: {
+      launched: false
+  },
   
   /**
    * Show {@link NX.view.Unlicensed} view from {@link Ext.container.Viewport}.
@@ -55,12 +57,18 @@ Ext.define('NX.controller.Unlicensed', {
     me.logDebug('Removing unlicensed listeners');
     //</if>
     Ext.History.un('change', me.forceLicensing);
+    NX.controller.Unlicensed.launched = false;
   },
 
   /**
    * Show a message and force navigation to the Licensing page, preventing all other navigation in the UI.
    */
   forceLicensing: function () {
+    if (NX.controller.Unlicensed.launched) {
+      return;
+    }
+    NX.controller.Unlicensed.launched = true;
+
     NX.Messages.error(NX.I18n.get('State_License_Invalid_Message'));
     NX.Bookmarks.navigateTo(NX.Bookmarks.fromToken('admin/system/licensing'));
   }

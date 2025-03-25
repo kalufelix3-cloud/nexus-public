@@ -71,7 +71,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Component_Asset_Tree_EmptyText_View: 'No component/assets found in repository',
     Component_Asset_Tree_Expand_Failure: 'Unable to show requested tree entry',
     Component_Asset_Tree_Filtered_EmptyText_View: 'All components have been filtered out, try using <a href="#browse/search">search</a> instead?',
-    Component_Asset_Tree_Results_Warning: 'There may be additional results, try filtering the results or searching if you cannot find what you\'re looking for.',
+    Component_Asset_Tree_Results_Warning: 'There may be additional results, try searching if you cannot find what you\'re looking for.',
     Component_Asset_Tree_Html_View: 'HTML View',
     Component_Asset_Tree_Upload_Component: 'Upload component',
 
