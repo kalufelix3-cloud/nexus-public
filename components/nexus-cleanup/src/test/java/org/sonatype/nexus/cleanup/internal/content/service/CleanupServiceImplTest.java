@@ -143,8 +143,8 @@ public class CleanupServiceImplTest
     when(cleanupPolicy1.getCriteria()).thenReturn(ImmutableMap.of(LAST_BLOB_UPDATED_KEY, "1"));
     when(cleanupPolicy2.getCriteria()).thenReturn(ImmutableMap.of(LAST_DOWNLOADED_KEY, "2"));
 
-    when(browseService.browse(cleanupPolicy1, repository1)).thenReturn(ImmutableList.of(component1, component2).stream());
-    when(browseService.browse(cleanupPolicy2, repository2)).thenReturn(ImmutableList.of(component3).stream());
+    when(browseService.browseIncludingAssets(cleanupPolicy1, repository1)).thenReturn(ImmutableList.of(component1, component2).stream());
+    when(browseService.browseIncludingAssets(cleanupPolicy2, repository2)).thenReturn(ImmutableList.of(component3).stream());
 
     when(cancelledCheck.getAsBoolean()).thenReturn(false);
 
@@ -267,8 +267,8 @@ public class CleanupServiceImplTest
 
   @Test
   public void doNothingWhenNoComponentsFound() throws Exception {
-    when(browseService.browse(cleanupPolicy1, repository1)).thenReturn(empty());
-    when(browseService.browse(cleanupPolicy2, repository2)).thenReturn(empty());
+    when(browseService.browseIncludingAssets(cleanupPolicy1, repository1)).thenReturn(empty());
+    when(browseService.browseIncludingAssets(cleanupPolicy2, repository2)).thenReturn(empty());
 
     underTest.cleanup(cancelledCheck);
 
@@ -368,7 +368,7 @@ public class CleanupServiceImplTest
       CleanupPolicy cleanupPolicy = mock(CleanupPolicy.class);
       when(cleanupPolicy.getCriteria()).thenReturn(ImmutableMap.of(LAST_BLOB_UPDATED_KEY, "1"));
       when(cleanupPolicyStorage.get(policyName)).thenReturn(cleanupPolicy);
-      when(browseService.browse(cleanupPolicy, repository)).thenReturn(components);
+      when(browseService.browseIncludingAssets(cleanupPolicy, repository)).thenReturn(components);
     });
 
     return components;

@@ -13,8 +13,10 @@
 package org.sonatype.nexus.repository.content.event.component;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -29,13 +31,30 @@ public class ComponentPurgedEvent
 {
   private final int[] componentIds;
 
+  private final List<FluentComponent> components;
+
   public ComponentPurgedEvent(final int contentRepositoryId, final int[] componentIds) { // NOSONAR
     super(contentRepositoryId);
     this.componentIds = checkNotNull(componentIds);
+    this.components = null;
+  }
+
+  public ComponentPurgedEvent(
+      final int contentRepositoryId,
+      final int[] componentIds,
+      final List<FluentComponent> components)
+  {
+    super(contentRepositoryId);
+    this.componentIds = checkNotNull(componentIds);
+    this.components = checkNotNull(components);
   }
 
   public int[] getComponentIds() {
     return componentIds; // NOSONAR
+  }
+
+  public List<FluentComponent> getComponents() {
+    return components;
   }
 
   @Override

@@ -142,7 +142,7 @@ public class CleanupServiceImpl
 
     do {
       try {
-        Stream<FluentComponent> componentsToDelete = browseService.browse(policy, repository);
+        Stream<FluentComponent> componentsToDelete = browseService.browseIncludingAssets(policy, repository);
         DeletionProgress currentProgress = cleanupMethod.run(repository, componentsToDelete, cancelledCheck);
         deletionProgress.update(currentProgress);
       }

@@ -18,11 +18,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.event.Event;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AttributeOperation;
@@ -536,7 +538,10 @@ public class ComponentStore<T extends ComponentDAO>
         c -> postCommitEvent(() -> new ComponentsPurgedAuditEvent(repositoryId, Collections.unmodifiableList(c))));
 
     preCommitEvent(() -> new ComponentPrePurgeEvent(repositoryId, componentIds));
-    postCommitEvent(() -> new ComponentPurgedEvent(repositoryId, componentIds));
+    Supplier<Event> eventSupplier = components.<Supplier<Event>>map(
+        fluentComponents -> () -> new ComponentPurgedEvent(repositoryId, componentIds, fluentComponents))
+        .orElseGet(() -> () -> new ComponentPurgedEvent(repositoryId, componentIds));
+    postCommitEvent(eventSupplier);
 
     return purged;
   }
