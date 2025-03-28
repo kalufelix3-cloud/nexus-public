@@ -30,20 +30,17 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-rapture</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-common</artifactId>
-      <scope>provided</scope>
     </dependency>
 
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-core</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>

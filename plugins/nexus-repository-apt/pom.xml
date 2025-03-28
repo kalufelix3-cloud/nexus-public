@@ -30,19 +30,16 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-plugin-api</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-common</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-repository-content</artifactId>
-      <scope>provided</scope>
       <optional>true</optional>
     </dependency>
 
@@ -58,7 +55,6 @@
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-blobstore-tasks</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -70,7 +66,6 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -98,7 +93,6 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-cleanup</artifactId>
-      <scope>provided</scope>
     </dependency>
   </dependencies>
 

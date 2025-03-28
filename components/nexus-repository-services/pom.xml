@@ -130,13 +130,11 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-rest</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-swagger</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>

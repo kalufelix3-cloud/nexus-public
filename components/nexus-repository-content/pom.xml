@@ -51,7 +51,6 @@
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-datastore-mybatis</artifactId>
       <optional>true</optional>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -67,19 +66,16 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-swagger</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-upgrade</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-annotation</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
