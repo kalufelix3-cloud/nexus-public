@@ -51,7 +51,7 @@ export default function Licensing() {
     </PageHeader>
     <ContentBody className="nxrm-licensing">
       {showDetails && <LicenseDetails service={service}/>}
-      {showLicensedUsage && <LicensedUsage maxRepoRequests={data.maxRepoRequests} maxRepoComponents={data.maxRepoComponents}/>}
+      {showLicensedUsage && <LicensedUsage maxRepoRequests={data.maxRepoRequests.toLocaleString()} maxRepoComponents={data.maxRepoComponents.toLocaleString()}/>}
       <InstallLicense service={service}/>
     </ContentBody>
   </Page>;

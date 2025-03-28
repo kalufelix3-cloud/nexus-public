@@ -62,7 +62,7 @@ export default {
             Your license is based on the total components stored and monthly requests.
             Track your current consumption on the <NxTextLink className="review-usage-link" onClick={scrollToUsageCenter}>Usage Center</NxTextLink>.
             <br />
-            <NxTextLink target='_blank' href="http://links.sonatype.com/products/nexus/pro/store?utm_medium=product&utm_source=nexus_repository&utm_campaign=repo_pricing_expansion" data-analytics-id="contact-us-link"> Contact us</NxTextLink> for additional capacity.
+            <NxTextLink external target='_blank' href="http://links.sonatype.com/products/nexus/pro/store?utm_medium=product&utm_source=nexus_repository&utm_campaign=repo_pricing_expansion" data-analytics-id="contact-us-link"> Contact us</NxTextLink> for additional capacity.
           </>
         )
       },
