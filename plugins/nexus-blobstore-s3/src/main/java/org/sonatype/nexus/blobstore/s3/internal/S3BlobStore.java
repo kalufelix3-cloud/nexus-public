@@ -50,7 +50,6 @@ import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.PaginatedResult;
-import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
@@ -66,7 +65,6 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.iterable.S3Objects;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest;
-import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.ObjectMetadata;
@@ -195,8 +193,6 @@ public class S3BlobStore
   private final Timer expireTimer;
 
   private final Timer hardDeleteTimer;
-
-  private RawObjectAccess rawObjectAccess;
 
   @Inject
   public S3BlobStore(
@@ -689,8 +685,6 @@ public class S3BlobStore
       bucketManager.setS3(s3);
       bucketManager.prepareStorageLocation(blobStoreConfiguration);
       S3BlobStoreConfigurationHelper.setConfiguredBucket(blobStoreConfiguration, getConfiguredBucket());
-      rawObjectAccess =
-          new S3RawObjectAccess(getConfiguredBucket(), getBucketPrefix(), s3, performanceLogger, uploader);
     }
     catch (AmazonS3Exception e) {
       throw buildException(e);
@@ -1005,25 +999,6 @@ public class S3BlobStore
 
   @Override
   @Timed
-  public boolean isBlobEmpty(final BlobId blobId) {
-    checkNotNull(blobId);
-    try (final Timer.Context existsContext = existsTimer.time()) {
-      return isBlobZeroLength(blobId);
-    }
-    catch (Exception e) {
-      log.debug("Unable to check existence and size of {}", contentPath(blobId));
-      return false;
-    }
-  }
-
-  private boolean isBlobZeroLength(final BlobId blobId) {
-    ObjectMetadata metadata =
-        s3.getObjectMetadata(new GetObjectMetadataRequest(getConfiguredBucket(), contentPath(blobId)));
-    return s3.doesObjectExist(getConfiguredBucket(), contentPath(blobId)) && metadata.getContentLength() == 0;
-  }
-
-  @Override
-  @Timed
   public Future<Boolean> asyncDelete(final BlobId blobId) {
     if (preferAsyncCleanup) {
       return executorService.submit(() -> this.deleteHard(blobId));
@@ -1054,11 +1029,6 @@ public class S3BlobStore
         BLOB_NAME_HEADER, blobName,
         DIRECT_PATH_BLOB_HEADER, "true");
     return blobIdLocationResolver.fromHeaders(headers);
-  }
-
-  @Override
-  public RawObjectAccess getRawObjectAccess() {
-    return rawObjectAccess;
   }
 
   @Override

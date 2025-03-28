@@ -231,13 +231,6 @@ public interface BlobStore
   boolean bytesExists(BlobId blobId);
 
   /**
-   * Performs a simple existence and empty size check for {@code .bytes} for given {@code blobId}.
-   *
-   * @return {@code true} if the blobstore is exists and empty {@code false} if it does not.
-   */
-  boolean isBlobEmpty(BlobId blobId);
-
-  /**
    * Removes a blob from the blob store. This may not immediately delete the blob from the underlying storage
    * mechanism, but will make it immediately unavailable to future calls to {@link BlobStore#get(BlobId)}.
    *
@@ -446,11 +439,6 @@ public interface BlobStore
   default void flushMetrics() throws IOException {
     // default impl does nothing
   }
-
-  /**
-   * @since 3.31
-   */
-  RawObjectAccess getRawObjectAccess();
 
   /**
    * @return an Optional containing the external metadata if supported, empty otherwise

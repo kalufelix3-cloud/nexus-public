@@ -68,7 +68,6 @@ import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.PaginatedResult;
-import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.file.internal.BlobCollisionException;
 import org.sonatype.nexus.blobstore.file.internal.DateBasedWalkFile;
@@ -186,8 +185,6 @@ public class FileBlobStore
   private boolean supportsHardLinkCopy;
 
   private boolean supportsAtomicMove;
-
-  private RawObjectAccess rawObjectAccess;
 
   private final BlobStoreReconciliationLogger reconciliationLogger;
 
@@ -792,7 +789,6 @@ public class FileBlobStore
       this.reconciliationLogDir = reconciliationLogDir;
 
       setConfiguredBlobStorePath(getRelativeBlobDir());
-      rawObjectAccess = new FileRawObjectAccess(blobDir);
     }
     catch (Exception e) {
       throw new BlobStoreException(
@@ -831,16 +827,6 @@ public class FileBlobStore
       return false;
     }
     return true;
-  }
-
-  @Override
-  public boolean isBlobEmpty(final BlobId blobId) {
-    checkNotNull(blobId);
-    if (fileOperations.isBlobZeroLength(contentPath(blobId))) {
-      log.debug("Blob {} content (.bytes) was not found during existence check", blobId);
-      return true;
-    }
-    return false;
   }
 
   private boolean delete(final Path path) throws IOException {
@@ -1307,11 +1293,6 @@ public class FileBlobStore
       log.error("Unable to set BlobAttributes for blob id: {}, exception: {}",
           blobId, e.getMessage(), log.isDebugEnabled() ? e : null);
     }
-  }
-
-  @Override
-  public RawObjectAccess getRawObjectAccess() {
-    return rawObjectAccess;
   }
 
   @Override

@@ -551,17 +551,6 @@ public class FileBlobStoreTest
   }
 
   @Test
-  public void testIsBlobEmpty() throws Exception {
-    Path bytesPath = fullPath.resolve("test-blob.bytes");
-    write(bytesPath, "some bytes content".getBytes());
-    when(fileOperations.isBlobZeroLength(bytesPath)).thenReturn(true);
-
-    assertThat(bytesPath.toFile().exists(), is(true));
-
-    assertThat(underTest.isBlobEmpty(new BlobId("test-blob")), is(true));
-  }
-
-  @Test
   public void testCreateBlobAttributes() {
     BlobId blobId = new BlobId("fakeid", UTC.now());
     final DateTime creationTime = new DateTime();

@@ -52,8 +52,6 @@ import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.PaginatedResult;
-import org.sonatype.nexus.blobstore.api.RawObjectAccess;
-import org.sonatype.nexus.blobstore.api.UnimplementedRawObjectAccess;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.group.internal.BlobStoreGroupMetrics;
 import org.sonatype.nexus.blobstore.group.internal.WriteToFirstMemberFillPolicy;
@@ -448,13 +446,6 @@ public class BlobStoreGroup
   }
 
   @Override
-  public boolean isBlobEmpty(final BlobId blobId) {
-    return members.get()
-        .stream()
-        .anyMatch((BlobStore member) -> member.isBlobEmpty(blobId));
-  }
-
-  @Override
   @Guarded(by = {NEW, STOPPED, FAILED, SHUTDOWN})
   public void remove() {
     // no-op
@@ -511,11 +502,6 @@ public class BlobStoreGroup
 
   public List<BlobStore> getMembers() {
     return unmodifiableList(members.get());
-  }
-
-  @Override
-  public RawObjectAccess getRawObjectAccess() {
-    return new UnimplementedRawObjectAccess();
   }
 
   /**
