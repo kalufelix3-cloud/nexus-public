@@ -16,57 +16,46 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.stream.Collectors;
 
-import com.google.common.collect.Iterables;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 
 /**
- * Simplistic tokenizer which splits strings using the following characters: . - /
+ * Type handler for use with {@code ::tsvector}<br/>
+ *
+ * Not @Named to avoid injection
  */
-public class TokenizingTypeHandler
-    extends BaseTypeHandler<Collection<String>>
+public class QuotingTypeHandler
+    extends BaseTypeHandler<String>
 {
-  private static final String SEPARATOR = " ";
+  private static final String QUOTE = "'";
 
   @Override
   public void setNonNullParameter(
       final PreparedStatement ps,
       final int parameterIndex,
-      final Collection<String> parameter,
+      final String parameter,
       final JdbcType jdbcType) throws SQLException
   {
-    ps.setString(parameterIndex, tokenize(toString(parameter)));
-  }
-
-  private static String tokenize(final String token) {
-    return token.replaceAll("[.-/]", SEPARATOR);
-  }
-
-  private static String toString(final Collection<String> values) {
-    if (values.isEmpty()) {
-      return "";
-    }
-    else if (values.size() == 1) {
-      return Iterables.getOnlyElement(values);
-    }
-    return values.stream().collect(Collectors.joining(SEPARATOR));
+    ps.setString(parameterIndex, tsEscape(parameter));
   }
 
   @Override
-  public Collection<String> getNullableResult(final ResultSet rs, final String columnName) throws SQLException {
+  public String getNullableResult(final ResultSet rs, final String columnName) throws SQLException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Collection<String> getNullableResult(final ResultSet rs, final int columnIndex) throws SQLException {
+  public String getNullableResult(final ResultSet rs, final int columnIndex) throws SQLException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Collection<String> getNullableResult(final CallableStatement cs, final int columnIndex) throws SQLException {
+  public String getNullableResult(final CallableStatement cs, final int columnIndex) throws SQLException {
     throw new UnsupportedOperationException();
+  }
+
+  public static String tsEscape(final String term) {
+    return QUOTE + term.replace("\\", "\\\\").replace(QUOTE, "\\'") + QUOTE;
   }
 }

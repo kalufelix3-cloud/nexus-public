@@ -30,7 +30,16 @@ public interface SearchRecord
    * {@link Component} if needed. This should be for a single attribute of Components/Assets, do not mix attributes
    * within a single format.
    */
-  void addFormatFieldValue1(String formatFieldValue1);
+  default void addFormatFieldValue1(final String formatFieldValue1) {
+    addFormatFieldValue1(formatFieldValue1, false);
+  }
+
+  /**
+   * Add an attribute which is specific to a format this may be called multiple times for assets within the same
+   * {@link Component} if needed. This should be for a single attribute of Components/Assets, do not mix attributes
+   * within a single format.
+   */
+  void addFormatFieldValue1(String formatFieldValue1, boolean preventTokenization);
 
   /**
    * Add an attribute which is specific to a format this may be called multiple times for assets within the same
@@ -51,7 +60,16 @@ public interface SearchRecord
    * {@link Component} if needed. This should be for a single attribute of Components/Assets, do not mix attributes
    * within a single format.
    */
-  void addFormatFieldValue4(String formatFieldValues4);
+  default void addFormatFieldValue4(final String formatFieldValues4) {
+    addFormatFieldValue4(formatFieldValues4, false);
+  }
+
+  /**
+   * Add an attribute which is specific to a format this may be called multiple times for assets within the same
+   * {@link Component} if needed. This should be for a single attribute of Components/Assets, do not mix attributes
+   * within a single format.
+   */
+  void addFormatFieldValue4(String formatFieldValues4, boolean preventTokenization);
 
   /**
    * Add an attribute which is specific to a format this may be called multiple times for assets within the same
@@ -65,7 +83,16 @@ public interface SearchRecord
    * {@link Component} if needed. This should be for a single attribute of Components/Assets, do not mix attributes
    * within a single format.
    */
-  void addFormatFieldValue6(String formatFieldValues6);
+  default void addFormatFieldValue6(final String formatFieldValues6) {
+    addFormatFieldValue6(formatFieldValues6, false);
+  }
+
+  /**
+   * Add an attribute which is specific to a format this may be called multiple times for assets within the same
+   * {@link Component} if needed. This should be for a single attribute of Components/Assets, do not mix attributes
+   * within a single format.
+   */
+  void addFormatFieldValue6(String formatFieldValues6, boolean preventTokenization);
 
   /**
    * Add an attribute which is specific to a format this may be called multiple times for assets within the same

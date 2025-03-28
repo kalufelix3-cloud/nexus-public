@@ -14,11 +14,25 @@ package org.sonatype.nexus.repository.search.sql.query.syntax;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class WildcardTerm
-    extends TermSupport<String>
+/**
+ * Represents a {@link StringTerm} which should be treated as having a trailing wildcard
+ *
+ * @param term the term, must not be null
+ * @param isAllowTokenization whether the provided term should be allowed to be tokenized in a full text search
+ */
+public record WildcardTerm(String term, boolean isAllowTokenization)
     implements StringTerm
 {
+  public WildcardTerm {
+    checkNotNull(term);
+  }
+
   public WildcardTerm(final String term) {
-    super(checkNotNull(term));
+    this(term, true);
+  }
+
+  @Override
+  public String get() {
+    return term;
   }
 }

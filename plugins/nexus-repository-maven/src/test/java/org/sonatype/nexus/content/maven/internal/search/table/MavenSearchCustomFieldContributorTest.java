@@ -65,7 +65,7 @@ public class MavenSearchCustomFieldContributorTest
 
     underTest.populateSearchCustomFields(searchRecord, asset);
 
-    verify(searchRecord).addFormatFieldValue1("/1.1.1");
+    verify(searchRecord).addFormatFieldValue1("1.1.1", true);
     verify(searchRecord).addFormatFieldValue2("testExtension");
     verify(searchRecord).addFormatFieldValue3("testClassifier");
 
@@ -73,7 +73,7 @@ public class MavenSearchCustomFieldContributorTest
 
     underTest.populateSearchCustomFields(searchRecord, asset);
 
-    verify(searchRecord).addFormatFieldValue1("/1.1-SNAPSHOT");
+    verify(searchRecord).addFormatFieldValue1("1.1-SNAPSHOT", true);
   }
 
   @Test

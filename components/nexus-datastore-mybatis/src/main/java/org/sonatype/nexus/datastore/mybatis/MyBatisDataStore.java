@@ -73,8 +73,8 @@ import org.sonatype.nexus.datastore.mybatis.handlers.MapTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.NestedAttributesMapTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.PasswordCharacterArrayTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.PrincipalCollectionTypeHandler;
+import org.sonatype.nexus.datastore.mybatis.handlers.QuotingTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.SetTypeHandler;
-import org.sonatype.nexus.datastore.mybatis.handlers.TokenizingTypeHandler;
 import org.sonatype.nexus.security.PasswordHelper;
 import org.sonatype.nexus.transaction.TransactionIsolation;
 
@@ -596,7 +596,7 @@ public class MyBatisDataStore
     register(new PasswordCharacterArrayTypeHandler(passwordHelper));
     register(new PrincipalCollectionTypeHandler());
     registerDetached(new EncryptedStringTypeHandler()); // detached so it doesn't apply to all Strings
-    registerDetached(new TokenizingTypeHandler()); // detached so it doesn't apply to all Strings
+    registerDetached(new QuotingTypeHandler()); // detached so it doesn't apply to all Strings
 
     // enable automatic encryption of sensitive JSON fields in the config store
     sensitiveAttributeFilter = buildSensitiveAttributeFilter(mybatisConfig);

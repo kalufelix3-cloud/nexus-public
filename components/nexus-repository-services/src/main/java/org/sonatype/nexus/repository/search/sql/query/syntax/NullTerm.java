@@ -15,13 +15,13 @@ package org.sonatype.nexus.repository.search.sql.query.syntax;
 /**
  * A term with a {@code null} value
  */
-public class NullTerm
-    extends TermSupport<String>
+public record NullTerm()
     implements StringTerm
 {
   public static final NullTerm INSTANCE = new NullTerm();
 
-  private NullTerm() {
-    super(null);
+  @Override
+  public String get() {
+    return null;
   }
 }
