@@ -13,14 +13,18 @@
 package org.sonatype.nexus.rest;
 
 import com.google.common.collect.ImmutableList;
-import junit.framework.TestCase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.sonatype.goodies.testsupport.Test5Support;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 public class WebApplicationMessageExceptionTest
-    extends TestCase
+    extends Test5Support
 {
 
   /**

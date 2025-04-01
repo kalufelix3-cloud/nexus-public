@@ -12,25 +12,24 @@
  */
 package org.sonatype.nexus.repository.view.matchers.logic;
 
-import java.util.Arrays;
-
-import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.matchers.RegexMatcher;
 
-import org.junit.Test;
+import java.util.Arrays;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 /**
  * Tests for {@link AndMatcher}.
  */
-class AndMatcherTest
-    extends TestSupport
+public class AndMatcherTest
+    extends Test5Support
 {
   private Context context(String path) {
     return new Context(mock(Repository.class), new Request.Builder().action("GET").path(path).build());
