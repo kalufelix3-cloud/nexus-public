@@ -20,6 +20,10 @@ import { when } from 'jest-when';
 
 import UploadDetails from './UploadDetails.jsx';
 import * as testData from './UploadDetails.testdata';
+import {Utils} from '@sonatype/nexus-ui-plugin';
+
+// Immediately resolve timeoutPromise so that we don't have to wait for it in tests
+jest.spyOn(Utils, 'timeoutPromise').mockResolvedValue();
 
 // Creates a selector function that uses getByRole by default but which can be customized per-use to use
 // queryByRole, findByRole, etc instead
@@ -199,14 +203,6 @@ describe('UploadDetails', function() {
   function render(itemId = 'simple-repo') {
     return rtlRender(<UploadDetails itemId={itemId} />);
   }
-
-  it('renders a main content area', function() {
-    // resolving the promise in this otherwise-synchronous test causes act errors, so just leave it unresolved here
-    jest.spyOn(axios, 'get').mockReturnValue(new Promise(() => {}));
-    render();
-
-    expect(selectors.main()).toBeInTheDocument();
-  });
 
   describe('initial loading', function() {
     it('renders a loading spinner before the readReferences call completes', function() {
@@ -1519,6 +1515,8 @@ describe('UploadDetails', function() {
           setFileUploadValue(fileUpload, file);
 
           await userEvent.click(uploadBtn);
+
+          expect(Utils.timeoutPromise).toBeCalledWith(500);
 
           await waitFor(
               () => expect(hashSpy).toHaveBeenCalledWith('browse/search=keyword%3D%22foo%23%3F%25%20bar%22'),

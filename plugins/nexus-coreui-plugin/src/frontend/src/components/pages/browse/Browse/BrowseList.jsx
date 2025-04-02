@@ -129,6 +129,7 @@ export default function BrowseList({onEdit, copyUrl = doCopyUrl}) {
                         variant="icon-only"
                         onClick={(e) => copyUrl(e, url)}
                         title={COPY_URL_TITLE}
+                        aria-label={COPY_URL_TITLE}
                       >
                         <NxFontAwesomeIcon icon={faCopy} />
                       </NxButton>
@@ -157,6 +158,7 @@ export default function BrowseList({onEdit, copyUrl = doCopyUrl}) {
 
 function doCopyUrl(event, url) {
   event.stopPropagation();
-  navigator.clipboard.writeText(url);
-  ExtJS.showSuccessMessage(URL_COPIED_MESSAGE);
+  navigator.clipboard.writeText(url).then(() => {
+    ExtJS.showSuccessMessage(URL_COPIED_MESSAGE);
+  });
 }

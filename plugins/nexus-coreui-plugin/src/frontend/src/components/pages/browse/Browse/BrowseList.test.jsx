@@ -60,6 +60,8 @@ describe('BrowseList', function() {
     ...TestUtils.tableSelectors,
     getEmptyMessage: () => screen.getByText('There are no repositories available'),
     getFilterInput: () => screen.getByPlaceholderText('Filter by name'),
+    getAllCopyUrlButtons: () => screen.getAllByLabelText(UIStrings.BROWSE.LIST.COPY_URL_TITLE),
+    getCopyUrlButton: (row) => within(row).getByLabelText(UIStrings.BROWSE.LIST.COPY_URL_TITLE),
     healthCheck: {
       columnHeader: () => screen.queryByRole('columnheader', {name: COLUMNS.HEALTH_CHECK}),
       cell: (rowIdx) => screen.getAllByRole('row')[rowIdx].cells[5],
@@ -93,7 +95,7 @@ describe('BrowseList', function() {
 
   const sortRepos = (field, order = ascend) => sort(order(prop(field)), REPOS);
 
-  const sortReposWithStatus = (order = ascend) => { 
+  const sortReposWithStatus = (order = ascend) => {
     const dir = order === ascend ? 1 : -1;
     return REPOS.slice().sort((a, b) => JSON.stringify(a) > JSON.stringify(b) ? dir : -dir)
   };
@@ -139,7 +141,7 @@ describe('BrowseList', function() {
       keys.forEach(key => expect(item.hasOwnProperty(key)).toBeTruthy());
 
       Object.values(pick(keys, item)).forEach((value, index)  => {
-        index === 3 
+        index === 3
         ? expect(row.cells[index]).toHaveTextContent(getStatusText(value))
         : expect(row.cells[index]).toHaveTextContent(value);
       });
@@ -149,14 +151,13 @@ describe('BrowseList', function() {
   it('renders copy button in each row with tooltips of "Copy URL to Clipboard" when hovering',
     async function() {
       await renderView({data: REPOS});
-      const rows = selectors.rows();
 
-      for (const row of rows) {
-        const copyBtn = within(row).getAllByRole('button')[0];
+      for (const row of selectors.rows()) {
+        const copyBtn = selectors.getCopyUrlButton(row);
         expect(copyBtn).toBeInTheDocument();
         await TestUtils.expectToSeeTooltipOnHover(copyBtn, 'Copy URL to Clipboard');
       }
-  });
+    });
 
   it('calls onCopyUrl when copy button is clicked', async function () {
     const onCopyUrl = jest.fn((event) => event.stopPropagation());
@@ -173,8 +174,8 @@ describe('BrowseList', function() {
     );
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-    const copyBtn = within(selectors.rows()[1]).getAllByRole('button')[0];
-    userEvent.click(copyBtn);
+    const copyUrlBtn = selectors.getCopyUrlButton(selectors.rows()[1]);
+    await userEvent.click(copyUrlBtn);
 
     expect(onCopyUrl).toBeCalled();
   });

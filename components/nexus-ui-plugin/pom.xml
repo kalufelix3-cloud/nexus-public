@@ -63,11 +63,11 @@
           <execution>
             <id>js-unit-test</id>
             <goals>
-              <goal>corepack</goal>
+              <goal>yarn</goal>
             </goals>
             <phase>test</phase>
             <configuration>
-              <arguments>yarn test --reporters=jest-junit --reporters=default</arguments>
+              <arguments>test --reporters=jest-junit --reporters=default</arguments>
               <skip>${npm.skipTests}</skip>
             </configuration>
           </execution>

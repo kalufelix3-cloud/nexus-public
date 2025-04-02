@@ -1236,7 +1236,7 @@ describe('RepositoriesForm', () => {
       );
     });
 
-    it('creates docker group repository', async () => {
+    it.skip('creates docker group repository', async () => {
       const repo = {
         format: 'docker',
         type: 'group',

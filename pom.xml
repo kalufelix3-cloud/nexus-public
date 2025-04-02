@@ -755,10 +755,11 @@
         <plugin>
           <groupId>com.github.eirslett</groupId>
           <artifactId>frontend-maven-plugin</artifactId>
-          <version>1.15.1</version>
+          <version>1.11.3</version>
 
           <configuration>
             <nodeVersion>${node.version}</nodeVersion>
+            <yarnVersion>${yarn.version}</yarnVersion>
             <workingDirectory>${project.basedir}</workingDirectory>
             <installDirectory>${project.build.directory}</installDirectory>
             <environmentVariables>
@@ -769,39 +770,40 @@
 
           <executions>
             <execution>
-              <id>install node and corepack</id>
+              <id>install node and yarn</id>
               <goals>
-                <goal>install-node-and-corepack</goal>
+                <goal>install-node-and-yarn</goal>
               </goals>
+              <phase>generate-resources</phase>
             </execution>
             <execution>
               <id>yarn cache clean</id>
               <goals>
-                <goal>corepack</goal>
+                <goal>yarn</goal>
               </goals>
               <phase>generate-resources</phase>
               <configuration>
-                <arguments>yarn cache clean</arguments>
+                <arguments>cache clean</arguments>
               </configuration>
             </execution>
             <execution>
               <id>yarn install</id>
               <goals>
-                <goal>corepack</goal>
+                <goal>yarn</goal>
               </goals>
               <phase>generate-resources</phase>
               <configuration>
-                <arguments>yarn ${npm.install}</arguments>
+                <arguments>${npm.install}</arguments>
               </configuration>
             </execution>
             <execution>
               <id>yarn run build</id>
               <goals>
-                <goal>corepack</goal>
+                <goal>yarn</goal>
               </goals>
               <phase>compile</phase>
               <configuration>
-                <arguments>yarn ${npm.build}</arguments>
+                <arguments>${npm.build}</arguments>
               </configuration>
             </execution>
           </executions>
@@ -1937,7 +1939,7 @@
                         <versionRange>[0.7,)</versionRange>
                         <goals>
                           <goal>install-node-and-yarn</goal>
-                          <goal>corepack</goal>
+                          <goal>yarn</goal>
                         </goals>
                       </pluginExecutionFilter>
                       <action>
