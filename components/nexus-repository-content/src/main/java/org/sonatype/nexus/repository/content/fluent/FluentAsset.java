@@ -37,7 +37,7 @@ public interface FluentAsset
    */
   Repository repository();
 
-   /**
+  /**
    * Downloads this asset.
    */
   Content download();
@@ -81,6 +81,12 @@ public interface FluentAsset
    * @since 3.25
    */
   FluentAsset kind(String kind);
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   * Update this asset to have the given path.
+   */
+  FluentAsset updatePath(String path);
 
   /**
    * Deletes this asset.
@@ -131,14 +137,14 @@ public interface FluentAsset
    */
   FluentAsset attributes(AttributeChangeSet changeset);
 
-   /**
+  /**
    * Generally it is recommended that this method not be called and let stores manage this value automatically.
    *
    * Sets the name of user who uploaded the asset.
    */
   void createdBy(String createdBy);
 
-   /**
+  /**
    * Generally it is recommended that this method not be called and let stores manage this value automatically.
    *
    * Sets the IP addres of user who uploaded the asset.

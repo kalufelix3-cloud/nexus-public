@@ -308,6 +308,21 @@
         WHERE <include refid="assetMatch"/> AND kind != #{kind};
   </update>
 
+  <update id="updateAssetPath" parameterType="AssetData">
+    <bind name="repositoryId" value="asset.repositoryId"/>
+    <bind name="assetId" value="asset.assetId"/>
+    <bind name="path" value="asset.path"/>
+
+    <if test="updateComponentEntityVersion">
+      <include refid="componentEntityVersionIncrement"/>
+      WHERE component_id IN (SELECT component_id FROM ${format}_asset
+      WHERE <include refid="assetMatch"/>);
+    </if>
+
+    UPDATE ${format}_asset SET path = #{path}, last_updated = CURRENT_TIMESTAMP
+    WHERE <include refid="assetMatch"/>;
+  </update>
+
   <select id="readAssetAttributes" resultType="NestedAttributesMap">
     SELECT attributes FROM ${format}_asset WHERE <include refid="assetMatch"/>;
   </select>

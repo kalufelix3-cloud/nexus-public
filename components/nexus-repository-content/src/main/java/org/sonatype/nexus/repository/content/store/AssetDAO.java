@@ -237,6 +237,16 @@ public interface AssetDAO
       @Param("updateComponentEntityVersion") boolean updateComponentEntityVersion);
 
   /**
+   * Updates the path of the given asset in the content data store.
+   *
+   * @param asset the asset to update*
+   * @param updateComponentEntityVersion whether to update the component entity version
+   */
+  void updateAssetPath(
+      @Param("asset") Asset asset,
+      @Param("updateComponentEntityVersion") boolean updateComponentEntityVersion);
+
+  /**
    * Retrieves the latest attributes of the given asset in the content data store.
    *
    * @param asset the asset to read

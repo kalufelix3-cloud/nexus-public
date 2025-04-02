@@ -77,7 +77,7 @@ public class AssetAuditor
   @AllowConcurrentEvents
   public void on(final AssetPurgedEvent event) {
     if (isRecording()) {
-      String repositoryName =  event.getRepository().map(Repository::getName).orElse("Unknown");
+      String repositoryName = event.getRepository().map(Repository::getName).orElse("Unknown");
 
       AuditData data = new AuditData();
       data.setDomain(DOMAIN);
@@ -108,17 +108,19 @@ public class AssetAuditor
       attributes.put("path", asset.path());
       attributes.put("kind", asset.kind());
 
-      if (event instanceof AssetAttributesEvent && attributeChangesDetailEnabled){
+      if (event instanceof AssetAttributesEvent && attributeChangesDetailEnabled) {
         AssetAttributesEvent attributesEvent = (AssetAttributesEvent) event;
 
         attributes.put("attribute.changes", attributesEvent.getChanges()
-            .stream().map(change -> {
+            .stream()
+            .map(change -> {
               Map<String, Object> entry = new HashMap<>();
               entry.put("operation", change.getOperation());
               entry.put("key", change.getKey());
               entry.put("value", change.getValue());
               return entry;
-            }).collect(Collectors.toList()));
+            })
+            .collect(Collectors.toList()));
       }
 
       record(data);

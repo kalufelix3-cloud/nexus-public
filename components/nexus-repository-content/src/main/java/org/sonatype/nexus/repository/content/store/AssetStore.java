@@ -343,6 +343,16 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
+   * Updates the path of the given asset in the content data store.
+   *
+   * @param asset the asset to update
+   */
+  @Transactional
+  public void updateAssetPath(final Asset asset) {
+    dao().updateAssetPath(asset, clustered);
+  }
+
+  /**
    * Updates the attributes of the given asset in the content data store.
    *
    * @param asset the asset to update

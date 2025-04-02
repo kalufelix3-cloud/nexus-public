@@ -273,6 +273,13 @@ public class FluentAssetImpl
   }
 
   @Override
+  public FluentAsset updatePath(final String path) {
+    ((AssetData) asset).setPath(path);
+    facet.stores().assetStore.updateAssetPath(asset);
+    return this;
+  }
+
+  @Override
   public boolean delete() {
     facet.checkDeleteAllowed(asset);
     return facet.stores().assetStore.deleteAsset(asset);
