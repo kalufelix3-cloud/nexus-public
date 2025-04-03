@@ -86,5 +86,16 @@ export default {
         DOWNLOAD: 'Download a copy of the agreement'
       }
     },
+    HISTORICAL_USAGE: {
+      TITLE: 'Historical Usage',
+      DESCRIPTION: <>Monitor your repository usage trends over time. <NxTextLink external href="http://links.sonatype.com/products/nxrm3/license/historical-usage">Learn how usage is calculated</NxTextLink></>,
+      MONTH: 'Month',
+      PEAK_COMPONENTS: 'Peak Components',
+      COMPONENTS_CHANGE: 'Components % Change',
+      COMPONENTS_CHANGE_TOOLTIP: 'Change rate of the peak component count from the previous month.',
+      TOTAL_REQUESTS: 'Total Requests',
+      REQUESTS_CHANGE: 'Requests % Change',
+      REQUESTS_CHANGE_TOOLTIP: 'Change rate of the total monthly requests from the previous month.',
+    }
   }
 };

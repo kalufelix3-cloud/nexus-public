@@ -1,0 +1,101 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import Axios from 'axios';
+import LicensingHistorcalUsage from './LicensingHistoricalUsage';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+
+
+describe('Licensing Historical Usage', () => {
+  async function renderView() {
+    return render(<LicensingHistorcalUsage />);
+  }
+
+  it('renders the title and description', async () => {
+    await renderView();
+
+    expect(screen.getByRole('heading', { name: "Historical Usage" })).toBeInTheDocument();
+    expect(screen.getByText('Monitor your repository usage trends over time.')).toBeInTheDocument();
+  });
+
+  it('renders the table headers correctly', async () => {
+    await renderView();
+
+    expect(screen.getByText("Month")).toBeInTheDocument();
+    expect(screen.getByText("Peak Components")).toBeInTheDocument();
+    expect(screen.getByText("Components % Change")).toBeInTheDocument();
+    expect(screen.getByText("Total Requests")).toBeInTheDocument();
+    expect(screen.getByText("Requests % Change")).toBeInTheDocument();
+  });
+
+  it('renders data rows correctly', async () => {
+    const mockData = [
+      {
+        metricDate: '2024-11-01T00:00:00.000',
+        componentCount: 1000,
+        percentageChangeComponent: 10,
+        requestCount: 2000,
+        percentageChangeRequest: -5
+      }
+    ];
+
+    jest.spyOn(Axios, 'get').mockResolvedValue({ data: mockData });
+
+    await renderView();
+
+    expect(screen.getByText("Nov 2024")).toBeInTheDocument();
+    expect(screen.getByText("1,000")).toBeInTheDocument();
+    expect(screen.getByText("10%")).toBeInTheDocument();
+    expect(screen.getByText("2,000")).toBeInTheDocument();
+    expect(screen.getByText("5%")).toBeInTheDocument();
+  });
+
+  it('renders change icons correctly', async () => {
+    const mockData = [
+      {
+        metricDate: '2024-11-01T00:00:00.000',
+        componentCount: 1000,
+        percentageChangeComponent: 10,
+        requestCount: 2000,
+        percentageChangeRequest: -5
+      }
+    ];
+
+    jest.spyOn(Axios, 'get').mockResolvedValue({ data: mockData });
+
+    const {container} = await renderView();
+    
+    const icon = container.querySelector('[data-icon="info-circle"]');
+
+    await TestUtils.expectToSeeTooltipOnHover(icon, 'Change rate of the peak component count from the previous month.');
+  });
+
+  it('renders N/A for unavailable data', async () => {
+    const mockData = [
+      {
+        metricDate: '2024-11-01T00:00:00.000',
+        componentCount: 'N/A',
+        percentageChangeComponent: 'N/A',
+        requestCount: 'N/A',
+        percentageChangeRequest: 'N/A'
+      }
+    ];
+
+    jest.spyOn(Axios, 'get').mockResolvedValue({ data: mockData });
+
+    await renderView();
+
+    expect(screen.getAllByText('N/A')[0]).toBeInTheDocument();
+  });
+});

@@ -1,4 +1,4 @@
-/**
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,45 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCaretUp, faCaretDown, faMinus } from '@fortawesome/free-solid-svg-icons';
 
-.nxrm-licensing {
-  .licence-details {
-    grid-template-columns: 1fr 1fr 1fr;
+const ChangeIcon = ({ value }) => {
+    let icon = null;
 
-    .nx-read-only__data {
-      word-break: break-word;
-    }
-  }
-  .agreement-iframe {
-    border: none;
-    width: 100%;
-    height: 400px;
-  }
-
-  .licensing-usage-table {
-    .fa-minus {
-      width: 24px;
-      font-size: 10px;
+    if (value === 'N/A') {
+        icon = faMinus;
+    } else if (value > 0) {
+        icon = faCaretUp;
+    } else if (value < 0) {
+        icon = faCaretDown;
     }
 
-    .fa-caret-down {
-      width: 24px;
-      font-size: 24px;
-      position: relative;
-      top: 3px;
-    }
+    return icon ? <FontAwesomeIcon icon={icon} /> : null;
+};
 
-    .fa-caret-up {
-      color: var(--nx-swatch-green-35);
-      width: 24px;
-      font-size: 24px;
-      position: relative;
-      top: 3px;
-    }
-
-    .fa-info-circle {
-      position: relative;
-      left: 5px;
-    }
-  }
-}
+export default ChangeIcon;

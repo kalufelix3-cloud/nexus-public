@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import {useMachine} from '@xstate/react';
 
 import {faWallet} from '@fortawesome/free-solid-svg-icons';
@@ -32,6 +32,9 @@ import UIStrings from '../../../../constants/UIStrings';
 import './Licensing.scss';
 import LicensedUsage from "./LicensedUsage";
 
+import { NxTabs, NxTabList, NxTab, NxTabPanel } from '@sonatype/react-shared-components';
+import LicensingHistorcalUsage from './LicensingHistoricalUsage';
+
 const {LICENSING: {MENU}} = UIStrings;
 
 export default function Licensing() {
@@ -40,6 +43,7 @@ export default function Licensing() {
   const {data, loadError} = state.context;
   const showDetails = !loadError && data.contactCompany;
   const showLicensedUsage = !loadError && data?.maxRepoRequests && data?.maxRepoComponents;
+  const [activeTabId, setActiveTabId] = useState(0);
 
   return <Page>
     <PageHeader>
@@ -50,9 +54,20 @@ export default function Licensing() {
       />
     </PageHeader>
     <ContentBody className="nxrm-licensing">
-      {showDetails && <LicenseDetails service={service}/>}
-      {showLicensedUsage && <LicensedUsage maxRepoRequests={data.maxRepoRequests.toLocaleString()} maxRepoComponents={data.maxRepoComponents.toLocaleString()}/>}
-      <InstallLicense service={service}/>
+    <NxTabs activeTab={activeTabId} onTabSelect={setActiveTabId}>
+          <NxTabList aria-label="Tabs in a tile with no header">
+            <NxTab data-analytics-id="license-tab">License</NxTab>
+            <NxTab data-analytics-id="usage-tab">Usage</NxTab>
+          </NxTabList>
+          <NxTabPanel>
+            {showDetails && <LicenseDetails service={service}/>}
+            {showLicensedUsage && <LicensedUsage maxRepoRequests={data.maxRepoRequests} maxRepoComponents={data.maxRepoComponents}/>}
+            <InstallLicense service={service}/>
+          </NxTabPanel>
+          <NxTabPanel>
+            <LicensingHistorcalUsage/>
+          </NxTabPanel>
+        </NxTabs>
     </ContentBody>
   </Page>;
 }
