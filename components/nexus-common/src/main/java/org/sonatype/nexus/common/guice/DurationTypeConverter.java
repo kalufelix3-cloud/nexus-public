@@ -14,11 +14,11 @@ package org.sonatype.nexus.common.guice;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+
 import javax.inject.Named;
 
 import com.google.inject.TypeLiteral;
 import com.google.inject.spi.TypeConverter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 import static java.time.temporal.ChronoUnit.HOURS;
@@ -29,21 +29,11 @@ import static java.time.temporal.ChronoUnit.NANOS;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
 /**
- * !!!! DEPRECATED in favor of a new way of binding type converters with Spring's Converter interface, see the spring
- * dev
- * doc {@link{private/developer-documentation/architecture/spring.md} for more details, being removed as this was guice
- * specific handling. This class should be removed when the previous DI architecture is removed. Until then changes
- * should primarily be done on the newer "nexus.spring.only=true" impl, then only brought back to this class if
- * necessary
- * -------------------------------------------------------
- * Old javadoc
  * Guice {@link TypeConverter} for {@link Duration} instances.
- * 
+ *
  * @since 3.41
  */
-@Deprecated(since = "4/1/2025", forRemoval = true)
 @Named
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
 public class DurationTypeConverter
     extends TypeConverterSupport<Duration>
 {

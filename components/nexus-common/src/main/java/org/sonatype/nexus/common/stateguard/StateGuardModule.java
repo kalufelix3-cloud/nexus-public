@@ -17,18 +17,10 @@ import org.sonatype.nexus.common.guice.AbstractInterceptorModule;
 import com.google.inject.matcher.Matchers;
 
 /**
- * !!!! DEPRECATED in favor of Spring's `@Configuration` annotation, see the spring dev doc
- * {@link{private/developer-documentation/architecture/spring.md} for more details, being removed as this was guice
- * specific handling. This class should be removed when the previous DI architecture is removed. Until then changes
- * should primarily be done on the newer "nexus.spring.only=true" impl, then only brought back to this class if
- * necessary
- * -------------------------------------------------------
- * Old javadoc
  * State guard module.
- * 
+ *
  * @since 3.0
  */
-@Deprecated(since = "4/1/2025", forRemoval = true)
 public class StateGuardModule
     extends AbstractInterceptorModule
 {

@@ -46,16 +46,8 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.common.text.Strings2.isEmpty;
 
 /**
- * !!!! DEPRECATED in favor of {@link org.sonatype.nexus.bootstrap.NexusServletContextListener}
- * This class was moved to be loaded and usable in the first pass of injection. Left this deprecated class simply
- * because of the widespread usage. This class should be removed when the previous DI architecture is removed. Until
- * then changes should primarily be done on the newer "nexus.spring.only=true" impl, then only brought back to this
- * class if necessary
- * -------------------------------------------------------
- * Old javadoc
  * {@link ServletContextListener} that bootstraps the core Nexus application.
  */
-@Deprecated(since = "4/1/2025", forRemoval = true)
 public class NexusServletContextListener
     implements ServletContextListener
 {

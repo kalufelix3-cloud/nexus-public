@@ -29,14 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * !!!! DEPRECATED in favor of spring @Configuration class. This class should be removed when the previous DI
- * architecture is removed. Until then changes should primarily be done on the newer "nexus.spring.only=true" impl,
- * then only brought back to this class if necessary
- * -------------------------------------------------------
- * Old javadoc
  * Provides access to the shared metrics and healthcheck registries.
  */
-@Deprecated(since = "4/1/2025", forRemoval = true)
 public class MetricsRegistryModule
     extends AbstractModule
 {

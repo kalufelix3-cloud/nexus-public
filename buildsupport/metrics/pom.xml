@@ -61,10 +61,6 @@
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
           </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-          </exclusion>
         </exclusions>
       </dependency>
 
@@ -72,12 +68,6 @@
         <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-healthchecks</artifactId>
         <version>${metrics.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <dependency>
@@ -90,12 +80,6 @@
         <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-logback</artifactId>
         <version>${metrics.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <dependency>

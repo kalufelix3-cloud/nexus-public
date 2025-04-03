@@ -13,6 +13,7 @@
 package org.sonatype.nexus.common.app;
 
 import java.util.Map;
+
 import javax.annotation.Nullable;
 
 /**

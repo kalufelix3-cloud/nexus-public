@@ -15,37 +15,24 @@ package org.sonatype.nexus.bootstrap.application;
 import javax.annotation.PreDestroy;
 
 import org.sonatype.nexus.bootstrap.jetty.JettyServer;
+import org.sonatype.nexus.spring.application.ShutdownHelper;
+import org.sonatype.nexus.spring.application.ShutdownHelper.ShutdownDelegate;
 
 import org.slf4j.MDC;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.context.event.EventListener;
 
 import static org.sonatype.nexus.bootstrap.application.Launcher.SYSTEM_USERID;
 
-/**
- * !!!! DEPRECATED in favor of org.sonatype.nexus.bootstrap.entrypoint.NexusApplication, no need for the static
- * reference to jetty server any longer. This class should be removed when the previous DI architecture is removed.
- * Until then changes should primarily be done on the newer "nexus.spring.only=true" impl, then only brought back to
- * this class if necessary
- */
-@Deprecated(since = "4/1/2025", forRemoval = true)
 public abstract class NexusApplication
+    implements ShutdownDelegate
 {
-  /**
-   * See class level javadoc
-   */
-  @Deprecated
-  private static JettyServer STATIC_SERVER_REFERENCE;
-
-  @Deprecated
   private final Launcher launcher;
+
+  private static JettyServer STATIC_SERVER_REFERENCE;
 
   public NexusApplication(final Launcher launcher) {
     this.launcher = launcher;
   }
 
-  // don't start jetty until spring context is fully initialized
-  @EventListener(ContextRefreshedEvent.class)
   public void onContextRefreshed() {
     try {
       configureApplication();
@@ -56,29 +43,43 @@ public abstract class NexusApplication
   }
 
   private void configureApplication() throws Exception {
-    MDC.put("userId", SYSTEM_USERID);
+    ShutdownHelper.setDelegate(this);
 
-    // spring continues launch via PostBootstrapInjector when springOnly is true
-    // otherwise, we drive forward with the old spring/sisu/guice rute
-    if (launcher != null) {
-      launcher.startAsync(() -> {
-      });
-      STATIC_SERVER_REFERENCE = launcher.getServer(); // NOSONAR
-    }
+    MDC.put("userId", SYSTEM_USERID);
+    launcher.startAsync(
+        () -> {
+        });
+    STATIC_SERVER_REFERENCE = launcher.getServer(); // NOSONAR
+  }
+
+  /**
+   * For this interim iteration of our migration away from OSGi and on to Spring, there is one single class instance
+   * that needs to be instantiated by Spring, yet still accessible to Guice managed beans: the JettyServer.
+   * At time of writing we do not have a way to take Spring managed beans and make them available to Guice.
+   * This method is a temporary mechanism for Guice managed beans to get a reference to the JettyServer.
+   * When Guice is removed, this method should be removed and the JettyServer will be injected directly into
+   * downstream dependent classes.
+   * This method will return null until {@link #onContextRefreshed()} has been called.
+   *
+   * @return a reference to the JettyServer under normal conditions
+   */
+  public static JettyServer getServerReference() {
+    return STATIC_SERVER_REFERENCE;
   }
 
   @PreDestroy
   public void stop() throws Exception {
-    if (launcher != null) {
-      launcher.stop();
-    }
+    launcher.stop();
   }
 
-  /**
-   * See class level javadoc
-   */
-  @Deprecated
-  public static JettyServer getServerReference() {
-    return STATIC_SERVER_REFERENCE;
+  @Override
+  public void doExit(int code) {
+    ShutdownHelper.setDelegate(ShutdownHelper.JAVA); // avoid recursion
+    ShutdownHelper.exit(code);
+  }
+
+  @Override
+  public void doHalt(int code) {
+    ShutdownHelper.halt(code);
   }
 }

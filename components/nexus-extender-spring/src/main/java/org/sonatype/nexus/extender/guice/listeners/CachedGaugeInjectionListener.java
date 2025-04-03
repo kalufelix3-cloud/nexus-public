@@ -23,18 +23,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * !!!! DEPRECATED This annotation needs a new implementation in spring (only load for `nexus.spring.only=true`,
- * using an Aspect, google gemini will help "how do i add a new metrics annotation that works alongside dropwizard
- * metrics annotations ?". This class should be removed when the previous DI architecture is removed. Until then
- * changes should primarily be done on the newer "nexus.spring.only=true" impl, then only brought back to this class
- * if necessary
- * -------------------------------------------------------
- * Old javadoc
  * Registers the supplied cache gauage to the metrics registry
  * 
  * @since 3.26
  */
-@Deprecated(since = "4/1/2025", forRemoval = true)
 public class CachedGaugeInjectionListener<T>
     implements InjectionListener<T>
 {

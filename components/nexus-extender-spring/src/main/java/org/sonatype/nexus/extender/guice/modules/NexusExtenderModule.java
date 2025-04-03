@@ -40,16 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * !!!! DEPRECATED in favor of spring @Configuration class. This class should no longer care about other modules,
- * just needs to expose the "(org|com)/sonatype.nexus.bootstrap" package for injection. Could also use a high
- * priority value to get processed last. This class should be removed when the previous DI architecture is removed.
- * Until then changes should primarily be done on the newer "nexus.spring.only=true" impl, then only brought back to
- * this class if necessary
- * -------------------------------------------------------
- * Old javadoc
  * The main entry module for sisu/guice configuration
  */
-@Deprecated(since = "4/1/2025", forRemoval = true)
 public class NexusExtenderModule
     extends AbstractModule
 {

@@ -15,6 +15,7 @@ package org.sonatype.nexus.rapture.internal.state;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -23,18 +24,8 @@ import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-
-/**
- * !!!! DEPRECATED in favor of {@link org.sonatype.nexus.rapture.internal.BundleStateContributor} in nexus-rapture
- * module, now that our DI framework has solidified around spring, we can go back to a dynamic module listing. This
- * class should be removed when the previous DI architecture is removed. Until then changes should primarily be done
- * on the newer "nexus.spring.only=true" impl, then only brought back to this class if necessary
- */
-@Deprecated(since = "4/1/2025", forRemoval = true)
 @Named
 @Singleton
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
 public class CoreEditionActiveBundleStateContributor
     implements StateContributor
 {

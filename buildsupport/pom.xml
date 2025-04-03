@@ -35,8 +35,10 @@
   <modules>
     <module>commons</module>
     <module>db</module>
+    <module>feature-flag-processor</module>
     <module>goodies</module>
     <module>groovy</module>
+    <module>guice</module>
     <module>httpclient</module>
     <module>internal</module>
     <module>jetty</module>
@@ -53,27 +55,9 @@
 
     <!-- aggregator -->
     <module>all</module>
-    <module>extjs-maven-plugin</module>
-  </modules>
 
-  <profiles>
-    <profile>
-      <id>not-spring-only</id>
-      <activation>
-        <property>
-          <name>nexus.spring.only</name>
-          <value>!true</value>
-        </property>
-      </activation>
-      <modules>
-        <!-- THIS MODULE SHOULD BE REMOVED WHEN SPRING MIGRATION COMPLETE -->
-        <module>guice</module>
-        <!-- THIS MODULE SHOULD BE REMOVED WHEN SPRING MIGRATION COMPLETE -->
-        <module>feature-flag-processor</module>
-        <!-- THIS MODULE SHOULD BE REMOVED WHEN SPRING MIGRATION COMPLETE -->
-        <module>nexus-feature-flags</module>
-      </modules>
-    </profile>
-  </profiles>
+    <module>extjs-maven-plugin</module>
+    <module>nexus-feature-flags</module>
+  </modules>
 
 </project>

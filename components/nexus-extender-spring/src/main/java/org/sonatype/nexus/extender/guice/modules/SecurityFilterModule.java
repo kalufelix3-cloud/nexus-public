@@ -23,14 +23,8 @@ import static java.lang.Boolean.parseBoolean;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 
 /**
- * !!!! DEPRECATED in favor of a new spring @Configuration class. This class should be removed when the previous DI
- * architecture is removed. Until then changes should primarily be done on the newer "nexus.spring.only=true" impl,
- * then only brought back to this class if necessary
- * -------------------------------------------------------
- * Old javadoc
  * SecurityFilter support bindings.
  */
-@Deprecated(since = "4/1/2025", forRemoval = true)
 public class SecurityFilterModule
     extends AbstractModule
 {

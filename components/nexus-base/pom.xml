@@ -28,10 +28,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-spring</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>jcl-over-slf4j</artifactId>
     </dependency>

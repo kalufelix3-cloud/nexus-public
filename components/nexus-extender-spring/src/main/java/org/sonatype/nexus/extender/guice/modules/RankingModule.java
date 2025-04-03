@@ -19,11 +19,8 @@ import org.eclipse.sisu.inject.DefaultRankingFunction;
 import org.eclipse.sisu.inject.RankingFunction;
 
 /**
- * !!!! DEPRECATED this functionality will not get replicatd in this fashion, no need to add new class. This class
- * should be removed when the previous DI architecture is removed. Until then changes should primarily be done on
- * the newer "nexus.spring.only=true" impl, then only brought back to this class if necessary
+ * Provides ranking policy that gives more recent plugins priority over older plugins.
  */
-@Deprecated(since = "4/1/2025", forRemoval = true)
 public class RankingModule
     extends AbstractModule
 {

@@ -19,16 +19,15 @@ import java.security.CodeSource;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+
 import javax.annotation.Nullable;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.bootstrap.entrypoint.configuration.DirectoryHelper;
-import org.sonatype.nexus.bootstrap.entrypoint.configuration.PropertyMap;
 import org.sonatype.nexus.bootstrap.jetty.JettyServer;
 import org.sonatype.nexus.spring.application.NexusProperties;
+import org.sonatype.nexus.spring.application.PropertyMap;
 import org.sonatype.nexus.spring.application.ShutdownHelper;
 import org.sonatype.nexus.spring.application.classpath.components.JettyConfigurationComponentList;
 import org.sonatype.nexus.spring.application.classpath.components.MybatisDAOComponentList;
@@ -40,35 +39,19 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.bridge.SLF4JBridgeHandler;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-
-import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusDirectoryConfiguration.BASEDIR_SYS_PROP;
-import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusDirectoryConfiguration.DATADIR_SYS_PROP;
+import static org.sonatype.nexus.NexusDirectoryConfiguration.BASEDIR_SYS_PROP;
+import static org.sonatype.nexus.NexusDirectoryConfiguration.DATADIR_SYS_PROP;
 
 /**
  * Nexus bootstrap launcher.
- * !!!! DEPRECATED in favor of org.sonatype.nexus.bootstrap.entrypoint.ApplicationLauncher. This class should be
- * removed when the previous DI architecture is removed. Until then, changes should primarily be done on the
- * newer "nexus.spring.only=true" impl, then only brought back to this class if necessary
  */
-@Deprecated(since = "4/1/2025", forRemoval = true)
 @Named
 @Singleton
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
 public class Launcher
 {
   private static final String LOGGING_OVERRIDE_PREFIX = "nexus.logging.level.";
 
-  // org.sonatype.nexus.spring.application.ShutdownHelper
-
-  /**
-   * Backwards compatible property
-   * 
-   * @deprecated Use {@link #IGNORE_SHUTDOWN_HELPER} instead
-   */
-  @Deprecated
   public static final String IGNORE_SHUTDOWN_HELPER = ShutdownHelper.class.getName() + ".ignore";
 
   public static final String SYSTEM_USERID = "*SYSTEM";
@@ -84,8 +67,7 @@ public class Launcher
       final FeatureFlagEnabledClassFinderFilter featureFlagEnabledClassFinderFilter,
       final SisuComponentMap sisuComponentMap,
       final MybatisDAOComponentList mybatisDAOComponentList,
-      final JettyConfigurationComponentList jettyConfigurationComponentList,
-      final DirectoryHelper directoryHelper) throws Exception
+      final JettyConfigurationComponentList jettyConfigurationComponentList) throws Exception
   {
     configureLogging();
 
@@ -108,7 +90,7 @@ public class Launcher
     }
 
     // ensure the temporary directory is sane
-    File tmpdir = directoryHelper.getTemporaryDirectory();
+    File tmpdir = TemporaryDirectory.get();
     log.info("TMP: {}", tmpdir);
 
     if (!"false".equalsIgnoreCase(getProperty(IGNORE_SHUTDOWN_HELPER, "false"))) {
@@ -170,7 +152,6 @@ public class Launcher
     return value;
   }
 
-  @PreDestroy
   public void stop() throws Exception {
     server.stop();
   }
@@ -179,8 +160,8 @@ public class Launcher
    * Customize logging of the application as necessary.
    */
   private void configureLogging() {
-    SLF4JBridgeHandler.removeHandlersForRootLogger();
-    SLF4JBridgeHandler.install();
+    org.slf4j.bridge.SLF4JBridgeHandler.removeHandlersForRootLogger();
+    org.slf4j.bridge.SLF4JBridgeHandler.install();
   }
 
   private static class Property

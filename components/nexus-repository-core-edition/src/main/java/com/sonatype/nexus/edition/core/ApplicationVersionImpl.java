@@ -15,26 +15,16 @@ package com.sonatype.nexus.edition.core;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.app.ApplicationLicense;
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.ApplicationVersionSupport;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-
 /**
- * !!!! DEPRECATED in favor of {@link org.sonatype.nexus.bootstrap.core.ApplicationVersionImpl},
- * wanted class in the second round of injection, after edition has been selected. This class should be removed when
- * the previous DI architecture is removed. Until then changes should primarily be done on the newer
- * "nexus.spring.only=true" impl, then only brought back to this class if necessary
- * -------------------------------------------------------
- * old javadoc
- * CORE {@link ApplicationLicense}.
- * 
+ * CORE {@link ApplicationVersion}.
+ *
  * @since 3.0
  */
-@Deprecated(since = "4/1/2025", forRemoval = true)
 @Named("CORE")
 @Singleton
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
 public class ApplicationVersionImpl
     extends ApplicationVersionSupport
 {

@@ -29,13 +29,6 @@ import org.apache.commons.lang.time.DateUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import static java.time.temporal.ChronoUnit.DAYS;
-import static java.time.temporal.ChronoUnit.HOURS;
-import static java.time.temporal.ChronoUnit.MINUTES;
-import static java.time.temporal.ChronoUnit.MONTHS;
-import static java.time.temporal.ChronoUnit.SECONDS;
-import static java.time.temporal.ChronoUnit.WEEKS;
-
 /**
  * Helper for {@link DateTime} and {@link Date} types.
  *
@@ -43,18 +36,6 @@ import static java.time.temporal.ChronoUnit.WEEKS;
  */
 public class DateHelper
 {
-  private static final long MILLIS_PER_MONTH = MONTHS.getDuration().toMillis();
-
-  private static final long MILLIS_PER_WEEK = WEEKS.getDuration().toMillis();
-
-  private static final long MILLIS_PER_DAY = DAYS.getDuration().toMillis();
-
-  private static final long MILLIS_PER_HOUR = HOURS.getDuration().toMillis();
-
-  private static final long MILLIS_PER_MINUTE = MINUTES.getDuration().toMillis();
-
-  private static final long MILLIS_PER_SECOND = SECONDS.getDuration().toMillis();
-
   private DateHelper() {
     // empty
   }
@@ -206,35 +187,5 @@ public class DateHelper
     }
     LocalDateTime localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
     return localDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-  }
-
-  public static String toDurationString(final long duration) {
-    StringBuilder stringBuilder = new StringBuilder();
-    long remainder = toDurationString(stringBuilder, "month", MILLIS_PER_MONTH, duration);
-    remainder = toDurationString(stringBuilder, "week", MILLIS_PER_WEEK, remainder);
-    remainder = toDurationString(stringBuilder, "day", MILLIS_PER_DAY, remainder);
-    remainder = toDurationString(stringBuilder, "hour", MILLIS_PER_HOUR, remainder);
-    remainder = toDurationString(stringBuilder, "minute", MILLIS_PER_MINUTE, remainder);
-    toDurationString(stringBuilder, "second", MILLIS_PER_SECOND, remainder);
-
-    return stringBuilder.toString();
-  }
-
-  private static long toDurationString(
-      final StringBuilder stringBuilder,
-      final String period,
-      final long periodInMillis,
-      final long duration)
-  {
-    long count = duration / periodInMillis;
-    long remainder = duration % periodInMillis;
-
-    if (count > 0) {
-      if (!stringBuilder.isEmpty()) {
-        stringBuilder.append(" ");
-      }
-      stringBuilder.append(count).append(" ").append(period).append(count > 1 ? "s" : "");
-    }
-    return remainder;
   }
 }

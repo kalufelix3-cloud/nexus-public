@@ -28,11 +28,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * DEPRECATED as it uses the deprecated AvailabilityVersion annotation. This class needs to be reimplemented to use the
- * newer AvailabilityVersion annotation and surrounding classes
- */
-@Deprecated(since = "4/1/2025", forRemoval = true)
 public class UpgradeVersionCheckerInterceptorTest
     extends TestSupport
 {

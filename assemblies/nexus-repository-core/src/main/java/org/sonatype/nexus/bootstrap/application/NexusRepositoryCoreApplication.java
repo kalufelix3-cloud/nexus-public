@@ -14,41 +14,25 @@ package org.sonatype.nexus.bootstrap.application;
 
 import javax.inject.Inject;
 
-import org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusDirectoryConfiguration;
+import org.sonatype.nexus.NexusDirectoryConfiguration;
 
+import org.springframework.boot.Banner;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.logging.LogLevel;
 import org.springframework.boot.logging.LoggingSystem;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 
-import static org.springframework.boot.Banner.Mode.OFF;
-
-/**
- * !!!! DEPRECATED in favor of {@link org.sonatype.nexus.bootstrap.entrypoint.core.NexusRepositoryCoreApplication}.
- * This class should be removed when the previous DI architecture is removed. Until then changes should primarily be
- * done on the newer "nexus.spring.only=true" impl, then only brought back to this class if necessary
- */
-@Deprecated(since = "4/1/2025", forRemoval = true)
-@SpringBootApplication(scanBasePackages = {
-    "org.sonatype.nexus.bootstrap",
-    "org.sonatype.nexus.spring"
-})
+@SpringBootApplication(scanBasePackages = {"org.sonatype.nexus.bootstrap", "org.sonatype.nexus.spring"})
 public class NexusRepositoryCoreApplication
     extends NexusApplication
 {
-  @Inject
-  public NexusRepositoryCoreApplication(final Launcher launcher) {
-    super(launcher);
-  }
-
-  public static void main(String[] args) {
-    System.setProperty("spring.config.location", "etc/default-application.properties");
-    // since logback is going to start on its own, we need to tell it where to find its configuration
-    System.setProperty("logback.configurationFile", "etc/logback/logback.xml");
-
+  public static void main(final String[] args) {
     // Ensure karaf.data is set as logback needs it early
     NexusDirectoryConfiguration.load();
 
+    System.setProperty("spring.config.location", "etc/default-application.properties");
     // we don't want Spring to own our logging configuration right now
     // at this phase in the migration, Guice still bears the responsibility for configuring logging
     // these two lines tell Spring that there is no logging, preventing any undesirable output to stdout/err
@@ -56,8 +40,21 @@ public class NexusRepositoryCoreApplication
     System.setProperty(LoggingSystem.class.getName(), LoggingSystem.NONE);
     LoggingSystem.get(ClassLoader.getSystemClassLoader()).setLogLevel("ROOT", LogLevel.OFF);
 
-    new SpringApplicationBuilder(NexusRepositoryCoreApplication.class)
-        .bannerMode(OFF)
-        .run(args);
+    // since logback is going to start on its own, we need to tell it where to find its configuration
+    System.setProperty("logback.configurationFile", "etc/logback/logback.xml");
+    SpringApplication app = new SpringApplication(NexusRepositoryCoreApplication.class);
+    app.setBannerMode(Banner.Mode.OFF);
+    app.run(args);
+  }
+
+  @Inject
+  public NexusRepositoryCoreApplication(final Launcher launcher) {
+    super(launcher);
+  }
+
+  @EventListener(ContextRefreshedEvent.class)
+  @Override
+  public void onContextRefreshed() {
+    super.onContextRefreshed();
   }
 }

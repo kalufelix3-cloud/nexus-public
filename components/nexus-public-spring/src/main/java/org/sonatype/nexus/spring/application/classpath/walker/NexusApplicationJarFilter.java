@@ -14,23 +14,15 @@ package org.sonatype.nexus.spring.application.classpath.walker;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
 import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-
-/**
- * !!!! DEPRECATED no new impl needed. This class should be removed when
- * the previous DI architecture is removed. Until then changes should primarily be done on the newer
- * "nexus.spring.only=true" impl, then only brought back to this class if necessary
- */
-@Deprecated(since = "4/1/2025", forRemoval = true)
 @Named
 @Singleton
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
 public class NexusApplicationJarFilter
     extends ComponentSupport
     implements ApplicationJarFilter

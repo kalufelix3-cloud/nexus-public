@@ -19,25 +19,17 @@ import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.guice.AbstractInterceptorModule;
 
 import com.google.inject.matcher.Matchers;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 /**
- * !!!! DEPRECATED in favor of Spring's `@Configuration` annotation, see the spring dev doc
- * {@link{private/developer-documentation/architecture/spring.md} for more details, being removed as this was guice
- * specific handling. This class should be removed when the previous DI architecture is removed. Until then changes
- * should primarily be done on the newer "nexus.spring.only=true" impl, then only brought back to this class if
- * necessary
- * -------------------------------------------------------
- * Old javadoc
  * Guice module for configuring upgrade-related interceptors.
+ *
  * This module binds an interceptor to methods annotated with {@link AvailabilityVersion}.
  * The interceptor is an instance of {@link AvailabilityVersionCheckerInterceptor} which is provided
  * with a {@link DatabaseCheck} instance.
+ *
  */
-@Deprecated(since = "4/1/2025", forRemoval = true)
 @Named
 @Singleton
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
 public class UpgradeModule
     extends AbstractInterceptorModule
 {

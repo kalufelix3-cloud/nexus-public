@@ -31,10 +31,7 @@
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-common</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-spring</artifactId>
-    </dependency>
+
     <!-- serialize/deserialize Java 8 date time types e.g OffsetDateTime -->
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>

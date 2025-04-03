@@ -28,6 +28,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.stream.Stream;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -35,17 +36,8 @@ import javax.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-
 import static java.util.stream.Collectors.toList;
 
-/**
- * !!!! DEPRECATED no longer a needed process with everything injected into spring now. This class should be
- * removed when the previous DI architecture is removed. Until then changes should primarily be done on the newer
- * "nexus.spring.only=true" impl, then only brought back to this class if necessary
- */
-@Deprecated(since = "4/1/2025", forRemoval = true)
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
 @Named
 @Singleton
 public class ClasspathWalker

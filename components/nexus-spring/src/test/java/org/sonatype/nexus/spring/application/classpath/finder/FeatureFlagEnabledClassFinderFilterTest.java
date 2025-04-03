@@ -15,8 +15,8 @@ package org.sonatype.nexus.spring.application.classpath.finder;
 import java.io.IOException;
 import java.util.List;
 
-import org.sonatype.nexus.bootstrap.entrypoint.configuration.PropertyMap;
 import org.sonatype.nexus.spring.application.NexusProperties;
+import org.sonatype.nexus.spring.application.PropertyMap;
 import org.sonatype.nexus.spring.application.classpath.components.FeatureFlagComponentMap;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -27,12 +27,6 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * !!!! DEPRECATED no longer a needed process with everything injected into spring now. This class should be
- * removed when the previous DI architecture is removed. Until then changes should primarily be done on the newer
- * "nexus.spring.only=true" impl, then only brought back to this class if necessary
- */
-@Deprecated(since = "4/1/2025", forRemoval = true)
 public class FeatureFlagEnabledClassFinderFilterTest
 {
   private FeatureFlagComponentMap featureFlagComponentMap;

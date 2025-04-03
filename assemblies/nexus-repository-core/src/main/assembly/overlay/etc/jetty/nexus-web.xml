@@ -21,7 +21,7 @@
   <display-name>Sonatype Nexus</display-name>
 
   <listener>
-    <listener-class>org.sonatype.nexus.bootstrap.NexusServletContextListener</listener-class>
+    <listener-class>org.sonatype.nexus.extender.NexusServletContextListener</listener-class>
   </listener>
 
   <filter>
