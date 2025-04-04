@@ -24,6 +24,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
+
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
 import org.sonatype.nexus.common.app.ManagedLifecycleManager;
@@ -36,6 +37,8 @@ import com.google.inject.Key;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.inject.BeanLocator;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.reverse;
 import static java.lang.Math.max;
@@ -45,12 +48,20 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.OFF;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 
 /**
+ * !!!! DEPRECATED in favor of {@link org.sonatype.nexus.extender.NexusLifecycleManager}
+ * There is simply an alternate way of finding the Lifecycle items. This class should be removed when the previous DI
+ * architecture is removed. Until then changes should primarily be done on the newer "nexus.spring.only=true" impl,
+ * then only brought back to this class if necessary
+ * -------------------------------------------------------
+ * Old javadoc
  * Manages any {@link Lifecycle} components annotated with {@link ManagedLifecycle}.
  * <p>
  * Components are managed during their appropriate phase in order of their priority.
  */
+@Deprecated(since = "4/1/2025", forRemoval = true)
 @Singleton
 @Named
+@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
 public class NexusLifecycleManager
     extends ManagedLifecycleManager
 {

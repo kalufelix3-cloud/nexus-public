@@ -15,6 +15,12 @@ package org.sonatype.nexus.spring.application.classpath.components;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * !!!! DEPRECATED no longer a needed process with everything injected into spring now. This class should be
+ * removed when the previous DI architecture is removed. Until then changes should primarily be done on the newer
+ * "nexus.spring.only=true" impl, then only brought back to this class if necessary
+ */
+@Deprecated(since = "4/1/2025", forRemoval = true)
 public abstract class AbstractComponentList<T>
     implements ComponentList<T>
 {

@@ -23,13 +23,20 @@ import org.eclipse.sisu.inject.TypeArguments;
 import static com.google.inject.name.Names.named;
 
 /**
+ * !!!! DEPRECATED in favor of javax.inject.Qualifier
+ * annotationorg.sonatype.nexus.rapture.internal.BundleStateContributor in nexus-rapture module,
+ * now that our DI framework has solidified around spring, we can go back to a dynamic module listing. This class
+ * should be removed when the previous DI architecture is removed. Until then changes should primarily be done on the
+ * newer "nexus.spring.only=true" impl, then only brought back to this class if necessary
+ * -------------------------------------------------------
+ * Old javadoc
  * Utility class to help bind {@link Provider} components as managed {@link Lifecycle}s.
- *
  * Provider implementations are not automatically exposed under additional interfaces.
  * This small module is a workaround to expose this provider as a (managed) lifecycle.
- *
+ * 
  * @since 3.16
  */
+@Deprecated(since = "4/1/2025", forRemoval = true)
 public class BindAsLifecycleSupport<T extends Lifecycle & Provider<?>>
     extends AbstractModule
 {

@@ -29,6 +29,14 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.collect.Iterators.forEnumeration;
 import static com.google.common.collect.Streams.stream;
 
+/**
+ * !!!! DEPRECATED in favor of spring @Configuration class. This class would need to use the ClassFinder to find all
+ * *ConnectorConfiguration.class files, because this is using classloading and NOT injection, this doesn't have to wait
+ * for a specific state of injection. This class should be removed when the previous DI architecture is removed.
+ * Until then changes should primarily be done on the newer "nexus.spring.only=true" impl, then only brought back to
+ * this class if necessary
+ */
+@Deprecated(since = "4/1/2025", forRemoval = true)
 public class JettyConfigurationModule
     extends AbstractModule
 {

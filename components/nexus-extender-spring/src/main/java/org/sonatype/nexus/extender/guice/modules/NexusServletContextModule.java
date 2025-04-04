@@ -33,8 +33,12 @@ import org.eclipse.sisu.wire.ParameterKeys;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Binds the initial {@link ServletContext} and configures shiro.
+ * !!!! DEPRECATED in favor of spring @Configuration class. As this class is just grouping other modules, we can
+ * get by without a replacment, as i'd expect each of the other modules/configurations to be automatically dealt with.
+ * This class should be removed when the previous DI architecture is removed. Until then changes should primarily be
+ * done on the newer "nexus.spring.only=true" impl, then only brought back to this class if necessary
  */
+@Deprecated(since = "4/1/2025", forRemoval = true)
 public class NexusServletContextModule
     extends AbstractModule
 {

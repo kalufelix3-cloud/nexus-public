@@ -29,20 +29,6 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>nexus-audit-plugin</module>
-    <module>nexus-blobstore-s3</module>
-    <module>nexus-blobstore-tasks</module>
-    <module>nexus-coreui-plugin</module>
-    <module>nexus-repository-httpbridge</module>
-    <module>nexus-repository-maven</module>
-    <module>nexus-repository-apt</module>
-    <module>nexus-repository-raw</module>
-    <module>nexus-script-plugin</module>
-    <module>nexus-ssl-plugin</module>
-    <module>nexus-task-log-cleanup</module>
-    <module>nexus-onboarding-plugin</module>
-    <module>nexus-default-role-plugin</module>
-    <module>nexus-example-content</module>
   </modules>
 
   <dependencyManagement>
@@ -186,27 +172,65 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.eclipse.sisu</groupId>
-        <artifactId>sisu-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
           <compilerId>javac</compilerId>
-          <annotationProcessorPaths>
-            <annotationProcessorPath>
-              <groupId>org.sonatype.nexus.buildsupport</groupId>
-              <artifactId>feature-flag-processor</artifactId>
-              <version>${project.version}</version>
-            </annotationProcessorPath>
-          </annotationProcessorPaths>
-          <annotationProcessors>
-            <annotationProcessor>org.sonatype.nexus.inject.FeatureFlagAnnotationProcessor</annotationProcessor>
-          </annotationProcessors>
         </configuration>
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>not-spring-only</id>
+      <activation>
+        <property>
+          <name>nexus.spring.only</name>
+          <value>!true</value>
+        </property>
+      </activation>
+      <modules>
+        <module>nexus-audit-plugin</module>
+        <module>nexus-blobstore-s3</module>
+        <module>nexus-blobstore-tasks</module>
+        <module>nexus-coreui-plugin</module>
+        <module>nexus-repository-httpbridge</module>
+        <module>nexus-repository-maven</module>
+        <module>nexus-repository-apt</module>
+        <module>nexus-repository-raw</module>
+        <module>nexus-script-plugin</module>
+        <module>nexus-ssl-plugin</module>
+        <module>nexus-task-log-cleanup</module>
+        <module>nexus-onboarding-plugin</module>
+        <module>nexus-default-role-plugin</module>
+        <module>nexus-example-content</module>
+      </modules>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.eclipse.sisu</groupId>
+            <artifactId>sisu-maven-plugin</artifactId>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <annotationProcessorPaths>
+                <annotationProcessorPath>
+                  <groupId>org.sonatype.nexus.buildsupport</groupId>
+                  <artifactId>feature-flag-processor</artifactId>
+                  <version>${project.version}</version>
+                </annotationProcessorPath>
+              </annotationProcessorPaths>
+              <annotationProcessors>
+                <annotationProcessor>org.sonatype.nexus.inject.FeatureFlagAnnotationProcessor</annotationProcessor>
+              </annotationProcessors>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
 </project>

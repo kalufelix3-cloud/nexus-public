@@ -47,6 +47,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 2.7.0
  */
+/**
+ * !!!! DEPRECATED in favor of {@link org.sonatype.nexus.bootstrap.entrypoint.configuration.DirectoryHelper}
+ * This class was moved to be loaded and usable in the first pass of injection. Left this deprecated class simply
+ * because of the widespread usage. This class should be removed when the previous DI architecture is removed. Until
+ * then changes should primarily be done on the newer "nexus.spring.only=true" impl, then only brought back to this
+ * class if necessary
+ */
+@Deprecated(since = "4/1/2025", forRemoval = true)
 public final class DirectoryHelper
 {
   private static final Logger log = LoggerFactory.getLogger(DirectoryHelper.class);

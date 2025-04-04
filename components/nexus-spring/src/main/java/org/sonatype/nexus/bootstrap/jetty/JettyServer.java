@@ -22,7 +22,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.spring.application.PropertyMap;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.PropertyMap;
 import org.sonatype.nexus.spring.application.ShutdownHelper;
 
 import org.eclipse.jetty.server.Server;
@@ -35,8 +35,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Jetty server.
+ * !!!! DEPRECATED in favor of {@link org.sonatype.nexus.bootstrap.entrypoint.jetty.JettyServer},
+ * wanted class in the first round of injection. This class should be removed when
+ * the previous DI architecture is removed. Until then changes should primarily be done on the newer
+ * "nexus.spring.only=true" impl, then only brought back to this class if necessary
  */
+@Deprecated(since = "4/1/2025", forRemoval = true)
 public class JettyServer
 {
   private static final Logger log = LoggerFactory.getLogger(JettyServer.class);

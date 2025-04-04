@@ -27,11 +27,19 @@ import org.sonatype.nexus.webresources.WebResourceBundle;
 
 import org.eclipse.sisu.space.ClassSpace;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 /**
+ * !!!! NOT REALLY DEPRECATED simply to mark for needing eyes, this may work without issue in the spring context,
+ * just not sure with the nested jars and the resource loading done here.
+ * -------------------------------------------------------
+ * Old javadoc
  * {@link WebResourceBundle} that exposes any resources found under /static.
  */
+@Deprecated(since = "4/1/2025", forRemoval = true)
 @Named
 @Singleton
+@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
 public class StaticWebResource
     implements WebResourceBundle
 {

@@ -27,19 +27,8 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <properties>
-    <slf4j.version>1.7.36</slf4j.version>
-    <logback.version>1.2.13</logback.version>
-  </properties>
-
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>uk.org.lidalia</groupId>
-        <artifactId>sysout-over-slf4j</artifactId>
-        <version>1.0.2</version>
-      </dependency>
-
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
@@ -83,12 +72,49 @@
       </dependency>
 
       <dependency>
-        <groupId>ch.qos.logback</groupId>
-        <artifactId>logback-access</artifactId>
-        <version>${logback.version}</version>
+        <groupId>uk.org.lidalia</groupId>
+        <artifactId>sysout-over-slf4j</artifactId>
+        <version>1.0.2</version>
       </dependency>
-
     </dependencies>
   </dependencyManagement>
+
+  <profiles>
+    <profile>
+      <id>spring-only</id>
+      <activation>
+        <property>
+          <name>nexus.spring.only</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <properties>
+        <slf4j.version>2.0.15</slf4j.version>
+        <logback.version>1.5.12</logback.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>not-spring-only</id>
+      <activation>
+        <property>
+          <name>nexus.spring.only</name>
+          <value>!true</value>
+        </property>
+      </activation>
+      <properties>
+        <slf4j.version>1.7.36</slf4j.version>
+        <logback.version>1.2.13</logback.version>
+      </properties>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-access</artifactId>
+            <version>${logback.version}</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+    </profile>
+  </profiles>
 
 </project>

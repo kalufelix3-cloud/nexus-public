@@ -28,66 +28,14 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>nexus-audit</module>
-    <module>nexus-base</module>
-    <module>nexus-blobstore</module>
-    <module>nexus-blobstore-api</module>
-    <module>nexus-blobstore-file</module>
     <module>nexus-bootstrap-spring</module>
-    <module>nexus-capability</module>
-    <module>nexus-cleanup</module>
-    <module>nexus-cleanup-config</module>
     <module>nexus-common</module>
-    <module>nexus-core</module>
-    <module>nexus-crypto</module>
-    <module>nexus-cache</module>
-    <module>nexus-datastore</module>
-    <module>nexus-datastore-api</module>
-    <module>nexus-distributed-event-service-api</module>
-    <module>nexus-datastore-mybatis</module>
-    <module>nexus-elasticsearch</module>
-    <module>nexus-email</module>
-    <module>nexus-extdirect</module>
+    <module>nexus-configuration</module>
     <module>nexus-extender-spring</module>
-    <module>nexus-httpclient</module>
-    <module>nexus-jmx</module>
-    <module>nexus-scheduling</module>
-    <module>nexus-formfields</module>
-    <module>nexus-guice-servlet</module>
-    <module>nexus-mime</module>
-    <module>nexus-repository-core-edition</module>
     <module>nexus-pax-logging</module>
-    <module>nexus-plugin-api</module>
-	<module>nexus-public-spring</module>
-    <module>nexus-quartz</module>
-    <module>nexus-rapture</module>
-    <module>nexus-repository-config</module>
-    <module>nexus-repository-content</module>
-    <module>nexus-repository-services</module>
-    <module>nexus-repository-view</module>
-    <module>nexus-rest</module>
-    <module>nexus-rest-client</module>
-    <module>nexus-rest-jackson2</module>
-    <module>nexus-script</module>
-    <module>nexus-security</module>
-    <module>nexus-selector</module>
-    <module>nexus-servlet</module>
-    <module>nexus-siesta</module>
+    <module>nexus-repository-core-edition</module>
     <module>nexus-spring</module>
-    <module>nexus-ssl</module>
-    <module>nexus-supportzip-api</module>
-    <module>nexus-swagger</module>
-    <module>nexus-test-common</module>
-    <module>nexus-test-db</module>
     <module>nexus-testsupport</module>
-    <module>nexus-thread</module>
-    <module>nexus-transaction</module>
-    <module>nexus-ui-plugin</module>
-    <module>nexus-upgrade</module>
-    <module>nexus-validation</module>
-    <module>nexus-webhooks</module>
-    <module>nexus-webresources-api</module>
-    <module>nexus-self-hosted</module>
   </modules>
 
   <dependencyManagement>
@@ -102,13 +50,6 @@
     </dependencies>
   </dependencyManagement>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.sonatype.nexus.buildsupport</groupId>
-      <artifactId>feature-flag-processor</artifactId>
-    </dependency>
-  </dependencies>
-
   <build>
     <pluginManagement>
       <plugins>
@@ -117,26 +58,114 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <configuration>
             <compilerId>javac</compilerId>
-            <annotationProcessorPaths>
-              <annotationProcessorPath>
-                <groupId>org.sonatype.nexus.buildsupport</groupId>
-                <artifactId>feature-flag-processor</artifactId>
-                <version>${project.version}</version>
-              </annotationProcessorPath>
-            </annotationProcessorPaths>
-            <annotationProcessors>
-              <annotationProcessor>org.sonatype.nexus.inject.FeatureFlagAnnotationProcessor</annotationProcessor>
-            </annotationProcessors>
           </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
-    <plugins>
-      <plugin>
-        <groupId>org.eclipse.sisu</groupId>
-        <artifactId>sisu-maven-plugin</artifactId>
-      </plugin>
-    </plugins>
   </build>
 
+  <profiles>
+    <profile>
+      <id>not-spring-only</id>
+      <activation>
+        <property>
+          <name>nexus.spring.only</name>
+          <value>!true</value>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.sonatype.nexus.buildsupport</groupId>
+          <artifactId>feature-flag-processor</artifactId>
+        </dependency>
+      </dependencies>
+      <modules>
+        <module>nexus-audit</module>
+        <module>nexus-base</module>
+        <module>nexus-blobstore</module>
+        <module>nexus-blobstore-api</module>
+        <module>nexus-blobstore-file</module>
+        <module>nexus-bootstrap-spring</module>
+        <module>nexus-capability</module>
+        <module>nexus-cleanup</module>
+        <module>nexus-cleanup-config</module>
+        <module>nexus-core</module>
+        <module>nexus-crypto</module>
+        <module>nexus-cache</module>
+        <module>nexus-datastore</module>
+        <module>nexus-datastore-api</module>
+        <module>nexus-distributed-event-service-api</module>
+        <module>nexus-datastore-mybatis</module>
+        <module>nexus-elasticsearch</module>
+        <module>nexus-email</module>
+        <module>nexus-extdirect</module>
+        <module>nexus-httpclient</module>
+        <module>nexus-jmx</module>
+        <module>nexus-scheduling</module>
+        <module>nexus-formfields</module>
+        <!-- THIS MODULE SHOULD BE REMOVED WHEN SPRING MIGRATION COMPLETE -->
+        <module>nexus-guice-servlet</module>
+        <module>nexus-mime</module>
+        <module>nexus-pax-logging</module>
+        <module>nexus-plugin-api</module>
+        <!-- THIS MODULE SHOULD BE REMOVED WHEN SPRING MIGRATION COMPLETE -->
+        <module>nexus-public-spring</module>
+        <module>nexus-quartz</module>
+        <module>nexus-rapture</module>
+        <module>nexus-repository-config</module>
+        <module>nexus-repository-content</module>
+        <module>nexus-repository-services</module>
+        <module>nexus-repository-view</module>
+        <module>nexus-rest</module>
+        <module>nexus-rest-client</module>
+        <module>nexus-rest-jackson2</module>
+        <module>nexus-script</module>
+        <module>nexus-security</module>
+        <module>nexus-selector</module>
+        <module>nexus-servlet</module>
+        <module>nexus-siesta</module>
+        <module>nexus-ssl</module>
+        <module>nexus-supportzip-api</module>
+        <module>nexus-swagger</module>
+        <module>nexus-test-common</module>
+        <module>nexus-test-db</module>
+        <module>nexus-thread</module>
+        <module>nexus-transaction</module>
+        <module>nexus-ui-plugin</module>
+        <module>nexus-upgrade</module>
+        <module>nexus-validation</module>
+        <module>nexus-webhooks</module>
+        <module>nexus-webresources-api</module>
+        <module>nexus-self-hosted</module>
+      </modules>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <configuration>
+                <annotationProcessorPaths>
+                  <annotationProcessorPath>
+                    <groupId>org.sonatype.nexus.buildsupport</groupId>
+                    <artifactId>feature-flag-processor</artifactId>
+                    <version>${project.version}</version>
+                  </annotationProcessorPath>
+                </annotationProcessorPaths>
+                <annotationProcessors>
+                  <annotationProcessor>org.sonatype.nexus.inject.FeatureFlagAnnotationProcessor</annotationProcessor>
+                </annotationProcessors>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+        <plugins>
+          <plugin>
+            <groupId>org.eclipse.sisu</groupId>
+            <artifactId>sisu-maven-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
