@@ -830,6 +830,9 @@
                   -->
                   <exclude>**/*.js</exclude>
                   <exclude>**/dependency-reduced-pom.xml</exclude>
+
+                  <!-- Exclude developers local scripts folder-->
+                  <exclude>myscripts/**</exclude>
                 </excludes>
               </licenseSet>
 
