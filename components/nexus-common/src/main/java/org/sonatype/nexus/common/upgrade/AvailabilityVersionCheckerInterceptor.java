@@ -23,9 +23,14 @@ import org.aopalliance.intercept.MethodInvocation;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
+ * !!!! DEPRECATED in favor of a new implementation that doesn't use @BindingAnnotation. This class should be
+ * removed when the previous DI architecture is removed. Until then changes should primarily be done on the newer
+ * "nexus.spring.only=true" impl, then only brought back to this class ifnecessary
+ * -------------------------------------------------------
+ * Old javadoc
  * Interceptor that checks the database schema version before allowing a method to be invoked.
- *
  */
+@Deprecated(since = "4/1/2025", forRemoval = true)
 public class AvailabilityVersionCheckerInterceptor
     extends ComponentSupport
     implements MethodInterceptor

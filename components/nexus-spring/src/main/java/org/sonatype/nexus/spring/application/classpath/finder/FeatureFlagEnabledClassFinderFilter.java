@@ -27,13 +27,18 @@ import org.sonatype.nexus.spring.application.classpath.components.FeatureFlagCom
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Character.isLowerCase;
 
 /**
- * Filter for class finder that filters out classes based on feature flags being enabled for any class that has a
- * FeatureFlag annotation, or any class in a package that has a FeatureFlag annotation.
+ * !!!! DEPRECATED no longer a needed process with everything injected into spring now. This class should be
+ * removed when the previous DI architecture is removed. Until then changes should primarily be done on the newer
+ * "nexus.spring.only=true" impl, then only brought back to this class if necessary
  */
+@Deprecated(since = "4/1/2025", forRemoval = true)
+@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
 @Named
 @Singleton
 public class FeatureFlagEnabledClassFinderFilter

@@ -29,11 +29,6 @@
   <dependencies>
 
     <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-access</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-logback</artifactId>
     </dependency>
@@ -51,6 +46,11 @@
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
     </dependency>
 
     <dependency>
@@ -77,5 +77,54 @@
     </dependency>
 
   </dependencies>
+
+  <profiles>
+    <profile>
+      <id>spring-only</id>
+      <activation>
+        <property>
+          <name>nexus.spring.only</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <configuration>
+                <excludes>
+                  <exclude>ch/qos/logback/access/jetty/RequestLogImpl2.java</exclude>
+                  <exclude>org/sonatype/nexus/pax/logging/AccessPatternLayoutEncoder.java</exclude>
+                  <exclude>org/sonatype/nexus/pax/logging/NexusThreadConverter.java</exclude>
+                  <exclude>org/sonatype/nexus/pax/logging/NexusUserIdConverter.java</exclude>
+                </excludes>
+                <testExcludes>
+                  <testExclude>org/sonatype/nexus/pax/logging/NexusLogFilterTest.java</testExclude>
+                  <testExclude>org/sonatype/nexus/pax/logging/TaskLogsFilterTest.java</testExclude>
+                </testExcludes>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+    <profile>
+        <id>not-spring-only</id>
+        <activation>
+          <property>
+            <name>nexus.spring.only</name>
+            <value>!true</value>
+          </property>
+        </activation>
+        <dependencies>
+          <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-access</artifactId>
+          </dependency>
+        </dependencies>
+    </profile>
+  </profiles>
 
 </project>

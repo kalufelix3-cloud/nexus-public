@@ -21,20 +21,26 @@ import com.google.inject.name.Names;
 import org.aopalliance.intercept.MethodInterceptor;
 
 /**
+ * !!!! DEPRECATED in favor of a new way of binding interceptors with Spring's @Aspect annotation, see the spring dev
+ * doc {@link{private/developer-documentation/architecture/spring.md} for more details, being removed as this was a
+ * guice mannerism. This class should be removed when the previous DI architecture is removed. Until then changes
+ * should primarily be done on the newer "nexus.spring.only=true" impl, then only brought back to this class if
+ * necessary
+ * -------------------------------------------------------
+ * Old javadoc
  * Workaround to automatically share method interceptors until
  * <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=403108">proper Sisu feature</a> is implemented.
- * 
  * <p>
  * This module is only bound once in its originating realm, when the bindInterceptor method is first called. The Nexus
  * Plugin Manager can then see this module via the injected dynamic list of AbstractInterceptorModules and will install
  * it in any plugins registered after this point.
- * 
  * <p>
  * Note: you can't contribute interceptors to earlier plugins or from a plugin to core, but the other direction works
  * fine.
  * 
  * @since 2.4
  */
+@Deprecated(since = "4/1/2025", forRemoval = true)
 public abstract class AbstractInterceptorModule
     extends AbstractModule
 {

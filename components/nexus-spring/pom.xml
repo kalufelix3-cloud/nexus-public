@@ -38,7 +38,6 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-loader</artifactId>
-      <version>${spring-boot.version}</version>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
@@ -49,12 +48,12 @@
       <artifactId>javax.inject</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.sisu</groupId>
-      <artifactId>org.eclipse.sisu.inject</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-webapp</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.sonatype.goodies</groupId>
+      <artifactId>goodies-common</artifactId>
     </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
@@ -66,17 +65,7 @@
     </dependency>
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-common</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.servicemix.bundles</groupId>
-          <artifactId>org.apache.servicemix.bundles.aopalliance</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-datastore-api</artifactId>
+      <artifactId>nexus-configuration</artifactId>
     </dependency>
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
@@ -85,28 +74,83 @@
     </dependency>
   </dependencies>
 
-  <build>
-    <plugins>
-      <!-- these new spring modules do NOT need sisu indexing -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <excludes>
-            <exclude>META-INF/sisu/**</exclude>
-          </excludes>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.eclipse.sisu</groupId>
-        <artifactId>sisu-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>index-components</id>
-            <phase>none</phase>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
+  <profiles>
+    <profile>
+      <id>spring-only</id>
+      <activation>
+        <property>
+          <name>nexus.spring.only</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.aspectj</groupId>
+          <artifactId>aspectjtools</artifactId>
+        </dependency>
+      </dependencies>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <configuration>
+                <excludes>
+                  <exclude>org/sonatype/nexus/bootstrap/JavaPrefs.java</exclude>
+                  <exclude>org/sonatype/nexus/bootstrap/jetty/JettyServer.java</exclude>
+                  <exclude>org/sonatype/nexus/spring/**</exclude>
+                </excludes>
+                <testExcludes>
+                  <testExclude>org/sonatype/nexus/spring/**</testExclude>
+                </testExcludes>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+    <profile>
+      <id>not-spring-only</id>
+      <activation>
+        <property>
+          <name>nexus.spring.only</name>
+          <value>!true</value>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.eclipse.sisu</groupId>
+          <artifactId>org.eclipse.sisu.inject</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>org.sonatype.nexus</groupId>
+          <artifactId>nexus-datastore-api</artifactId>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+              <excludes>
+                <exclude>META-INF/sisu/**</exclude>
+              </excludes>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.eclipse.sisu</groupId>
+            <artifactId>sisu-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>index-components</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

@@ -16,8 +16,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * !!!! DEPRECATED in favor of {@link org.sonatype.nexus.bootstrap.entrypoint.jvm.JavaShutdownDelegate},
+ * new impl is automatically injected and mimics functionality. This class should be removed when
+ * the previous DI architecture is removed. Until then changes should primarily be done on the newer
+ * "nexus.spring.only=true" impl, then only brought back to this class if necessary
+ * -------------------------------------------------------
+ * old javadoc
  * Helper to cope with different mechanisms to shutdown.
  */
+@Deprecated(since = "4/1/2025", forRemoval = true)
 public class ShutdownHelper
 {
   private static final Logger log = LoggerFactory.getLogger(ShutdownHelper.class);
