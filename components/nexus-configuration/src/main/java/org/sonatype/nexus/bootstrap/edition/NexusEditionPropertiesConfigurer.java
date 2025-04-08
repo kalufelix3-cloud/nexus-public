@@ -15,7 +15,11 @@ package org.sonatype.nexus.bootstrap.edition;
 import java.nio.file.Path;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.PropertyMap;
+import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -40,9 +44,13 @@ public class NexusEditionPropertiesConfigurer
 
   private static final String NEXUS_EXCLUDE_FEATURES = "nexus-exclude-features";
 
+  private static final String COMMUNITY = "nexus-community-edition";
+
   private static final String TRUE = Boolean.TRUE.toString();
 
   private static final String FALSE = Boolean.FALSE.toString();
+
+  private static final Logger log = LoggerFactory.getLogger(NexusEditionPropertiesConfigurer.class);
 
   public void applyPropertiesFromConfiguration(final PropertyMap nexusProperties) {
     nexusProperties.putAll(System.getProperties());
@@ -86,7 +94,8 @@ public class NexusEditionPropertiesConfigurer
         .ifPresent(secretsFilePath -> properties.put(SECRETS_FILE, secretsFilePath));
   }
 
-  private void selectDatastoreFeature(final PropertyMap properties) {
+  @VisibleForTesting
+  void selectDatastoreFeature(final PropertyMap properties) {
     // table search should only be turned on via clustered flag
     if (parseBoolean(properties.get(
         DATASTORE_CLUSTERED_ENABLED,
@@ -127,6 +136,15 @@ public class NexusEditionPropertiesConfigurer
     if (!parseBoolean(properties.get(DATASTORE_DEVELOPER, FALSE))) {
       // exclude unfinished format features
       properties.put(NEXUS_EXCLUDE_FEATURES, properties.get(NEXUS_EXCLUDE_FEATURES, ""));
+    }
+
+    // If edition is CE, ensure analytics is always enabled
+    if (COMMUNITY.equals(properties.get(NexusEditionSelector.PROPERTY_KEY))) {
+      if (FALSE.equals(properties.get("nexus.analytics.enabled"))) {
+        log.warn(
+            "Attempt to disable analytics in Community Edition detected. Analytics will remain enabled as this is required for CE.");
+      }
+      properties.put("nexus.analytics.enabled", TRUE);
     }
 
     selectDbFeature(properties);

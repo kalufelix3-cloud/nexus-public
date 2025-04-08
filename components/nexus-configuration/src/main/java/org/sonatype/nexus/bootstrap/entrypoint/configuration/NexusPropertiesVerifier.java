@@ -15,6 +15,9 @@ package org.sonatype.nexus.bootstrap.entrypoint.configuration;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -41,6 +44,10 @@ public class NexusPropertiesVerifier
   public static final String TRUE = "true";
 
   public static final String DB_FEATURE_PROPERTY_KEY = "nexus-db-feature";
+
+  public static final String COMMUNITY = "nexus-community-edition";
+
+  private static final Logger log = LoggerFactory.getLogger(NexusPropertiesVerifier.class);
 
   public void verify(final NexusProperties nexusProperties) {
     // Ensure required properties exist
@@ -98,6 +105,15 @@ public class NexusPropertiesVerifier
     }
     else if (parseBoolean(nexusProperties.get(ELASTIC_SEARCH_ENABLED))) {
       nexusProperties.put(DATASTORE_TABLE_SEARCH, FALSE);
+    }
+
+    // If edition is CE, ensure analytics is always enabled
+    if (COMMUNITY.equals(nexusProperties.get(NexusEditionSelector.PROPERTY_KEY))) {
+      if (FALSE.equals(nexusProperties.get("nexus.analytics.enabled"))) {
+        log.warn(
+            "Attempt to disable analytics in Community Edition detected. Analytics will remain enabled as this is required for CE.");
+      }
+      nexusProperties.put("nexus.analytics.enabled", TRUE);
     }
 
     nexusProperties.put(DB_FEATURE_PROPERTY_KEY, "nexus-datastore-mybatis");
