@@ -155,7 +155,7 @@
               <configuration>
                 <excludes>
                   <exclude>org/sonatype/nexus/common/app/BindAsLifecycleSupport.java</exclude>
-                  <exclude>org/sonatype/nexus/common/guice/**</exclude>
+                  <exclude>org/sonatype/nexus/common/guice/**/*.java</exclude>
                   <exclude>org/sonatype/nexus/common/app/GlobalComponentLookupHelper.java</exclude>
                   <exclude>org/sonatype/nexus/common/id/DirectoryHelper.java</exclude>
                   <exclude>org/sonatype/nexus/common/stateguard/StateGuardModule.java</exclude>

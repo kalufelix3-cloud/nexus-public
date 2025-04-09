@@ -122,6 +122,20 @@
         </dependency>
       </dependencies>
       <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <configuration>
+                <excludes>
+                  <exclude>org/sonatype/nexus/bootstrap/entrypoint/**/*.java</exclude>
+                  <exclude>org/sonatype/nexus/bootstrap/spring/**/*.java</exclude>
+                </excludes>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>

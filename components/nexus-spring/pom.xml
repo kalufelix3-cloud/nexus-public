@@ -99,10 +99,10 @@
                 <excludes>
                   <exclude>org/sonatype/nexus/bootstrap/JavaPrefs.java</exclude>
                   <exclude>org/sonatype/nexus/bootstrap/jetty/JettyServer.java</exclude>
-                  <exclude>org/sonatype/nexus/spring/**</exclude>
+                  <exclude>org/sonatype/nexus/spring/**/*.java</exclude>
                 </excludes>
                 <testExcludes>
-                  <testExclude>org/sonatype/nexus/spring/**</testExclude>
+                  <testExclude>org/sonatype/nexus/spring/**/*.java</testExclude>
                 </testExcludes>
               </configuration>
             </plugin>
@@ -130,6 +130,15 @@
       </dependencies>
       <build>
         <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <excludes>
+                <exclude>com/sonatype/nexus/bootstrap/**</exclude>
+              </excludes>
+            </configuration>
+          </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>

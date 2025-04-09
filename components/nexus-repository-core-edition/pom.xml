@@ -53,8 +53,8 @@
               <artifactId>maven-compiler-plugin</artifactId>
               <configuration>
                 <excludes>
-                  <exclude>com/sonatype/nexus/edition/core/**</exclude>
-                  <exclude>org/sonatype/nexus/rapture/internal/state/**</exclude>
+                  <exclude>com/sonatype/nexus/edition/core/**/*.java</exclude>
+                  <exclude>org/sonatype/nexus/rapture/internal/state/**/*.java</exclude>
                 </excludes>
               </configuration>
             </plugin>
@@ -78,7 +78,7 @@
               <artifactId>maven-compiler-plugin</artifactId>
               <configuration>
                 <excludes>
-                  <exclude>com/sonatype/nexus/bootstrap/**</exclude>
+                  <exclude>com/sonatype/nexus/bootstrap/**/*.java</exclude>
                 </excludes>
               </configuration>
             </plugin>

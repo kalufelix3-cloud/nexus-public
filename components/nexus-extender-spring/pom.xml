@@ -80,8 +80,8 @@
               <artifactId>maven-compiler-plugin</artifactId>
               <configuration>
                 <excludes>
-                  <exclude>org/sonatype/nexus/extender/guice/**</exclude>
-                  <exclude>org/sonatype/nexus/extender/sisu/**</exclude>
+                  <exclude>org/sonatype/nexus/extender/guice/**/*.java</exclude>
+                  <exclude>org/sonatype/nexus/extender/sisu/**/*.java</exclude>
                   <exclude>org/sonatype/nexus/extender/NexusServletContextListener.java</exclude>
                 </excludes>
               </configuration>
@@ -167,7 +167,7 @@
               <configuration>
                 <excludes>
                   <exclude>org/sonatype/nexus/extender/NexusLifecycleManager.java</exclude>
-                  <exclude>org/sonatype/nexus/bootstrap/NexusServletContextListener.java</exclude>
+                  <exclude>org/sonatype/nexus/bootstrap/**/*.java</exclude>
                 </excludes>
               </configuration>
             </plugin>

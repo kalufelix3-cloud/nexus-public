@@ -75,11 +75,11 @@
               <artifactId>maven-compiler-plugin</artifactId>
               <configuration>
                 <excludes>
-                  <exclude>org/sonatype/nexus/bootstrap/edition/**</exclude>
+                  <exclude>org/sonatype/nexus/bootstrap/edition/**/*.java</exclude>
                   <exclude>org/sonatype/nexus/common/app/FeatureFlags.java</exclude>
                 </excludes>
                 <testExcludes>
-                  <testExclude>org/sonatype/nexus/bootstrap/edition/**</testExclude>
+                  <testExclude>org/sonatype/nexus/bootstrap/edition/**/*.java</testExclude>
                 </testExcludes>
               </configuration>
             </plugin>
