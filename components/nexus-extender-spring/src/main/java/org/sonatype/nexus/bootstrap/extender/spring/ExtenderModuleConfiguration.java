@@ -10,17 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.bootstrap.common;
+package org.sonatype.nexus.bootstrap.extender.spring;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
+
 @Configuration
 @ComponentScan(basePackages = {
-    "org.sonatype.nexus.common"
+    "org.sonatype.nexus.extender"
 })
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "true")
-public class ModuleConfiguration
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "true")
+public class ExtenderModuleConfiguration
 {
 }

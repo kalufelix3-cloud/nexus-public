@@ -18,12 +18,14 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
+
 /**
  * This class is only in place until nexus.spring.only has overtaken the entire code base, to be removed at that point
  */
 @Deprecated(since = "4/1/2025", forRemoval = true)
 @Configuration
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "false", matchIfMissing = true)
 public class PublicConfiguration
 {
   @Bean

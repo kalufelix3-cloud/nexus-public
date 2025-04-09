@@ -29,6 +29,8 @@ import org.eclipse.sisu.space.ClassSpace;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
+
 /**
  * !!!! NOT REALLY DEPRECATED simply to mark for needing eyes, this may work without issue in the spring context,
  * just not sure with the nested jars and the resource loading done here.
@@ -39,7 +41,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 @Deprecated(since = "4/1/2025", forRemoval = true)
 @Named
 @Singleton
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "false", matchIfMissing = true)
 public class StaticWebResource
     implements WebResourceBundle
 {

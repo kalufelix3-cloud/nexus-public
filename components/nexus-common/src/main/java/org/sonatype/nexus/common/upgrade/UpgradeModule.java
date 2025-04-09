@@ -21,6 +21,8 @@ import org.sonatype.nexus.common.guice.AbstractInterceptorModule;
 import com.google.inject.matcher.Matchers;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
+
 /**
  * !!!! DEPRECATED in favor of Spring's `@Configuration` annotation, see the spring dev doc
  * {@link{private/developer-documentation/architecture/spring.md} for more details, being removed as this was guice
@@ -37,7 +39,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 @Deprecated(since = "4/1/2025", forRemoval = true)
 @Named
 @Singleton
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "false", matchIfMissing = true)
 public class UpgradeModule
     extends AbstractInterceptorModule
 {

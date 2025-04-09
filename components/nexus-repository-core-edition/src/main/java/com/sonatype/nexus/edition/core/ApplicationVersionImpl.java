@@ -20,6 +20,8 @@ import org.sonatype.nexus.common.app.ApplicationVersionSupport;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
+
 /**
  * !!!! DEPRECATED in favor of {@link org.sonatype.nexus.bootstrap.core.ApplicationVersionImpl},
  * wanted class in the second round of injection, after edition has been selected. This class should be removed when
@@ -34,7 +36,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 @Deprecated(since = "4/1/2025", forRemoval = true)
 @Named("CORE")
 @Singleton
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "false", matchIfMissing = true)
 public class ApplicationVersionImpl
     extends ApplicationVersionSupport
 {

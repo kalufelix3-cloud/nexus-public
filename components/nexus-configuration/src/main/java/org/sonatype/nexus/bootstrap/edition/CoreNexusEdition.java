@@ -23,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
+
 /**
  * !!!! DEPRECATED in favor of org.sonatype.nexus.bootstrap.entrypoint.edition.core.CoreNexusEdition. The modules
  * containing the edition modules need to be in the bootstrap.entrypoint package so they are loaded in first round of
@@ -30,7 +32,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
  * primarily be done on the newer "nexus.spring.only=true" impl, then only brought back to this class if necessary
  */
 @Deprecated(since = "4/1/2025", forRemoval = true)
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "false", matchIfMissing = true)
 @Named
 @Singleton
 public class CoreNexusEdition

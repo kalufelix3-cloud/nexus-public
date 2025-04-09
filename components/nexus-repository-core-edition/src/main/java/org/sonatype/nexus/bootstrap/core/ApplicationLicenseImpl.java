@@ -27,13 +27,14 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.lang.Nullable;
 
 import static java.util.Collections.emptyMap;
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
 
 /**
  * CORE {@link ApplicationLicense}.
  */
 @Named
 @Singleton
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "true")
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "true")
 @Conditional(AnotherPropertyCondition.class)
 public class ApplicationLicenseImpl
     implements ApplicationLicense

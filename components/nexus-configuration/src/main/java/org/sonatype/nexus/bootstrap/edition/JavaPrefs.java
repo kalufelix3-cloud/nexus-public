@@ -18,13 +18,14 @@ import javax.inject.Singleton;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static java.util.prefs.Preferences.userRoot;
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
 
 /**
  * !!!! DEPRECATED class no longer needed in "spring only" app. This class should be removed when the previous DI
  * architecture is removed.
  */
 @Deprecated(since = "4/1/2025", forRemoval = true)
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "false", matchIfMissing = true)
 @Singleton
 @Named
 public class JavaPrefs

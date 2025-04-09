@@ -40,23 +40,25 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.lang.Nullable;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
+
 /**
  * Jetty server.
  */
 @Singleton
 @Named
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "true")
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "true")
 public class JettyServer
 {
   private static final Logger LOG = LoggerFactory.getLogger(JettyServer.class);
 
   private final NexusProperties nexusProperties;
 
+  private final ShutdownDelegate shutdownDelegate;
+
   private JettyMainThread thread;
 
   private ConnectorManager connectorManager;
-
-  private ShutdownDelegate shutdownDelegate;
 
   @Inject
   public JettyServer(final NexusProperties nexusPropeties, final ShutdownDelegate shutdownDelegate) {
@@ -124,7 +126,7 @@ public class JettyServer
     XmlConfiguration last = null;
     for (String arg : args) {
       try (Resource resource = Resource.newResource(arg)) {
-        URL url = resource.getURL();
+        URL url = resource.getURI().toURL();
         if (url.getFile().toLowerCase(Locale.ENGLISH).endsWith(".properties")) {
           LOG.info("Loading properties: {}", url);
 

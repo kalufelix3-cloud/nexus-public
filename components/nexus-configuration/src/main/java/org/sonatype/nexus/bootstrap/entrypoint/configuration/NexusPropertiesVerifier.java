@@ -36,7 +36,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.*;
  */
 @Named
 @Singleton
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = TRUE)
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = TRUE)
 public class NexusPropertiesVerifier
 {
   public static final String FALSE = "false";

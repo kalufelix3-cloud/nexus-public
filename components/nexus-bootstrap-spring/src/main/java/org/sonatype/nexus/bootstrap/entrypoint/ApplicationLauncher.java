@@ -31,9 +31,11 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.MapPropertySource;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
+
 @Named
 @Singleton
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "true")
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "true")
 public class ApplicationLauncher
 {
   public static final String SYSTEM_USERID = "*SYSTEM";

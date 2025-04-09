@@ -20,6 +20,8 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.spi.TypeConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
+
 /**
  * !!!! DEPRECATED in favor of a new way of binding type converters with Spring's Converter interface, see the spring
  * dev
@@ -35,7 +37,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
  */
 @Deprecated(since = "4/1/2025", forRemoval = true)
 @Named
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "false", matchIfMissing = true)
 public class TimeTypeConverter
     extends TypeConverterSupport<Time>
 {

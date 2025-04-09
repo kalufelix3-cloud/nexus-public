@@ -24,6 +24,7 @@ import org.eclipse.sisu.space.ClassFinder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
 
 /**
  * !!!! DEPRECATED no longer a needed process with everything injected into spring now. This class should be
@@ -31,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * "nexus.spring.only=true" impl, then only brought back to this class if necessary
  */
 @Deprecated(since = "4/1/2025", forRemoval = true)
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "false", matchIfMissing = true)
 @Named
 @Singleton
 public class JettyConfigurationIndexClassFinder

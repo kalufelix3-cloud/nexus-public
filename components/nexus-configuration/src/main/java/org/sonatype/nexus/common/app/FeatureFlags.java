@@ -20,6 +20,9 @@ package org.sonatype.nexus.common.app;
  */
 public class FeatureFlags
 {
+  /* Sisu/Guice completely removed */
+  public static final String FEATURE_SPRING_ONLY = "nexus.spring.only";
+
   /* Go (hosted) repository is experimental. Available values: true, false. Default value: false */
   public static final String FEATURE_GOLANG_HOSTED = "nexus.golang.hosted";
 

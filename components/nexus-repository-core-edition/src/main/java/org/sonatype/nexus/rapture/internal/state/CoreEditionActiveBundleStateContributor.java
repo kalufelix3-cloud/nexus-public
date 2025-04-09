@@ -25,6 +25,8 @@ import com.google.common.collect.ImmutableMap;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
+
 /**
  * !!!! DEPRECATED in favor of {@link org.sonatype.nexus.rapture.internal.BundleStateContributor} in nexus-rapture
  * module, now that our DI framework has solidified around spring, we can go back to a dynamic module listing. This
@@ -34,7 +36,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 @Deprecated(since = "4/1/2025", forRemoval = true)
 @Named
 @Singleton
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "false", matchIfMissing = true)
 public class CoreEditionActiveBundleStateContributor
     implements StateContributor
 {

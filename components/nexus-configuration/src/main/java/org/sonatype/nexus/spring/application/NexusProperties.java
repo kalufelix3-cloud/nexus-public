@@ -48,6 +48,7 @@ import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusDirecto
 import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusDirectoryConfiguration.DATADIR_SYS_PROP;
 import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusDirectoryConfiguration.getBasePath;
 import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusDirectoryConfiguration.getDataPath;
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
 
 /**
  * !!!! DEPRECATED in favor of {@link org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusProperties}
@@ -57,7 +58,7 @@ import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusDirecto
  * class if necessary
  */
 @Deprecated(since = "4/1/2025", forRemoval = true)
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "false", matchIfMissing = true)
 @Named
 @Singleton
 public class NexusProperties

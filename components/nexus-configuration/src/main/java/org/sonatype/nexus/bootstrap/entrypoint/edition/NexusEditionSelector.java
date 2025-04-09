@@ -23,10 +23,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
 import static java.util.Collections.reverse;
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
 
 @Named
 @Singleton
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "true")
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "true")
 public class NexusEditionSelector
 {
   public static final String PROPERTY_KEY = "nexus-edition";

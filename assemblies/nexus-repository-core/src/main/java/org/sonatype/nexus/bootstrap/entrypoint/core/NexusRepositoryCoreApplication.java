@@ -19,6 +19,7 @@ import org.sonatype.nexus.bootstrap.entrypoint.NexusApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
 import static org.springframework.boot.Banner.Mode.OFF;
 
 // Minimalist list of root packages to scan, to start bootstrapping
@@ -35,7 +36,7 @@ public class NexusRepositoryCoreApplication
 
     new SpringApplicationBuilder(NexusRepositoryCoreApplication.class)
         .bannerMode(OFF)
-        .properties(Map.of("nexus.spring.only", "true"))
+        .properties(Map.of(FEATURE_SPRING_ONLY, "true"))
         .run(args);
   }
 }

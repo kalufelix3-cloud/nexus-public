@@ -26,6 +26,8 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
+
 /**
  * !!!! DEPRECATED in favor of com.sonatype.nexus.bootstrap.entrypoint.edition.pro.ProfessionalNexusEdition. The
  * modules containing the edition modules need to be in the bootstrap.entrypoint package so they are loaded in first
@@ -36,7 +38,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 @Deprecated(since = "4/1/2025", forRemoval = true)
 @Named
 @Singleton
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "false", matchIfMissing = true)
 public class ProNexusEdition
     extends NexusEdition
 {

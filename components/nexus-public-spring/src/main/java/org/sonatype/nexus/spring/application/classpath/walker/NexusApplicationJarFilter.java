@@ -22,6 +22,8 @@ import org.sonatype.goodies.common.ComponentSupport;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
+
 /**
  * !!!! DEPRECATED no new impl needed. This class should be removed when
  * the previous DI architecture is removed. Until then changes should primarily be done on the newer
@@ -30,7 +32,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 @Deprecated(since = "4/1/2025", forRemoval = true)
 @Named
 @Singleton
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "false", matchIfMissing = true)
 public class NexusApplicationJarFilter
     extends ComponentSupport
     implements ApplicationJarFilter

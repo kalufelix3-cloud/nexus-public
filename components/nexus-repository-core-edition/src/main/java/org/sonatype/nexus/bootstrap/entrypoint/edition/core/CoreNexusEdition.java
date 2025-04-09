@@ -21,9 +21,11 @@ import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSupport;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
+
 @Singleton
 @Named
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "true")
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "true")
 public class CoreNexusEdition
     extends NexusEditionSupport
 {

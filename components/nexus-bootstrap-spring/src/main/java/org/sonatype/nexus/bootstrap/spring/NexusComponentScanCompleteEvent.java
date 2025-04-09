@@ -12,15 +12,18 @@
  */
 package org.sonatype.nexus.bootstrap.spring;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ConfigurableApplicationContext;
 
 /**
- * Everything nested under (org|com)/sonatype/nexus/bootstrap has already been scanned for injection. All of the other
- * classes are either "to be removed" or interfaces
+ * This event is fired after Nexus is done performing its component scan. The flow is as follows Spring does its
+ * component scan, using the typical spring @CompnentScan annoation(s) or via packages set in the @SpringBootApplication
+ * annotations
  */
-@Configuration
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "true")
-public class ModuleConfiguration
+public class NexusComponentScanCompleteEvent
+    extends ApplicationEvent
 {
+  public NexusComponentScanCompleteEvent(final ConfigurableApplicationContext configurableApplicationContext) {
+    super(configurableApplicationContext);
+  }
 }

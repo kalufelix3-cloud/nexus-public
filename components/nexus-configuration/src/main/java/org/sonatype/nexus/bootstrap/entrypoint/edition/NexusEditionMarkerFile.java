@@ -26,10 +26,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static java.util.Locale.ENGLISH;
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
 
 @Singleton
 @Named
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "true")
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "true")
 public class NexusEditionMarkerFile
 {
   private static final Logger LOG = LoggerFactory.getLogger(NexusEditionMarkerFile.class);

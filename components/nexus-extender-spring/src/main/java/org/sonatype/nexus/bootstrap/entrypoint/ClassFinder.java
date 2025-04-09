@@ -27,6 +27,7 @@ import org.springframework.core.type.filter.TypeFilter;
 import static java.util.stream.Collectors.toSet;
 import static org.sonatype.nexus.bootstrap.entrypoint.ClassFilter.ClassType.CLASS;
 import static org.sonatype.nexus.bootstrap.entrypoint.ClassFilter.ClassType.INTERFACE;
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
 
 /**
  * Finds classes in the classpath based on a given Classfilter. This is NOT
@@ -36,7 +37,7 @@ import static org.sonatype.nexus.bootstrap.entrypoint.ClassFilter.ClassType.INTE
  */
 @Named
 @Singleton
-@ConditionalOnProperty(value = "nexus.spring.only", havingValue = "true")
+@ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "true")
 public class ClassFinder
 {
   private static final Logger LOG = LoggerFactory.getLogger(ClassFinder.class);
