@@ -61,7 +61,7 @@ export default function Licensing() {
           </NxTabList>
           <NxTabPanel>
             {showDetails && <LicenseDetails service={service}/>}
-            {showLicensedUsage && <LicensedUsage maxRepoRequests={data.maxRepoRequests} maxRepoComponents={data.maxRepoComponents}/>}
+            {showLicensedUsage && <LicensedUsage maxRepoRequests={data.maxRepoRequests.toLocaleString()} maxRepoComponents={data.maxRepoComponents.toLocaleString()}/>}
             <InstallLicense service={service}/>
           </NxTabPanel>
           <NxTabPanel>
