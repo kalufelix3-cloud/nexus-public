@@ -197,7 +197,7 @@ public class S3BlobStoreApiUpdateValidationTest
   }
 
   private static S3BlobStoreApiBucket anS3BlobStoreApiBucket(final String region, final String bucket) {
-    return new S3BlobStoreApiBucket(region, bucket, "", -1);
+    return new S3BlobStoreApiBucket(region, bucket, "");
   }
 
   private static List<S3BlobStoreApiFailoverBucket> s3BlobStoreApiFailoverBuckets(final String... regions) {

@@ -89,12 +89,10 @@ public final class S3BlobStoreApiConfigurationMapper
   }
 
   private static S3BlobStoreApiBucket buildS3BlobStoreBucket(final NestedAttributesMap attributes) {
-    final String expiration = getValue(attributes, EXPIRATION_KEY);
     return new S3BlobStoreApiBucket(
         getValue(attributes, REGION_KEY),
         getValue(attributes, BUCKET_KEY),
-        getValue(attributes, BUCKET_PREFIX_KEY),
-        Integer.valueOf(nonNull(expiration) ? expiration : "0"));
+        getValue(attributes, BUCKET_PREFIX_KEY));
   }
 
   private static S3BlobStoreApiBucketSecurity buildS3BlobStoreBucketSecurity(final NestedAttributesMap attributes) {

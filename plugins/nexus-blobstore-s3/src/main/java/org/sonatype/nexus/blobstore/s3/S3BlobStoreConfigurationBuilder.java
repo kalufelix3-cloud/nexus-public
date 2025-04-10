@@ -45,8 +45,6 @@ public class S3BlobStoreConfigurationBuilder
 
   private String region;
 
-  private String expiration;
-
   private Optional<String> prefix = Optional.empty();
 
   private Optional<String> accessKey = Optional.empty();
@@ -112,23 +110,8 @@ public class S3BlobStoreConfigurationBuilder
     return this;
   }
 
-  /**
-   * Set the the number of days before deleted blobs are automatically removed. Use -1 to disable automatic clean-up.
-   */
-  public S3BlobStoreConfigurationBuilder expiration(final String expiration) {
-    return expiration(Integer.valueOf(checkNotNull(expiration, "Missing expiration")));
-  }
-
   public S3BlobStoreConfigurationBuilder failover(final String region, final String bucketName) {
     this.failover.put(region, bucketName);
-    return this;
-  }
-
-  /**
-   * Set the the number of days before deleted blobs are automatically removed. Use -1 to disable automatic clean-up.
-   */
-  public S3BlobStoreConfigurationBuilder expiration(final Integer expiration) {
-    this.expiration = checkNotNull(expiration, "Missing expiration").toString();
     return this;
   }
 
@@ -247,7 +230,6 @@ public class S3BlobStoreConfigurationBuilder
 
     s3.set(BUCKET_KEY, checkNotNull(bucket, "Missing bucket name"));
     s3.set(REGION_KEY, checkNotNull(region, "Missing region"));
-    s3.set(EXPIRATION_KEY, checkNotNull(expiration, "Missing expiration"));
 
     prefix.ifPresent(set(s3, BUCKET_PREFIX_KEY));
 

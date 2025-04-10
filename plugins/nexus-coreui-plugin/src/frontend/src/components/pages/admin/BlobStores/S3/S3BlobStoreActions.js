@@ -21,7 +21,6 @@ export default {
     bucketConfiguration: {
       bucket: {
         region: 'DEFAULT',
-        expiration: '3',
         prefix: ''
       },
       bucketSecurity: null,
@@ -40,14 +39,7 @@ export default {
     const validationErrors = {
       bucketConfiguration: {
         bucket: {
-          name: ValidationUtils.validateNotBlank(bucket?.name),
-          expiration:
-              ValidationUtils.validateNotBlank(bucket?.expiration) ||
-              ValidationUtils.isInRange({
-                value: bucket?.expiration,
-                min: -1,
-                allowDecimals: false
-              })
+          name: ValidationUtils.validateNotBlank(bucket?.name)
         },
         bucketSecurity: {},
         advancedBucketConnection: {

@@ -32,7 +32,6 @@ public class S3BlobStoreConfigurationBuilderTest
         S3BlobStoreConfigurationBuilder.builder(configuration, "test")
             .bucket("test-bucket")
             .region("test-region")
-            .expiration("10")
             .preSignedUrlEnabled(true)
             .build();
 
@@ -46,7 +45,6 @@ public class S3BlobStoreConfigurationBuilderTest
         S3BlobStoreConfigurationBuilder.builder(configuration, "test")
             .bucket("test-bucket")
             .region("test-region")
-            .expiration("10")
             .preSignedUrlEnabled(false)
             .build();
 
@@ -60,7 +58,6 @@ public class S3BlobStoreConfigurationBuilderTest
         S3BlobStoreConfigurationBuilder.builder(configuration, "test")
             .bucket("test-bucket")
             .region("test-region")
-            .expiration("10")
             .build();
 
     assertThat(config.attributes(CONFIG_KEY).get(PRE_SIGNED_URL_ENABLED), is(nullValue()));

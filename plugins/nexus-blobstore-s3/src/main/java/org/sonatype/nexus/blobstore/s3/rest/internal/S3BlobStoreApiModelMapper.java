@@ -57,7 +57,6 @@ public final class S3BlobStoreApiModelMapper
         S3BlobStoreConfigurationBuilder.builder(blobStoreConfiguration, request.getName())
             .bucket(bucket.getName())
             .region(bucket.getRegion())
-            .expiration(bucket.getExpiration())
             .prefix(bucket.getPrefix())
             .preSignedUrlEnabled(preSignedUrlEnabled);
 

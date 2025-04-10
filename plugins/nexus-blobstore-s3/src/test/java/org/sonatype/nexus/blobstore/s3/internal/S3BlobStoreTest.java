@@ -33,6 +33,7 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
+import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlobIndex;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.blobstore.s3.internal.datastore.DatastoreS3BlobStoreMetricsService;
 import org.sonatype.nexus.common.log.DryRunPrefix;
@@ -52,8 +53,6 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.amazonaws.services.s3.model.SetObjectTaggingRequest;
-import org.hamcrest.core.Is;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,14 +63,12 @@ import org.mockito.MockedStatic;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.endsWith;
@@ -86,8 +83,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_FILE_ATTRIBUTES_SUFFIX;
-import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_FILE_CONTENT_SUFFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
@@ -100,6 +95,8 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.TEMPORARY_BLOB_HEADER;
 public class S3BlobStoreTest
     extends TestSupport
 {
+  @Mock
+  private SoftDeletedBlobIndex deletedBlobIndex;
 
   @Mock
   private AmazonS3Factory amazonS3Factory;
@@ -140,7 +137,8 @@ public class S3BlobStoreTest
     when(region.getName()).thenReturn("us-east-1");
     regionsMockedStatic.when(Regions::getCurrentRegion).thenReturn(region);
     blobStore = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(true), uploader, copier, false,
-        false, false, storeMetrics, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker);
+        storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker);
+
     config = new MockBlobStoreConfiguration();
     attributesContents =
         "#Thu Jun 01 23:10:55 UTC 2017\n@BlobStore.created-by=admin\nsize=11\n@Bucket.repo-name=test\ncreationTime=1496358655289\n@BlobStore.content-type=text/plain\n@BlobStore.blob-name=test\nsha1=eb4c2a5a1c04ca2d504c5e57e1f88cef08c75707";
@@ -286,16 +284,8 @@ public class S3BlobStoreTest
     S3Object attributesS3Object = mockS3Object(attributesContents);
     when(s3.getObject("mybucket", "prefix/" + propertiesLocation(blobId))).thenReturn(attributesS3Object);
     boolean deleted = blobStore.delete(blobId, "successful test");
-    ArgumentCaptor<SetObjectTaggingRequest> objectTaggingRequestArgumentCaptor =
-        ArgumentCaptor.forClass(SetObjectTaggingRequest.class);
-    verify(s3, times(2)).setObjectTagging(objectTaggingRequestArgumentCaptor.capture());
-    List<SetObjectTaggingRequest> capturedRequests = objectTaggingRequestArgumentCaptor.getAllValues();
 
-    assertTrue(capturedRequests.get(0).getKey().endsWith(BLOB_FILE_CONTENT_SUFFIX));
-    assertThat(capturedRequests.get(0).getTagging().getTagSet(), hasItem(S3BlobStore.DELETED_TAG));
-
-    assertTrue(capturedRequests.get(1).getKey().endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX));
-    assertThat(capturedRequests.get(1).getTagging().getTagSet(), hasItem(S3BlobStore.DELETED_TAG));
+    verify(deletedBlobIndex).createRecord(blobId);
     assertThat(deleted, is(true));
   }
 
@@ -307,26 +297,6 @@ public class S3BlobStoreTest
     boolean deleted = blobStore.delete(new BlobId("soft-delete-fail"), "test");
     assertThat(deleted, is(false));
     verify(s3, never()).setObjectTagging(any());
-  }
-
-  @Test
-  public void testDeleteIsHardWhenExpiryDaysIsZero() throws Exception {
-    BlobId blobId = new BlobId("some-blob");
-    MockBlobStoreConfiguration cfg = new MockBlobStoreConfiguration();
-    cfg.setAttributes(new HashMap<>(Map.of("s3", new HashMap<>(Map.of("bucket", "mybucket", "prefix", "")))));
-    blobStore.init(cfg);
-    blobStore.doStart();
-    S3Object attributesS3Object = mockS3Object(attributesContents);
-    when(s3.doesObjectExist("mybucket", propertiesLocation(blobId))).thenReturn(true);
-    when(s3.getObject("mybucket", propertiesLocation(blobId))).thenReturn(attributesS3Object);
-
-    DeleteObjectsResult deleteObjectsResult = mock(DeleteObjectsResult.class);
-    when(deleteObjectsResult.getDeletedObjects()).thenReturn(List.of(new DeletedObject(), new DeletedObject()));
-    when(s3.deleteObjects(any(DeleteObjectsRequest.class))).thenReturn(deleteObjectsResult);
-
-    cfg.attributes("s3").set("expiration", 0);
-    blobStore.delete(blobId, "just a test");
-    verify(s3).deleteObjects(any(DeleteObjectsRequest.class));
   }
 
   @Test
@@ -346,21 +316,13 @@ public class S3BlobStoreTest
     verify(s3, never()).setObjectTagging(any());
 
     when(blobAttributes.getMetrics()).thenReturn(mock(BlobMetrics.class));
-    restored = blobStore.undelete(usageChecker, new BlobId("restore-succeed"), blobAttributes, false);
+    BlobId blobId = new BlobId("restore-succeed");
+    restored = blobStore.undelete(usageChecker, blobId, blobAttributes, false);
     assertThat(restored, is(true));
     verify(blobAttributes).setDeleted(false);
     verify(blobAttributes).setDeletedReason(null);
 
-    ArgumentCaptor<SetObjectTaggingRequest> objectTaggingRequestArgumentCaptor =
-        ArgumentCaptor.forClass(SetObjectTaggingRequest.class);
-    verify(s3, times(2)).setObjectTagging(objectTaggingRequestArgumentCaptor.capture());
-    List<SetObjectTaggingRequest> capturedRequests = objectTaggingRequestArgumentCaptor.getAllValues();
-
-    assertTrue(capturedRequests.get(0).getKey().endsWith(BLOB_FILE_CONTENT_SUFFIX));
-    assertTrue(capturedRequests.get(0).getTagging().getTagSet().isEmpty());
-
-    assertTrue(capturedRequests.get(1).getKey().endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX));
-    assertTrue(capturedRequests.get(1).getTagging().getTagSet().isEmpty());
+    verify(deletedBlobIndex).deleteRecord(blobId);
   }
 
   @Test
@@ -488,71 +450,6 @@ public class S3BlobStoreTest
   }
 
   @Test
-  public void testExpiry() throws Exception {
-    S3BlobStore expiryPreferredBlobStore = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(true),
-        uploader, copier, true, false, false, storeMetrics, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker);
-    BlobId blobId = new BlobId("soft-delete-success");
-    MockBlobStoreConfiguration cfg = new MockBlobStoreConfiguration();
-    cfg.setAttributes(new HashMap<>(Map.of("s3", new HashMap<>(Map.of("bucket", "mybucket", "prefix", "myPrefix")))));
-    expiryPreferredBlobStore.init(cfg);
-    expiryPreferredBlobStore.doStart();
-
-    when(s3.doesObjectExist("mybucket", "myPrefix/" + propertiesLocation(blobId))).thenReturn(true);
-    S3Object attributesS3Object = mockS3Object(attributesContents);
-    when(s3.getObject("mybucket", "myPrefix/" + propertiesLocation(blobId))).thenReturn(attributesS3Object);
-
-    boolean deleted = expiryPreferredBlobStore.deleteHard(blobId);
-    assertThat(deleted, is(true));
-    verify(s3, never()).deleteObject(anyString(), anyString());
-  }
-
-  @Test
-  public void testHardDeleteHardDeletesWhenPreferred() throws Exception {
-    S3BlobStore hardDeleteStore = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(true), uploader,
-        copier, true, true, false, storeMetrics, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker);
-    BlobId blobId = new BlobId("soft-delete-success");
-    MockBlobStoreConfiguration cfg = new MockBlobStoreConfiguration();
-    cfg.setAttributes(new HashMap<>(Map.of("s3", new HashMap<>(Map.of("bucket", "mybucket", "prefix", "myPrefix")))));
-    hardDeleteStore.init(cfg);
-    hardDeleteStore.doStart();
-
-    when(s3.doesObjectExist("mybucket", "myPrefix/" + propertiesLocation(blobId))).thenReturn(true);
-    S3Object attributesS3Object = mockS3Object(attributesContents);
-    when(s3.getObject("mybucket", "myPrefix/" + propertiesLocation(blobId))).thenReturn(attributesS3Object);
-
-    DeleteObjectsResult deleteObjectsResult = mock(DeleteObjectsResult.class);
-    when(deleteObjectsResult.getDeletedObjects()).thenReturn(List.of(new DeletedObject(), new DeletedObject()));
-    when(s3.deleteObjects(any(DeleteObjectsRequest.class))).thenReturn(deleteObjectsResult);
-
-    boolean deleted = hardDeleteStore.deleteHard(blobId);
-    assertThat(deleted, is(true));
-    verify(s3).deleteObjects(any(DeleteObjectsRequest.class));
-  }
-
-  @Test
-  public void testRegularDeleteHardDeletesWhenPreferred() throws Exception {
-    S3BlobStore hardDeleteStore = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(true), uploader,
-        copier, true, true, false, storeMetrics, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker);
-    BlobId blobId = new BlobId("soft-delete-success");
-    MockBlobStoreConfiguration cfg = new MockBlobStoreConfiguration();
-    cfg.setAttributes(new HashMap<>(Map.of("s3", new HashMap<>(Map.of("bucket", "mybucket", "prefix", "myPrefix")))));
-    hardDeleteStore.init(cfg);
-    hardDeleteStore.doStart();
-
-    when(s3.doesObjectExist("mybucket", "myPrefix/" + propertiesLocation(blobId))).thenReturn(true);
-    S3Object attributesS3Object = mockS3Object(attributesContents);
-    when(s3.getObject("mybucket", "myPrefix/" + propertiesLocation(blobId))).thenReturn(attributesS3Object);
-
-    DeleteObjectsResult deleteObjectsResult = mock(DeleteObjectsResult.class);
-    when(deleteObjectsResult.getDeletedObjects()).thenReturn(List.of(new DeletedObject(), new DeletedObject()));
-    when(s3.deleteObjects(any(DeleteObjectsRequest.class))).thenReturn(deleteObjectsResult);
-
-    boolean deleted = hardDeleteStore.delete(blobId, "testDelete");
-    assertThat(deleted, is(true));
-    verify(s3).deleteObjects(any(DeleteObjectsRequest.class));
-  }
-
-  @Test
   public void testConcurrentAttemptsToRefreshBlobShouldNeverReturnNull() throws Exception {
     MockBlobStoreConfiguration cfg = new MockBlobStoreConfiguration();
     cfg.setAttributes(new HashMap<>(Map.of("s3", new HashMap<>(Map.of("bucket", "mybucket")))));
@@ -644,12 +541,12 @@ public class S3BlobStoreTest
     Blob result = spy.makeBlobPermanent(blobId, headers);
 
     verify(spy).getExternalMetadata(blobId);
-    assertThat(result, Is.is(blob));
-    assertThat(headers.size(), Is.is(5));
+    assertThat(result, is(blob));
+    assertThat(headers.size(), is(5));
     assertThat(headers, hasKey(EXTERNAL_ETAG_HEADER));
     assertThat(headers, hasKey(EXTERNAL_LAST_MODIFIED_HEADER));
-    assertThat(headers.get(EXTERNAL_ETAG_HEADER), Is.is("test-etag"));
-    assertThat(headers.get(EXTERNAL_LAST_MODIFIED_HEADER), Is.is(DateHelper.toOffsetDateTime(lastModified).toString()));
+    assertThat(headers.get(EXTERNAL_ETAG_HEADER), is("test-etag"));
+    assertThat(headers.get(EXTERNAL_LAST_MODIFIED_HEADER), is(DateHelper.toOffsetDateTime(lastModified).toString()));
   }
 
   @Test
@@ -677,8 +574,8 @@ public class S3BlobStoreTest
     Blob result = spy.makeBlobPermanent(blobId, headers);
 
     verify(spy).getExternalMetadata(blobId);
-    assertThat(result, Is.is(blob));
-    assertThat(headers.size(), Is.is(3));
+    assertThat(result, is(blob));
+    assertThat(headers.size(), is(3));
     assertThat(headers, not(hasKey(EXTERNAL_ETAG_HEADER)));
     assertThat(headers, not(hasKey(EXTERNAL_LAST_MODIFIED_HEADER)));
   }
@@ -727,11 +624,11 @@ public class S3BlobStoreTest
     verify(s3, never()).deleteObjects(any());
   }
 
-  private String propertiesLocation(BlobId blobId) {
+  private String propertiesLocation(final BlobId blobId) {
     return "content/" + new VolumeChapterLocationStrategy().location(blobId) + ".properties";
   }
 
-  private String bytesLocation(BlobId blobId) {
+  private String bytesLocation(final BlobId blobId) {
     return "content/" + new VolumeChapterLocationStrategy().location(blobId) + ".bytes";
   }
 
@@ -741,7 +638,7 @@ public class S3BlobStoreTest
     return tempBlobMetaData;
   }
 
-  private S3Object mockS3Object(String content) {
+  private S3Object mockS3Object(final String content) {
     S3Object s3Object = mock(S3Object.class);
     S3ObjectInputStream inputStream = new S3ObjectInputStream(new ByteArrayInputStream(content.getBytes()), null);
     when(s3Object.getObjectContent()).thenReturn(inputStream);

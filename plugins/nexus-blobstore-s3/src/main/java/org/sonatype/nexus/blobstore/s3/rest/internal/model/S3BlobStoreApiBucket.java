@@ -20,8 +20,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 
-import static org.sonatype.nexus.blobstore.s3.internal.AmazonS3Factory.DEFAULT;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+import static org.sonatype.nexus.blobstore.s3.internal.AmazonS3Factory.DEFAULT;
 
 /**
  * Encapsulates the S3 bucket details for an s3 blob store.
@@ -45,23 +45,15 @@ public class S3BlobStoreApiBucket
   @ApiModelProperty("The S3 blob store (i.e S3 object) key prefix")
   private final String prefix;
 
-  @Valid
-  @NotNull
-  @ApiModelProperty(value = "How many days until deleted blobs are finally removed from the S3 bucket (-1 to disable)",
-      example = "3")
-  private final Integer expiration;
-
   @JsonCreator
   public S3BlobStoreApiBucket(
       @JsonProperty("region") final String region,
       @JsonProperty("name") final String name,
-      @JsonProperty("prefix") final String prefix,
-      @JsonProperty("expiration") final Integer expiration)
+      @JsonProperty("prefix") final String prefix)
   {
     this.region = region;
     this.name = name;
     this.prefix = prefix;
-    this.expiration = expiration;
   }
 
   public String getRegion() {
@@ -74,9 +66,5 @@ public class S3BlobStoreApiBucket
 
   public String getPrefix() {
     return prefix;
-  }
-
-  public Integer getExpiration() {
-    return expiration;
   }
 }

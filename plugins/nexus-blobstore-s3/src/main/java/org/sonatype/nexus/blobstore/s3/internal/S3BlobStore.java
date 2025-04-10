@@ -46,11 +46,13 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.PaginatedResult;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
+import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlobIndex;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
@@ -58,6 +60,8 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.common.time.UTC;
+import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
+import org.sonatype.nexus.scheduling.TaskInterruptedException;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import com.amazonaws.SdkBaseException;
@@ -68,11 +72,8 @@ import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.ObjectTagging;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.amazonaws.services.s3.model.SetObjectTaggingRequest;
-import com.amazonaws.services.s3.model.Tag;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
@@ -91,14 +92,12 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.cache.CacheLoader.from;
 import static java.lang.String.format;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
 import static org.sonatype.nexus.blobstore.api.OperationType.DOWNLOAD;
 import static org.sonatype.nexus.blobstore.api.OperationType.UPLOAD;
-import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.getConfiguredExpirationInDays;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.buildException;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
@@ -129,8 +128,6 @@ public class S3BlobStore
 
   public static final String ENDPOINT_KEY = "endpoint";
 
-  public static final String EXPIRATION_KEY = "expiration";
-
   public static final String SIGNERTYPE_KEY = "signertype";
 
   public static final String FORCE_PATH_STYLE_KEY = "forcepathstyle";
@@ -146,10 +143,6 @@ public class S3BlobStore
   public static final String BUCKET_REGEX =
       "^([a-z]|(\\d(?!\\d{0,2}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})))([a-z\\d]|(\\.(?!(\\.|-)))|(-(?!\\.))){1,61}[a-z\\d]$";
 
-  public static final int DEFAULT_EXPIRATION_IN_DAYS = 3;
-
-  public static final int NO_AUTOMATIC_EXPIRY_HARD_DELETE = 0;
-
   public static final String METADATA_FILENAME = "metadata.properties";
 
   public static final String TYPE_KEY = "type";
@@ -157,8 +150,6 @@ public class S3BlobStore
   public static final String TYPE_V1 = "s3/1";
 
   public static final String DIRECT_PATH_PREFIX = CONTENT_PREFIX + "/" + DIRECT_PATH_ROOT;
-
-  public static final Tag DELETED_TAG = new Tag("deleted", "true");
 
   private static final String FILE_V1 = "file/1";
 
@@ -170,9 +161,7 @@ public class S3BlobStore
 
   private S3Copier copier;
 
-  private boolean preferExpire;
-
-  private boolean forceHardDelete;
+  private final SoftDeletedBlobIndex deletedBlobIndex;
 
   private boolean preferAsyncCleanup;
 
@@ -200,10 +189,9 @@ public class S3BlobStore
       final BlobIdLocationResolver blobIdLocationResolver,
       @Named("${nexus.s3.uploaderName:-producerConsumerUploader}") final S3Uploader uploader,
       @Named("${nexus.s3.copierName:-parallelCopier}") final S3Copier copier,
-      @Named("${nexus.s3.preferExpire:-false}") final boolean preferExpire,
-      @Named("${nexus.s3.forceHardDelete:-false}") final boolean forceHardDelete,
       @Named("${nexus.s3.preferAsyncCleanup:-true}") final boolean preferAsyncCleanup,
       @Named(S3BlobStore.TYPE) final BlobStoreMetricsService<S3BlobStore> metricsService,
+      final SoftDeletedBlobIndex deletedBlobIndex,
       final DryRunPrefix dryRunPrefix,
       final BucketManager bucketManager,
       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker)
@@ -213,11 +201,9 @@ public class S3BlobStore
     this.copier = checkNotNull(copier);
     this.uploader = checkNotNull(uploader);
     this.metricsService = checkNotNull(metricsService);
+    this.deletedBlobIndex = checkNotNull(deletedBlobIndex);
     this.blobStoreQuotaUsageChecker = checkNotNull(blobStoreQuotaUsageChecker);
     this.bucketManager = checkNotNull(bucketManager);
-    this.preferExpire = preferExpire;
-
-    this.forceHardDelete = forceHardDelete;
     this.preferAsyncCleanup = preferAsyncCleanup;
 
     MetricRegistry registry = SharedMetricRegistries.getOrCreate("nexus");
@@ -496,23 +482,6 @@ public class S3BlobStore
   @Override
   @Timed
   protected boolean doDelete(final BlobId blobId, final String reason) {
-    if (forceHardDelete) {
-      return performHardDelete(blobId);
-    }
-    else if (deleteByExpire()) {
-      return expire(blobId, reason);
-    }
-    else {
-      return performHardDelete(blobId);
-    }
-  }
-
-  private boolean deleteByExpire() {
-    return getConfiguredExpirationInDays(blobStoreConfiguration) != NO_AUTOMATIC_EXPIRY_HARD_DELETE;
-  }
-
-  @Timed
-  private boolean expire(final BlobId blobId, final String reason) {
     final S3Blob blob = liveBlobs.getUnchecked(blobId);
 
     Lock lock = blob.lock();
@@ -558,17 +527,8 @@ public class S3BlobStore
 
       blobAttributes.store();
 
-      // soft delete is implemented using an S3 lifecycle that sets expiration on objects with DELETED_TAG
-      // tag the bytes
-      s3.setObjectTagging(tagAsDeleted(contentPath(blobId)));
-      // tag the attributes
-      s3.setObjectTagging(tagAsDeleted(attributePath));
+      deletedBlobIndex.createRecord(blobId);
       blob.markStale();
-
-      Long contentSize = getContentSizeForDeletion(blobAttributes);
-      if (contentSize != null) {
-        metricsService.recordDeletion(contentSize);
-      }
 
       return true;
     }
@@ -580,35 +540,8 @@ public class S3BlobStore
     }
   }
 
-  private SetObjectTaggingRequest tagAsDeleted(final String key) {
-    return new SetObjectTaggingRequest(
-        getConfiguredBucket(),
-        key,
-        new ObjectTagging(singletonList(DELETED_TAG)));
-  }
-
-  private SetObjectTaggingRequest untagAsDeleted(final String key) {
-    return new SetObjectTaggingRequest(
-        getConfiguredBucket(),
-        key,
-        new ObjectTagging(emptyList()));
-  }
-
   @Override
   protected boolean doDeleteHard(final BlobId blobId) {
-    if (forceHardDelete) {
-      return performHardDelete(blobId);
-    }
-    else if (preferExpire && deleteByExpire()) {
-      return expire(blobId, "hard-delete");
-    }
-    else {
-      return performHardDelete(blobId);
-    }
-  }
-
-  @Timed
-  private boolean performHardDelete(final BlobId blobId) {
     final S3Blob blob = liveBlobs.getUnchecked(blobId);
     Lock lock = blob.lock();
     try (final Timer.Context performHardDeleteContext = hardDeleteTimer.time()) {
@@ -635,6 +568,60 @@ public class S3BlobStore
       lock.unlock();
       liveBlobs.invalidate(blobId);
     }
+  }
+
+  @Guarded(by = STARTED)
+  @Override
+  protected void doCompact(@Nullable final BlobStoreUsageChecker inUseChecker) {
+    try {
+      doCompactWithDeletedBlobIndex(inUseChecker);
+    }
+    catch (BlobStoreException | TaskInterruptedException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new BlobStoreException(e, null);
+    }
+  }
+
+  void doCompactWithDeletedBlobIndex(@Nullable final BlobStoreUsageChecker inUseChecker) {
+    log.info("Begin deleted blobs processing");
+    // only process each blob once (in-use blobs may be re-added to the index)
+    try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
+      for (int counter = 0, numBlobs = deletedBlobIndex.size(); counter < numBlobs; counter++) {
+        log.debug("Processing record {} of {}", counter + 1, numBlobs);
+        BlobId nextAvailableRecord = deletedBlobIndex.getNextAvailableRecord();
+        if (Objects.isNull(nextAvailableRecord)) {
+          log.info("Deleted blobs not found");
+          return;
+        }
+        S3Blob blob = liveBlobs.getIfPresent(nextAvailableRecord);
+        log.debug("Next available record for compaction: {}", nextAvailableRecord);
+        if (Objects.isNull(blob) || blob.isStale()) {
+          log.debug("Compacting...");
+          maybeCompactBlob(inUseChecker, nextAvailableRecord);
+          deletedBlobIndex.deleteRecord(nextAvailableRecord);
+        }
+        else {
+          log.debug("Still in use to deferring");
+          // still in use, so move it to end of the queue
+          deletedBlobIndex.deleteRecord(nextAvailableRecord);
+          deletedBlobIndex.createRecord(nextAvailableRecord);
+        }
+
+        progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(), counter + 1, numBlobs);
+      }
+    }
+  }
+
+  private boolean maybeCompactBlob(@Nullable final BlobStoreUsageChecker inUseChecker, final BlobId blobId) {
+    Optional<S3BlobAttributes> attributesOption = ofNullable((S3BlobAttributes) getBlobAttributes(blobId));
+    if (!attributesOption.isPresent() || !undelete(inUseChecker, blobId, attributesOption.get(), false)) {
+      // attributes file is missing or blob id not in use, so it's safe to delete the file
+      log.debug("Hard deleting blob id: {}, in blob store: {}", blobId, blobStoreConfiguration.getName());
+      return deleteHard(blobId);
+    }
+    return false;
   }
 
   @Nullable
@@ -685,6 +672,8 @@ public class S3BlobStore
       bucketManager.setS3(s3);
       bucketManager.prepareStorageLocation(blobStoreConfiguration);
       S3BlobStoreConfigurationHelper.setConfiguredBucket(blobStoreConfiguration, getConfiguredBucket());
+
+      deletedBlobIndex.init(this);
     }
     catch (AmazonS3Exception e) {
       throw buildException(e);
@@ -851,7 +840,7 @@ public class S3BlobStore
     return new PaginatedResult<>(blobIds, nextContinuationToken);
   }
 
-  private Stream<BlobId> getBlobIdStream(final String prefix, OffsetDateTime fromDateTime) {
+  private Stream<BlobId> getBlobIdStream(final String prefix, final OffsetDateTime fromDateTime) {
     Iterable<S3ObjectSummary> summaries = S3Objects.withPrefix(s3, getConfiguredBucket(), prefix);
     return stream(summaries.spliterator(), false)
         .filter(o -> o.getKey().endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX) || o.getKey().endsWith(BLOB_FILE_CONTENT_SUFFIX))
@@ -944,8 +933,7 @@ public class S3BlobStore
   @Override
   @Timed
   protected void doUndelete(final BlobId blobId, final BlobAttributes attributes) {
-    s3.setObjectTagging(untagAsDeleted(contentPath(blobId)));
-    s3.setObjectTagging(untagAsDeleted(attributePath(blobId)));
+    deletedBlobIndex.deleteRecord(blobId);
     metricsService.recordAddition(attributes.getMetrics().getContentSize());
   }
 

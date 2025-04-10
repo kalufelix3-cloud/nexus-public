@@ -31,8 +31,6 @@ import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.DEFAULT_EXPIRATION_IN_DAYS;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.EXPIRATION_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.REGION_KEY;
 
 /**
@@ -100,11 +98,6 @@ public class S3BlobStoreConfigurationHelper
         .map(Object::toString)
         .map(bucketName -> Collections.singletonMap(currentRegion, bucketName))
         .orElse(Collections.singletonMap(primaryRegion, primaryBucket));
-  }
-
-  public static int getConfiguredExpirationInDays(final BlobStoreConfiguration blobStoreConfiguration) {
-    return Integer.parseInt(
-        blobStoreConfiguration.attributes(CONFIG_KEY).get(EXPIRATION_KEY, DEFAULT_EXPIRATION_IN_DAYS).toString());
   }
 
   public static String getBucketPrefix(final BlobStoreConfiguration blobStoreConfiguration) {

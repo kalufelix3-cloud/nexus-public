@@ -62,8 +62,6 @@ public class S3BlobStoreApiModelMapperTest
 
   private static final String AWS_REGION = "aws-region-1";
 
-  private static final int BUCKET_EXPIRATION = 5;
-
   private static final String AN_IAM_ACCESS_KEY = "anAccessKey";
 
   private static final String AN_IAM_SECRET_ACCESS_KEY = "aSecretAccessKey";
@@ -165,7 +163,7 @@ public class S3BlobStoreApiModelMapperTest
   }
 
   private static S3BlobStoreApiBucket anS3BlobStoreBucket() {
-    return new S3BlobStoreApiBucket(AWS_REGION, S3_BUCKET_NAME, BUCKET_PREFIX, BUCKET_EXPIRATION);
+    return new S3BlobStoreApiBucket(AWS_REGION, S3_BUCKET_NAME, BUCKET_PREFIX);
   }
 
   private static S3BlobStoreApiModel aFullySetS3BlobStoreApiModel() {
@@ -212,7 +210,6 @@ public class S3BlobStoreApiModelMapperTest
   private static void assertGeneralBucketDetails(final NestedAttributesMap attributes) {
     assertThat(getAttribute(REGION_KEY, attributes), is(AWS_REGION));
     assertThat(getAttribute(BUCKET_KEY, attributes), is(S3_BUCKET_NAME));
-    assertThat(parseInt(getAttribute(EXPIRATION_KEY, attributes)), is(BUCKET_EXPIRATION));
     assertThat(getAttribute(BUCKET_PREFIX_KEY, attributes), is(BUCKET_PREFIX));
   }
 

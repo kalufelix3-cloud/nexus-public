@@ -206,7 +206,6 @@ describe.skip('BlobStoresForm', function() {
           kmsKeyResourceName: () => getByLabelText('KMS Key ID'),
           prefix: () => getByLabelText('Prefix'),
           presigned: () => queryByLabelText(S3_STRINGS.S3BlobStore_Presigned_HelpText),
-          expiration: () => getByLabelText('Expiration Days'),
           accessKeyId: () => getByLabelText('Access Key ID'),
           secretAccessKey: () => getByLabelText('Secret Access Key'),
           assumeRole: () => getByLabelText('Assume Role ARN (Optional)'),
@@ -301,7 +300,6 @@ describe.skip('BlobStoresForm', function() {
       region,
       bucket,
       prefix,
-      expiration,
       accessKeyId,
       secretAccessKey,
       assumeRole,
@@ -320,7 +318,6 @@ describe.skip('BlobStoresForm', function() {
     expect(region()).toBeInTheDocument();
     expect(bucket()).toBeInTheDocument();
     expect(prefix()).toBeInTheDocument();
-    expect(expiration()).toBeInTheDocument();
     expect(accessKeyId()).toBeInTheDocument();
     expect(secretAccessKey()).toBeInTheDocument();
     expect(assumeRole()).toBeInTheDocument();
@@ -337,7 +334,6 @@ describe.skip('BlobStoresForm', function() {
       name,
       loadingMask,
       typeSelect,
-      expiration,
       bucket,
       accessKeyId,
       secretAccessKey,
@@ -351,7 +347,6 @@ describe.skip('BlobStoresForm', function() {
 
     userEvent.selectOptions(typeSelect(), 's3');
     expect(typeSelect()).toHaveValue('s3');
-    expect(expiration()).toHaveValue('3');
 
     expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
@@ -496,7 +491,6 @@ describe.skip('BlobStoresForm', function() {
       name,
       loadingMask,
       typeSelect,
-      expiration,
       bucket,
       accessKeyId,
       secretAccessKey,
@@ -511,7 +505,6 @@ describe.skip('BlobStoresForm', function() {
 
     userEvent.selectOptions(typeSelect(), 'S3');
     expect(typeSelect()).toHaveValue('s3');
-    expect(expiration()).toHaveValue('3');
     userEvent.click(selectors.querySubmitButton());
 
     expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
@@ -577,7 +570,7 @@ describe.skip('BlobStoresForm', function() {
     const request = {
       name: 'test',
       bucketConfiguration: {
-        bucket: { region: 'DEFAULT', name: 'bucket', prefix: '', expiration: '3' },
+        bucket: { region: 'DEFAULT', name: 'bucket', prefix: '' },
         bucketSecurity: {
           accessKeyId: 'someAccessKey',
           secretAccessKey: 'SomeSecretAccessKey'
@@ -944,7 +937,7 @@ describe.skip('BlobStoresForm', function() {
       data: {
         name: 'test',
         bucketConfiguration: {
-          bucket: { region: 'DEFAULT', name: 'bucket', prefix: '', expiration: '3' },
+          bucket: { region: 'DEFAULT', name: 'bucket', prefix: '' },
           bucketSecurity: {
             accessKeyId: 'someAccessKey',
             secretAccessKey: 'SomeSecretAccessKey',
@@ -989,7 +982,6 @@ describe.skip('BlobStoresForm', function() {
       loadingMask,
       convertToGroup,
       typeSelect,
-      expiration,
       bucket,
       accessKeyId,
       secretAccessKey,
@@ -1008,7 +1000,6 @@ describe.skip('BlobStoresForm', function() {
     expect(typeSelect()).not.toBeInTheDocument();
     expect(name()).not.toBeInTheDocument();
 
-    expect(expiration()).toHaveValue('3');
     expect(bucket()).toHaveValue('bucket');
     expect(accessKeyId()).toHaveValue('someAccessKey');
     expect(secretAccessKey()).toHaveValue('SomeSecretAccessKey');
@@ -1052,7 +1043,7 @@ describe.skip('BlobStoresForm', function() {
       data: {
         name: 'test',
         bucketConfiguration: {
-          bucket: { region: 'DEFAULT', name: 'bucket', prefix: '', expiration: '3' },
+          bucket: { region: 'DEFAULT', name: 'bucket', prefix: ''},
           failoverBuckets: [
             {
               region: "us-east-1",

@@ -47,11 +47,11 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.LIMIT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.TYPE_KEY;
-import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.FAILOVER_BUCKETS_KEY;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.FAILOVER_BUCKETS_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
 
 public class S3BlobStoreApiConfigurationMapperTest
     extends TestSupport
@@ -232,7 +232,6 @@ public class S3BlobStoreApiConfigurationMapperTest
     bucketAttributes.set(REGION_KEY, AWS_REGION);
     bucketAttributes.set(BUCKET_KEY, S3_BUCKET_NAME);
     bucketAttributes.set(BUCKET_PREFIX_KEY, BUCKET_PREFIX);
-    bucketAttributes.set(EXPIRATION_KEY, BUCKET_EXPIRATION);
   }
 
   private static void fillOptionalBucketDetails(final NestedAttributesMap bucketAttributes) {
@@ -290,7 +289,6 @@ public class S3BlobStoreApiConfigurationMapperTest
   private static void assertRequiredBucketDetails(final S3BlobStoreApiBucket s3BlobStoreBucket) {
     assertThat(s3BlobStoreBucket.getRegion(), is(AWS_REGION));
     assertThat(s3BlobStoreBucket.getName(), is(S3_BUCKET_NAME));
-    assertThat(s3BlobStoreBucket.getExpiration(), is(BUCKET_EXPIRATION));
     assertThat(s3BlobStoreBucket.getPrefix(), is(BUCKET_PREFIX));
   }
 

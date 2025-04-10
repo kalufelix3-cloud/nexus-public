@@ -154,16 +154,6 @@ export default function S3BlobStoreSettings({service}) {
                  {...FormUtils.fieldProps(bucketField('prefix'), current)}
                  onChange={FormUtils.handleUpdate(bucketField('prefix'), send)}/>
     </NxFormGroup>
-    <div className="nx-form-group">
-      <label className="nx-label" htmlFor="bucketConfiguration.bucket.expiration">
-        <span className="nx-label__text">{FIELDS.S3BlobStore_Expiration_FieldLabel}</span>
-      </label>
-      <div className="nx-sub-label">{FIELDS.S3BlobStore_Expiration_HelpText}</div>
-      <NxTextInput
-                 {...FormUtils.fieldProps(bucketField('expiration'), current)}
-                 onChange={FormUtils.handleUpdate(bucketField('expiration'), send)}/>
-      <span className='nxrm-s3-blobstore-prefix-text'>{FIELDS.S3BlobStore_Expiration_DaysText}</span>
-    </div>
     {isProEdition &&
         <div className="nxrm-s3-presigned">
           <NxFieldset label={FIELDS.S3BlobStore_Presigned_FieldLabel}>

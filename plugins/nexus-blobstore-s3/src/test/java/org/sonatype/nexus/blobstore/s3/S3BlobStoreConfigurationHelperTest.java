@@ -113,8 +113,7 @@ public class S3BlobStoreConfigurationHelperTest
     // use the builder so we get the real code path for creating a config
     S3BlobStoreConfigurationBuilder builder = S3BlobStoreConfigurationBuilder.builder(configuration, "my-blobstore")
         .bucket(bucketName)
-        .region(region)
-        .expiration(1);
+        .region(region);
 
     if (failoverBuckets != null) {
       failoverBuckets.forEach((failoverRegion, failoverBucket) -> builder.failover(failoverRegion, failoverBucket));

@@ -26,15 +26,9 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration.Rule;
-import com.amazonaws.services.s3.model.BucketLifecycleConfiguration.Transition;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.amazonaws.services.s3.model.StorageClass;
-import com.amazonaws.services.s3.model.lifecycle.LifecycleAndOperator;
-import com.amazonaws.services.s3.model.lifecycle.LifecycleFilter;
-import com.amazonaws.services.s3.model.lifecycle.LifecyclePrefixPredicate;
-import com.amazonaws.services.s3.model.lifecycle.LifecycleTagPredicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import junitparams.JUnitParamsRunner;
@@ -49,13 +43,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -95,170 +85,6 @@ public class BucketManagerTest
   public void setup() {
     when(featureFlag.isDisabled()).thenReturn(false);
     underTest.setS3(s3);
-  }
-
-  @Test
-  public void setLifeCycleOnExistingBucketIfNotPresent() {
-    when(s3.doesBucketExistV2(anyString())).thenReturn(true);
-    BlobStoreConfiguration cfg = new MockBlobStoreConfiguration();
-    Map<String, Map<String, Object>> attr = ImmutableMap.of("s3", ImmutableMap
-        .of("bucket", "mybucket", "prefix", "myprefix", "expiration", "3"));
-    cfg.setAttributes(attr);
-    underTest.setS3(s3);
-
-    underTest.prepareStorageLocation(cfg);
-
-    verify(s3).getBucketPolicy("mybucket");
-    verify(s3).setBucketLifecycleConfiguration(eq("mybucket"), notNull());
-  }
-
-  @Test
-  public void isExpirationLifeCycleCfgPresentReturnsFalseOnEmptyConfig() {
-    BlobStoreConfiguration cfg = new MockBlobStoreConfiguration();
-    Map<String, Map<String, Object>> attr = ImmutableMap.of("s3", ImmutableMap
-        .of("bucket", "mybucket", "prefix", "myprefix", "expiration", "3"));
-    cfg.setAttributes(attr);
-    BucketLifecycleConfiguration bucketCfg = new BucketLifecycleConfiguration();
-    underTest.setS3(s3);
-
-    assertFalse(underTest.isExpirationLifecycleConfigurationPresent(bucketCfg, cfg));
-  }
-
-  /**
-   * Make sure if admins have set other lifecycle rules we don't clobber them.
-   */
-  @Test
-  public void addingLifecycleRuleLeavesOtherRulesAlone() {
-    BlobStoreConfiguration cfg = new MockBlobStoreConfiguration().withName("blobs");
-    Map<String, Map<String, Object>> attr = ImmutableMap.of("s3", ImmutableMap
-        .of("bucket", "mybucket", "prefix", "myprefix", "expiration", "3"));
-    cfg.setAttributes(attr);
-
-    BucketLifecycleConfiguration bucketCfg = new BucketLifecycleConfiguration();
-
-    Rule glacierRule = new BucketLifecycleConfiguration.Rule()
-        .withId("some other rule")
-        .withTransitions(ImmutableList.of(new Transition().withStorageClass(StorageClass.Glacier)
-            .withDays(365)))
-        .withStatus(BucketLifecycleConfiguration.ENABLED);
-    Rule otherBlobStoreRule = new BucketLifecycleConfiguration.Rule()
-        .withId(LIFECYCLE_EXPIRATION_RULE_ID_PREFIX + "other")
-        .withFilter(new LifecycleFilter(
-            new LifecycleAndOperator(
-                ImmutableList.of(
-                    new LifecyclePrefixPredicate("otherPrefix/"),
-                    new LifecycleTagPredicate(S3BlobStore.DELETED_TAG)))))
-        .withExpirationInDays(123)
-        .withStatus(BucketLifecycleConfiguration.ENABLED);
-    bucketCfg.setRules(ImmutableList.of(glacierRule, otherBlobStoreRule));
-
-    when(s3.doesBucketExistV2(anyString())).thenReturn(true);
-    when(s3.getBucketLifecycleConfiguration(anyString())).thenReturn(bucketCfg);
-
-    underTest.prepareStorageLocation(cfg);
-
-    verify(s3).setBucketLifecycleConfiguration(anyString(), lifeCycleCfgCaptor.capture());
-    BucketLifecycleConfiguration capturedCfg = lifeCycleCfgCaptor.getValue();
-    List<Rule> capturedRules = capturedCfg.getRules();
-    assertEquals(3, capturedRules.size());
-    assertTrue(capturedRules.stream().anyMatch(r -> "some other rule".equals(r.getId())));
-    assertTrue(
-        capturedRules.stream().anyMatch(r -> (LIFECYCLE_EXPIRATION_RULE_ID_PREFIX + "other").equals(r.getId())));
-    assertTrue(
-        capturedRules.stream().anyMatch(r -> (LIFECYCLE_EXPIRATION_RULE_ID_PREFIX + "blobs").equals(r.getId())));
-  }
-
-  @Test
-  public void lifecycleRuleUpdatedWhenExpiryDateChanges() {
-    BlobStoreConfiguration cfg = new MockBlobStoreConfiguration().withName("blobs");
-    Map<String, Map<String, Object>> attr = ImmutableMap.of("s3", ImmutableMap
-        .of("bucket", "mybucket", "prefix", "myprefix", "expiration", "3"));
-    cfg.setAttributes(attr);
-
-    BucketLifecycleConfiguration bucketCfg = new BucketLifecycleConfiguration();
-
-    Rule rule1 = new BucketLifecycleConfiguration.Rule()
-        .withId("some other rule")
-        .withTransitions(ImmutableList.of(new Transition().withStorageClass(StorageClass.Glacier)
-            .withDays(365)))
-        .withStatus(BucketLifecycleConfiguration.ENABLED);
-    Rule rule2 = new BucketLifecycleConfiguration.Rule()
-        .withId(LIFECYCLE_EXPIRATION_RULE_ID_PREFIX + "blobs")
-        .withFilter(new LifecycleFilter(
-            new LifecycleTagPredicate(S3BlobStore.DELETED_TAG)))
-        .withExpirationInDays(2)
-        .withStatus(BucketLifecycleConfiguration.ENABLED);
-    bucketCfg.setRules(ImmutableList.of(rule1, rule2));
-
-    when(s3.doesBucketExistV2(anyString())).thenReturn(true);
-    when(s3.getBucketLifecycleConfiguration(anyString())).thenReturn(bucketCfg);
-
-    underTest.prepareStorageLocation(cfg);
-
-    verify(s3).setBucketLifecycleConfiguration(anyString(), lifeCycleCfgCaptor.capture());
-    BucketLifecycleConfiguration capturedCfg = lifeCycleCfgCaptor.getValue();
-    List<Rule> capturedRules = capturedCfg.getRules();
-    assertEquals(2, capturedRules.size());
-    assertTrue(capturedRules.stream().anyMatch(r -> "some other rule".equals(r.getId())));
-    assertTrue(capturedRules.stream()
-        .filter(r -> (LIFECYCLE_EXPIRATION_RULE_ID_PREFIX + "blobs").equals(r.getId()))
-        .allMatch(r -> r.getExpirationInDays() == 3));
-  }
-
-  @Test
-  public void lifecycleConfigurationRemovedIfAllRulesRemoved() {
-    BlobStoreConfiguration cfg = new MockBlobStoreConfiguration().withName("mybucket");
-    Map<String, Map<String, Object>> attr = ImmutableMap.of("s3", ImmutableMap
-        .of("bucket", "mybucket", "expiration", "0"));
-    cfg.setAttributes(attr);
-
-    BucketLifecycleConfiguration bucketCfg = new BucketLifecycleConfiguration();
-
-    Rule rule1 = new BucketLifecycleConfiguration.Rule()
-        .withId(LIFECYCLE_EXPIRATION_RULE_ID_PREFIX + "mybucket")
-        .withFilter(new LifecycleFilter(
-            new LifecycleTagPredicate(S3BlobStore.DELETED_TAG)))
-        .withExpirationInDays(3)
-        .withStatus(BucketLifecycleConfiguration.ENABLED);
-    bucketCfg.setRules(ImmutableList.of(rule1));
-
-    when(s3.doesBucketExistV2(anyString())).thenReturn(true);
-    when(s3.getBucketLifecycleConfiguration(anyString())).thenReturn(bucketCfg);
-
-    underTest.prepareStorageLocation(cfg);
-
-    verify(s3).deleteBucketLifecycleConfiguration(anyString());
-    verify(s3, times(0)).setBucketLifecycleConfiguration(anyString(), any());
-  }
-
-  @Test
-  public void globalLifecycleRuleSwitchedToBlobStoreSpecificIfPresent() {
-    BlobStoreConfiguration cfg = new MockBlobStoreConfiguration().withName("blobs");
-    Map<String, Map<String, Object>> attr = ImmutableMap.of("s3", ImmutableMap
-        .of("bucket", "mybucket", "expiration", "4"));
-    cfg.setAttributes(attr);
-
-    BucketLifecycleConfiguration bucketCfg = new BucketLifecycleConfiguration();
-
-    Rule rule1 = new BucketLifecycleConfiguration.Rule()
-        .withId(OLD_LIFECYCLE_EXPIRATION_RULE_ID)
-        .withFilter(new LifecycleFilter(
-            new LifecycleTagPredicate(S3BlobStore.DELETED_TAG)))
-        .withExpirationInDays(3)
-        .withStatus(BucketLifecycleConfiguration.ENABLED);
-    bucketCfg.setRules(ImmutableList.of(rule1));
-
-    when(s3.doesBucketExistV2(anyString())).thenReturn(true);
-    when(s3.getBucketLifecycleConfiguration(anyString())).thenReturn(bucketCfg);
-
-    underTest.prepareStorageLocation(cfg);
-
-    verify(s3).setBucketLifecycleConfiguration(anyString(), lifeCycleCfgCaptor.capture());
-    BucketLifecycleConfiguration capturedCfg = lifeCycleCfgCaptor.getValue();
-    List<Rule> capturedRules = capturedCfg.getRules();
-    assertEquals(1, capturedRules.size());
-    assertEquals(LIFECYCLE_EXPIRATION_RULE_ID_PREFIX + "blobs", capturedRules.get(0).getId());
-    assertEquals(4, capturedRules.get(0).getExpirationInDays());
   }
 
   @Test
@@ -317,9 +143,9 @@ public class BucketManagerTest
   @Test
   @Parameters(named = "ruleSetAndDeleteLifeCycleParams")
   public void itWillOnlyRemoveNxrmManagedLifeCyclesFromTheBucket(
-      List<Rule> rules,
-      int deleteLifeCycleCallCount,
-      int setLifeCycleCallCount)
+      final List<Rule> rules,
+      final int deleteLifeCycleCallCount,
+      final int setLifeCycleCallCount)
   {
     ObjectListing listingMock = mock(ObjectListing.class);
     when(listingMock.getObjectSummaries()).thenReturn(ImmutableList.of(new S3ObjectSummary()));
@@ -369,8 +195,8 @@ public class BucketManagerTest
   @Test
   @Parameters(named = "errorCodeAndMessageParams")
   public void errorThrownWhenBucketCannotBeCreated(
-      String errorCode,
-      String message)
+      final String errorCode,
+      final String message)
   {
     String bucketName = "bucketName";
     when(s3.doesBucketExistV2(anyString())).thenReturn(false);
@@ -403,8 +229,8 @@ public class BucketManagerTest
   @Test
   @Parameters(named = "errorCodeAndMessageInvalidPermissionsParams")
   public void errorCodeAndMessageInvalidPermissionsParams(
-      String errorCode,
-      String message)
+      final String errorCode,
+      final String message)
   {
     String bucketName = "bucketName";
     AmazonS3Exception s3Exception = mock(AmazonS3Exception.class);
@@ -440,8 +266,8 @@ public class BucketManagerTest
   @Test
   @Parameters(named = "errorCodeAndMessageUserWithoutAccessParams")
   public void errorThrownIfUserDoesNotHaveAccessToAnExistingBucket(
-      String errorCode,
-      String message)
+      final String errorCode,
+      final String message)
   {
     String bucketName = "bucketName";
     when(s3.doesBucketExistV2(anyString())).thenReturn(true);
@@ -487,7 +313,7 @@ public class BucketManagerTest
     return oldRule;
   }
 
-  private Rule newNxrmRule(String name) {
+  private Rule newNxrmRule(final String name) {
     Rule newRule = mock(Rule.class);
     when(newRule.getId()).thenReturn(LIFECYCLE_EXPIRATION_RULE_ID_PREFIX + name);
     return newRule;
