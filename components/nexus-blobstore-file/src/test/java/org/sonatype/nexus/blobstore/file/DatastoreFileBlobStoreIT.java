@@ -82,7 +82,7 @@ public class DatastoreFileBlobStoreIT
       }).getInstance(SoftDeletedBlobsStoreImpl.class);
     }
 
-    return new DatastoreFileBlobDeletionIndex(store, periodicJobService, Duration.ofSeconds(1), 100);
+    return new DatastoreFileBlobDeletionIndex(store, periodicJobService, Duration.ofSeconds(1));
   }
 
 }

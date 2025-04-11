@@ -20,6 +20,7 @@ import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -209,7 +210,7 @@ public abstract class FileBlobStoreITSupport
     assertThat(deleted, is(equalTo(true)));
     verifyNoInteractions(metricsStore);
 
-    underTest.compact(null);
+    underTest.compact(null, Duration.ofDays(0));
     verify(metricsStore).recordDeletion(TEST_DATA_LENGTH);
     await().atMost(METRICS_FLUSH_TIMEOUT + 1, SECONDS)
         .untilAsserted(() -> verifyBlobMetricsStore(-TEST_DATA_LENGTH, -1));
@@ -241,7 +242,7 @@ public abstract class FileBlobStoreITSupport
 
     final boolean deleted = underTest.delete(blob.getId(), "createAndDeleteBlobWithDirectPathSuccessful");
     assertThat(deleted, is(equalTo(true)));
-    underTest.compact(null);
+    underTest.compact(null, Duration.ofDays(0));
     verify(metricsStore).recordDeletion(TEST_DATA_LENGTH);
 
     final Blob deletedBlob = underTest.get(blob.getId());
@@ -360,7 +361,7 @@ public abstract class FileBlobStoreITSupport
 
     final boolean deleted = underTest.delete(blob.getId(), " overwriteDirectPathBlobSuccessful");
     assertThat(deleted, is(equalTo(true)));
-    underTest.compact(null);
+    underTest.compact(null, Duration.ofDays(0));
     verify(metricsStore).recordDeletion(content.length);
 
     final Blob deletedBlob = underTest.get(blob.getId());
@@ -393,7 +394,7 @@ public abstract class FileBlobStoreITSupport
     verifyNoInteractions(metricsStore);
 
     // Compact triggers hard delete, so metrics will be updated
-    underTest.compact(null);
+    underTest.compact(null, Duration.ofDays(0));
     verify(metricsStore).recordDeletion(TEST_DATA_LENGTH);
   }
 
@@ -672,7 +673,7 @@ public abstract class FileBlobStoreITSupport
     metadataPropertiesFile.setProperty(FileBlobStore.REBUILD_DELETED_BLOB_INDEX_KEY, "true");
     metadataPropertiesFile.store();
 
-    underTest.compact(null);
+    underTest.compact(null, Duration.ofDays(0));
 
     assertThat(bytesPath1.toFile().exists(), is(false));
     assertThat(bytesPath2.toFile().exists(), is(true));

@@ -14,6 +14,7 @@ package org.sonatype.nexus.blobstore;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -268,17 +269,17 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
   @Override
   @Guarded(by = STARTED)
-  public synchronized void compact(@Nullable final BlobStoreUsageChecker inUseChecker) {
+  public synchronized void compact(@Nullable final BlobStoreUsageChecker inUseChecker, final Duration blobsOlderThan) {
     long start = System.nanoTime();
     try {
-      doCompact(inUseChecker);
+      doCompact(inUseChecker, blobsOlderThan);
     }
     finally {
       updateTimer("compact", System.nanoTime() - start);
     }
   }
 
-  protected void doCompact(@Nullable final BlobStoreUsageChecker inUseChecker) {
+  protected void doCompact(@Nullable final BlobStoreUsageChecker inUseChecker, final Duration blobsOlderThan) {
     // no-op
   }
 
@@ -299,7 +300,7 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   }
 
   @Override
-  public void init(BlobStoreConfiguration configuration) {
+  public void init(final BlobStoreConfiguration configuration) {
     this.blobStoreConfiguration = configuration;
     this.performanceLogger.setBlobStoreName(configuration.getName());
     doInit(this.blobStoreConfiguration);

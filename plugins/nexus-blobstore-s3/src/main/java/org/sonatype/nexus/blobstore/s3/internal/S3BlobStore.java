@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -61,6 +62,7 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
+import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
@@ -572,9 +574,9 @@ public class S3BlobStore
 
   @Guarded(by = STARTED)
   @Override
-  protected void doCompact(@Nullable final BlobStoreUsageChecker inUseChecker) {
+  protected void doCompact(@Nullable final BlobStoreUsageChecker inUseChecker, final Duration blobsOlderThan) {
     try {
-      doCompactWithDeletedBlobIndex(inUseChecker);
+      doCompactWithDeletedBlobIndex(inUseChecker, blobsOlderThan);
     }
     catch (BlobStoreException | TaskInterruptedException e) {
       throw e;
@@ -584,33 +586,33 @@ public class S3BlobStore
     }
   }
 
-  void doCompactWithDeletedBlobIndex(@Nullable final BlobStoreUsageChecker inUseChecker) {
-    log.info("Begin deleted blobs processing");
+  void doCompactWithDeletedBlobIndex(
+      @Nullable final BlobStoreUsageChecker inUseChecker,
+      final Duration blobsOlderThan)
+  {
+    OffsetDateTime date = OffsetDateTime.now().minus(blobsOlderThan);
+    log.info("Begin deleted blobs processing before {}", date);
     // only process each blob once (in-use blobs may be re-added to the index)
     try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
-      for (int counter = 0, numBlobs = deletedBlobIndex.size(); counter < numBlobs; counter++) {
-        log.debug("Processing record {} of {}", counter + 1, numBlobs);
-        BlobId nextAvailableRecord = deletedBlobIndex.getNextAvailableRecord();
-        if (Objects.isNull(nextAvailableRecord)) {
-          log.info("Deleted blobs not found");
-          return;
-        }
-        S3Blob blob = liveBlobs.getIfPresent(nextAvailableRecord);
-        log.debug("Next available record for compaction: {}", nextAvailableRecord);
+      int numBlobs = deletedBlobIndex.count(date);
+      AtomicInteger counter = new AtomicInteger();
+      deletedBlobIndex.getRecordsBefore(date).forEach(blobId -> {
+        CancelableHelper.checkCancellation();
+
+        S3Blob blob = liveBlobs.getIfPresent(blobId);
+        log.debug("Next available record for compaction: {}", blobId);
         if (Objects.isNull(blob) || blob.isStale()) {
           log.debug("Compacting...");
-          maybeCompactBlob(inUseChecker, nextAvailableRecord);
-          deletedBlobIndex.deleteRecord(nextAvailableRecord);
+          maybeCompactBlob(inUseChecker, blobId);
+          deletedBlobIndex.deleteRecord(blobId);
         }
         else {
           log.debug("Still in use to deferring");
-          // still in use, so move it to end of the queue
-          deletedBlobIndex.deleteRecord(nextAvailableRecord);
-          deletedBlobIndex.createRecord(nextAvailableRecord);
         }
 
-        progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(), counter + 1, numBlobs);
-      }
+        progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
+            counter.incrementAndGet(), numBlobs);
+      });
     }
   }
 

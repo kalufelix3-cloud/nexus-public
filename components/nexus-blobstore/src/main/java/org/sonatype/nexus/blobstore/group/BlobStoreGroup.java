@@ -210,7 +210,7 @@ public class BlobStoreGroup
   }
 
   @Override
-  public void createBlobAttributes(final BlobId blobId, Map<String, String> headers, final BlobMetrics metrics) {
+  public void createBlobAttributes(final BlobId blobId, final Map<String, String> headers, final BlobMetrics metrics) {
     locate(blobId)
         .orElseThrow(() -> new BlobStoreException(
             "Unable to find a member Blob Store of '" + this + "' for create properties", null))
@@ -246,7 +246,7 @@ public class BlobStoreGroup
   @MonitoringBlobStoreMetrics(operationType = DOWNLOAD)
   public Blob get(final BlobId blobId) {
     return locate(blobId)
-        .map((BlobStore target) -> target.get(blobId))
+        .map(target -> target.get(blobId))
         .orElse(null);
   }
 
@@ -259,17 +259,15 @@ public class BlobStoreGroup
       // check directly without using cache
       return members.get()
           .stream()
-          .filter((BlobStore member) -> member.exists(blobId))
-          .map((BlobStore member) -> member.get(blobId, true))
+          .filter(member -> member.exists(blobId))
+          .map(member -> member.get(blobId, true))
           .filter(Objects::nonNull)
           .findAny()
           .orElse(null);
     }
-    else {
-      return locate(blobId)
-          .map((BlobStore target) -> target.get(blobId, false))
-          .orElse(null);
-    }
+    return locate(blobId)
+        .map(target -> target.get(blobId, false))
+        .orElse(null);
   }
 
   @Override
@@ -278,12 +276,12 @@ public class BlobStoreGroup
     locatedBlobs.remove(blobId);
     List<BlobStore> locations = members.get()
         .stream()
-        .filter((BlobStore member) -> member.exists(blobId))
+        .filter(member -> member.exists(blobId))
         .collect(toList());
 
     if (!locations.isEmpty()) {
       return locations.stream()
-          .allMatch((BlobStore member) -> member.delete(blobId, reason));
+          .allMatch(member -> member.delete(blobId, reason));
     }
     else {
       return false;
@@ -296,12 +294,12 @@ public class BlobStoreGroup
     locatedBlobs.remove(blobId);
     List<BlobStore> locations = members.get()
         .stream()
-        .filter((BlobStore member) -> member.exists(blobId))
+        .filter(member -> member.exists(blobId))
         .collect(toList());
 
     if (!locations.isEmpty()) {
       return locations.stream()
-          .allMatch((BlobStore member) -> member.deleteHard(blobId));
+          .allMatch(member -> member.deleteHard(blobId));
     }
     else {
       return false;
@@ -377,14 +375,17 @@ public class BlobStoreGroup
 
   @Override
   @Guarded(by = STARTED)
-  public synchronized void compact(@Nullable final BlobStoreUsageChecker inUseChecker) {
-    members.get().stream().forEach((BlobStore member) -> member.compact(inUseChecker));
+  public synchronized void compact(
+      @Nullable final BlobStoreUsageChecker inUseChecker,
+      final java.time.Duration blobsBefore)
+  {
+    members.get().stream().forEach(member -> member.compact(inUseChecker, blobsBefore));
   }
 
   @Override
   @Guarded(by = STARTED)
   public synchronized void deleteTempFiles(@Nullable final Integer daysOlderThan) {
-    members.get().forEach((BlobStore member) -> deleteTempFiles(daysOlderThan));
+    members.get().forEach(member -> deleteTempFiles(daysOlderThan));
   }
 
   @Override
@@ -396,8 +397,8 @@ public class BlobStoreGroup
   {
     return members.get()
         .stream()
-        .map((BlobStore member) -> member.undelete(inUseChecker, blobId, attributes, isDryRun))
-        .anyMatch((Boolean deleted) -> deleted);
+        .map(member -> member.undelete(inUseChecker, blobId, attributes, isDryRun))
+        .anyMatch((final Boolean deleted) -> deleted);
   }
 
   @Override
@@ -435,14 +436,14 @@ public class BlobStoreGroup
   public boolean exists(final BlobId blobId) {
     return members.get()
         .stream()
-        .anyMatch((BlobStore member) -> member.exists(blobId));
+        .anyMatch(member -> member.exists(blobId));
   }
 
   @Override
   public boolean bytesExists(final BlobId blobId) {
     return members.get()
         .stream()
-        .anyMatch((BlobStore member) -> member.bytesExists(blobId));
+        .anyMatch(member -> member.bytesExists(blobId));
   }
 
   @Override
@@ -455,7 +456,7 @@ public class BlobStoreGroup
   public Stream<BlobId> getBlobIdStream() {
     return members.get()
         .stream()
-        .map((BlobStore member) -> member.getBlobIdStream())
+        .map(BlobStore::getBlobIdStream)
         .flatMap(identity());
   }
 
@@ -464,7 +465,7 @@ public class BlobStoreGroup
     return members
         .get()
         .stream()
-        .flatMap((BlobStore member) -> member.getBlobIdUpdatedSinceStream(duration));
+        .flatMap(member -> member.getBlobIdUpdatedSinceStream(duration));
   }
 
   @Override
@@ -482,7 +483,7 @@ public class BlobStoreGroup
   public Stream<BlobId> getDirectPathBlobIdStream(final String prefix) {
     return members.get()
         .stream()
-        .map((BlobStore member) -> member.getDirectPathBlobIdStream(prefix))
+        .map(member -> member.getDirectPathBlobIdStream(prefix))
         .flatMap(identity());
   }
 
@@ -490,14 +491,14 @@ public class BlobStoreGroup
   @Override
   public BlobAttributes getBlobAttributes(final BlobId blobId) {
     return locate(blobId)
-        .map((BlobStore target) -> target.getBlobAttributes(blobId))
+        .map(target -> target.getBlobAttributes(blobId))
         .orElse(null);
   }
 
   @Override
-  public void setBlobAttributes(BlobId blobId, BlobAttributes blobAttributes) {
+  public void setBlobAttributes(final BlobId blobId, final BlobAttributes blobAttributes) {
     locate(blobId)
-        .ifPresent((BlobStore target) -> target.setBlobAttributes(blobId, blobAttributes));
+        .ifPresent(target -> target.setBlobAttributes(blobId, blobAttributes));
   }
 
   public List<BlobStore> getMembers() {
@@ -510,6 +511,7 @@ public class BlobStoreGroup
   private class MembersSupplier
       implements Supplier<List<BlobStore>>
   {
+    @Override
     public List<BlobStore> get() {
       List<BlobStore> memberList = new ArrayList<>();
       for (String name : BlobStoreGroupConfigurationHelper.memberNames(blobStoreConfiguration)) {
@@ -541,12 +543,12 @@ public class BlobStoreGroup
     return Optional.ofNullable(blobStore);
   }
 
-  private BlobStore search(BlobId blobId) {
+  private BlobStore search(final BlobId blobId) {
     log.trace("Searching for {} in {}", blobId, members);
     return members.get()
         .stream()
         .sorted(Comparator.comparing(BlobStore::isWritable).reversed())
-        .filter((BlobStore member) -> member.exists(blobId))
+        .filter(member -> member.exists(blobId))
         .findAny()
         .orElse(null);
   }

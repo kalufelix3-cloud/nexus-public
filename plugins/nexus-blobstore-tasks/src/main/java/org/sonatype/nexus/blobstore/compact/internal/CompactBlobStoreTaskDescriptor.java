@@ -18,6 +18,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.ComboboxFormField;
+import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
@@ -37,6 +38,8 @@ public class CompactBlobStoreTaskDescriptor
 
   public static final String BLOB_STORE_NAME_FIELD_ID = "blobstoreName";
 
+  public static final String BLOBS_OLDER_THAN_FIELD_ID = "blobsOlderThan";
+
   @Inject
   public CompactBlobStoreTaskDescriptor() {
     super(TYPE_ID,
@@ -48,8 +51,8 @@ public class CompactBlobStoreTaskDescriptor
             BLOB_STORE_NAME_FIELD_ID,
             "Blob store",
             "Select the blob store to compact",
-            MANDATORY
-        ).withStoreApi("coreui_Blobstore.read").withIdMapping("name")
-    );
+            MANDATORY).withStoreApi("coreui_Blobstore.read").withIdMapping("name"),
+        new NumberTextFormField(BLOBS_OLDER_THAN_FIELD_ID, "Blobs Older Than",
+            "The number of days a blob should kept before permanent deletion (default 0)", false).withMinimumValue(0));
   }
 }

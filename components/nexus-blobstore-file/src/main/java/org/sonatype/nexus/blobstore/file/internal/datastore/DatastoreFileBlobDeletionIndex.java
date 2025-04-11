@@ -56,10 +56,9 @@ public class DatastoreFileBlobDeletionIndex
   public DatastoreFileBlobDeletionIndex(
       final SoftDeletedBlobsStore softDeletedBlobsStore,
       final PeriodicJobService periodicJobService,
-      @Named("${nexus.file.deletion.migrate.delay:-60s}") final Duration migrationDelay,
-      @Named("${nexus.file.deletion.buffer.size:-1000}") final int deletedFileBufferSize)
+      @Named("${nexus.file.deletion.migrate.delay:-60s}") final Duration migrationDelay)
   {
-    super(softDeletedBlobsStore, deletedFileBufferSize);
+    super(softDeletedBlobsStore);
     this.periodicJobService = checkNotNull(periodicJobService);
     this.migrationDelay = checkNotNull(migrationDelay);
     checkArgument(!migrationDelay.isNegative(), "Non-negative nexus.file.deletion.migrate.delay required");

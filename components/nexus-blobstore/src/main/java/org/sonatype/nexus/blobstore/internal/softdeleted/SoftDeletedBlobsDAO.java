@@ -53,6 +53,12 @@ public interface SoftDeletedBlobsDAO
       @Param("limit") int limit,
       @Param("sourceBlobStoreName") String sourceBlobStoreName);
 
+  Continuation<SoftDeletedBlob> readRecordsBefore(
+      @Nullable @Param("continuationToken") String continuationToken,
+      @Param("limit") int limit,
+      @Param("sourceBlobStoreName") String sourceBlobStoreName,
+      @Param("blobsDeletedBefore") OffsetDateTime upperBound);
+
   /**
    * Delete single record by provided 'blobId' related to specified blobstore name
    *
@@ -81,4 +87,15 @@ public interface SoftDeletedBlobsDAO
    * @return amount of soft deleted blobs
    */
   int count(@Param("sourceBlobStoreName") String sourceBlobStoreName);
+
+  /**
+   * Returns the amount of soft deleted blobs records related to provided blobstore
+   *
+   * @param sourceBlobStoreName the blobstore name these records are related to
+   * @param blobsDeletedBefore an upper bound of when blobs were deleted
+   * @return amount of soft deleted blobs
+   */
+  int countBefore(
+      @Param("sourceBlobStoreName") String blobStoreName,
+      @Param("blobsDeletedBefore") OffsetDateTime blobsDeletedBefore);
 }

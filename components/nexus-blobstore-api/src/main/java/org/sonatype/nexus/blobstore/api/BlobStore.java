@@ -172,7 +172,11 @@ public interface BlobStore
    * @param headers the headers of the blob, {@see BlobStore}
    * @param blobMetrics blob metrics
    */
-  default void createBlobAttributes(BlobId blobId, Map<String, String> headers, BlobMetrics blobMetrics) {
+  default void createBlobAttributes(
+      final BlobId blobId,
+      final Map<String, String> headers,
+      final BlobMetrics blobMetrics)
+  {
   }
 
   /**
@@ -281,7 +285,7 @@ public interface BlobStore
    *
    * @since 3.5
    */
-  void compact(@Nullable BlobStoreUsageChecker inUseChecker);
+  void compact(@Nullable BlobStoreUsageChecker inUseChecker, Duration blobsBefore);
 
   /**
    * Delete blob temporary files
@@ -413,7 +417,7 @@ public interface BlobStore
    *
    * @since 3.29
    */
-  default Future<Boolean> asyncDelete(BlobId blobId) {
+  default Future<Boolean> asyncDelete(final BlobId blobId) {
     return CompletableFuture.completedFuture(deleteHard(blobId));
   }
 
@@ -423,7 +427,7 @@ public interface BlobStore
    *
    * @since 3.37
    */
-  default boolean deleteIfTemp(BlobId blobId) {
+  default boolean deleteIfTemp(final BlobId blobId) {
     return deleteHard(blobId);
   }
 

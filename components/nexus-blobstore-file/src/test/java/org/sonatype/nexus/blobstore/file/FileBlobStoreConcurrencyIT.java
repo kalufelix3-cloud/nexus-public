@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Queue;
 import java.util.Random;
@@ -208,7 +209,7 @@ public class FileBlobStoreConcurrencyIT
       }
     });
 
-    runner.addTask(numberOfCompactors, () -> underTest.compact(null));
+    runner.addTask(numberOfCompactors, () -> underTest.compact(null, Duration.ofDays(100)));
 
     runner.go();
 

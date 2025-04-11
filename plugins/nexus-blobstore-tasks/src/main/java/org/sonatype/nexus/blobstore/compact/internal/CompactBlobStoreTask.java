@@ -12,9 +12,11 @@
  */
 package org.sonatype.nexus.blobstore.compact.internal;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -34,6 +36,7 @@ import com.google.common.collect.ImmutableMap;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static org.sonatype.nexus.blobstore.compact.internal.CompactBlobStoreTaskDescriptor.BLOBS_OLDER_THAN_FIELD_ID;
 import static org.sonatype.nexus.blobstore.compact.internal.CompactBlobStoreTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 
@@ -54,7 +57,6 @@ public class CompactBlobStoreTask
   private final BlobStoreUsageChecker blobStoreUsageChecker;
 
   private final TaskUtils taskUtils;
-
 
   @Inject
   public CompactBlobStoreTask(
@@ -79,7 +81,7 @@ public class CompactBlobStoreTask
     checkForUnfinishedMoveTask(blobStoreName);
   }
 
-  private void checkForUnfinishedMoveTask(String blobStoreName) {
+  private void checkForUnfinishedMoveTask(final String blobStoreName) {
     List<ChangeRepositoryBlobStoreConfiguration> existingMoves = changeBlobstoreStore
         .map(store -> store.findByBlobStoreName(blobStoreName))
         .orElseGet(Collections::emptyList);
@@ -99,7 +101,7 @@ public class CompactBlobStoreTask
 
     BlobStore blobStore = blobStoreManager.get(getBlobStoreField());
     if (blobStore != null) {
-      blobStore.compact(blobStoreUsageChecker);
+      blobStore.compact(blobStoreUsageChecker, getBlobsOlderThanField());
     }
     else {
       log.warn("Unable to find blob store: {}", getBlobStoreField());
@@ -114,5 +116,9 @@ public class CompactBlobStoreTask
 
   private String getBlobStoreField() {
     return getConfiguration().getString(BLOB_STORE_NAME_FIELD_ID);
+  }
+
+  private Duration getBlobsOlderThanField() {
+    return Duration.ofDays(getConfiguration().getInteger(BLOBS_OLDER_THAN_FIELD_ID, 0));
   }
 }

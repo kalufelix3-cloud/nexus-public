@@ -50,6 +50,14 @@
     ORDER BY record_id LIMIT #{limit};
   </select>
 
+  <select id="readRecordsBefore" resultType="org.sonatype.nexus.blobstore.internal.softdeleted.SoftDeletedBlobsData" >
+    SELECT * FROM soft_deleted_blobs
+    WHERE source_blob_store_name = #{sourceBlobStoreName}
+      AND deleted_date &lt; #{blobsDeletedBefore}
+    <if test="continuationToken != null"> AND record_id > #{continuationToken}</if>
+    ORDER BY record_id LIMIT #{limit};
+  </select>
+
   <delete id="deleteRecord">
     DELETE FROM soft_deleted_blobs
     WHERE source_blob_store_name = #{sourceBlobStoreName} AND blob_id = #{blobId};
@@ -77,6 +85,13 @@
     SELECT COUNT(*)
     FROM soft_deleted_blobs
     WHERE source_blob_store_name = #{sourceBlobStoreName};
+  </select>
+
+  <select id="countBefore" resultType="java.lang.Integer">
+    SELECT COUNT(*)
+    FROM soft_deleted_blobs
+    WHERE source_blob_store_name = #{sourceBlobStoreName}
+      AND deleted_date &lt; #{blobsDeletedBefore};
   </select>
 
   <select id="readOldestRecords" resultType="org.sonatype.nexus.blobstore.internal.softdeleted.SoftDeletedBlobsData">

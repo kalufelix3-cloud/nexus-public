@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -69,6 +70,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -294,7 +296,7 @@ public class FileBlobStoreTest
     checkDeletionsIndex(true);
     setRebuildMetadataToTrue();
 
-    underTest.doCompact(blobStoreUsageChecker);
+    underTest.doCompact(blobStoreUsageChecker, Duration.ofDays(100));
 
     checkDeletionsIndex(true);
 
@@ -309,7 +311,7 @@ public class FileBlobStoreTest
     checkDeletionsIndex(true);
     setRebuildMetadataToTrue();
 
-    underTest.doCompact(blobStoreUsageChecker);
+    underTest.doCompact(blobStoreUsageChecker, Duration.ofDays(100));
 
     checkDeletionsIndex(true);
 
@@ -332,7 +334,7 @@ public class FileBlobStoreTest
     assertThat(fileInSubdir1.toFile().exists(), is(true));
     assertThat(subdir2.toFile().exists(), is(true));
 
-    underTest.doCompact(blobStoreUsageChecker);
+    underTest.doCompact(blobStoreUsageChecker, Duration.ofDays(100));
 
     assertThat(fileInSubdir1.toFile().exists(), is(true));
     assertThat(subdir2.toFile().exists(), is(false));
@@ -433,7 +435,7 @@ public class FileBlobStoreTest
     metadataPropertiesFile.store();
   }
 
-  private void checkDeletionsIndex(boolean expectEmpty) throws IOException {
+  private void checkDeletionsIndex(final boolean expectEmpty) throws IOException {
     QueueFile queueFile = new QueueFile(underTest.getAbsoluteBlobDir().resolve("test-deletions.index").toFile());
     assertThat(queueFile.isEmpty(), is(expectEmpty));
     queueFile.close();
@@ -457,7 +459,7 @@ public class FileBlobStoreTest
 
     setRebuildMetadataToTrue();
 
-    underTest.compact(null);
+    underTest.compact(null, Duration.ofDays(100));
 
     verify(fileOperations, times(2)).delete(any());
   }
@@ -473,12 +475,8 @@ public class FileBlobStoreTest
     setRebuildMetadataToTrue();
     cancelled.set(true);
 
-    try {
-      underTest.compact(null);
-      fail("Expected exception to be thrown");
-    }
-    catch (TaskInterruptedException expected) {
-    }
+    Duration ago = Duration.ofDays(100);
+    assertThrows(TaskInterruptedException.class, () -> underTest.compact(null, ago));
 
     verify(fileOperations, never()).delete(any());
   }
@@ -661,18 +659,18 @@ public class FileBlobStoreTest
       extends FileBlobStore
   {
     public TestFileBlobStore(
-        Path root,
-        BlobIdLocationResolver blobIdLocationResolver,
-        FileOperations fileOperations,
-        DatastoreFileBlobStoreMetricsService metrics,
-        BlobStoreConfiguration configuration,
-        ApplicationDirectories appDirs,
-        NodeAccess nodeAccess,
-        DryRunPrefix dryRunPrefix,
-        BlobStoreReconciliationLogger reconciliationLogger,
-        long blobStoreQuota,
-        BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
-        FileBlobDeletionIndex fileBlobDeletionIndex)
+        final Path root,
+        final BlobIdLocationResolver blobIdLocationResolver,
+        final FileOperations fileOperations,
+        final DatastoreFileBlobStoreMetricsService metrics,
+        final BlobStoreConfiguration configuration,
+        final ApplicationDirectories appDirs,
+        final NodeAccess nodeAccess,
+        final DryRunPrefix dryRunPrefix,
+        final BlobStoreReconciliationLogger reconciliationLogger,
+        final long blobStoreQuota,
+        final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
+        final FileBlobDeletionIndex fileBlobDeletionIndex)
     {
       super(root, blobIdLocationResolver, fileOperations, metrics, configuration, appDirs, nodeAccess, dryRunPrefix,
           reconciliationLogger, blobStoreQuota, blobStoreQuotaUsageChecker, fileBlobDeletionIndex);

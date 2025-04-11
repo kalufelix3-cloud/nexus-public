@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.internal.softdeleted;
 
+import java.time.OffsetDateTime;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
@@ -57,10 +58,27 @@ public class SoftDeletedBlobsStoreImpl
     return dao().readRecords(continuationToken, limit, sourceBlobStoreName);
   }
 
+  @Transactional
+  public Continuation<SoftDeletedBlob> readRecordsBefore(
+      final String continuationToken,
+      final int limit,
+      final String sourceBlobStoreName,
+      final OffsetDateTime upperBound)
+  {
+    return dao().readRecordsBefore(continuationToken, limit, sourceBlobStoreName, upperBound);
+  }
+
   @Override
   public Stream<BlobId> readAllBlobIds(final String sourceBlobStoreName) {
     return Continuations
         .streamOf((limit, continuationToken) -> readRecords(continuationToken, limit, sourceBlobStoreName))
+        .map(data -> new BlobId(data.getBlobId(), data.getDatePathRef()));
+  }
+
+  @Override
+  public Stream<BlobId> getBlobsBefore(final String sourceBlobStoreName, final OffsetDateTime blobsDeletedBefore) {
+    return Continuations
+        .streamOf((limit, token) -> readRecordsBefore(token, limit, sourceBlobStoreName, blobsDeletedBefore))
         .map(data -> new BlobId(data.getBlobId(), data.getDatePathRef()));
   }
 
@@ -86,5 +104,11 @@ public class SoftDeletedBlobsStoreImpl
   @Override
   public int count(final String sourceBlobStoreName) {
     return dao().count(sourceBlobStoreName);
+  }
+
+  @Transactional
+  @Override
+  public int countBefore(final String blobStoreName, final OffsetDateTime blobsDeletedBefore) {
+    return dao().countBefore(blobStoreName, blobsDeletedBefore);
   }
 }

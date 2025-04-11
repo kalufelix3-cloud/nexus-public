@@ -37,7 +37,7 @@ import org.sonatype.nexus.scheduling.TaskSupport;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * This task moves data from the {@code azure_deleted_blob} table to a table shared by all types of blobstores.
+ * This task creates compact blob store tasks for S3 blob stores based on the old configuration setting for expiration.
  */
 @Named
 public class ScheduleS3CompactTasksTask

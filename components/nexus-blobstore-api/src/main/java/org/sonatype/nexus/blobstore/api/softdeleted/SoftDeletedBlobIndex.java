@@ -12,7 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.api.softdeleted;
 
-import javax.annotation.Nullable;
+import java.time.OffsetDateTime;
+import java.util.stream.Stream;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -35,14 +36,6 @@ public interface SoftDeletedBlobIndex
   void createRecord(BlobId blobId);
 
   /**
-   * Get the next BlobId currently present, may return {@code null} if no deletion records are present
-   *
-   * @return oldest {@link BlobId} or null
-   */
-  @Nullable
-  BlobId getNextAvailableRecord();
-
-  /**
    * Deletes specified record by {@link BlobId}
    *
    * @param blobId the {@link BlobId} of record to be deleted
@@ -55,9 +48,21 @@ public interface SoftDeletedBlobIndex
   void deleteAllRecords();
 
   /**
+   * @return a stream of blobids associated with the initialized blobstore that were deleted prior to the provided date
+   */
+  Stream<BlobId> getRecordsBefore(OffsetDateTime blobsBefore);
+
+  /**
    * Returns the amount of soft deleted blobs records
    *
    * @return amount of soft deleted blobs
    */
   int size();
+
+  /**
+   * Returns the amount of soft deleted blobs records
+   *
+   * @return amount of soft deleted blobs
+   */
+  int count(OffsetDateTime blobsBefore);
 }

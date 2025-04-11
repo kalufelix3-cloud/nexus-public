@@ -83,6 +83,7 @@ import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
+import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
 import com.codahale.metrics.annotation.Timed;
@@ -681,7 +682,7 @@ public class FileBlobStore
   }
 
   @Override
-  protected void doCompact(@Nullable final BlobStoreUsageChecker inUseChecker) {
+  protected void doCompact(@Nullable final BlobStoreUsageChecker inUseChecker, final Duration blobsOlderThan) {
     try {
       PropertiesFile metadata = new PropertiesFile(getAbsoluteBlobDir().resolve(METADATA_FILENAME).toFile());
       metadata.load();
@@ -702,7 +703,7 @@ public class FileBlobStore
         metadata.store();
       }
       else {
-        doCompactWithDeletedBlobIndex(inUseChecker);
+        doCompactWithDeletedBlobIndex(inUseChecker, blobsOlderThan);
       }
     }
     catch (BlobStoreException | TaskInterruptedException e) {
@@ -946,33 +947,33 @@ public class FileBlobStore
     return configurationPath;
   }
 
-  void doCompactWithDeletedBlobIndex(@Nullable final BlobStoreUsageChecker inUseChecker) throws IOException {
-    log.info("Begin deleted blobs processing");
+  void doCompactWithDeletedBlobIndex(
+      @Nullable final BlobStoreUsageChecker inUseChecker,
+      final Duration blobsOlderThan)
+  {
+    OffsetDateTime date = OffsetDateTime.now().minus(blobsOlderThan);
+    log.info("Begin deleted blobs processing before {}", date);
+
     // only process each blob once (in-use blobs may be re-added to the index)
     try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS)) {
-      for (int counter = 0, numBlobs = blobDeletionIndex.size(); counter < numBlobs; counter++) {
-        log.debug("Processing record {} of {}", counter + 1, numBlobs);
-        BlobId nextAvailableRecord = blobDeletionIndex.getNextAvailableRecord();
-        if (Objects.isNull(nextAvailableRecord)) {
-          log.info("Deleted blobs not found");
-          return;
-        }
-        FileBlob blob = liveBlobs.getIfPresent(nextAvailableRecord);
-        log.debug("Next available record for compaction: {}", nextAvailableRecord);
+      int numBlobs = blobDeletionIndex.count(date);
+      AtomicInteger counter = new AtomicInteger();
+      blobDeletionIndex.getRecordsBefore(date).forEach(blobId -> {
+        CancelableHelper.checkCancellation();
+        FileBlob blob = liveBlobs.getIfPresent(blobId);
+        log.debug("Next available record for compaction: {}", blobId);
         if (Objects.isNull(blob) || blob.isStale()) {
           log.debug("Compacting...");
-          maybeCompactBlob(inUseChecker, nextAvailableRecord);
-          blobDeletionIndex.deleteRecord(nextAvailableRecord);
+          maybeCompactBlob(inUseChecker, blobId);
+          blobDeletionIndex.deleteRecord(blobId);
         }
         else {
           log.debug("Still in use to deferring");
-          // still in use, so move it to end of the queue
-          blobDeletionIndex.deleteRecord(nextAvailableRecord);
-          blobDeletionIndex.createRecord(nextAvailableRecord);
         }
 
-        progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(), counter + 1, numBlobs);
-      }
+        progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
+            counter.incrementAndGet(), numBlobs);
+      });
       // once done removing stuff, clean any empty directories left around in the directpath area
       pruneEmptyDirectories(progressLogger, contentDir.resolve(DIRECT_PATH_ROOT));
     }
@@ -1058,22 +1059,16 @@ public class FileBlobStore
   {
     BlobId blobId = getBlobIdFromAttributeFilePath(new FileAttributesLocation(attributes.getPath()));
     FileBlob blob = blobId != null ? liveBlobs.getIfPresent(blobId) : null;
-    try {
-      if (blob == null || blob.isStale()) {
-        if (!maybeCompactBlob(inUseChecker, blobId)) {
-          blobDeletionIndex.createRecord(blobId);
-        }
-        else {
-          progressLogger.info("Elapsed time: {}, processed: {}", progressLogger.getElapsed(),
-              count.incrementAndGet());
-        }
-      }
-      else {
+    if (blob == null || blob.isStale()) {
+      if (!maybeCompactBlob(inUseChecker, blobId)) {
         blobDeletionIndex.createRecord(blobId);
       }
+      else {
+        progressLogger.info("Elapsed time: {}, processed: {}", progressLogger.getElapsed(), count.incrementAndGet());
+      }
     }
-    catch (IOException e) {
-      log.warn("Failed to add blobId to index from attribute file {}", blobId, e);
+    else {
+      blobDeletionIndex.createRecord(blobId);
     }
   }
 

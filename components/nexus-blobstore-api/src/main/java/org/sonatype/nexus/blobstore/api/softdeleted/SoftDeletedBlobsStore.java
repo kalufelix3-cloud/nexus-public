@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.api.softdeleted;
 
+import java.time.OffsetDateTime;
 import java.util.stream.Stream;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -41,6 +42,8 @@ public interface SoftDeletedBlobsStore
 
   Stream<BlobId> readAllBlobIds(String sourceBlobStoreName);
 
+  Stream<BlobId> getBlobsBefore(final String sourceBlobStoreName, OffsetDateTime blobsDeletedBefore);
+
   /**
    * Delete single record by provided 'blobId' related to specified blobstore name
    *
@@ -63,4 +66,13 @@ public interface SoftDeletedBlobsStore
    * @return amount of soft deleted blobs
    */
   int count(String sourceBlobStoreName);
+
+  /**
+   * Returns the amount of soft deleted blobs records related to provided blobstore
+   *
+   * @param sourceBlobStoreName the blobstore name these records are related to
+   * @param blobsDeletedBefore an upper bound of when blobs were deleted
+   * @return amount of soft deleted blobs
+   */
+  int countBefore(String blobStoreName, OffsetDateTime blobsDeletedBefore);
 }

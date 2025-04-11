@@ -13,15 +13,16 @@
 package org.sonatype.nexus.blobstore.file;
 
 import java.io.IOException;
-import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlobIndex;
 import org.sonatype.nexus.common.property.PropertiesFile;
 
 /**
  * Storage holding {@link BlobId} of soft-deleted blobs for future hard-deletion
  */
 public interface FileBlobDeletionIndex
+    extends SoftDeletedBlobIndex
 {
   /**
    * Initialisation of deletion index that should be done in the scope of {@link FileBlobStore} startup
@@ -35,38 +36,4 @@ public interface FileBlobDeletionIndex
    * Tear down of deletion index that should be done in the scope of {@link FileBlobStore} tear down
    */
   void stopIndex() throws IOException;
-
-  /**
-   * Add new record to deletion index
-   *
-   * @param blobId the {@link BlobId} that is referenced to the Blob that was soft-deleted
-   */
-  void createRecord(BlobId blobId) throws IOException;
-
-  /**
-   * Get the next BlobId currently present, may return {@code null} if no deletion records are present
-   *
-   * @return oldest {@link BlobId} or null
-   */
-  @Nullable
-  BlobId getNextAvailableRecord() throws IOException;
-
-  /**
-   * Deletes specified record by {@link BlobId}
-   *
-   * @param blobId the {@link BlobId} of record to be deleted
-   */
-  void deleteRecord(BlobId blobId) throws IOException;
-
-  /**
-   * Deletes all records currently holding
-   */
-  void deleteAllRecords() throws IOException;
-
-  /**
-   * Returns the amount of soft deleted blobs records
-   *
-   * @return amount of soft deleted blobs
-   */
-  int size() throws IOException;
 }

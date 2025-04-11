@@ -12,50 +12,37 @@
  */
 package org.sonatype.nexus.blobstore.internal;
 
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.Optional;
+import java.time.OffsetDateTime;
+import java.util.stream.Stream;
 
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlob;
 import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlobIndex;
 import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlobsStore;
-import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 @Priority(Integer.MAX_VALUE)
 @Named("default")
 public class SoftDeletedBlobIndexImpl
-    extends ComponentSupport
+    extends StateGuardLifecycleSupport
     implements SoftDeletedBlobIndex
 {
   protected final SoftDeletedBlobsStore softDeletedBlobsStore;
 
-  private final int deletedFileCacheLimit;
-
   protected String blobStoreName;
 
-  private Iterator<BlobId> currentBatchIterator;
-
-  private Continuation<SoftDeletedBlob> deletionContinuation;
-
   @Inject
-  public SoftDeletedBlobIndexImpl(
-      final SoftDeletedBlobsStore softDeletedBlobsStore,
-      @Named("${nexus.blobstore.deletion.buffer.size:-1000}") final int deletedFileCacheLimit)
-  {
+  public SoftDeletedBlobIndexImpl(final SoftDeletedBlobsStore softDeletedBlobsStore) {
     this.softDeletedBlobsStore = checkNotNull(softDeletedBlobsStore);
-    checkArgument(deletedFileCacheLimit > 0);
-    this.deletedFileCacheLimit = deletedFileCacheLimit;
   }
 
   @Override
@@ -63,53 +50,50 @@ public class SoftDeletedBlobIndexImpl
     checkState(blobStoreName == null, "Previously initialized");
     checkNotNull(blobStore);
     this.blobStoreName = checkNotNull(blobStore.getBlobStoreConfiguration().getName());
+    try {
+      start();
+    }
+    catch (Exception e) {
+      if (e instanceof RuntimeException re) {
+        throw re;
+      }
+      throw new IllegalArgumentException(e);
+    }
   }
 
+  @Guarded(by = STARTED)
   @Override
   public final void createRecord(final BlobId blobId) {
     softDeletedBlobsStore.createRecord(blobId, blobStoreName);
   }
 
+  @Guarded(by = STARTED)
   @Override
-  public final BlobId getNextAvailableRecord() {
-    if (Objects.isNull(currentBatchIterator) || !currentBatchIterator.hasNext()) {
-      populateInternalCache();
-    }
-
-    return Objects.nonNull(this.currentBatchIterator) ? currentBatchIterator.next() : null;
+  public final Stream<BlobId> getRecordsBefore(final OffsetDateTime blobsOlderThan) {
+    return softDeletedBlobsStore.getBlobsBefore(blobStoreName, blobsOlderThan);
   }
 
+  @Guarded(by = STARTED)
   @Override
   public final void deleteRecord(final BlobId blobId) {
     softDeletedBlobsStore.deleteRecord(blobStoreName, blobId);
   }
 
+  @Guarded(by = STARTED)
   @Override
   public final void deleteAllRecords() {
     softDeletedBlobsStore.deleteAllRecords(blobStoreName);
   }
 
+  @Guarded(by = STARTED)
   @Override
   public final int size() {
     return softDeletedBlobsStore.count(blobStoreName);
   }
 
-  private void populateInternalCache() {
-    String token = Optional.ofNullable(deletionContinuation)
-        .filter(value -> !value.isEmpty())
-        .map(Continuation::nextContinuationToken)
-        .orElse("0");
-
-    deletionContinuation = softDeletedBlobsStore.readRecords(token,
-        Math.abs(deletedFileCacheLimit), blobStoreName);
-
-    if (!deletionContinuation.isEmpty()) {
-      currentBatchIterator = this.deletionContinuation.stream()
-          .map(value -> new BlobId(value.getBlobId(), value.getDatePathRef()))
-          .iterator();
-    }
-    else {
-      currentBatchIterator = null;
-    }
+  @Guarded(by = STARTED)
+  @Override
+  public int count(final OffsetDateTime blobsBefore) {
+    return softDeletedBlobsStore.countBefore(blobStoreName, blobsBefore);
   }
 }
