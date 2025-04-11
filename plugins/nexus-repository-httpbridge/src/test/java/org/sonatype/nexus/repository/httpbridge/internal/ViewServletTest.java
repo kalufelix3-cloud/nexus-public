@@ -90,8 +90,7 @@ public class ViewServletTest
     underTest = spy(new ViewServlet(mock(RepositoryManager.class),
         new HttpResponseSenderSelector(Collections.<String, HttpResponseSender>emptyMap(), defaultResponseSender),
         mock(DescriptionHelper.class),
-        descriptionRenderer, true
-    ));
+        descriptionRenderer));
 
     when(request.getPath()).thenReturn("/test");
 
@@ -122,8 +121,7 @@ public class ViewServletTest
         any(Request.class),
         any(Response.class),
         any(Exception.class),
-        any(String.class)
-    );
+        any(String.class));
     verify(defaultResponseSender).send(eq(request), any(Response.class), eq(servletResponse));
   }
 
@@ -177,14 +175,6 @@ public class ViewServletTest
     when(httpServletRequest.getPathInfo()).thenThrow(new BadRequestException(message));
     underTest.service(httpServletRequest, servletResponse);
     verify(servletResponse).setStatus(SC_BAD_REQUEST, message);
-  }
-
-  @Test
-  public void responseHasContentSecurityPolicy() throws Exception {
-    underTest.service(httpServletRequest, servletResponse);
-
-    verify(servletResponse).setHeader(HttpHeaders.CONTENT_SECURITY_POLICY,
-        "sandbox allow-forms allow-modals allow-popups allow-presentation allow-scripts allow-top-navigation");
   }
 
   @Test

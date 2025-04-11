@@ -64,8 +64,6 @@ public class ViewServlet
 {
   private static final Logger log = LoggerFactory.getLogger(ViewServlet.class);
 
-  private static final String SANDBOX = "sandbox allow-forms allow-modals allow-popups allow-presentation allow-scripts allow-top-navigation";
-
   @VisibleForTesting
   static final String P_DESCRIBE = "describe";
 
@@ -79,21 +77,18 @@ public class ViewServlet
 
   private final DescriptionRenderer descriptionRenderer;
 
-  private final boolean sandboxEnabled;
-
   @Inject
-  public ViewServlet(final RepositoryManager repositoryManager,
-                     final HttpResponseSenderSelector httpResponseSenderSelector,
-                     final DescriptionHelper descriptionHelper,
-                     final DescriptionRenderer descriptionRenderer,
-                     @Named("${nexus.repository.sandbox.enable:-true}") final boolean sandboxEnabled)
+  public ViewServlet(
+      final RepositoryManager repositoryManager,
+      final HttpResponseSenderSelector httpResponseSenderSelector,
+      final DescriptionHelper descriptionHelper,
+      final DescriptionRenderer descriptionRenderer)
   {
 
     this.repositoryManager = checkNotNull(repositoryManager);
     this.httpResponseSenderSelector = checkNotNull(httpResponseSenderSelector);
     this.descriptionHelper = checkNotNull(descriptionHelper);
     this.descriptionRenderer = checkNotNull(descriptionRenderer);
-    this.sandboxEnabled = sandboxEnabled;
   }
 
   @Override
@@ -109,8 +104,9 @@ public class ViewServlet
   }
 
   @Override
-  protected void service(final HttpServletRequest httpRequest, final HttpServletResponse httpResponse)
-      throws ServletException, IOException
+  protected void service(
+      final HttpServletRequest httpRequest,
+      final HttpServletResponse httpResponse) throws ServletException, IOException
   {
     String uri = httpRequest.getRequestURI();
     if (httpRequest.getQueryString() != null) {
@@ -142,12 +138,10 @@ public class ViewServlet
     }
   }
 
-  protected void doService(final HttpServletRequest httpRequest, final HttpServletResponse httpResponse)
-      throws Exception
+  protected void doService(
+      final HttpServletRequest httpRequest,
+      final HttpServletResponse httpResponse) throws Exception
   {
-    if (sandboxEnabled) {
-      httpResponse.setHeader(HttpHeaders.CONTENT_SECURITY_POLICY, SANDBOX);
-    }
     httpResponse.setHeader(HttpHeaders.X_XSS_PROTECTION, "1; mode=block");
 
     // resolve repository for request
@@ -200,11 +194,11 @@ public class ViewServlet
   }
 
   @VisibleForTesting
-  void dispatchAndSend(final Request request,
-                       final ViewFacet facet,
-                       final HttpResponseSender sender,
-                       final HttpServletResponse httpResponse)
-      throws Exception
+  void dispatchAndSend(
+      final Request request,
+      final ViewFacet facet,
+      final HttpResponseSender sender,
+      final HttpServletResponse httpResponse) throws Exception
   {
     Response response = null;
     Exception failure = null;
@@ -234,8 +228,7 @@ public class ViewServlet
     final Description description = new Description(ImmutableMap.of(
         // placeholder for the describeHtml.vm
         "path", StringEscapeUtils.escapeHtml(request.getPath()),
-        "nexusUrl", BaseUrlHolder.get()
-    ));
+        "nexusUrl", BaseUrlHolder.get()));
     if (exception != null) {
       descriptionHelper.describeException(description, exception);
     }
@@ -266,8 +259,10 @@ public class ViewServlet
    * Needed in a few places _before_ we have a repository instance to determine its specific sender.
    */
   @VisibleForTesting
-  void send(@Nullable final Request request, final Response response, final HttpServletResponse httpResponse)
-      throws ServletException, IOException
+  void send(
+      @Nullable final Request request,
+      final Response response,
+      final HttpServletResponse httpResponse) throws ServletException, IOException
   {
     httpResponseSenderSelector.defaultSender().send(request, response, httpResponse);
   }

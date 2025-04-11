@@ -50,22 +50,20 @@ public class LegacyViewServlet
   private final RepositoryManager repositoryManager;
 
   @Inject
-  public LegacyViewServlet(final RepositoryManager repositoryManager,
-                           final HttpResponseSenderSelector httpResponseSenderSelector,
-                           final DescriptionHelper descriptionHelper,
-                           final DescriptionRenderer descriptionRenderer,
-                           final List<LegacyViewContributor> legacyViewContributors,
-                           @Named("${nexus.repository.sandbox.enable:-true}") final boolean sandboxEnabled)
+  public LegacyViewServlet(
+      final RepositoryManager repositoryManager,
+      final HttpResponseSenderSelector httpResponseSenderSelector,
+      final DescriptionHelper descriptionHelper,
+      final DescriptionRenderer descriptionRenderer,
+      final List<LegacyViewContributor> legacyViewContributors)
   {
-    super(repositoryManager, httpResponseSenderSelector, descriptionHelper, descriptionRenderer, sandboxEnabled);
+    super(repositoryManager, httpResponseSenderSelector, descriptionHelper, descriptionRenderer);
     this.legacyViewContributors = checkNotNull(legacyViewContributors);
     this.repositoryManager = repositoryManager;
   }
 
   @Override
-  protected void doService(final HttpServletRequest request, final HttpServletResponse response)
-      throws Exception
-  {
+  protected void doService(final HttpServletRequest request, final HttpServletResponse response) throws Exception {
     if (handleFormatSpecificUri(request, response)) {
       return;
     }
@@ -73,8 +71,9 @@ public class LegacyViewServlet
     super.doService(request, response);
   }
 
-  private boolean handleFormatSpecificUri(final HttpServletRequest request, final HttpServletResponse response)
-      throws ServletException, IOException
+  private boolean handleFormatSpecificUri(
+      final HttpServletRequest request,
+      final HttpServletResponse response) throws ServletException, IOException
   {
     for (LegacyViewContributor legacyViewContributor : legacyViewContributors) {
       LegacyViewConfiguration configuration = legacyViewContributor.contribute();
@@ -90,8 +89,9 @@ public class LegacyViewServlet
     return false;
   }
 
-  private boolean repositoryNotFoundOrFormatNotMatched(final LegacyViewConfiguration configuration,
-                                                       final Repository repository)
+  private boolean repositoryNotFoundOrFormatNotMatched(
+      final LegacyViewConfiguration configuration,
+      final Repository repository)
   {
     return isNull(repository) || !Objects.equals(configuration.getFormat(), repository.getFormat().getValue());
   }

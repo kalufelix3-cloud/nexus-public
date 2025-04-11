@@ -53,7 +53,8 @@ import static org.sonatype.nexus.repository.http.HttpStatus.NOT_FOUND;
 public class LegacyViewServletTest
     extends TestSupport
 {
-  private static final String LEGACY_ENABLED = "org.sonatype.nexus.repository.httpbridge.internal.HttpBridgeModule.legacy";
+  private static final String LEGACY_ENABLED =
+      "org.sonatype.nexus.repository.httpbridge.internal.HttpBridgeModule.legacy";
 
   private static final String REPOSITORY_NAME = "test-repo";
 
@@ -156,7 +157,7 @@ public class LegacyViewServletTest
 
   private LegacyViewServlet buildServlet() {
     return new LegacyViewServlet(repositoryManager, httpResponseSenderSelector,
-        descriptionHelper, descriptionRenderer, legacyViewContributors, true);
+        descriptionHelper, descriptionRenderer, legacyViewContributors);
   }
 
   private void mockNames() {

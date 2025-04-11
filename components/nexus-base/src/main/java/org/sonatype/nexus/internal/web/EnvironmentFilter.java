@@ -23,6 +23,7 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -33,6 +34,7 @@ import org.sonatype.nexus.security.UserIdMdcHelper;
 import org.eclipse.sisu.Hidden;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.net.HttpHeaders.CONTENT_SECURITY_POLICY;
 import static com.google.common.net.HttpHeaders.SERVER;
 import static com.google.common.net.HttpHeaders.X_CONTENT_TYPE_OPTIONS;
 
@@ -96,7 +98,7 @@ public class EnvironmentFilter
     baseUrlManager.detectAndHoldUrl();
 
     // fill in default response headers
-    defaultHeaders((HttpServletResponse) response);
+    defaultHeaders((HttpServletRequest) request, (HttpServletResponse) response);
 
     try {
       chain.doFilter(request, response);
@@ -110,10 +112,14 @@ public class EnvironmentFilter
   /**
    * Add default headers to servlet response.
    */
-  private void defaultHeaders(final HttpServletResponse response) {
+  private void defaultHeaders(final HttpServletRequest request, final HttpServletResponse response) {
     response.setHeader(SERVER, serverHeader);
 
     // NEXUS-5023 disable IE for sniffing into response content
     response.setHeader(X_CONTENT_TYPE_OPTIONS, "nosniff");
+
+    response.setHeader(CONTENT_SECURITY_POLICY,
+        "default-src " + request.getScheme() + ": data: blob: 'unsafe-inline'; script-src " + request.getScheme()
+            + ": 'unsafe-inline' 'unsafe-eval'");
   }
 }
