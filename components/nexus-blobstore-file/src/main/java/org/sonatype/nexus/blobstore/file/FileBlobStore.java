@@ -1159,9 +1159,9 @@ public class FileBlobStore
 
   @Override
   public PaginatedResult<BlobId> getBlobIdUpdatedSinceStream(
-      String prefix,
-      OffsetDateTime fromDateTime,
-      OffsetDateTime toDateTime,
+      final String prefix,
+      final OffsetDateTime fromDateTime,
+      final OffsetDateTime toDateTime,
       @Nullable final String continuationToken,
       final int pageSize)
   {
