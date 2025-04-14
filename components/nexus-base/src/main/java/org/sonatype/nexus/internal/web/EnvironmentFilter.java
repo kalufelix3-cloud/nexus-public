@@ -36,6 +36,7 @@ import org.eclipse.sisu.Hidden;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.CONTENT_SECURITY_POLICY;
 import static com.google.common.net.HttpHeaders.SERVER;
+import static com.google.common.net.HttpHeaders.STRICT_TRANSPORT_SECURITY;
 import static com.google.common.net.HttpHeaders.X_CONTENT_TYPE_OPTIONS;
 
 /**
@@ -50,16 +51,24 @@ public class EnvironmentFilter
     extends ComponentSupport
     implements Filter
 {
+  static final String SANDBOX =
+      "sandbox allow-forms allow-modals allow-popups allow-presentation allow-scripts allow-top-navigation";
+
+  static final String STS_VALUE = "max-age=31536000; includeSubDomains;";
+
   private final String serverBanner;
 
   private final String serverHeader;
 
   private final BaseUrlManager baseUrlManager;
 
+  private final String contextPath;
+
   @Inject
   public EnvironmentFilter(
       final ApplicationVersion applicationVersion,
-      final BaseUrlManager baseUrlManager)
+      final BaseUrlManager baseUrlManager,
+      @Named("${nexus-context-path}") final String contextPath)
   {
     // cache "Server" header value
     checkNotNull(applicationVersion);
@@ -73,6 +82,7 @@ public class EnvironmentFilter
         applicationVersion.getEdition());
 
     this.baseUrlManager = checkNotNull(baseUrlManager);
+    this.contextPath = resolveContextPath(contextPath);
   }
 
   @Override
@@ -118,8 +128,36 @@ public class EnvironmentFilter
     // NEXUS-5023 disable IE for sniffing into response content
     response.setHeader(X_CONTENT_TYPE_OPTIONS, "nosniff");
 
-    response.setHeader(CONTENT_SECURITY_POLICY,
-        "default-src " + request.getScheme() + ": data: blob: 'unsafe-inline'; script-src " + request.getScheme()
-            + ": 'unsafe-inline' 'unsafe-eval'");
+    if (request.getRequestURI().startsWith(contextPath + "repository")) {
+      // user-submitted content gets a different CSP to prevent stored XSS
+      response.setHeader(CONTENT_SECURITY_POLICY, SANDBOX);
+    }
+    else {
+      response.setHeader(CONTENT_SECURITY_POLICY,
+          "default-src " + request.getScheme() + ": data: blob: 'unsafe-inline'; script-src " + request.getScheme()
+              + ": 'unsafe-inline' 'unsafe-eval'");
+    }
+
+    if ("https".equals(request.getScheme())) {
+      response.setHeader(STRICT_TRANSPORT_SECURITY, STS_VALUE);
+    }
+  }
+
+  /**
+   * Guarantee that the contextPath ends with a trailing slash.
+   *
+   * @param contextPath
+   * @return never null, either "/" or the contextPath with a trailing slash
+   */
+  private String resolveContextPath(String contextPath) {
+    if (contextPath == null || contextPath.isEmpty()) {
+      return "/";
+    }
+    else if (contextPath.endsWith("/")) {
+      return contextPath;
+    }
+    else {
+      return contextPath + "/";
+    }
   }
 }
