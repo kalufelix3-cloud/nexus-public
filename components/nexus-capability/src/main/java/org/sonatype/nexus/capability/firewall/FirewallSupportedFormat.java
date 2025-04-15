@@ -30,7 +30,8 @@ public enum FirewallSupportedFormat
   NUGET("nuget"),
   MAVEN2("maven2"),
   COMPOSER("composer"),
-  COCOAPODS("cocoapods");
+  COCOAPODS("cocoapods"),
+  HUGGINGFACE("huggingface");
 
   private final String value;
 
