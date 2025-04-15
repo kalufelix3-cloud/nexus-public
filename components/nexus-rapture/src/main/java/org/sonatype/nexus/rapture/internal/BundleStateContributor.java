@@ -25,6 +25,8 @@ import org.sonatype.nexus.rapture.StateContributor;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
+
 @Named
 @Singleton
 @ConditionalOnProperty(value = FEATURE_SPRING_ONLY, havingValue = "true")
