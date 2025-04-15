@@ -252,6 +252,7 @@ export default function LeftNavigationMenu() {
 
       { clmState?.showDashboard ? (
           <NxGlobalSidebar2NavigationLink
+              className='nxrm-left-nav__link'
               text={UIStrings.IQ_SERVER.OPEN_DASHBOARD_LINK}
               href={clmState.url}
               icon={faExternalLinkAlt}

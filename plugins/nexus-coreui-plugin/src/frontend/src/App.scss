@@ -12,6 +12,7 @@
  */
 
 .nxrm-page {
+  grid-template-columns: auto auto min(var(--nx-width-sidebar), 270px) 1fr;
   .nx-global-sidebar-2__navigation-link.nx-text-link.selected {
     background-image: none;
     background-color: var(--nx-swatch-green-30);
