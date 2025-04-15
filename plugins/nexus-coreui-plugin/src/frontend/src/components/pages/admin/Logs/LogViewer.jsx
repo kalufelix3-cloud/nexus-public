@@ -102,7 +102,7 @@ export default function LogViewer({itemId}) {
 
   return <div className="nxrm-logs">
     <PageHeader>
-      <PageTitle text={VIEW.TITLE(itemId)}/>
+      <PageTitle text={VIEW.TITLE(decodeURIComponent(itemId))}/>
       <PageActions>
         <a download className="nx-btn nx-btn--primary" href={ExtJS.urlOf(`service/rest/internal/logging/logs/${itemId}`)}>{VIEW.DOWNLOAD}</a>
       </PageActions>

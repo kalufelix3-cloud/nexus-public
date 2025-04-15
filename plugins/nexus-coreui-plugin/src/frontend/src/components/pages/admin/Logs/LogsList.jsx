@@ -85,7 +85,7 @@ export default function LogsList({onEdit}) {
           </NxTableHead>
           <NxTableBody isLoading={isLoading} error={error}>
             {data.map(({fileName, size, lastModified}) => (
-                <NxTableRow key={fileName} onClick={() => onEdit(fileName)} isClickable>
+                <NxTableRow key={fileName} onClick={() => onEdit(encodeURIComponent(fileName))} isClickable>
                   <NxTableCell>{fileName}</NxTableCell>
                   <NxTableCell>{HumanReadableUtils.bytesToString(size)}</NxTableCell>
                   <NxTableCell>
