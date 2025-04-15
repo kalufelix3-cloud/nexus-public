@@ -58,6 +58,7 @@ const ADMIN = ROUTE_NAMES.ADMIN;
 import SettingsPageLayout from '../../components/LeftNavigationMenu/SettingsPageLayout/SettingsPageLayout';
 import LoggingConfiguration from '../../components/pages/admin/LoggingConfiguration/LoggingConfiguration';
 
+// for more info on how to define routes see private/developer-documentation/frontend/client-side-routing.md
 export const adminRoutes = [
   {
     name: ADMIN.DIRECTORY,

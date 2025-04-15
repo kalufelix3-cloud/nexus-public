@@ -29,6 +29,8 @@ const failure = 'failure';
 /*
   This is where we register all of the client side routes. Routing is handled using
   UIRouter. For more info see https://github.com/ui-router/react.
+
+  See also private/developer-documentation/frontend/client-side-routing.md
  */
 export function getRouter() {
   const BROWSE = ROUTE_NAMES.BROWSE;

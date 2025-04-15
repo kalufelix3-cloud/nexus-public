@@ -52,6 +52,7 @@ const { MALWARE_RISK_ENABLED } = FeatureFlags;
 
 const BROWSE = ROUTE_NAMES.BROWSE;
 
+// for more info on how to define routes see private/developer-documentation/frontend/client-side-routing.md
 export const browseRoutes = [
   {
     name: BROWSE.DIRECTORY,

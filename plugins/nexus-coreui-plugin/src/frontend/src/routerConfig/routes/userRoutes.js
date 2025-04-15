@@ -22,6 +22,7 @@ import { ROUTE_NAMES } from '../routeNames/routeNames';
 
 const USER = ROUTE_NAMES.USER;
 
+// for more info on how to define routes see private/developer-documentation/frontend/client-side-routing.md
 export const userRoutes = [
   {
     name: USER.DIRECTORY,
