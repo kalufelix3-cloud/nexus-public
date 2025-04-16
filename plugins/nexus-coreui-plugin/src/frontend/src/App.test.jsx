@@ -194,8 +194,8 @@ describe('App', () => {
   }
 
   function givenExtJSState(values = getDefaultState(), edition = 'COMMUNITY') {
-    const getValueMock = jest.fn().mockImplementation((key) => {
-      return values[key];
+    const getValueMock = jest.fn().mockImplementation((key, defaultValue) => {
+      return values[key] || defaultValue;
     });
 
     jest.spyOn(ExtJS, 'state').mockReturnValue({

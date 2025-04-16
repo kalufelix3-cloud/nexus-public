@@ -594,7 +594,6 @@ describe("GlobalHeader", () => {
   }
 
   async function assertButtonVisibleIn(parent, name) {
-    screen.debug();
     const button = await within(parent)
         .findByRole('button', { name });
     expect(button).toBeVisible();

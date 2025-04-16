@@ -89,7 +89,7 @@ describe('LeftNavigationMenu', () => {
   });
   describe('collapsible behavior', () => {
     it('should preserve Search collapsed if user manually collapsed it before collapsing sidebar', async () => {
-      givenExtApplicationState({ mockAppStateStore: getDefaultBrowseableFormatStoreMock() });
+      givenBrowsableFormats();
       givenUserLoggedIn();
       givenPermissions({ 'nexus:search:read': true });
       
@@ -116,7 +116,7 @@ describe('LeftNavigationMenu', () => {
       expect(searchList).toBeNull();
     });
     it('should reopen Search if it was open before collapsing sidebar', async () => {
-      givenExtApplicationState({ mockAppStateStore: getDefaultBrowseableFormatStoreMock() });
+      givenBrowsableFormats();
       givenUserLoggedIn();
       givenPermissions({ 'nexus:search:read': true });
     
@@ -289,7 +289,7 @@ describe('LeftNavigationMenu', () => {
     describe('Search links', () => {
       describe('search link', () => {
         it('should render if user has search read permissions', async () => {
-          givenExtApplicationState({ mockAppStateStore: getDefaultBrowseableFormatStoreMock() });
+          givenBrowsableFormats();
           givenUserLoggedIn();
           givenPermissions({ 'nexus:search:read': true });
           renderComponent();
@@ -492,7 +492,7 @@ describe('LeftNavigationMenu', () => {
   });
 
   async function assertSearchLink(linkName, linkLabel) {
-    givenExtApplicationState({ mockAppStateStore: getDefaultBrowseableFormatStoreMock() });
+    givenBrowsableFormats();
     givenUserLoggedIn();
     givenPermissions({ 'nexus:search:read': true });
     renderComponent();
@@ -512,16 +512,47 @@ describe('LeftNavigationMenu', () => {
     );
   }
 
-  function givenExtApplicationState({ mockAppStateStore, mockPermissionController } = {}) {
-    mockAppStateStore = !!mockAppStateStore ? mockAppStateStore : getDefaultAppStateStoreMock();
+  function givenBrowsableFormats(formats = [
+    'apt',
+    'cargo',
+    'cocoapods',
+    'composer',
+    'conan',
+    'conda',
+    'docker',
+    'gitlfs',
+    'go',
+    'helm',
+    'huggingface',
+    'maven2',
+    'npm',
+    'nuget',
+    'p2',
+    'pypi',
+    'r',
+    'raw',
+    'rubygems',
+    'yum'
+  ]) {
+    givenExtApplicationState({
+      mockController: {
+        getFormats: () => formats,
+        on: jest.fn(),
+        un: jest.fn()
+      }
+    });
+  }
 
-    mockPermissionController = !!mockPermissionController
-      ? mockPermissionController
+  function givenExtApplicationState({ mockStore, mockController } = {}) {
+    mockStore = !!mockStore ? mockStore : getDefaultAppStateStoreMock();
+
+    mockController = !!mockController
+      ? mockController
       : getDefaultPermissionControllerMock();
 
     global.Ext.getApplication.mockReturnValue({
-      getStore: jest.fn().mockReturnValue(mockAppStateStore),
-      getController: jest.fn().mockReturnValue(mockPermissionController),
+      getStore: jest.fn().mockReturnValue(mockStore),
+      getController: jest.fn().mockReturnValue(mockController),
     });
   }
 

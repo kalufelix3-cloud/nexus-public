@@ -96,7 +96,7 @@ export default function isVisible(visibilityRequirements) {
 }
 
 function isFormatBrowseable(browseableFormat) {
-  return Ext.getApplication().getStore('BrowseableFormat').getById(browseableFormat) !== null;
+  return Ext.getApplication().getController('NX.coreui.controller.BrowseableFormats').getFormats().includes(browseableFormat);
 }
 
 function areAllRequiredStatesEnabled(statesEnabled) {
