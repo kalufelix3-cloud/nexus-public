@@ -90,14 +90,6 @@ public class DateBasedHelper
     return prefixes;
   }
 
-  public static Map<String, DateInterval> generateSingletonPrefix(
-      final OffsetDateTime from,
-      final OffsetDateTime to,
-      String prefix)
-  {
-    return Map.of(prefix, new DateInterval(from, to));
-  }
-
   public static class DateInterval
   {
     private final OffsetDateTime start;

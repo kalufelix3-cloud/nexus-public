@@ -568,22 +568,20 @@ public class FileBlobStore
         return false;
       }
 
-      if (isReconcilePlanEnabled()) {
-        BlobId propRef = new BlobId(blobId.asUniqueString(), UTC.now());
-        String softDeletedPrefixLocation = getLocationPrefix(propRef);
-        Path path = attributePath(propRef);
-        DateTime deletedDateTime = new DateTime();
-        blobAttributes.setDeletedDateTime(deletedDateTime);
-        blobAttributes.setSoftDeletedLocation(softDeletedPrefixLocation);
+      BlobId propRef = new BlobId(blobId.asUniqueString(), UTC.now());
+      String softDeletedPrefixLocation = getLocationPrefix(propRef);
+      Path path = attributePath(propRef);
+      DateTime deletedDateTime = new DateTime();
+      blobAttributes.setDeletedDateTime(deletedDateTime);
+      blobAttributes.setSoftDeletedLocation(softDeletedPrefixLocation);
 
-        // Save properties file under the new location
-        String originalPrefixLocation = getLocationPrefix(blobId);
-        if (!originalPrefixLocation.equals(softDeletedPrefixLocation)) {
-          FileBlobAttributes newBlobAttributes = getFileBlobAttributes(path);
-          newBlobAttributes.updateFrom(blobAttributes);
-          newBlobAttributes.setOriginalLocation(getLocationPrefix(blobId));
-          newBlobAttributes.store();
-        }
+      // Save properties file under the new location
+      String originalPrefixLocation = getLocationPrefix(blobId);
+      if (!originalPrefixLocation.equals(softDeletedPrefixLocation)) {
+        FileBlobAttributes newBlobAttributes = getFileBlobAttributes(path);
+        newBlobAttributes.updateFrom(blobAttributes);
+        newBlobAttributes.setOriginalLocation(getLocationPrefix(blobId));
+        newBlobAttributes.store();
       }
 
       blobAttributes.setDeleted(true);
