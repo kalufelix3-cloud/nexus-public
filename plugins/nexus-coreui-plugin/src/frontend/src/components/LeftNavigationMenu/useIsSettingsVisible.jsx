@@ -17,12 +17,13 @@ import useFilteredRoutes from '../../hooks/useFilteredRoutes';
 
 const ADMIN = ROUTE_NAMES.ADMIN;
 
-export function useIsSettingsVisible() {
-  const visibleRoutes = useFilteredRoutes(state => (
-      state.name.startsWith(`${ADMIN.DIRECTORY}.`) &&
+export function useIsSettingsVisible(section = `${ADMIN.DIRECTORY}.`) {
+  const visibleRoutes = useFilteredRoutes(
+    state =>
+      state.name.startsWith(section) &&
       !state?.data?.visibilityRequirements?.ignoreForMenuVisibilityCheck &&
       isVisible(state.data.visibilityRequirements)
-  ));
+  );
 
   return visibleRoutes.length > 0;
 }
