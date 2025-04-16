@@ -339,6 +339,6 @@ export default class {
   }
 
   static isExtJsRendered() {
-    return document.getElementsByClassName('nxrm-ext-js-wrapper').length > 0;
+    return !!document.getElementById('feature-content');
   }
 }
