@@ -16,6 +16,7 @@ import { UIView, useCurrentStateAndParams, useRouter } from '@uirouter/react';
 import SettingsSidebar from './SettingsSidebar';
 import isVisible from '../../../routerConfig/isVisible';
 import { ROUTE_NAMES } from '../../../routerConfig/routeNames/routeNames';
+import { useIsSettingsVisible } from '../useIsSettingsVisible';
 
 export default function SettingsPageLayout() {
   const { ADMIN, BROWSE } = ROUTE_NAMES;
@@ -25,22 +26,26 @@ export default function SettingsPageLayout() {
   const {
     state: { name: currentPageName },
   } = useCurrentStateAndParams();
+  const isRepositorySectionVisible = useIsSettingsVisible(`${ADMIN.REPOSITORY.DIRECTORY}.`);
+  const isSecuritySectionVisible = useIsSettingsVisible(`${ADMIN.SECURITY.DIRECTORY}.`);
+  const isSystemSectionVisible = useIsSettingsVisible(`${ADMIN.SYSTEM.DIRECTORY}.`);
+  const isSupportSectionVisible = useIsSettingsVisible(`${ADMIN.SUPPORT.DIRECTORY}.`);
+  const isIQSectionVisible = useIsSettingsVisible(`${ADMIN.IQ}`);
 
   if (currentPageName === ADMIN.DIRECTORY) {
-    let redirectPage = BROWSE.WELCOME;
-    const adminStates = [ADMIN.REPOSITORY, ADMIN.SECURITY, ADMIN.SUPPORT, ADMIN.SYSTEM];
-
-    for (const stateName in adminStates) {
-      const state = router.stateRegistry.get(stateName);
-      const data = state?.data || {};
-      const { visibilityRequirements } = data;
-
-      if (isVisible(visibilityRequirements)) {
-        redirectPage = stateName;
-        break;
-      }
+    if (isRepositorySectionVisible) {
+      router.stateService.go(ADMIN.REPOSITORY.DIRECTORY);
+    } else if (isSecuritySectionVisible) {
+      router.stateService.go(ADMIN.SECURITY.DIRECTORY);
+    } else if (isSystemSectionVisible) {
+      router.stateService.go(ADMIN.SYSTEM.DIRECTORY);
+    } else if (isSupportSectionVisible) {
+      router.stateService.go(ADMIN.SUPPORT.DIRECTORY);
+    } else if (isIQSectionVisible) {
+      router.stateService.go(ADMIN.IQ);
+    } else {
+      router.stateService.go(BROWSE.WELCOME);
     }
-    router.stateService.go(redirectPage);
   }
 
   return (

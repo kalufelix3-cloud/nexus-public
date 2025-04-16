@@ -20,17 +20,8 @@ import { faChevronDown, faChevronUp, faLink } from '@fortawesome/free-solid-svg-
 import './NavigationLinkWithCollapsibleList.scss';
 import CollapsibleListItem from './CollapsibleListItem';
 
-const NavigationLinkWithCollapsibleList = ({
-  children,
-  text,
-  isSelected,
-  href,
-  icon,
-  isDefaultOpen = false,
-  isOpen,
-  ...props
-}) => {
-  const [isExpanded, setIsExpanded] = useState(isDefaultOpen);
+const NavigationLinkWithCollapsibleList = ({ children, text, isSelected, href, icon, isOpen = false, ...props }) => {
+  const [isExpanded, setIsExpanded] = useState(isOpen);
   const chevronIcon = isExpanded ? faChevronUp : faChevronDown;
 
   const onChevronClick = e => {
@@ -43,10 +34,10 @@ const NavigationLinkWithCollapsibleList = ({
     <div className='nxrm-navigation-expandable-link__text'>
       {text}
       <button
-          aria-label={isExpanded ? 'Collapse Menu' : 'Expand Menu' }
-          aria-expanded={isExpanded}
-          className='nxrm-navigation-expandable-link__chevron'
-          onClick={onChevronClick}
+        aria-label={isExpanded ? 'Collapse Menu' : 'Expand Menu'}
+        aria-expanded={isExpanded}
+        className='nxrm-navigation-expandable-link__chevron'
+        onClick={onChevronClick}
       >
         <NxFontAwesomeIcon icon={chevronIcon} />
       </button>
@@ -59,12 +50,11 @@ const NavigationLinkWithCollapsibleList = ({
     hideIcon: !icon,
   });
 
-
   useEffect(() => {
-    if (isOpen || isDefaultOpen) {
-       setIsExpanded(true);
+    if (isOpen) {
+      setIsExpanded(true);
     }
- }, [isOpen, isDefaultOpen]);
+  }, [isOpen]);
 
   return (
     <div className={wrapperClassnames}>
@@ -89,7 +79,6 @@ NavigationLinkWithCollapsibleList.propTypes = {
   children: PropTypes.any,
   href: PropTypes.string.isRequired,
   icon: PropTypes.object,
-  isDefaultOpen: PropTypes.bool,
   isSelected: PropTypes.bool,
   text: PropTypes.oneOfType([PropTypes.string, PropTypes.element]).isRequired,
   isOpen: PropTypes.bool,
