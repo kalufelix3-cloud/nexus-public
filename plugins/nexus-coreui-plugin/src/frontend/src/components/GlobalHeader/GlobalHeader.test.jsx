@@ -40,10 +40,10 @@ jest.mock('swagger-ui-react', () => {
 
 // the variable id allows us to simulate being on a react vs on an extJs page
 // for refresh tests
-let welcomeWrapperId;
+let welcomeWrapperClassName;
 jest.mock('../pages/user/Welcome/Welcome', () => {
   return () => {
-    return (<main id={welcomeWrapperId}><h1>Welcome Mock</h1></main>);
+    return (<main className={welcomeWrapperClassName}><h1>Welcome Mock</h1></main>);
   }
 });
 
@@ -82,7 +82,7 @@ describe("GlobalHeader", () => {
   const givenUserName = 'test-user';
 
   beforeEach(() => {
-    welcomeWrapperId = "some-id-for-a-react-page-" + Math.random();
+    welcomeWrapperClassName = "" ;
 
     givenExtJSState()
     jest.spyOn(UpgradeAlertFunctions, 'hasUser').mockReturnValue(hasUserKey);
@@ -535,6 +535,7 @@ describe("GlobalHeader", () => {
     it('performs an appropriate refresh operation for a react rendered component', async () => {
        const { router} = renderComponent();
        jest.spyOn(router.stateService, 'reload');
+       
 
        const banner = screen.getByRole('banner');
        expect(banner).toBeVisible();
@@ -545,9 +546,9 @@ describe("GlobalHeader", () => {
     });
 
     it('performs an appropriate refresh operation for an extjs rendered component', async () => {
-      // render a component with the id feature-content so that the logic determines this to be
+      // render a component with the class name nxrm-ext-js-wrapper so that the logic determines this to be
       // an ExtJS rendered page
-      welcomeWrapperId = 'feature-content';
+      welcomeWrapperClassName = 'nxrm-ext-js-wrapper';
 
       const refresh = jest.spyOn(ExtJS, 'refresh').mockReturnValue(null);
 
