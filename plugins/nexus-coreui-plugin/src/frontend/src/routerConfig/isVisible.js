@@ -130,11 +130,7 @@ function areAllRequiredLicensesPresent(licenseValid) {
       licenseValid => {
         const value = NX.State.getValue(licenseValid.key, licenseValid.defaultValue)
         if (typeof value !== 'object') {
-          // I've only ever seen this happen when writing tests, when a value is not properly mocked, but when it
-          // happens it can result in a tricky to debug NPE, this should at least give better feedback to the user
-          // about how to fix the problem, while still throwing an exception that will fail the test, forcing them
-          // to properly mock it
-          throw new Error(`invalid state found for license key ${licenseValid.key}`);
+          return false;
         }
 
         return value['licenseValid'];
