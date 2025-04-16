@@ -515,7 +515,7 @@ export default FormUtils.buildFormMachine({
     async waitAndRedirect({ savedComponentName }) {
       await Utils.timeoutPromise(SUBMIT_MASK_SUCCESS_VISIBLE_TIME_MS);
 
-      window.location.hash = `browse/search=${encodeURIComponent(`keyword="${savedComponentName}"`)}`;
+      window.location.hash = `browse/search/generic=${encodeURIComponent(`keyword="${savedComponentName}"`)}`;
     }
   }
 });

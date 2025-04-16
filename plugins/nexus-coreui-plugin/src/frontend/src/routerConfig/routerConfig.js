@@ -42,6 +42,8 @@ export function getRouter() {
 
   // validate permissions and configuration on each route request
   router.transitionService.onBefore({}, async (transition) => {
+    console.debug('evaluating transition: ' + transition.to().name);
+
     const redirectTo404 = () => {
       transition.abort();
       router.stateService.go(ROUTE_NAMES.MISSING_ROUTE);
@@ -86,7 +88,10 @@ export function getRouter() {
   });
 
   // send any unrecognized routes to the 404 page
-  router.urlService.rules.otherwise({ state: ROUTE_NAMES.MISSING_ROUTE });
+  router.urlService.rules.otherwise((matchValue, urlParts, router) => {
+    console.warn('url not recognized', matchValue, urlParts);
+    return { state: ROUTE_NAMES.MISSING_ROUTE };
+  });
 
   console.info('States added to router:', router.stateRegistry.get());
 
