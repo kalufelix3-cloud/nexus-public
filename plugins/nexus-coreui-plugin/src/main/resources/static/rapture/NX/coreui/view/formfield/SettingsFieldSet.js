@@ -36,7 +36,8 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
     'NX.coreui.view.formfield.factory.FormfieldUrlFactory',
     'NX.coreui.view.formfield.factory.FormfieldStaticInfoFactory',
     'NX.coreui.view.formfield.factory.FormfieldTaskScopeFactory',
-    'NX.coreui.view.formfield.factory.FormfieldPanelMessageFactory'
+    'NX.coreui.view.formfield.factory.FormfieldPanelMessageFactory',
+    'NX.coreui.view.formfield.factory.FormfieldTemplateOnlyFactory'
   ],
 
   mixins: {
@@ -99,26 +100,29 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
           factory = Ext.ClassManager.getByAlias('nx.formfield.factory.string');
         }
         if (factory) {
-          var config = {
-            requiresPermission: true,
-            name: 'property_' + formField.id,
-            factory: factory,
-            delimiter: me.delimiter,
-            listeners: {
-              afterrender: {
-                fn: function() {
-                  // fixes an issue with hidden validation errors when the error is added before the field is rendered
-                  this.validate();
+          item = factory.create(formField, me.disableSort)
+          if(item) {
+            var config = {
+              requiresPermission: true,
+              name: 'property_' + formField.id,
+              factory: factory,
+              delimiter: me.delimiter,
+              listeners: {
+                afterrender: {
+                  fn: function() {
+                    // fixes an issue with hidden validation errors when the error is added before the field is rendered
+                    this.validate();
+                  }
                 }
               }
+            };
+            if (Ext.isDefined(me.delimiter)) {
+              config.delimiter = me.delimiter;
             }
-          };
-          if (Ext.isDefined(me.delimiter)) {
-            config.delimiter = me.delimiter;
+            item = Ext.apply(item, config);
+            me.configureListeners(formField, item);
+            me.add(item);
           }
-          item = Ext.apply(factory.create(formField, me.disableSort), config);
-          me.configureListeners(formField, item);
-          me.add(item);
         }
       });
     }

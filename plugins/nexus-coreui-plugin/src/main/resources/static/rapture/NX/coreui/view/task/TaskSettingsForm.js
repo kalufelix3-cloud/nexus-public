@@ -207,7 +207,7 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
         const scopeFieldsSet = me.down('nx-coreui-task-scopefieldset');
         if (scopeFieldsSet) {
           if (model.get("properties") == null) {
-            model.set("properties", {"taskScope": null})
+            model.set("properties", { "taskScope": "duration", "sinceMinutes": "30" })
           }
           scopeFieldsSet.importProperties(model.get('properties'));
         }

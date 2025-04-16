@@ -12,18 +12,19 @@
  */
 package org.sonatype.nexus.formfields;
 
-/**
- * Task scope field.
- */
-public class TaskScopeFormField
-    extends AbstractFormField<String>
+public class TemplateFormField<T>
+    extends AbstractFormField<T>
 {
-  public TaskScopeFormField(final String id, boolean required, String initialValue) {
-    super(id, "", "", required, null, initialValue);
+  public TemplateFormField(
+      final String id,
+      final boolean required,
+      final T initialValue)
+  {
+    super(id, null, null, required, null, initialValue);
   }
 
   @Override
   public String getType() {
-    return "taskScope";
+    return "templateOnly";
   }
 }

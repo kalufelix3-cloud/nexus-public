@@ -60,9 +60,10 @@ public class TaskSchedulerImpl
   protected boolean changeRepoBlobstoreTaskEnabled;
 
   @Inject
-  public TaskSchedulerImpl(final EventManager eventManager,
-                           final TaskFactory taskFactory,
-                           final Provider<SchedulerSPI> scheduler)
+  public TaskSchedulerImpl(
+      final EventManager eventManager,
+      final TaskFactory taskFactory,
+      final Provider<SchedulerSPI> scheduler)
   {
     this.eventManager = checkNotNull(eventManager);
     this.taskFactory = checkNotNull(taskFactory);
@@ -152,6 +153,9 @@ public class TaskSchedulerImpl
     checkNotNull(config);
     checkNotNull(schedule);
 
+    TaskDescriptor descriptor = checkNotNull(taskFactory.findDescriptor(config.getTypeId()));
+
+    descriptor.completeConfiguration(config);
     config.validate();
 
     Date now = new Date();
@@ -164,8 +168,7 @@ public class TaskSchedulerImpl
 
     log.info("Task {} scheduled: {}",
         taskInfo.getConfiguration().getTaskLogName(),
-        taskInfo.getSchedule().getType()
-    );
+        taskInfo.getSchedule().getType());
 
     eventManager.post(new TaskScheduledEvent(taskInfo));
 

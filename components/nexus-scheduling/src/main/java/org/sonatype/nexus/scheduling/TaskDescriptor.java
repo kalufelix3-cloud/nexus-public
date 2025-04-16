@@ -86,4 +86,11 @@ public interface TaskDescriptor
   boolean allowConcurrentRun();
 
   boolean isReadOnlyUi();
+
+  /**
+   * Allows the descriptor to complete the configuration of the task before it is stored.
+   * 
+   * @param config Instance of the task configuration to be completed.
+   */
+  void completeConfiguration(TaskConfiguration config);
 }
