@@ -92,7 +92,7 @@ describe('TagsDetails', function() {
 
       expect(selectors.getTileHeader()).toHaveTextContent(`test-tag ${TAGS.DETAILS.TILE_HEADER}`);
       expect(selectors.getSearchTaggedComponentsLink()).toBeInTheDocument();
-      expect(selectors.getSearchTaggedComponentsLink()).toHaveAttribute('href','#browse/search/custom=tags%3D%22test-tag%22');
+      expect(selectors.getSearchTaggedComponentsLink()).toHaveAttribute('href','#browse/search/custom/=tags%3D%22test-tag%22');
       expect(selectors.getFirstCreatedLabel()).toBeInTheDocument();
       expect(screen.queryByText('1/1/2023, 7:00:00 AM')).toBeInTheDocument();
       expect(selectors.getLastUpdatedLabel()).toBeInTheDocument();

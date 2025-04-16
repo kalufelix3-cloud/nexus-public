@@ -67,7 +67,7 @@ export default function TagsDetails({itemId}) {
                   <NxH2>{tagData.name} {TAGS.DETAILS.TILE_HEADER}</NxH2>
                 </NxTile.HeaderTitle>
                 <NxTile.HeaderActions>
-                  <NxTextLink href={'#browse/search/custom=' + encodeURIComponent(`tags="${tagData.name}"`)}>{TAGS.DETAILS.FIND_TAGGED}</NxTextLink>
+                  <NxTextLink href={'#browse/search/custom/=' + encodeURIComponent(`tags="${tagData.name}"`)}>{TAGS.DETAILS.FIND_TAGGED}</NxTextLink>
                 </NxTile.HeaderActions>
               </NxTile.Header>
               <NxTile.Content>
