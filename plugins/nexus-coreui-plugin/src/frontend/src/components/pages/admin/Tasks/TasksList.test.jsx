@@ -28,13 +28,6 @@ const XSS_STRING = TestUtils.XSS_STRING;
 const {TASKS: {LIST: LABELS}} = UIStrings;
 const {EXT: {URL, TASK: {ACTION, METHODS}}, SORT_DIRECTIONS: {DESC, ASC}} = APIConstants;
 
-jest.mock('axios', () => {
-  return {
-    ...jest.requireActual('axios'),
-    post: jest.fn(),
-  };
-});
-
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
     ...jest.requireActual('@sonatype/nexus-ui-plugin'),

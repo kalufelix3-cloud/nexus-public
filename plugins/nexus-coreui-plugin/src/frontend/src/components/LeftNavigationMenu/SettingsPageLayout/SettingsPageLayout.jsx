@@ -14,7 +14,6 @@ import React from 'react';
 import { UIView, useCurrentStateAndParams, useRouter } from '@uirouter/react';
 
 import SettingsSidebar from './SettingsSidebar';
-import isVisible from '../../../routerConfig/isVisible';
 import { ROUTE_NAMES } from '../../../routerConfig/routeNames/routeNames';
 import { useIsSettingsVisible } from '../useIsSettingsVisible';
 

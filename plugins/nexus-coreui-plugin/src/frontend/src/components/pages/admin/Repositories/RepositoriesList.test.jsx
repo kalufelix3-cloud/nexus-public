@@ -23,11 +23,6 @@ import UIStrings from '../../../../constants/UIStrings';
 import RepositoriesContextProvider from './RepositoriesContextProvider';
 import {canReadFirewallStatus, canUpdateHealthCheck} from './IQServerColumns/IQServerHelpers';
 
-jest.mock('axios', () => ({
-  get: jest.fn(),
-  post: jest.fn()
-}));
-
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
     ...jest.requireActual('@sonatype/nexus-ui-plugin'),

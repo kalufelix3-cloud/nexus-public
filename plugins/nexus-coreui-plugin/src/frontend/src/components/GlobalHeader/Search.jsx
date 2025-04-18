@@ -14,9 +14,8 @@
 import React, { useState } from 'react';
 import { useCurrentStateAndParams } from '@uirouter/react';
 import { NxFilterInput } from '@sonatype/react-shared-components';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, useIsVisible} from '@sonatype/nexus-ui-plugin';
 import { useRouter } from '@uirouter/react';
-import useIsVisible from '../../routerConfig/useIsVisible';
 import {ROUTE_NAMES} from "../../routerConfig/routeNames/routeNames";
 
 export default function Search() {

@@ -19,10 +19,6 @@ import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 import BrowseTree from './BrowseTree';
 import {COMPONENTS, FOLDER1_CHILDREN, COMPONENT1_CHILDREN} from './BrowseTree.testdata';
 
-jest.mock('axios', () => ({
-  post: jest.fn()
-}));
-
 describe('BrowseTree', function () {
   const repoId = 'maven-releases';
   const selectors = {

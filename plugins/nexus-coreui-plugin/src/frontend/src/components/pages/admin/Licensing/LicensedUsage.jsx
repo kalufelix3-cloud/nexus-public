@@ -19,10 +19,10 @@ import {
 } from '@sonatype/react-shared-components';
 import {
   ReadOnlyField,
+  scrollToUsageCenter
 } from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
-import { scrollToUsageCenter } from '../../../../interfaces/LocationUtils';
 
 const {LICENSING: {DETAILS: LABELS}, LICENSING} = UIStrings;
 

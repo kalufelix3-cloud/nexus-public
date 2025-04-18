@@ -21,7 +21,7 @@ import {
   NxH3,
   useToggle
 } from "@sonatype/react-shared-components";
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, isPageHashIncluding} from '@sonatype/nexus-ui-plugin';
 import {faExclamationCircle, faCaretRight} from "@fortawesome/free-solid-svg-icons";
 
 import MaliciousRiskOnDiskMachine from "./MaliciousRiskOnDiskMachine";
@@ -29,7 +29,6 @@ import UIStrings from '../../../constants/UIStrings';
 import "./MaliciousRiskOnDisk.scss";
 import FeatureFlags from '../../../constants/FeatureFlags';
 import {helperFunctions} from '../SystemStatusAlerts/CELimits/UsageHelper';
-import {isPageHashIncluding} from '../../../interfaces/LocationUtils';
 import { useSize } from '../../../hooks/useSize';
 import classNames from 'classnames';
 

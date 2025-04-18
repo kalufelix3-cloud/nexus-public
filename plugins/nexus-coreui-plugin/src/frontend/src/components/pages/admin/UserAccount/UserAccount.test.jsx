@@ -19,6 +19,7 @@ import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 
 import UIStrings from '../../../../constants/UIStrings';
 import UserAccount from './UserAccount';
+import {when} from "jest-when";
 
 const mockUserAccount = {
   userId: 'admin',
@@ -47,25 +48,14 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
   }
 });
 
-jest.mock('axios', () => {
-  return {
-    ...jest.requireActual('axios'),
-    get: jest.fn((url) => {
-      if (url === 'service/rest/internal/ui/user') {
-        return Promise.resolve({data: mockUserAccount});
-      }
-    }),
-    put: jest.fn(() => Promise.resolve())
-  };
-});
-
-const selectors = {
-  ...TestUtils.formSelectors
-};
-
 describe('UserAccount', () => {
   beforeEach(() => {
     window.dirty = [];
+
+    when(Axios.get).calledWith('service/rest/internal/ui/user').mockResolvedValue({
+      data: mockUserAccount
+    });
+    Axios.put.mockResolvedValue();
   });
 
   afterEach(() => {

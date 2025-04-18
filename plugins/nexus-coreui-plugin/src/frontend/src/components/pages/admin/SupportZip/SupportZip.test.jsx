@@ -31,16 +31,6 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   },
 }));
 
-jest.mock('axios', () => {
-  return {
-    ...jest.requireActual('axios'),
-    get: jest.fn(),
-    post: jest.fn(),
-    delete: jest.fn(),
-    all: jest.fn(),
-  };
-});
-
 describe('SupportZip', () => {
   const selectors = {
     generateAllSupportZipButton: () =>

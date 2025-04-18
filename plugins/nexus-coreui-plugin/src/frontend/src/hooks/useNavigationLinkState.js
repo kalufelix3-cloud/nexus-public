@@ -16,7 +16,7 @@
  */
 
 import { useIsActive, useRouter, useSref } from '@uirouter/react';
-import useIsVisible from '../routerConfig/useIsVisible';
+import { useIsVisible } from '@sonatype/nexus-ui-plugin';
 
 /**
  * @param name - route sate name

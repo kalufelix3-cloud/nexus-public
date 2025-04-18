@@ -27,6 +27,8 @@ import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 
 import AnonymousSettings from './AnonymousSettings';
 import UIStrings from '../../../../constants/UIStrings';
+import axios from "axios";
+import {when} from "jest-when";
 
 const {
   ANONYMOUS_SETTINGS: ANONYMOUS_API
@@ -54,21 +56,6 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
   }
 });
 
-jest.mock('axios', () => {  // Mock out parts of axios, has to be done in same scope as import statements
-  return {
-    ...jest.requireActual('axios'), // Use most functions from actual axios
-    get: jest.fn((url) => {
-      switch (url) {
-        case 'service/rest/internal/ui/realms/types':
-          return Promise.resolve({data: mockRealmTypes});
-        case 'service/rest/internal/ui/anonymous-settings':
-          return Promise.resolve({data: mockAnonymousSettings});
-      }
-    }),
-    put: jest.fn(() => Promise.resolve())
-  };
-});
-
 const selectors = {
   ...TestUtils.formSelectors,
   ...TestUtils.selectors,
@@ -82,6 +69,13 @@ const selectors = {
 describe('AnonymousSettings', () => {
   beforeEach(() => {
     window.dirty = [];
+    when(axios.get).calledWith('service/rest/internal/ui/realms/types').mockResolvedValue({
+      data: mockRealmTypes
+    });
+    when(axios.get).calledWith('service/rest/internal/ui/anonymous-settings').mockResolvedValue({
+      data: mockAnonymousSettings
+    });
+    axios.put.mockResolvedValue();
   });
 
   afterEach(() => {

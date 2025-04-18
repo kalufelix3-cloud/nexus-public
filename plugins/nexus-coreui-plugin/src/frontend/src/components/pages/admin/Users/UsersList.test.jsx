@@ -27,13 +27,6 @@ const {USERS: {LIST: LABELS}} = UIStrings;
 
 const {EXT: {URL, USER: {ACTION, METHODS}}, SORT_DIRECTIONS: {DESC, ASC}} = APIConstants;
 
-jest.mock('axios', () => {
-  return {
-    ...jest.requireActual('axios'),
-    post: jest.fn(),
-  };
-});
-
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
     ...jest.requireActual('@sonatype/nexus-ui-plugin'),

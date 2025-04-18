@@ -10,43 +10,44 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, { useEffect } from 'react';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import {UIRouter, UIView} from '@uirouter/react';
+import {ExtJS} from '@sonatype/nexus-ui-plugin'
 
 import { getRouter } from './routerConfig/routerConfig';
-import { UIRouter, UIView, useRouter } from "@uirouter/react";
-import { waitForExtJs } from "./interfaces/ExtJSUtil";
 import LeftNavigationMenu from "./components/LeftNavigationMenu/LeftNavigationMenu";
 import GlobalHeader from "./components/GlobalHeader/GlobalHeader";
 
 import './App.scss';
 import SystemNotices from './components/widgets/SystemStatusAlerts/SystemNotices';
 import UpgradeModal from './components/pages/user/Welcome/UpgradeModal';
-import { useRedirectOnLogout } from './hooks/useRedirectOnLogout';
+import {useRedirectOnLogout} from './hooks/useRedirectOnLogout';
 
 export function App() {
-  useRedirectOnLogout()
+  useRedirectOnLogout();
 
   return (
       <>
-        <SystemNotices />
+        <SystemNotices/>
 
-        <GlobalHeader />
+        <GlobalHeader/>
 
-        <LeftNavigationMenu />
+        <LeftNavigationMenu/>
 
-        <UpgradeModal />
+        <UpgradeModal/>
 
-        <UIView />
+        <UIView/>
       </>);
 }
 
-waitForExtJs(() => {
+ExtJS.waitForExtJs(() => {
   const router = getRouter();
   const el = document.createElement('div');
   el.className = 'nx-page nxrm-page';
   document.body.appendChild(el);
   ReactDOM.render(
       <UIRouter router={router}>
-        <App />
+        <App/>
       </UIRouter>, el);
 });

@@ -16,9 +16,8 @@
  */
 import Axios from 'axios';
 
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, TokenMachine} from '@sonatype/nexus-ui-plugin';
 
-import TokenMachine from '../../../../interfaces/TokenMachine';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default TokenMachine.withConfig({

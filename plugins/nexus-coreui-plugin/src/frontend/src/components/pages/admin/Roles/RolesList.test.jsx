@@ -25,12 +25,6 @@ import RolesList from './RolesList';
 const {ROLES: {LIST: LABELS}} = UIStrings;
 const {EXT: {CAPABILITY: {ACTION, METHODS}, URL: EXT_URL}} = APIConstants;
 
-jest.mock('axios', () => ({
-  ...jest.requireActual('axios'),
-  get: jest.fn(),
-  post: jest.fn(),
-}));
-
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
     ...jest.requireActual('@sonatype/nexus-ui-plugin'),

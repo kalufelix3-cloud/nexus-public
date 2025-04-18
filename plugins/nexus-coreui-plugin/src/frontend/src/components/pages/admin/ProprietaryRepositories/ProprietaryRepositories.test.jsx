@@ -39,13 +39,6 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
   }
 });
 
-jest.mock('axios', () => {  // Mock out parts of axios, has to be done in same scope as import statements
-  return {
-    ...jest.requireActual('axios'), // Use most functions from actual axios
-    post: jest.fn()
-  };
-});
-
 const selectors = {
   ...TestUtils.selectors,
   ...TestUtils.formSelectors,

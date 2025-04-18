@@ -27,6 +27,7 @@
     "@fortawesome/free-solid-svg-icons": "5.11.2",
     "@fortawesome/react-fontawesome": "0.1.4",
     "@sonatype/react-shared-components": "13.5.2",
+    "@uirouter/react": "1.0.7",
     "classnames": "2.3.1",
     "file-size": "1.0.0",
     "node-gyp": "8.1.0",
@@ -53,6 +54,7 @@
   },
   "peerDependencies": {
     "@sonatype/react-shared-components": "13.5.2",
+    "@uirouter/react": "1.0.7",
     "react": "16.14.0",
     "react-dom": "16.14.0",
     "xstate": "4.38.3"

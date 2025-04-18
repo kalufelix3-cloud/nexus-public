@@ -14,8 +14,8 @@
 import React from 'react'
 import { useSref, useRouter } from '@uirouter/react';
 import { NxList } from '@sonatype/react-shared-components';
+import {useIsVisible} from '@sonatype/nexus-ui-plugin';
 import classNames from 'classnames';
-import useIsVisible from '../../routerConfig/useIsVisible';
 
 export default function DirectoryListItem({ text, description, routeName, params, className, ...props }) {
   const routerState = useRouter().stateRegistry.get(routeName);

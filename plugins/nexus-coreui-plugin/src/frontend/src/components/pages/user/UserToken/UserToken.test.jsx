@@ -43,50 +43,31 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
   }
 });
 
-jest.mock('axios', () => {
-  return {
-    ...jest.requireActual('axios'),
-    get: jest.fn((url) => {
-      if (url === `/service/rest/internal/current-user/user-token?authToken=${mockTokenB64}`) {
-        return Promise.resolve({
-          data: {
-            nameCode: 'fWlnS_RJ',
-            passCode: 'EAQvjLMhKd0JYV_05Ig7yIg8mwrOyBO61AdsPS7bsJma',
-            created: '2020-04-23T21:49:40.112+01:00'
-          }
-        });
-      }
-      if (url === 'service/rest/internal/current-user/user-token/attributes') {
-        return Promise.resolve({
-          data: {
-            "expirationTimeTimestamp": "1713498443006",
-            "expirationEnabled": "true"
-          }
-        });
-      }
-    }),
-    post: jest.fn((url) => {
-      if (url === `/service/rest/internal/current-user/user-token?authToken=${mockTokenB64}`) {
-        return Promise.resolve({
-          data: {
-            nameCode: 'EjGJcwfm',
-            passCode: 'WE9UAaEQJQzh5NrmNJ22I44Eh80_h3oORkkO0EaoB4UR',
-            created: '2024-04-23T21:49:40.112+01:00'
-          }
-        });
-      }
-    }),
-    delete: jest.fn((url) => {
-      if (url === `/service/rest/internal/current-user/user-token?authToken=${mockTokenB64}`) {
-        return Promise.resolve();
-      }
-    }),
-  };
-});
-
 describe('UserToken', () => {
   beforeEach(() => {
     window.dirty = [];
+
+    when(axios.get).calledWith(`/service/rest/internal/current-user/user-token?authToken=${mockTokenB64}`).mockResolvedValue({
+      data: {
+        nameCode: 'fWlnS_RJ',
+        passCode: 'EAQvjLMhKd0JYV_05Ig7yIg8mwrOyBO61AdsPS7bsJma',
+        created: '2020-04-23T21:49:40.112+01:00'
+      }
+    });
+    when(axios.get).calledWith('service/rest/internal/current-user/user-token/attributes').mockResolvedValue({
+      data: {
+        "expirationTimeTimestamp": "1713498443006",
+        "expirationEnabled": "true"
+      }
+    });
+    when(axios.post).calledWith(`/service/rest/internal/current-user/user-token?authToken=${mockTokenB64}`).mockResolvedValue({
+      data: {
+        nameCode: 'EjGJcwfm',
+        passCode: 'WE9UAaEQJQzh5NrmNJ22I44Eh80_h3oORkkO0EaoB4UR',
+        created: '2024-04-23T21:49:40.112+01:00'
+      }
+    });
+    when(axios.delete).calledWith(`/service/rest/internal/current-user/user-token?authToken=${mockTokenB64}`).mockResolvedValue();
   });
 
   afterEach(() => {

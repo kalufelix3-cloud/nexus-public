@@ -20,10 +20,6 @@ import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 import TagsList from './TagsList';
 import UIStrings from '../../../../constants/UIStrings';
 
-jest.mock('axios', () => ({
-  post: jest.fn()
-}));
-
 describe('TagsList', function() {
   const tags = [
     {

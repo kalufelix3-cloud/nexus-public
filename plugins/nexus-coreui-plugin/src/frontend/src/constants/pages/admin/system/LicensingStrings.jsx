@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import {NxTextLink} from "@sonatype/react-shared-components";
-import { scrollToUsageCenter } from '../../../../interfaces/LocationUtils';
+import { scrollToUsageCenter } from '@sonatype/nexus-ui-plugin';
 import { faWallet } from '@fortawesome/free-solid-svg-icons';
 
 export default {

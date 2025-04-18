@@ -19,6 +19,7 @@ import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 
 import NuGetApiToken from './NuGetApiToken';
 import UIStrings from '../../../../constants/UIStrings';
+import {when} from "jest-when";
 
 const mockToken = 'fakeToken'
 const mockTokenB64 = 'ZmFrZVRva2Vu'
@@ -29,29 +30,25 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
     ExtJS: {
       showSuccessMessage: jest.fn(),
       requestAuthenticationToken: jest.fn(() => Promise.resolve(mockToken)),
-      absolutePath: jest.fn(() => 'http://localhost:4242/repository/fakeUrl'),
-      showSuccessMessage: jest.fn()
+      absolutePath: jest.fn(() => 'http://localhost:4242/repository/fakeUrl')
     }
   };
 });
 
-jest.mock('axios', () => {
-  return {
-    ...jest.requireActual('axios'),
-    get: jest.fn((url) => {
-      if (url === `/service/rest/internal/nuget-api-key?authToken=${mockTokenB64}`) {
-        return Promise.resolve({data: {apiKey: 'testApiKey'}});
-      }
-    }),
-    delete: jest.fn((url) => {
-      if (url === `/service/rest/internal/nuget-api-key?authToken=${mockTokenB64}`) {
-        return Promise.resolve({data: {apiKey: 'newTestApiKey'}});
-      }
-  }),
-  };
-});
-
 describe('NuGetApiToken', () => {
+  beforeEach(() => {
+    when(Axios.get).calledWith(`/service/rest/internal/nuget-api-key?authToken=${mockTokenB64}`).mockResolvedValue({
+      data: {
+        apiKey: 'testApiKey'
+      }
+    });
+    when(Axios.delete).calledWith(`/service/rest/internal/nuget-api-key?authToken=${mockTokenB64}`).mockResolvedValue({
+      data: {
+        apiKey: 'newTestApiKey'
+      }
+    });
+  });
+
   function renderView(view) {
     return TestUtils.render(view, ({queryByText, getByText}) => ({
       accessButton: () => getByText(UIStrings.NUGET_API_KEY.ACCESS.BUTTON),

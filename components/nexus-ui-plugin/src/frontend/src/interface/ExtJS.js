@@ -322,6 +322,10 @@ export default class {
     NX.Security.askToAuthenticate();
   }
 
+  static hasUser() {
+    return NX.Security.hasUser();
+  }
+
   static signOut() {
     NX.Security.signOut();
   }
@@ -341,4 +345,18 @@ export default class {
   static isExtJsRendered() {
     return !!document.getElementById('feature-content');
   }
+
+  /**
+   * This function will wait for the ExtJS application to be fully loaded before executing the callback
+   * @param callback
+   */
+  static waitForExtJs(callback) {
+    const interval = setInterval(() => {
+      if (Ext.getApplication() && NX.Permissions.permissions !== undefined) {
+        clearInterval(interval);
+        callback();
+      }
+    }, 1);
+  }
+
 }

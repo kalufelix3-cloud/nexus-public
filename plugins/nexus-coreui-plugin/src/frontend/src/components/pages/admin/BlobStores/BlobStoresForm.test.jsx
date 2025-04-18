@@ -21,8 +21,6 @@ import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 import {BlobStoresForm} from './BlobStoresForm';
 
 import {URLs} from './BlobStoresHelper';
-// Include the blob stores types on the window
-import '../../../../index';
 
 import blobstoreTypes from './testData/mockBlobStoreTypes.json';
 import quotaTypes from './testData/mockQuotaTypes.json';
