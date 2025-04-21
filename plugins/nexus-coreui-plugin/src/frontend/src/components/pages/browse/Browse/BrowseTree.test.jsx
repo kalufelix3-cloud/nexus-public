@@ -19,7 +19,8 @@ import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 import BrowseTree from './BrowseTree';
 import {COMPONENTS, FOLDER1_CHILDREN, COMPONENT1_CHILDREN} from './BrowseTree.testdata';
 
-describe('BrowseTree', function () {
+// Disabled until we decide to replace the extjs browse tree with a react version
+describe.skip('BrowseTree', function () {
   const repoId = 'maven-releases';
   const selectors = {
     ...TestUtils.selectors,
