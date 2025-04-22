@@ -53,13 +53,8 @@ public class StaticWebResource
 
   @Inject
   public StaticWebResource(final ClassSpace space, final MimeSupport mimeSupport) {
-    for (Enumeration<URL> e = space.findEntries("static", "*", true); e.hasMoreElements();) {
-      final URL url = e.nextElement();
-      final String path = getPublishedPath(url);
-      if (path != null && !path.endsWith("/")) {
-        staticResources.add(new UrlWebResource(url, path, mimeSupport.guessMimeTypeFromPath(path)));
-      }
-    }
+    addAvailableResource(space, mimeSupport, "static");
+    addAvailableResource(space, mimeSupport, "assets");
   }
 
   // ----------------------------------------------------------------------
@@ -73,17 +68,35 @@ public class StaticWebResource
   // ----------------------------------------------------------------------
   // Implementation methods
   // ----------------------------------------------------------------------
-
   private static String getPublishedPath(final URL resourceURL) {
     final String path = resourceURL.toExternalForm();
     int index = path.indexOf("jar!/");
     if (index > 0) {
       return path.substring(index + 4);
     }
+
+    // Note: It appears as though this code is never hit, as far as I can tell from running on local
+    // all the instances of /static/ also contain the above jar!/ match so we never reach this line
+    // I am not going to remove this presently because I cannot be sure this will be the case on all systems,
+    // but I'm leaving this here for future discovery
     index = path.indexOf("/static/");
     if (index > 0) {
       return path.substring(index);
     }
     return null;
+  }
+
+  private void addAvailableResource(
+      final ClassSpace space,
+      final MimeSupport mimeSupport,
+      final String dirPath)
+  {
+    for (Enumeration<URL> e = space.findEntries(dirPath, "*", true); e.hasMoreElements();) {
+      final URL url = e.nextElement();
+      final String path = getPublishedPath(url);
+      if (path != null && !path.endsWith("/")) {
+        staticResources.add(new UrlWebResource(url, path, mimeSupport.guessMimeTypeFromPath(path)));
+      }
+    }
   }
 }
