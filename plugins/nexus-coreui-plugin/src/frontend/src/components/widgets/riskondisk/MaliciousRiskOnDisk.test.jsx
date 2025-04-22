@@ -104,6 +104,21 @@ describe('MaliciousRiskOnDisk', () => {
     expect(selectors.queryAlert()).not.toBeInTheDocument();
   });
 
+  it('expires the malware banner cookie if user is not logged', async () => {
+    ExtJS.useUser.mockReturnValue(null);
+    const setCookie = jest.fn();
+    Object.defineProperty(document, 'cookie', {
+      get: () => '',
+      set: setCookie,
+      configurable: true,
+    });
+    await act(async () => {
+      render(<MaliciousRiskOnDisk />);
+    });
+
+    expect(setCookie).toHaveBeenCalledWith('MALWARE_BANNER=; expires=Thu, 26 Feb 1950 00:00:00 UTC; path=/');
+  });
+
   it('does not render if feature flag is false', async () => {
     when(ExtJS.state().getValue)
         .calledWith(MALWARE_RISK_ON_DISK_ENABLED)

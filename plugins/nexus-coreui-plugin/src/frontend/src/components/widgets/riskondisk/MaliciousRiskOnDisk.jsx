@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, { useEffect, forwardRef, useRef } from 'react';
+import React, {useEffect, useRef} from 'react';
 import {useMachine} from "@xstate/react";
 
 import {
@@ -63,6 +63,10 @@ export default function MaliciousRiskOnDisk({ toggle, onSizeChanged, className }
   const isRiskOnDiskNoneAdminOverrideEnabled = ExtJS.state().getValue(MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED);
   const isAdmin = user && user.administrator;
   const shouldHideForNonAdmin = isRiskOnDiskNoneAdminOverrideEnabled && !isAdmin;
+
+  if (!userIsLogged) {
+    document.cookie = 'MALWARE_BANNER=; expires=Thu, 26 Feb 1950 00:00:00 UTC; path=/';
+  }
 
   if (!showMaliciousRiskOnDisk || shouldHideForNonAdmin) {
     return null;
