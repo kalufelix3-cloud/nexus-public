@@ -35,7 +35,17 @@ export default function isVisible(visibilityRequirements) {
     return true;
   }
 
-  const { bundle, licenseValid, statesEnabled, permissions, capability, editions, requiresUser, browseableFormat } = visibilityRequirements;
+  const {
+    bundle,
+    licenseValid,
+    statesEnabled,
+    permissions,
+    capability,
+    editions,
+    requiresUser,
+    browseableFormat,
+    notClustered
+  } = visibilityRequirements;
 
   // check that all our expected global dependencies are in place
   if (!hasValidDependencies()) {
@@ -44,6 +54,12 @@ export default function isVisible(visibilityRequirements) {
 
   const Application = NX?.app?.Application;
   const Security = NX?.Security;
+
+  // hide this route on HA
+  if (visibilityRequirements.notClustered && isClustered()) {
+    console.debug("notClustered=true; isClustered=true", bundle);
+    return false;
+  }
 
   if (bundle && !Application.bundleActive(bundle)) {
     // check that the bundles required by the route are enabled
@@ -152,6 +168,10 @@ function meetsEditionRequirement(editions) {
     }
     return hasEdition;
   });
+}
+
+function isClustered() {
+  return !!NX.State.getValue('nexus.datastore.clustered.enabled');
 }
 
 function hasValidDependencies() {

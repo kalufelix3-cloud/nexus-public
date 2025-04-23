@@ -475,6 +475,7 @@ export const adminRoutes = [
       visibilityRequirements: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: [Permissions.LOGGING.READ],
+        notClustered: true
       }
     },
     params: {

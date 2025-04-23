@@ -692,6 +692,19 @@ describe('SettingsSidebar', () => {
           renderComponent();
           await assertLinkNotVisible('Logs', 'Support');
         });
+
+        it('should not render if clustering is enabled on the system', async () => {
+          givenUserLoggedIn();
+          givenPermissions({ 'nexus:logging:read': true });
+          givenExtJSState({
+            ...getDefaultStateValues(),
+            'nexus.datastore.clustered.enabled': true
+          });
+
+          renderComponent();
+
+          await assertLinkNotVisible('Logs', 'Support');
+        });
       });
 
       describe('Logging link', () => {
