@@ -107,6 +107,99 @@ public class InstallConfigurationCustomizerTest
   }
 
   @Test
+  public void testJettyHttpsFipsFileIncluded() throws Exception {
+    File temp = tempFolder.newFile("jetty-https-fips.xml");
+
+    // Create a temporary jetty-https-fips.xml file
+    Files.write(temp.toPath(), Collections.singleton("<?xml version='1.0' encoding='UTF-8'?>\n" +
+        "<!DOCTYPE Configure PUBLIC '-//Jetty//Configure//EN' 'http://www.eclipse.org/jetty/configure_9_0.dtd'>\n" +
+        "<Configure id='Server' class='org.eclipse.jetty.server.Server'>\n" +
+        "  <New id=\"sslContextFactory\" class=\"org.eclipse.jetty.util.ssl.SslContextFactory$Server\">\n" +
+        "    <Set name=\"KeyStorePath\"><Property name=\"ssl.etc\"/>/keystore.jks</Set>\n" +
+        "    <Set name=\"KeyStorePassword\">password</Set>\n" +
+        "    <Set name=\"KeyManagerPassword\">password</Set>\n" +
+        "    <Set name=\"TrustStorePath\"><Property name=\"ssl.etc\"/>/keystore.jks</Set>\n" +
+        "    <Set name=\"TrustStorePassword\">password</Set>\n" +
+        "    <Set name=\"EndpointIdentificationAlgorithm\"></Set>\n" +
+        "    <Set name=\"NeedClientAuth\"><Property name=\"jetty.ssl.needClientAuth\" default=\"false\"/></Set>\n" +
+        "    <Set name=\"WantClientAuth\"><Property name=\"jetty.ssl.wantClientAuth\" default=\"false\"/></Set>\n" +
+        "    <Set name=\"IncludeProtocols\">\n" +
+        "      <Array type=\"java.lang.String\">\n" +
+        "        <Item>TLSv1.2</Item>\n" +
+        "      </Array>\n" +
+        "    </Set>\n" +
+        "    <Set name=\"IncludeCipherSuites\">\n" +
+        "      <Array type=\"java.lang.String\">\n" +
+        "        <Item>TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</Item>\n" +
+        "        <Item>TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384</Item>\n" +
+        "        <Item>TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256</Item>\n" +
+        "        <Item>TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256</Item>\n" +
+        "      </Array>\n" +
+        "    </Set>\n" +
+        "    <Set name=\"ExcludeCipherSuites\">\n" +
+        "      <Array type=\"java.lang.String\">\n" +
+        "        <Item>SSL_RSA_WITH_RC4_128_SHA</Item>\n" +
+        "        <Item>SSL_RSA_WITH_3DES_EDE_CBC_SHA</Item>\n" +
+        "        <Item>SSL_RSA_WITH_DES_CBC_SHA</Item>\n" +
+        "        <Item>SSL_RSA_WITH_NULL_SHA</Item>\n" +
+        "        <Item>SSL_RSA_EXPORT_WITH_RC4_40_MD5</Item>\n" +
+        "        <Item>SSL_RSA_EXPORT_WITH_DES40_CBC_SHA</Item>\n" +
+        "      </Array>\n" +
+        "    </Set>\n" +
+        "  </New>\n" +
+        "</Configure>"));
+
+    SanitizedJettyFileSource source = new SanitizedJettyFileSource(CONFIG, "test/file", temp, DEFAULT);
+    source.prepare();
+
+    // Validate the content of the file
+    String expectedContent = "<?xml version='1.0' encoding='UTF-8'?>\n" +
+        "<!DOCTYPE Configure PUBLIC '-//Jetty//Configure//EN' 'http://www.eclipse.org/jetty/configure_9_0.dtd'>\n" +
+        "<Configure id='Server' class='org.eclipse.jetty.server.Server'>\n" +
+        "  <New id=\"sslContextFactory\" class=\"org.eclipse.jetty.util.ssl.SslContextFactory$Server\">\n" +
+        "    <Set name=\"KeyStorePath\"><Property name=\"ssl.etc\"/>/keystore.jks</Set>\n" +
+        "    <Set name=\"KeyStorePassword\"/>\n" +
+        "    <Set name=\"KeyManagerPassword\"/>\n" +
+        "    <Set name=\"TrustStorePath\"><Property name=\"ssl.etc\"/>/keystore.jks</Set>\n" +
+        "    <Set name=\"TrustStorePassword\"/>\n" +
+        "    <Set name=\"EndpointIdentificationAlgorithm\"></Set>\n" +
+        "    <Set name=\"NeedClientAuth\"><Property name=\"jetty.ssl.needClientAuth\" default=\"false\"/></Set>\n" +
+        "    <Set name=\"WantClientAuth\"><Property name=\"jetty.ssl.wantClientAuth\" default=\"false\"/></Set>\n" +
+        "    <Set name=\"IncludeProtocols\">\n" +
+        "      <Array type=\"java.lang.String\">\n" +
+        "        <Item>TLSv1.2</Item>\n" +
+        "      </Array>\n" +
+        "    </Set>\n" +
+        "    <Set name=\"IncludeCipherSuites\">\n" +
+        "      <Array type=\"java.lang.String\">\n" +
+        "        <Item>TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</Item>\n" +
+        "        <Item>TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384</Item>\n" +
+        "        <Item>TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256</Item>\n" +
+        "        <Item>TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256</Item>\n" +
+        "      </Array>\n" +
+        "    </Set>\n" +
+        "    <Set name=\"ExcludeCipherSuites\">\n" +
+        "      <Array type=\"java.lang.String\">\n" +
+        "        <Item>SSL_RSA_WITH_RC4_128_SHA</Item>\n" +
+        "        <Item>SSL_RSA_WITH_3DES_EDE_CBC_SHA</Item>\n" +
+        "        <Item>SSL_RSA_WITH_DES_CBC_SHA</Item>\n" +
+        "        <Item>SSL_RSA_WITH_NULL_SHA</Item>\n" +
+        "        <Item>SSL_RSA_EXPORT_WITH_RC4_40_MD5</Item>\n" +
+        "        <Item>SSL_RSA_EXPORT_WITH_DES40_CBC_SHA</Item>\n" +
+        "      </Array>\n" +
+        "    </Set>\n" +
+        "  </New>\n" +
+        "</Configure>";
+
+    Diff diff = DiffBuilder.compare(Input.fromString(expectedContent))
+        .withTest(Input.fromStream(source.getContent()))
+        .ignoreWhitespace()
+        .build();
+
+    assertFalse(diff.toString(), diff.hasDifferences());
+  }
+
+  @Test
   public void testSanitizedDataStoreFileSource() throws Exception {
     File fabricDir = new File(etcDir, "fabric");
     fabricDir.mkdir();

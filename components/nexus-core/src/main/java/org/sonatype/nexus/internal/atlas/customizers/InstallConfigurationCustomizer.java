@@ -98,11 +98,17 @@ public class InstallConfigurationCustomizer
       try {
         if (fileName.equals("jetty-https.xml")) {
           supportBundle.add(new SanitizedJettyFileSource(CONFIG, filePath, file, priority));
-        } else if (fileName.endsWith("store.properties")) {
+        }
+        else if (fileName.equals("jetty-https-fips.xml")) {
+          supportBundle.add(new SanitizedJettyFileSource(CONFIG, filePath, file, priority));
+        }
+        else if (fileName.endsWith("store.properties")) {
           supportBundle.add(new SanitizedDataStoreFileSource(CONFIG, filePath, file, priority));
-        } else if (fileName.equals(NEXUS_PROPERTIES)) {
+        }
+        else if (fileName.equals(NEXUS_PROPERTIES)) {
           supportBundle.add(new SanitizedNexusFileSource(CONFIG, filePath, file, priority));
-        } else {
+        }
+        else {
           supportBundle.add(new FileContentSourceSupport(CONFIG, filePath, file, priority));
         }
       }
@@ -140,8 +146,11 @@ public class InstallConfigurationCustomizer
     /**
      * Constructor.
      */
-    public SanitizedJettyFileSource(final Type type, final String path, final File file, final Priority priority)
-        throws IOException
+    public SanitizedJettyFileSource(
+        final Type type,
+        final String path,
+        final File file,
+        final Priority priority) throws IOException
     {
       super(type, path, file, priority,
           IOUtils.toString(checkNotNull(SanitizedJettyFileSource.class.getResourceAsStream("jetty-stylesheet.xml")),
@@ -178,27 +187,27 @@ public class InstallConfigurationCustomizer
   }
 
   protected static class SanitizedNexusFileSource
-    extends FileContentSourceSupport
+      extends FileContentSourceSupport
   {
-        public SanitizedNexusFileSource(final Type type, final String path, final File file, final Priority priority) {
-          super(CONFIG, path, file, priority);
-        }
+    public SanitizedNexusFileSource(final Type type, final String path, final File file, final Priority priority) {
+      super(CONFIG, path, file, priority);
+    }
 
-        @Override
-        public InputStream getContent() throws Exception {
-          PropertiesFile dataStoreConfiguration = new PropertiesFile(file);
-          dataStoreConfiguration.load();
-          dataStoreConfiguration.forEach((k, v) -> {
-                if (SENSITIVE_FIELD_NAMES.contains(k)) {
-                  dataStoreConfiguration.replace(k, REPLACEMENT);
-                }
-                else if ("nexus.datastore.nexus.jdbcUrl".equals(k)) {
-                  dataStoreConfiguration.put(k, redactPassword((String) v));
-                }
-          });
-          ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-          dataStoreConfiguration.store(outputStream, null);
-          return new ByteArrayInputStream(outputStream.toByteArray());
+    @Override
+    public InputStream getContent() throws Exception {
+      PropertiesFile dataStoreConfiguration = new PropertiesFile(file);
+      dataStoreConfiguration.load();
+      dataStoreConfiguration.forEach((k, v) -> {
+        if (SENSITIVE_FIELD_NAMES.contains(k)) {
+          dataStoreConfiguration.replace(k, REPLACEMENT);
         }
+        else if ("nexus.datastore.nexus.jdbcUrl".equals(k)) {
+          dataStoreConfiguration.put(k, redactPassword((String) v));
+        }
+      });
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+      dataStoreConfiguration.store(outputStream, null);
+      return new ByteArrayInputStream(outputStream.toByteArray());
+    }
   }
 }
