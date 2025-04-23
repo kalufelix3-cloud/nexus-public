@@ -115,7 +115,11 @@ describe('App', () => {
       expect(errorOnTransition).toEqual('The transition has been aborted')
 
       await waitFor(() => {
-        expect(global.NX.Security.askToAuthenticate).toHaveBeenCalled();
+        expect(global.NX.Security.askToAuthenticate).toHaveBeenCalledWith(null, expect.objectContaining({
+          success: expect.any(Function),
+          cancel: expect.any(Function),
+          failure: expect.any(Function)
+        }));
       });
     });
 

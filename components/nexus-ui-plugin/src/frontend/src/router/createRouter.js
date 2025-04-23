@@ -110,7 +110,7 @@ async function offerUserTheChanceToLoginAndRevalidate(transition, visibilityRequ
 
 function promptUserToLogin() {
   return new Promise((resolve, reject) => {
-    ExtJS.askToAuthenticate(null, {
+    ExtJS.askToAuthenticate({
       success: () => {
         resolve('success');
       },
