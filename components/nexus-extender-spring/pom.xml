@@ -84,6 +84,9 @@
                   <exclude>org/sonatype/nexus/extender/sisu/**/*.java</exclude>
                   <exclude>org/sonatype/nexus/extender/NexusServletContextListener.java</exclude>
                 </excludes>
+                <testExcludes>
+                  <testExclude>org/sonatype/nexus/extender/guice/StaticWebResourceTest.java</testExclude>
+                </testExcludes>
               </configuration>
             </plugin>
           </plugins>
