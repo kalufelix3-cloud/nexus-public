@@ -34,7 +34,9 @@ export function getRouter() {
     name: ROUTE_NAMES.MISSING_ROUTE,
     url: '404',
     component: MissingRoutePage,
-    visibilityRequirements: {}
+    data: {
+      visibilityRequirements: {}
+    }
   };
 
   return createRouter({initialRoute, menuRoutes, missingRoute});
