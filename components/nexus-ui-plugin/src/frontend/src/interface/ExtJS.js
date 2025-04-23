@@ -318,8 +318,8 @@ export default class {
   /**
    * Show the sign in dialog
    */
-  static askToAuthenticate() {
-    NX.Security.askToAuthenticate();
+  static askToAuthenticate(options) {
+    NX.Security.askToAuthenticate(null, options);
   }
 
   static hasUser() {
