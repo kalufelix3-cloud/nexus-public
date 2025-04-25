@@ -64,6 +64,7 @@ export const adminRoutes = [
     name: ADMIN.DIRECTORY,
     url: 'admin',
     component: SettingsPageLayout,
+    abstract: true,
     data: {
       visibilityRequirements: {
         requiresUser: true,

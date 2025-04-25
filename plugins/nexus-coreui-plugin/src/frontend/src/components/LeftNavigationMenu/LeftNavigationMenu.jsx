@@ -20,15 +20,16 @@ import LeftNavigationMenuCollapsibleItem from './LeftNavigationMenuCollapsibleIt
 import LeftNavigationMenuCollapsibleChildItem from './LeftNavigationMenuCollapsibleChildItem';
 import UIStrings from '../../constants/UIStrings';
 import {ROUTE_NAMES} from "../../routerConfig/routeNames/routeNames";
-import { useIsSettingsVisible } from './useIsSettingsVisible';
+import { useDefaultAdminRouteName } from './useDefaultAdminRouteName';
 import {ExtJS} from "@sonatype/nexus-ui-plugin";
 import './LeftNavigationMenu.scss';
 
 export default function LeftNavigationMenu() {
-  const { BROWSE, ADMIN }  = ROUTE_NAMES;
+  const { BROWSE }  = ROUTE_NAMES;
 
-  const isSettingsVisible = useIsSettingsVisible();
-
+  const adminInitialRouteName = useDefaultAdminRouteName();
+  const isSettingsVisible = !!adminInitialRouteName;
+  
   const clmState = ExtJS.useState(() =>  {
     const clm = ExtJS.state().getValue('clm') || {};
     return {
@@ -242,7 +243,7 @@ export default function LeftNavigationMenu() {
           <>
             <NxDivider />
             <LeftNavigationMenuItem
-                name={ADMIN.DIRECTORY}
+                name={adminInitialRouteName}
                 text={UIStrings.ADMIN_DIRECTORY.MENU.text}
                 icon={UIStrings.ADMIN_DIRECTORY.MENU.icon}
                 data-analytics-id='nxrm-global-navbar-admin'
