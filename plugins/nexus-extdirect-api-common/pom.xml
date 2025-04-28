@@ -18,50 +18,41 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.sonatype.nexus</groupId>
-    <artifactId>nexus-parent</artifactId>
+    <groupId>org.sonatype.nexus.plugins</groupId>
+    <artifactId>nexus-plugins</artifactId>
     <version>3.81.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>org.sonatype.nexus.assemblies</groupId>
-  <artifactId>nexus-assemblies</artifactId>
+  <artifactId>nexus-extdirect-api-common</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
-  <packaging>pom</packaging>
 
-  <modules>
-    <module>nexus-base-overlay</module>
-    <module>nexus-repository-core</module>
-  </modules>
+  <dependencies>
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-extdirect</artifactId>
+    </dependency>
 
-  <dependencyManagement>
-    <dependencies>
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-annotation</artifactId>
+    </dependency>
 
-      <!-- IMPORTS -->
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-security</artifactId>
+    </dependency>
 
-      <dependency>
-        <groupId>org.sonatype.nexus</groupId>
-        <artifactId>nexus-components</artifactId>
-        <type>pom</type>
-        <version>3.81.0-SNAPSHOT</version>
-        <scope>import</scope>
-      </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <optional>true</optional>
+    </dependency>
 
-      <dependency>
-        <groupId>org.sonatype.nexus.plugins</groupId>
-        <artifactId>nexus-plugins</artifactId>
-        <type>pom</type>
-        <version>3.81.0-SNAPSHOT</version>
-        <scope>import</scope>
-      </dependency>
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-testsupport</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
-      <dependency>
-        <groupId>org.sonatype.nexus.api</groupId>
-        <artifactId>nexus-api-parent</artifactId>
-        <type>pom</type>
-        <version>3.81.0-SNAPSHOT</version>
-        <scope>import</scope>
-      </dependency>
-
-    </dependencies>
-  </dependencyManagement>
 </project>

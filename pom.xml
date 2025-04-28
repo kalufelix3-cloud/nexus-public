@@ -147,6 +147,7 @@
     <module>assemblies</module>
     <module>components</module>
     <module>plugins</module>
+	<module>api</module>
   </modules>
 
   <dependencyManagement>
