@@ -12,46 +12,51 @@
  */
 import React from 'react';
 
-import { NxDivider, NxStatefulGlobalSidebar2 } from '@sonatype/react-shared-components';
-import { NxDivider, NxGlobalSidebar2NavigationLink, NxStatefulGlobalSidebar2 } from '@sonatype/react-shared-components';
+import { NxDivider, NxGlobalSidebar2 } from '@sonatype/react-shared-components';
+import { NxDivider, NxGlobalSidebar2NavigationLink } from '@sonatype/react-shared-components';
 import { faArrowLeft, faArrowRight, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import LeftNavigationMenuItem from './LeftNavigationMenuItem';
 import LeftNavigationMenuCollapsibleItem from './LeftNavigationMenuCollapsibleItem';
 import LeftNavigationMenuCollapsibleChildItem from './LeftNavigationMenuCollapsibleChildItem';
 import UIStrings from '../../constants/UIStrings';
-import {ROUTE_NAMES} from "../../routerConfig/routeNames/routeNames";
+import { ROUTE_NAMES } from '../../routerConfig/routeNames/routeNames';
+import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import { ROUTE_NAMES } from '../../routerConfig/routeNames/routeNames';
 import { useDefaultAdminRouteName } from './useDefaultAdminRouteName';
-import {ExtJS} from "@sonatype/nexus-ui-plugin";
+import { ExtJS } from '@sonatype/nexus-ui-plugin';
 import './LeftNavigationMenu.scss';
+import useSideNavbarCollapsedState from '../../hooks/useSideNavbarCollapsedState';
 
 export default function LeftNavigationMenu() {
-  const { BROWSE }  = ROUTE_NAMES;
+  const { BROWSE } = ROUTE_NAMES;
+  const [isOpen, onToggleClick] = useSideNavbarCollapsedState(true);
 
   const adminInitialRouteName = useDefaultAdminRouteName();
   const isSettingsVisible = !!adminInitialRouteName;
-  
-  const clmState = ExtJS.useState(() =>  {
+
+  const clmState = ExtJS.useState(() => {
     const clm = ExtJS.state().getValue('clm') || {};
     return {
       showDashboard: !!(clm?.enabled && clm?.showLink && clm?.url),
-      url: clm?.url
+      url: clm?.url,
     };
   });
 
   return (
-    <NxStatefulGlobalSidebar2
+    <NxGlobalSidebar2
       className='nxrm-left-nav'
-      isDefaultOpen={true}
+      isOpen={isOpen}
+      onToggleClick={onToggleClick}
       toggleOpenIcon={faArrowLeft}
       toggleCloseIcon={faArrowRight}
       logoAltText='Sonatype Nexus Repository'
       logoLink='#'
     >
       <LeftNavigationMenuItem
-          name={BROWSE.WELCOME}
-          text={UIStrings.WELCOME.MENU.text}
-          icon={UIStrings.WELCOME.MENU.icon}
-          data-analytics-id='nxrm-global-navbar-welcome'
+        name={BROWSE.WELCOME}
+        text={UIStrings.WELCOME.MENU.text}
+        icon={UIStrings.WELCOME.MENU.icon}
+        data-analytics-id='nxrm-global-navbar-welcome'
       />
 
       <LeftNavigationMenuCollapsibleItem
@@ -233,35 +238,35 @@ export default function LeftNavigationMenu() {
       />
 
       <LeftNavigationMenuItem
-          name={BROWSE.MALWARERISK}
-          text={UIStrings.MALICIOUS_RISK.MENU.text}
-          icon={UIStrings.MALICIOUS_RISK.MENU.icon}
-          data-analytics-id='nxrm-global-navbar-malwarerisk'
+        name={BROWSE.MALWARERISK}
+        text={UIStrings.MALICIOUS_RISK.MENU.text}
+        icon={UIStrings.MALICIOUS_RISK.MENU.icon}
+        data-analytics-id='nxrm-global-navbar-malwarerisk'
       />
 
-      { isSettingsVisible &&
-          <>
-            <NxDivider />
-            <LeftNavigationMenuItem
-                name={adminInitialRouteName}
-                text={UIStrings.ADMIN_DIRECTORY.MENU.text}
-                icon={UIStrings.ADMIN_DIRECTORY.MENU.icon}
-                data-analytics-id='nxrm-global-navbar-admin'
-            />
-          </>
-      }
-
-      { clmState?.showDashboard ? (
-          <NxGlobalSidebar2NavigationLink
-              className='nxrm-left-nav__link'
-              text={UIStrings.IQ_SERVER.OPEN_DASHBOARD_LINK}
-              href={clmState.url}
-              icon={faExternalLinkAlt}
-              referrerPolicy='no-referrer'
-              target='_blank'
-              data-analytics-id='nxrm-global-navbar-iq-server'
+      {isSettingsVisible && (
+        <>
+          <NxDivider />
+          <LeftNavigationMenuItem
+            name={adminInitialRouteName}
+            text={UIStrings.ADMIN_DIRECTORY.MENU.text}
+            icon={UIStrings.ADMIN_DIRECTORY.MENU.icon}
+            data-analytics-id='nxrm-global-navbar-admin'
           />
-      ) : null }
-    </NxStatefulGlobalSidebar2>
+        </>
+      )}
+
+      {clmState?.showDashboard ? (
+        <NxGlobalSidebar2NavigationLink
+          className='nxrm-left-nav__link'
+          text={UIStrings.IQ_SERVER.OPEN_DASHBOARD_LINK}
+          href={clmState.url}
+          icon={faExternalLinkAlt}
+          referrerPolicy='no-referrer'
+          target='_blank'
+          data-analytics-id='nxrm-global-navbar-iq-server'
+        />
+      ) : null}
+    </NxGlobalSidebar2>
   );
 }
