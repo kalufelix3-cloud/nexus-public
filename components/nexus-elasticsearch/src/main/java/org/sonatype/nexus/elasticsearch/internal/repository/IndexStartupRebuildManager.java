@@ -28,7 +28,10 @@ import org.sonatype.nexus.repository.search.index.SearchIndexFacet;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID;
@@ -40,6 +43,7 @@ import static org.sonatype.nexus.repository.RepositoryTaskSupport.REPOSITORY_NAM
 @Named
 @Singleton
 @ManagedLifecycle(phase = TASKS)
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class IndexStartupRebuildManager
     extends LifecycleSupport
 {

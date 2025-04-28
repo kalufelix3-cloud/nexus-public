@@ -35,8 +35,10 @@ import org.sonatype.nexus.internal.log.LoggerOverrides;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 
 /**
@@ -45,6 +47,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 @Named
 @Singleton
 @ManagedLifecycle(phase = STORAGE)
+@ConditionalOnProperty(name = DATASTORE_CLUSTERED_ENABLED, havingValue = "true")
 public class DatastoreLoggerOverrides
     extends LogbackLoggerOverridesSupport
     implements LoggerOverrides

@@ -21,18 +21,22 @@ import org.sonatype.nexus.repository.httpbridge.legacy.LegacyUrlEnabledHelper;
 
 import com.google.inject.AbstractModule;
 import org.eclipse.sisu.inject.MutableBeanLocator;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
+
 /**
- * Manages the injection of {@link JwtLegacyHttpBridgeModule} based on the capability being enabled or the system property
+ * Manages the injection of {@link JwtLegacyHttpBridgeModule} based on the capability being enabled or the system
+ * property
  *
  * @since 3.38
  */
 @Named
 @Singleton
 @FeatureFlag(name = JWT_ENABLED)
+@ConditionalOnProperty(name = JWT_ENABLED, havingValue = "true")
 public class JwtLegacyHttpBridgeService
-  extends LegacyHttpBridgeService
+    extends LegacyHttpBridgeService
 {
   @Inject
   public JwtLegacyHttpBridgeService(

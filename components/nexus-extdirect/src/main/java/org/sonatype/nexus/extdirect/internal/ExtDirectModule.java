@@ -22,6 +22,7 @@ import org.sonatype.nexus.security.authc.AntiCsrfFilter;
 import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
 
 import com.google.inject.AbstractModule;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
 
@@ -32,6 +33,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
  */
 @Named
 @FeatureFlag(name = SESSION_ENABLED)
+@ConditionalOnProperty(name = SESSION_ENABLED, havingValue = "true")
 public class ExtDirectModule
     extends AbstractModule
 {
@@ -39,7 +41,8 @@ public class ExtDirectModule
 
   @Override
   protected void configure() {
-    install(new ExtDirectServletModule(MOUNT_POINT) {
+    install(new ExtDirectServletModule(MOUNT_POINT)
+    {
       @Override
       protected void bindSecurityFilter() {
         filter(MOUNT_POINT + "*").through(SecurityFilter.class);

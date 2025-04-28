@@ -33,6 +33,7 @@ import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 
 import com.google.common.eventbus.Subscribe;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.REPOSITORY_SIZE_ENABLED;
@@ -44,6 +45,7 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
 @Named
 @Singleton
 @FeatureFlag(name = REPOSITORY_SIZE_ENABLED, enabledByDefault = true)
+@ConditionalOnProperty(name = REPOSITORY_SIZE_ENABLED, havingValue = "true", matchIfMissing = true)
 public class RepositoryNameIdMappingCache
     extends ComponentSupport
     implements EventAware

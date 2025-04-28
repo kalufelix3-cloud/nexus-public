@@ -10,9 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-@FeatureFlag(name = DATASTORE_TABLE_SEARCH)
+@FeatureFlag(name = DATASTORE_CLUSTERED_ENABLED)
 package org.sonatype.nexus.content.maven.internal.search.table;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
 
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;

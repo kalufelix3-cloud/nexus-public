@@ -29,6 +29,7 @@ import org.apache.shiro.web.filter.authc.AuthenticatingFilter;
 import org.apache.shiro.web.util.WebUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
 
@@ -42,6 +43,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
 @Named
 @Singleton
 @FeatureFlag(name = SESSION_ENABLED)
+@ConditionalOnProperty(name = SESSION_ENABLED, havingValue = "true")
 public class SessionAuthenticationFilter
     extends AuthenticatingFilter
 {
@@ -59,9 +61,10 @@ public class SessionAuthenticationFilter
    * Allow if authenticated or if logout request.
    */
   @Override
-  protected boolean isAccessAllowed(final ServletRequest request,
-                                    final ServletResponse response,
-                                    final Object mappedValue)
+  protected boolean isAccessAllowed(
+      final ServletRequest request,
+      final ServletResponse response,
+      final Object mappedValue)
   {
     Subject subject = getSubject(request, response);
     return subject.isAuthenticated() || isLogoutRequest(request);
@@ -113,8 +116,9 @@ public class SessionAuthenticationFilter
   }
 
   @Override
-  protected AuthenticationToken createToken(final ServletRequest request, final ServletResponse response)
-      throws Exception
+  protected AuthenticationToken createToken(
+      final ServletRequest request,
+      final ServletResponse response) throws Exception
   {
     String username = decodeBase64Param(request, P_USERNAME);
     String password = decodeBase64Param(request, P_PASSWORD);
@@ -122,21 +126,22 @@ public class SessionAuthenticationFilter
   }
 
   @Override
-  protected boolean onLoginSuccess(final AuthenticationToken token,
-                                   final Subject subject,
-                                   final ServletRequest request,
-                                   final ServletResponse response)
-      throws Exception
+  protected boolean onLoginSuccess(
+      final AuthenticationToken token,
+      final Subject subject,
+      final ServletRequest request,
+      final ServletResponse response) throws Exception
   {
     log.debug("Success: token={}, subject={}", token, subject);
     return true;
   }
 
   @Override
-  protected boolean onLoginFailure(final AuthenticationToken token,
-                                   final AuthenticationException e,
-                                   final ServletRequest request,
-                                   final ServletResponse response)
+  protected boolean onLoginFailure(
+      final AuthenticationToken token,
+      final AuthenticationException e,
+      final ServletRequest request,
+      final ServletResponse response)
   {
     log.debug("Failure: token={}", token, e);
     denied(response);

@@ -24,6 +24,9 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 
 import org.elasticsearch.plugins.Plugin;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 
 /**
  * {@link PluginLocator} for {@link ContentAuthPlugin}. Also responsible for setting some required objects into static
@@ -33,6 +36,7 @@ import org.springframework.beans.factory.annotation.Value;
  */
 @Named
 @Singleton
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class ContentAuthPluginLocator
     implements PluginLocator
 {

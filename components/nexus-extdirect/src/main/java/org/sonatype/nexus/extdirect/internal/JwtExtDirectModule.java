@@ -21,6 +21,8 @@ import org.sonatype.nexus.security.anonymous.AnonymousFilter;
 import org.sonatype.nexus.security.authc.AntiCsrfFilter;
 import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 
 /**
@@ -30,12 +32,14 @@ import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
  */
 @Named
 @FeatureFlag(name = JWT_ENABLED)
+@ConditionalOnProperty(name = JWT_ENABLED, havingValue = "true")
 public class JwtExtDirectModule
-  extends ExtDirectModule
+    extends ExtDirectModule
 {
   @Override
   protected void configure() {
-    install(new ExtDirectServletModule(MOUNT_POINT) {
+    install(new ExtDirectServletModule(MOUNT_POINT)
+    {
       @Override
       protected void bindSecurityFilter() {
         filter(MOUNT_POINT + "*").through(JwtSecurityFilter.class);

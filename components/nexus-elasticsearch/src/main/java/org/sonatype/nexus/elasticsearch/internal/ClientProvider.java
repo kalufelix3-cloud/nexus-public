@@ -19,8 +19,10 @@ import javax.inject.Singleton;
 
 import org.elasticsearch.client.Client;
 import org.elasticsearch.node.Node;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 
 /**
  * ElasticSearch {@link Client} provider.
@@ -29,6 +31,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Named
 @Singleton
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class ClientProvider
     implements Provider<Client>
 {

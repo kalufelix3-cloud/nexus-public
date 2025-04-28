@@ -21,6 +21,9 @@ import org.sonatype.nexus.elasticsearch.ElasticSearchContribution;
 
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 
 /**
  * "attributes.docker.layerAncestry" {@link ElasticSearchContribution} (adds a prefix query for ancestry).
@@ -29,6 +32,7 @@ import org.elasticsearch.index.query.QueryBuilders;
  */
 @Named("attributes.docker.layerAncestry")
 @Singleton
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class DockerLayerIdElasticSearchContribution
     extends ElasticSearchContributionSupport
 {

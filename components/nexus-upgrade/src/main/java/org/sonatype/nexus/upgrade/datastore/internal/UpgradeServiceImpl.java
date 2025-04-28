@@ -21,14 +21,16 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.upgrade.UpgradeService;
 import org.sonatype.nexus.upgrade.datastore.DeploymentValidator;
 import org.sonatype.nexus.upgrade.datastore.UpgradeManager;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.CLUSTERED_ZERO_DOWNTIME_ENABLED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
 
 /**
@@ -37,7 +39,8 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
  * @since 3.29
  */
 @Named
-@FeatureFlag(name = FeatureFlags.CLUSTERED_ZERO_DOWNTIME_ENABLED, inverse = true, enabledByDefault = true)
+@FeatureFlag(name = CLUSTERED_ZERO_DOWNTIME_ENABLED, inverse = true, enabledByDefault = true)
+@ConditionalOnProperty(name = CLUSTERED_ZERO_DOWNTIME_ENABLED, havingValue = "false", matchIfMissing = true)
 @Priority(Integer.MAX_VALUE)
 @ManagedLifecycle(phase = UPGRADE)
 @Singleton
@@ -50,7 +53,10 @@ public class UpgradeServiceImpl
   private final UpgradeManager upgradeManager;
 
   @Inject
-  public UpgradeServiceImpl(@Nullable final DeploymentValidator deploymentValidator, final UpgradeManager upgradeManager) {
+  public UpgradeServiceImpl(
+      @Nullable final DeploymentValidator deploymentValidator,
+      final UpgradeManager upgradeManager)
+  {
     this.upgradeManager = checkNotNull(upgradeManager);
     this.deploymentValidator = Optional.ofNullable(deploymentValidator);
   }

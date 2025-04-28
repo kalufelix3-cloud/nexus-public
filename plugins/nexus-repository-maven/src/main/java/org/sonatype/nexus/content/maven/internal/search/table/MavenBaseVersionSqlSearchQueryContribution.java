@@ -23,13 +23,17 @@ import org.sonatype.nexus.repository.search.sql.query.syntax.ExactTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
 import org.sonatype.nexus.repository.search.sql.query.syntax.StringTerm;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
 
 /**
  * Creates sql query conditions for the assets.attributes.baseVersion search term.
  */
 @Named(MavenBaseVersionSqlSearchQueryContribution.NAME)
 @Singleton
+@ConditionalOnProperty(name = DATASTORE_CLUSTERED_ENABLED, havingValue = "true")
 public class MavenBaseVersionSqlSearchQueryContribution
     extends SqlSearchQueryContributionSupport
 {

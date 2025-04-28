@@ -26,6 +26,8 @@ import org.sonatype.nexus.security.jwt.JwtSecretChanged;
 import org.sonatype.nexus.security.jwt.SecretStore;
 import org.sonatype.nexus.transaction.Transactional;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 
 /**
@@ -36,6 +38,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 @Named("mybatis")
 @Singleton
 @FeatureFlag(name = JWT_ENABLED)
+@ConditionalOnProperty(name = JWT_ENABLED, havingValue = "true")
 public class JwtSecretStore
     extends ConfigStoreSupport<JwtSecretDAO>
     implements SecretStore

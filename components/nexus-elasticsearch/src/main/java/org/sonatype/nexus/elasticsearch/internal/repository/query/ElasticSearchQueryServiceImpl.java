@@ -63,11 +63,13 @@ import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.elasticsearch.search.profile.ProfileShardResult;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 import static org.elasticsearch.index.query.QueryBuilders.scriptQuery;
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 import static org.sonatype.nexus.elasticsearch.internal.repository.query.RepositoryQueryBuilder.repositoryQuery;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.TYPE;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
@@ -79,6 +81,7 @@ import static org.sonatype.nexus.security.BreadActions.BROWSE;
  */
 @Named("default")
 @Singleton
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class ElasticSearchQueryServiceImpl
     extends ComponentSupport
     implements ElasticSearchQueryService

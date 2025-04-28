@@ -37,6 +37,7 @@ import org.eclipse.sisu.inject.InjectorBindings;
 import org.eclipse.sisu.inject.MutableBeanLocator;
 import org.eclipse.sisu.wire.ParameterKeys;
 import org.eclipse.sisu.wire.WireModule;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
@@ -49,6 +50,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
 @Named
 @Singleton
 @FeatureFlag(name = SESSION_ENABLED)
+@ConditionalOnProperty(name = SESSION_ENABLED, havingValue = "true")
 @ManagedLifecycle(phase = Phase.TASKS)
 public class LegacyHttpBridgeService
     extends LifecycleSupport

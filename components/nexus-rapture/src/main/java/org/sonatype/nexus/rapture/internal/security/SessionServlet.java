@@ -31,6 +31,7 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
@@ -49,8 +50,9 @@ import static org.sonatype.nexus.servlet.XFrameOptions.DENY;
 @Named
 @Singleton
 @FeatureFlag(name = SESSION_ENABLED)
+@ConditionalOnProperty(name = SESSION_ENABLED, havingValue = "true")
 public class SessionServlet
-  extends HttpServlet
+    extends HttpServlet
 {
   private static final Logger log = LoggerFactory.getLogger(SessionServlet.class);
 
@@ -60,12 +62,14 @@ public class SessionServlet
   public SessionServlet(final EventManager eventManager) {
     this.eventManager = eventManager;
   }
+
   /**
    * Create session.
    */
   @Override
-  protected void doPost(final HttpServletRequest request, final HttpServletResponse response)
-      throws ServletException, IOException
+  protected void doPost(
+      final HttpServletRequest request,
+      final HttpServletResponse response) throws ServletException, IOException
   {
     Subject subject = SecurityUtils.getSubject();
     log.info("Created session for user: {}", subject.getPrincipal());
@@ -86,8 +90,9 @@ public class SessionServlet
    * Delete session.
    */
   @Override
-  protected void doDelete(final HttpServletRequest request, final HttpServletResponse response)
-      throws ServletException, IOException
+  protected void doDelete(
+      final HttpServletRequest request,
+      final HttpServletResponse response) throws ServletException, IOException
   {
     Subject subject = SecurityUtils.getSubject();
     log.info("Deleting session for user: {}", subject.getPrincipal());

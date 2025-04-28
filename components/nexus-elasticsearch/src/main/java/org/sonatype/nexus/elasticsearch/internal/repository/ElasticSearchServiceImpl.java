@@ -46,9 +46,11 @@ import org.sonatype.nexus.repository.search.elasticsearch.ElasticSearchExtension
 import com.google.common.collect.ImmutableList;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.time.format.DateTimeFormatter.ofPattern;
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.*;
 
 /**
@@ -58,6 +60,7 @@ import static org.sonatype.nexus.repository.search.index.SearchConstants.*;
  */
 @Named
 @Singleton
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class ElasticSearchServiceImpl
     extends ComponentSupport
     implements SearchService

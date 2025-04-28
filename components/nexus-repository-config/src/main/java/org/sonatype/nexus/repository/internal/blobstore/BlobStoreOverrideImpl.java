@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
@@ -36,6 +37,7 @@ import static org.sonatype.nexus.common.text.Strings2.isBlank;
  * A {@code BlobStoreOverride} that allows blob store attributes to be overridden
  * via an environment variable ({@code NEXUS_BLOB_STORE_OVERRIDE}) during {@code BlobStoreManager}
  * initialization. e.g.:
+ * 
  * <pre>
  *NEXUS_BLOB_STORE_OVERRIDE='{"default":{"file":{"path":"other_path"}}}'
  * </pre>
@@ -43,6 +45,7 @@ import static org.sonatype.nexus.common.text.Strings2.isBlank;
  * @since 3.31
  */
 @FeatureFlag(name = "nexus.blobstore.override.enabled", enabledByDefault = true)
+@ConditionalOnProperty(name = "nexus.blobstore.override.enabled", havingValue = "true", matchIfMissing = true)
 @Named
 @Singleton
 public class BlobStoreOverrideImpl
@@ -54,7 +57,9 @@ public class BlobStoreOverrideImpl
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private static final TypeReference<Map<String, Map<String, Map<String, Object>>>> TYPE_REFERENCE =
-      new TypeReference<Map<String, Map<String, Map<String, Object>>>>() {};
+      new TypeReference<Map<String, Map<String, Map<String, Object>>>>()
+      {
+      };
 
   private final BlobStoreConfigurationStore blobStoreConfigurationStore;
 

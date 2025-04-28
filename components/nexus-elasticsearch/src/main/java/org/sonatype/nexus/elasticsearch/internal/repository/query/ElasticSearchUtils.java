@@ -44,6 +44,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
@@ -53,6 +54,7 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.StreamSupport.stream;
 import static org.elasticsearch.search.sort.SortBuilders.fieldSort;
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.GROUP;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.NAME;
@@ -65,6 +67,7 @@ import static org.sonatype.nexus.repository.search.index.SearchConstants.VERSION
  */
 @Named
 @Singleton
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class ElasticSearchUtils
     extends ComponentSupport
 {

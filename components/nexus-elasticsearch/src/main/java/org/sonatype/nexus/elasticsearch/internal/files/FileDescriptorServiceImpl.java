@@ -21,6 +21,9 @@ import javax.inject.Named;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.KERNEL;
 
 /**
@@ -28,6 +31,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.KERNEL;
  */
 @Named
 @ManagedLifecycle(phase = KERNEL)
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class FileDescriptorServiceImpl
     extends StateGuardLifecycleSupport
     implements FileDescriptorService

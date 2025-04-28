@@ -30,6 +30,7 @@ import org.sonatype.nexus.security.jwt.SecretStore;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -45,6 +46,7 @@ import static org.sonatype.nexus.security.jwt.rest.JwtSecretApiResourceV1.PATH;
  * @since 3.38
  */
 @FeatureFlag(name = JWT_ENABLED)
+@ConditionalOnProperty(name = JWT_ENABLED, havingValue = "true")
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @Path(PATH)

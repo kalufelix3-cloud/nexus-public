@@ -35,6 +35,7 @@ import org.quartz.impl.jdbcjobstore.StdJDBCDelegate;
 import org.quartz.spi.JobStore;
 import org.quartz.utils.ConnectionProvider;
 import org.quartz.utils.DBConnectionManager;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Value;
 
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
@@ -45,6 +46,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
  * @since 3.19
  */
 @FeatureFlag(name = "nexus.quartz.jobstore.jdbc")
+@ConditionalOnProperty(name = "nexus.quartz.jobstore.jdbc", havingValue = "true")
 @ManagedLifecycle(phase = SCHEMAS)
 @Named
 @Singleton
@@ -147,6 +149,7 @@ public class JobStoreJdbcProvider
    * This small module is a workaround to expose this provider as a (managed) lifecycle.
    */
   @FeatureFlag(name = "nexus.quartz.jobstore.jdbc")
+  @ConditionalOnProperty(name = "nexus.quartz.jobstore.jdbc", havingValue = "true")
   @Named
   private static class BindAsLifecycle // NOSONAR
       extends BindAsLifecycleSupport<JobStoreJdbcProvider>

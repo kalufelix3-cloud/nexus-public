@@ -18,7 +18,10 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.internal.status.HealthCheckComponentSupport;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 import static java.lang.String.format;
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 
 /**
  * Health check that indicates if the file descriptor limit is below the recommended threshold
@@ -27,6 +30,7 @@ import static java.lang.String.format;
  */
 @Named("File Descriptors")
 @Singleton
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class FileDescriptorHealthCheck
     extends HealthCheckComponentSupport
 {

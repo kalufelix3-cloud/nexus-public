@@ -38,10 +38,12 @@ import org.sonatype.nexus.repository.content.search.elasticsearch.SearchDocument
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Math.max;
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
@@ -55,6 +57,7 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
  * @since 3.25
  */
 @Named
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class SearchFacetImpl
     extends FacetSupport
     implements SearchFacet

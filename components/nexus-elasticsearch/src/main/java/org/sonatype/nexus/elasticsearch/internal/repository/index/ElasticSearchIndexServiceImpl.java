@@ -70,6 +70,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -92,6 +93,7 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 @Named("default")
 @Singleton
 @FeatureFlag(name = ELASTIC_SEARCH_ENABLED, enabledByDefault = true)
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class ElasticSearchIndexServiceImpl
     extends ComponentSupport
     implements ElasticSearchIndexService

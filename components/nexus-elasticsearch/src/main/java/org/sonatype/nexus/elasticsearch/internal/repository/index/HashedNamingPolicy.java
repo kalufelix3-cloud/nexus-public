@@ -20,7 +20,9 @@ import org.sonatype.nexus.repository.Repository;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 
 /**
@@ -30,6 +32,7 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
  */
 @Named
 @Singleton
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class HashedNamingPolicy
     implements IndexNamingPolicy
 {

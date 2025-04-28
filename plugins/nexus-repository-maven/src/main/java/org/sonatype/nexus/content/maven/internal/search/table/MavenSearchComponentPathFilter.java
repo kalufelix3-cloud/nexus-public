@@ -21,10 +21,14 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.repository.content.utils.SearchComponentPathFilter;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
 import static org.sonatype.nexus.content.maven.internal.search.table.MavenSearchComponentPathFilter.MavenType.getMavenTypes;
 
 @Named(Maven2Format.NAME)
 @Singleton
+@ConditionalOnProperty(name = DATASTORE_CLUSTERED_ENABLED, havingValue = "true")
 public class MavenSearchComponentPathFilter
     implements SearchComponentPathFilter
 {

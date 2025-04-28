@@ -33,6 +33,7 @@ import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
@@ -54,6 +55,7 @@ import static org.sonatype.nexus.servlet.XFrameOptions.DENY;
 @Named
 @Singleton
 @FeatureFlag(name = JWT_ENABLED)
+@ConditionalOnProperty(name = JWT_ENABLED, havingValue = "true")
 public class JwtServlet
     extends HttpServlet
 {

@@ -139,6 +139,11 @@ public class NexusPropertiesVerifier
     else if (nexusProperties.get(JWT_ENABLED) != null && nexusProperties.get(SESSION_ENABLED) == null) {
       nexusProperties.put(SESSION_ENABLED, parseBoolean(nexusProperties.get(JWT_ENABLED)) ? FALSE : TRUE);
     }
+
+    if (!parseBoolean(nexusProperties.get(JWT_ENABLED))) {
+      // If JWT is not enabled, then disable OAuth2 as well
+      nexusProperties.put(NEXUS_SECURITY_OAUTH2_ENABLED, FALSE);
+    }
   }
 
   private void ensureHACIsDisabled(final NexusProperties nexusProperties) {

@@ -17,6 +17,9 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.log.LogConfigurationCustomizer;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 import static org.sonatype.nexus.common.log.LoggerLevel.DEFAULT;
 
 /**
@@ -26,6 +29,7 @@ import static org.sonatype.nexus.common.log.LoggerLevel.DEFAULT;
  */
 @Named
 @Singleton
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class LogConfigurationCustomizerImpl
     implements LogConfigurationCustomizer
 {

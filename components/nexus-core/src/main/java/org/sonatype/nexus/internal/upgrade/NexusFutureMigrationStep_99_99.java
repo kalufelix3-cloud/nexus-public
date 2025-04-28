@@ -24,10 +24,13 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import org.springframework.beans.factory.annotation.Value;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 import static org.sonatype.nexus.common.app.FeatureFlags.ZERO_DOWNTIME_FUTURE_MIGRATION_ENABLED;
 
 @Named
 @FeatureFlag(name = ZERO_DOWNTIME_FUTURE_MIGRATION_ENABLED, enabledByDefault = false)
+@ConditionalOnProperty(name = ZERO_DOWNTIME_FUTURE_MIGRATION_ENABLED, havingValue = "true")
 public class NexusFutureMigrationStep_99_99
     extends ComponentSupport
     implements DatabaseMigrationStep

@@ -26,7 +26,9 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 
 /**
@@ -34,6 +36,7 @@ import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSIT
  */
 @Named(RepositoryElasticSearchContribution.NAME)
 @Singleton
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class RepositoryElasticSearchContribution
     extends DefaultElasticSearchContribution
 {

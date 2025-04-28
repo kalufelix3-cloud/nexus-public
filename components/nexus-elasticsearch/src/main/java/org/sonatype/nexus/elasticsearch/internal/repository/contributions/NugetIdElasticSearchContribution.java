@@ -21,12 +21,16 @@ import org.sonatype.nexus.elasticsearch.ElasticSearchContribution;
 
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 
 /**
  * "attributes.nuget.id" {@link ElasticSearchContribution} (adds a match query for id).
  */
 @Named("assets.attributes.nuget.id")
 @Singleton
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class NugetIdElasticSearchContribution
     extends ElasticSearchContributionSupport
 {

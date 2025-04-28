@@ -21,6 +21,9 @@ import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.transaction.Transactional;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
 import static org.sonatype.nexus.internal.log.overrides.datastore.LoggerOverridesEvent.Action.CHANGE;
 import static org.sonatype.nexus.internal.log.overrides.datastore.LoggerOverridesEvent.Action.RESET;
 import static org.sonatype.nexus.internal.log.overrides.datastore.LoggerOverridesEvent.Action.RESET_ALL;
@@ -30,6 +33,7 @@ import static org.sonatype.nexus.internal.log.overrides.datastore.LoggerOverride
  */
 @Named("mybatis")
 @Singleton
+@ConditionalOnProperty(name = DATASTORE_CLUSTERED_ENABLED, havingValue = "true")
 public class LoggingOverridesStore
     extends ConfigStoreSupport<LoggingOverridesDAO>
 {

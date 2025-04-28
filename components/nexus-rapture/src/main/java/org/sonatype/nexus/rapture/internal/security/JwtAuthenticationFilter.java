@@ -27,6 +27,7 @@ import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
@@ -39,6 +40,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 @Named
 @Singleton
 @FeatureFlag(name = JWT_ENABLED)
+@ConditionalOnProperty(name = JWT_ENABLED, havingValue = "true")
 public class JwtAuthenticationFilter
     extends SessionAuthenticationFilter
 {
@@ -54,15 +56,15 @@ public class JwtAuthenticationFilter
   }
 
   @Override
-  protected boolean onLoginSuccess(final AuthenticationToken token,
-                                   final Subject subject,
-                                   final ServletRequest request,
-                                   final ServletResponse response)
-      throws Exception
+  protected boolean onLoginSuccess(
+      final AuthenticationToken token,
+      final Subject subject,
+      final ServletRequest request,
+      final ServletResponse response) throws Exception
   {
     log.debug("Success: token={}, subject={}", token, subject);
     Cookie cookie = jwtHelper.createJwtCookie(subject, request.isSecure());
-    ((HttpServletResponse)response).addCookie(cookie);
+    ((HttpServletResponse) response).addCookie(cookie);
     return true;
   }
 }

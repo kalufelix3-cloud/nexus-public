@@ -37,6 +37,7 @@ import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.rest.Resource;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -49,12 +50,14 @@ import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
  * Note this is not fully tested as it is currently used for HA tests.
  */
 @FeatureFlag(name = "nexus.internal.ha.tests")
+@ConditionalOnProperty(name = "nexus.internal.ha.tests", havingValue = "true")
 @Named
 @Singleton
 @Path(CapabilityResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
-public class CapabilityResource implements Resource
+public class CapabilityResource
+    implements Resource
 {
   static final String PASSWORD_PLACEHOLDER = "#~NXRM~PLACEHOLDER~PASSWORD~#";
 
@@ -70,7 +73,8 @@ public class CapabilityResource implements Resource
   @GET
   @RequiresPermissions("nexus:capabilities:read")
   public Collection<CapabilityDTO> list() {
-    return registry.getAll().stream()
+    return registry.getAll()
+        .stream()
         .map(CapabilityDTO::new)
         .collect(Collectors.toList());
   }
@@ -84,7 +88,8 @@ public class CapabilityResource implements Resource
   @Path("active")
   @RequiresPermissions("nexus:capabilities:read")
   public Collection<CapabilityDTO> listActive() {
-    return registry.getAll().stream()
+    return registry.getAll()
+        .stream()
         .map(CapabilityDTO::new)
         .collect(Collectors.toList());
   }
@@ -93,11 +98,10 @@ public class CapabilityResource implements Resource
   @RequiresPermissions("nexus:capabilities:create")
   public CapabilityDTO create(final CapabilityDTO capability) {
     return new CapabilityDTO(registry.add(
-            capabilityType(capability.getType()),
-            capability.isEnabled(),
-            capability.getNotes(),
-            capability.getProperties()
-        ));
+        capabilityType(capability.getType()),
+        capability.isEnabled(),
+        capability.getNotes(),
+        capability.getProperties()));
   }
 
   @PUT
@@ -109,8 +113,7 @@ public class CapabilityResource implements Resource
         capabilityIdentity(capabilityDto.getId()),
         capabilityDto.isEnabled(),
         capabilityDto.getNotes(),
-        unfilterProperties(capabilityDto.getProperties(), reference.context().properties())
-    );
+        unfilterProperties(capabilityDto.getProperties(), reference.context().properties()));
   }
 
   @DELETE
@@ -124,7 +127,8 @@ public class CapabilityResource implements Resource
       final Map<String, String> properties,
       final Map<String, String> referenceProperties)
   {
-    return properties.entrySet().stream()
+    return properties.entrySet()
+        .stream()
         .collect(Collectors.toMap(Entry::getKey, entry -> {
           if (PASSWORD_PLACEHOLDER.equals(entry.getValue())) {
             return referenceProperties.get(entry.getKey());
@@ -134,7 +138,8 @@ public class CapabilityResource implements Resource
   }
 
   static Map<String, String> filterProperties(final Map<String, String> properties, final Capability capability) {
-    return properties.entrySet().stream()
+    return properties.entrySet()
+        .stream()
         .collect(Collectors.toMap(Entry::getKey, entry -> {
           if (capability.isPasswordProperty(entry.getKey())) {
             if ("PKI".equals(properties.get("authenticationType"))) {

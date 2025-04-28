@@ -37,6 +37,7 @@ import com.google.common.eventbus.Subscribe;
 import com.google.inject.Provider;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -54,6 +55,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
 @ManagedLifecycle(phase = SECURITY)
 @Singleton
 @FeatureFlag(name = JWT_ENABLED)
+@ConditionalOnProperty(name = JWT_ENABLED, havingValue = "true")
 public class JwtHelper
     extends StateGuardLifecycleSupport
     implements EventAware

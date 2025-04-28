@@ -25,13 +25,17 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
 
 /**
  * Provides a mapping from search attribute or alias to {@link SearchField}
  */
 @Named
 @Singleton
+@ConditionalOnProperty(name = DATASTORE_CLUSTERED_ENABLED, havingValue = "true")
 public class SearchMappingService
 {
   private final Map<String, SearchField> attributeToField = new HashMap<>();
@@ -44,10 +48,10 @@ public class SearchMappingService
         .map(SearchMappings::get)
         .flatMap(iterable -> StreamSupport.stream(iterable.spliterator(), false))
         .forEach(mapping -> {
-            attributeToField.put(mapping.getAttribute(), mapping.getField());
-            attributeToExactMatch.put(mapping.getAttribute(), mapping.isExactMatch());
-            attributeToField.putIfAbsent(mapping.getAlias(), mapping.getField());
-            attributeToExactMatch.put(mapping.getAlias(), mapping.isExactMatch());
+          attributeToField.put(mapping.getAttribute(), mapping.getField());
+          attributeToExactMatch.put(mapping.getAttribute(), mapping.isExactMatch());
+          attributeToField.putIfAbsent(mapping.getAlias(), mapping.getField());
+          attributeToExactMatch.put(mapping.getAlias(), mapping.isExactMatch());
         });
   }
 

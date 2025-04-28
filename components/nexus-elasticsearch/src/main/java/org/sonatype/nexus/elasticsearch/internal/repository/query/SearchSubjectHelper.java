@@ -23,8 +23,10 @@ import org.sonatype.goodies.common.ComponentSupport;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.shiro.subject.Subject;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 
 /**
  * Helper class used to temporarily associate a subject with a key for purposes of passing Shiro {@link Subject}s into
@@ -35,6 +37,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Named
 @Singleton
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class SearchSubjectHelper
     extends ComponentSupport
 {

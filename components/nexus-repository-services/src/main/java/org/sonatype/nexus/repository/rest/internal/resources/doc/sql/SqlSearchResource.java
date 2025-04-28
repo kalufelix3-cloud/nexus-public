@@ -39,7 +39,9 @@ import org.sonatype.nexus.rest.Page;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH;
 import static org.sonatype.nexus.repository.search.SearchUtils.CONTINUATION_TOKEN;
 import static org.sonatype.nexus.repository.search.SearchUtils.SORT_DIRECTION;
 import static org.sonatype.nexus.repository.search.SearchUtils.SORT_FIELD;
@@ -50,12 +52,14 @@ import static org.sonatype.nexus.repository.search.SearchUtils.SORT_FIELD;
 @Named
 @Singleton
 @Path(SearchResource.RESOURCE_URI)
+@ConditionalOnProperty(name = DATASTORE_TABLE_SEARCH, havingValue = "true")
 public class SqlSearchResource
     extends SearchResource
 {
   private static final String SQL_SEARCH_RESTRICTIONS =
-      "All searches require at least one criterion of at least three characters before a trailing wildcard (\\*) and cannot start with a wildcard (\\*). " +
-      "Enclose your criteria in quotation marks to search an exact phrase; otherwise, search criteria will be split by any commas, spaces, dashes, or forward slashes.";
+      "All searches require at least one criterion of at least three characters before a trailing wildcard (\\*) and cannot start with a wildcard (\\*). "
+          +
+          "Enclose your criteria in quotation marks to search an exact phrase; otherwise, search criteria will be split by any commas, spaces, dashes, or forward slashes.";
 
   @Inject
   public SqlSearchResource(
@@ -75,14 +79,14 @@ public class SqlSearchResource
   @Override
   @ApiOperation(value = "Search components", notes = SQL_SEARCH_RESTRICTIONS)
   public Page<ComponentXO> search(
-      @ApiParam(value = CONTINUATION_TOKEN_DESCRIPTION, allowEmptyValue = true)
-      @QueryParam(CONTINUATION_TOKEN) final String continuationToken,
-      @ApiParam(value = SORT_DESCRIPTION, allowEmptyValue = true, allowableValues = ALLOWABLE_SORT_VALUES)
-      @QueryParam(SORT_FIELD) final String sort,
-      @ApiParam(value = DIRECTION_DESCRIPTION, allowEmptyValue = true, allowableValues = ALLOWABLE_SORT_DIRECTIONS)
-      @QueryParam(SORT_DIRECTION) final String direction,
-      @ApiParam(value = TIMEOUT_DESCRIPTION, allowEmptyValue = true)
-      @Nullable @QueryParam("timeout") final Integer seconds,
+      @ApiParam(value = CONTINUATION_TOKEN_DESCRIPTION,
+          allowEmptyValue = true) @QueryParam(CONTINUATION_TOKEN) final String continuationToken,
+      @ApiParam(value = SORT_DESCRIPTION, allowEmptyValue = true,
+          allowableValues = ALLOWABLE_SORT_VALUES) @QueryParam(SORT_FIELD) final String sort,
+      @ApiParam(value = DIRECTION_DESCRIPTION, allowEmptyValue = true,
+          allowableValues = ALLOWABLE_SORT_DIRECTIONS) @QueryParam(SORT_DIRECTION) final String direction,
+      @ApiParam(value = TIMEOUT_DESCRIPTION,
+          allowEmptyValue = true) @Nullable @QueryParam("timeout") final Integer seconds,
       @Context final UriInfo uriInfo)
   {
     return super.search(continuationToken, sort, direction, seconds, uriInfo);
@@ -93,14 +97,13 @@ public class SqlSearchResource
   @Override
   @ApiOperation(value = "Search assets", notes = SQL_SEARCH_RESTRICTIONS)
   public Page<AssetXO> searchAssets(
-      @ApiParam(value = CONTINUATION_TOKEN_DESCRIPTION)
-      @QueryParam(CONTINUATION_TOKEN) final String continuationToken,
-      @ApiParam(value = SORT_DESCRIPTION, allowEmptyValue = true, allowableValues = ALLOWABLE_SORT_VALUES)
-      @QueryParam(SORT_FIELD) final String sort,
-      @ApiParam(value = DIRECTION_DESCRIPTION, allowEmptyValue = true, allowableValues = ALLOWABLE_SORT_DIRECTIONS)
-      @QueryParam(SORT_DIRECTION) final String direction,
-      @ApiParam(value = TIMEOUT_DESCRIPTION, allowEmptyValue = true)
-      @Nullable @QueryParam("timeout") final Integer seconds,
+      @ApiParam(value = CONTINUATION_TOKEN_DESCRIPTION) @QueryParam(CONTINUATION_TOKEN) final String continuationToken,
+      @ApiParam(value = SORT_DESCRIPTION, allowEmptyValue = true,
+          allowableValues = ALLOWABLE_SORT_VALUES) @QueryParam(SORT_FIELD) final String sort,
+      @ApiParam(value = DIRECTION_DESCRIPTION, allowEmptyValue = true,
+          allowableValues = ALLOWABLE_SORT_DIRECTIONS) @QueryParam(SORT_DIRECTION) final String direction,
+      @ApiParam(value = TIMEOUT_DESCRIPTION,
+          allowEmptyValue = true) @Nullable @QueryParam("timeout") final Integer seconds,
       @Context final UriInfo uriInfo)
   {
     return super.searchAssets(continuationToken, sort, direction, seconds, uriInfo);

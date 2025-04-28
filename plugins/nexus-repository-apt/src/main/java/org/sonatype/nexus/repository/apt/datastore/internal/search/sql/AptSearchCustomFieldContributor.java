@@ -21,8 +21,13 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.search.sql.SearchCustomFieldContributor;
 import org.sonatype.nexus.repository.search.sql.SearchRecord;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
+
 @Named(AptFormat.NAME)
 @Singleton
+@ConditionalOnProperty(name = DATASTORE_CLUSTERED_ENABLED, havingValue = "true")
 public class AptSearchCustomFieldContributor
     extends ComponentSupport
     implements SearchCustomFieldContributor

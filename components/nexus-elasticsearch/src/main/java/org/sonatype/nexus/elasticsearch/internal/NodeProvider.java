@@ -45,10 +45,12 @@ import org.elasticsearch.node.NodeBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.PluginManager;
 import org.elasticsearch.plugins.PluginManager.OutputMode;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 import static org.sonatype.nexus.common.app.ManagedLifecycleManager.isShuttingDown;
 
@@ -60,6 +62,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycleManager.isShuttingDo
 @Named
 @ManagedLifecycle(phase = STORAGE)
 @Singleton
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class NodeProvider
     extends LifecycleSupport
     implements Provider<Node>

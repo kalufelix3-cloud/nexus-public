@@ -24,10 +24,13 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import org.springframework.beans.factory.annotation.Value;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 
 @FeatureFlag(name = ELASTIC_SEARCH_ENABLED, enabledByDefault = true)
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 @ManagedLifecycle(phase = SERVICES)
 @Named
 @Singleton

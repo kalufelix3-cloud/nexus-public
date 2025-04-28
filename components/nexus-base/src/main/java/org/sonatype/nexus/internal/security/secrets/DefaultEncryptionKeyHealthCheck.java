@@ -20,6 +20,7 @@ import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.crypto.secrets.EncryptionKeyValidator;
 
 import com.codahale.metrics.health.HealthCheck;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -27,6 +28,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * A {@link HealthCheck} which fails if the administrator has not configured a key to use for encrypting secrets.
  */
 @FeatureFlag(name = "nexus.health.check.encryption", enabledByDefault = true)
+@ConditionalOnProperty(name = "nexus.health.check.encryption", havingValue = "true", matchIfMissing = true)
 @Named("Default Secret Encryption Key")
 @Singleton
 public class DefaultEncryptionKeyHealthCheck

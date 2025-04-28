@@ -61,6 +61,7 @@ import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -81,6 +82,7 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 @FeatureFlag(name = FeatureFlags.ELASTIC_SEARCH_ENABLED, enabledByDefault = true)
+@ConditionalOnProperty(name = FeatureFlags.ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class SearchResource
     extends ComponentSupport
     implements Resource, SearchResourceDoc

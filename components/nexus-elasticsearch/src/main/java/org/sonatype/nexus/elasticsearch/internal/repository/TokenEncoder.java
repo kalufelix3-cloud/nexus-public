@@ -21,10 +21,12 @@ import org.sonatype.nexus.common.io.Hex;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.elasticsearch.index.query.QueryBuilder;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static java.lang.Integer.parseInt;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 
 /**
@@ -32,6 +34,7 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
  */
 @Singleton
 @Named
+@ConditionalOnProperty(name = ELASTIC_SEARCH_ENABLED, havingValue = "true", matchIfMissing = true)
 public class TokenEncoder
     extends ComponentSupport
 {
