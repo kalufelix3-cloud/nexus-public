@@ -61,7 +61,7 @@
       <dependencies>
         <dependency>
           <groupId>org.bouncycastle</groupId>
-          <artifactId>bcpkix-jdk15on</artifactId>
+          <artifactId>bcpkix-jdk18on</artifactId>
         </dependency>
         <dependency>
           <groupId>org.bouncycastle</groupId>
@@ -129,7 +129,7 @@
         <dependency>
           <groupId>org.bouncycastle</groupId>
           <artifactId>bcprov-jdk15to18</artifactId>
-          <scope>test, provided</scope>
+          <scope>compile</scope>
         </dependency>
 
         <dependency>

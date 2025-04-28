@@ -108,7 +108,7 @@
         <dependency>
           <groupId>org.bouncycastle</groupId>
           <artifactId>bcpg-fips</artifactId>
-          <scope>test, compile</scope>
+          <scope>compile</scope>
         </dependency>
       </dependencies>
     </profile>
@@ -130,13 +130,13 @@
         <dependency>
           <groupId>org.bouncycastle</groupId>
           <artifactId>bcprov-jdk15to18</artifactId>
-          <scope>test, compile</scope>
+          <scope>compile</scope>
         </dependency>
 
         <dependency>
           <groupId>org.bouncycastle</groupId>
           <artifactId>bcpg-jdk15to18</artifactId>
-          <scope>test, compile</scope>
+          <scope>compile</scope>
         </dependency>
       </dependencies>
     </profile>
