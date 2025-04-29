@@ -1,20 +1,14 @@
 <?xml version="1.0"?>
-<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "https://jetty.org/configure_10_0.dtd">
 <Configure id="Server" class="org.eclipse.jetty.server.Server">
 
-  <Ref refid="Handlers">
-    <Call name="addHandler">
+  <Set name="RequestLog">
+    <New id="RequestLog" class="org.sonatype.nexus.jetty.log.NexusRepositoryRequestLog">
       <Arg>
-        <New id="RequestLogHandler" class="org.eclipse.jetty.server.handler.RequestLogHandler">
-          <Set name="requestLog">
-            <New id="LogbackRequestLog" class="ch.qos.logback.access.jetty.RequestLogImpl2">
-              <Set name="fileName"><Property name="logback.etc"/>/logback-access.xml</Set>
-              <Set name="quiet">true</Set>
-            </New>
-          </Set>
-        </New>
+        <New class="org.eclipse.jetty.server.Slf4jRequestLogWriter"/>
       </Arg>
-    </Call>
-  </Ref>
+      <Arg>%{client}a - %{nexus.user.id}attr %{dd/MMM/yyyy:HH:mm:ss Z|<Call class="org.sonatype.nexus.jetty.log.NexusRepositoryRequestLog" name="getDefaultTimeZoneId"/>}t "%r" %s %{Content-Length}i %O %{ms}T "%{User-Agent}i" [%{threadName}attr]</Arg>
+    </New>
+  </Set>
 
 </Configure>

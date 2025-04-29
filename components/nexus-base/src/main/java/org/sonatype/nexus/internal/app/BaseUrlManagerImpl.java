@@ -108,6 +108,7 @@ public class BaseUrlManagerImpl
       StringBuffer url = request.getRequestURL();
       String uri = request.getRequestURI();
       String ctx = request.getContextPath();
+      log.debug("Request url {{}} uri {{}} context path {{}} and scheme {{}}", url, uri, ctx, request.getScheme());
       return url.substring(0, url.length() - uri.length() + ctx.length());
     }
 
@@ -133,17 +134,21 @@ public class BaseUrlManagerImpl
       if (DispatcherType.FORWARD == request.getDispatcherType()) {
         contextPath = (String) request.getAttribute(RequestDispatcher.FORWARD_CONTEXT_PATH);
         requestUri = (String) request.getAttribute(RequestDispatcher.FORWARD_REQUEST_URI);
+        log.debug("Request uri and context path from FORWARD dispatcher: {} {}", requestUri, contextPath);
       }
       else if (DispatcherType.ERROR == request.getDispatcherType()) {
         requestUri = (String) request.getAttribute(RequestDispatcher.ERROR_REQUEST_URI);
+        log.debug("Request uri from ERROR dispatcher: {}", requestUri);
       }
       contextPath = contextPath == null ? request.getContextPath() : contextPath;
       requestUri = requestUri == null ? request.getRequestURI() : requestUri;
       // Remove the context path
       String path = requestUri.substring(contextPath.length());
+      log.debug("Request uri and context path: {} {}", path, contextPath);
       return createRelativePath(countSlashes(path));
     }
 
+    log.debug("Unable to detect relative path from request");
     // unable to determine base-url
     return "";
   }
@@ -184,7 +189,12 @@ public class BaseUrlManagerImpl
   public void detectAndHoldUrl() {
     String url = detectUrl();
     if (url != null) {
-      BaseUrlHolder.set(url, detectRelativePath());
+      final String relativePath = detectRelativePath();
+      log.debug("Detected base-url: {} and relative path {}", url, relativePath);
+      BaseUrlHolder.set(url, relativePath);
+    }
+    else {
+      log.debug("Unable to detect base-url");
     }
   }
 }

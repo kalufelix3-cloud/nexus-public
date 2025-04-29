@@ -117,6 +117,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.sonatype.goodies</groupId>
+      <artifactId>goodies-httpfixture</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-test-db</artifactId>
       <scope>test</scope>

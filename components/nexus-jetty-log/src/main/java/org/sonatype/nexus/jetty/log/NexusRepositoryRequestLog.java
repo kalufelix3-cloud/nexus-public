@@ -10,32 +10,36 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.bootstrap.jetty;
+package org.sonatype.nexus.jetty.log;
 
-import com.codahale.metrics.SharedMetricRegistries;
-import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
+import java.util.TimeZone;
+
+import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Response;
 
-/**
- * Extension of {@link io.dropwizard.metrics.jetty12.AbstractInstrumentedHandler} that restores the delegate
- * constructor.
- */
-public final class InstrumentedHandler // NOSONAR
-    extends io.dropwizard.metrics.jetty12.AbstractInstrumentedHandler
+public class NexusRepositoryRequestLog
+    extends CustomRequestLog
 {
-  public InstrumentedHandler(ServletContextHandler delegate) {
-    super(SharedMetricRegistries.getOrCreate("nexus"));
-    setHandler(delegate);
+  public NexusRepositoryRequestLog(RequestLog.Writer writer, String formatString) {
+    super(writer, formatString);
   }
 
   @Override
-  protected void setupServletListeners(final Request request, final Response response) {
-    // no-op
+  public void log(Request request, Response response) {
+    request.setAttribute("threadName", Thread.currentThread().getName());
+    super.log(request, response);
   }
 
-  @Override
-  protected boolean isSuspended(final Request request, final Response response) {
-    return false;
+  /**
+   * Returns the default time zone ID. This method is used in
+   * `jetty-requestlog.xml` to dynamically set the time zone for request
+   * logs to the system's default time zone.
+   *
+   * @return The ID of the default time zone.
+   */
+  public static String getDefaultTimeZoneId() {
+    return TimeZone.getDefault().getID();
   }
 }

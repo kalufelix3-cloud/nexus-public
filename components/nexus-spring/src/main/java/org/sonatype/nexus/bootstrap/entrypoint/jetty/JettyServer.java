@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -29,11 +30,12 @@ import org.sonatype.nexus.bootstrap.entrypoint.jvm.ShutdownDelegate;
 import org.sonatype.nexus.bootstrap.jetty.ConnectorConfiguration;
 import org.sonatype.nexus.bootstrap.jetty.ConnectorManager;
 
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.ContextHandler.Context;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.resource.Resource;
+import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.jetty.xml.XmlConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,29 +127,28 @@ public class JettyServer
     // For all arguments, load properties or parse XMLs
     XmlConfiguration last = null;
     for (String arg : args) {
-      try (Resource resource = Resource.newResource(arg)) {
-        URL url = resource.getURI().toURL();
-        if (url.getFile().toLowerCase(Locale.ENGLISH).endsWith(".properties")) {
-          LOG.info("Loading properties: {}", url);
+      Resource resource = ResourceFactory.root().newResource(arg);
+      URL url = resource.getURI().toURL();
+      if (url.getFile().toLowerCase(Locale.ENGLISH).endsWith(".properties")) {
+        LOG.info("Loading properties: {}", url);
 
-          props.load(url);
-        }
-        else {
-          LOG.info("Applying configuration: {}", url);
+        props.load(url);
+      }
+      else {
+        LOG.info("Applying configuration: {}", url);
 
-          XmlConfiguration configuration = new XmlConfiguration(resource);
-          if (last != null) {
-            configuration.getIdMap().putAll(last.getIdMap());
-          }
-          if (!props.isEmpty()) {
-            configuration.getProperties().putAll(props);
-          }
-          Object component = configuration.configure();
-          if (component instanceof LifeCycle) {
-            components.add((LifeCycle) component);
-          }
-          last = configuration;
+        XmlConfiguration configuration = new XmlConfiguration(resource);
+        if (last != null) {
+          configuration.getIdMap().putAll(last.getIdMap());
         }
+        if (!props.isEmpty()) {
+          configuration.getProperties().putAll(props);
+        }
+        Object component = configuration.configure();
+        if (component instanceof LifeCycle) {
+          components.add((LifeCycle) component);
+        }
+        last = configuration;
       }
     }
 
@@ -178,6 +179,24 @@ public class JettyServer
       LOG.error("Stop failed", e);
       throw propagateThrowable(e);
     }
+  }
+
+  /**
+   * This implementation is tightly coupled to the jetty.xml provided in nexus-base-overlay.
+   *
+   * @param server
+   * @return
+   */
+  static ContextHandler getContextHandler(final Server server) {
+    ContextHandler context = null;
+    Handler handler = server.getDefaultHandler();
+    if (handler instanceof Handler.Wrapper wrapped) {
+      handler = wrapped.getHandler();
+      if (handler instanceof ContextHandler contextHandler) {
+        context = contextHandler;
+      }
+    }
+    return context;
   }
 
   private void doStop() throws Exception {
@@ -307,12 +326,9 @@ public class JettyServer
     private static void logStartupBanner(final Server server) {
       Object banner = null;
 
-      ContextHandler contextHandler = server.getChildHandlerByClass(ContextHandler.class);
-      if (contextHandler != null) {
-        Context context = contextHandler.getServletContext();
-        if (context != null) {
-          banner = context.getAttribute("nexus-banner");
-        }
+      ContextHandler context = JettyServer.getContextHandler(server);
+      if (context != null) {
+        banner = context.getAttribute("nexus-banner");
       }
 
       StringBuilder buf = new StringBuilder();

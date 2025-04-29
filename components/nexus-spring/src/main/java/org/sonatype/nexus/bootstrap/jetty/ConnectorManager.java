@@ -93,7 +93,7 @@ public class ConnectorManager
               new HttpConnectionFactory(httpConfiguration)));
     }
     else if (HttpScheme.HTTPS == httpScheme) {
-      final SslContextFactory sslContextFactory = bean(SSL_CONTEXT_FACTORY_ID, SslContextFactory.class);
+      final SslContextFactory.Server sslContextFactory = bean(SSL_CONTEXT_FACTORY_ID, SslContextFactory.Server.class);
       serverConnector = new ServerConnector(
           server,
           connectorPrototype.getAcceptors(),

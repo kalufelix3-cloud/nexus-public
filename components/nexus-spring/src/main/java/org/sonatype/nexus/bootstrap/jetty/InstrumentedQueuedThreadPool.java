@@ -15,10 +15,11 @@ package org.sonatype.nexus.bootstrap.jetty;
 import com.codahale.metrics.SharedMetricRegistries;
 
 /**
- * Extension of {@link com.codahale.metrics.jetty9.InstrumentedQueuedThreadPool} that restores the default constructor.
+ * Extension of {@link io.dropwizard.metrics.jetty12.InstrumentedQueuedThreadPool} that restores the default
+ * constructor.
  */
 public final class InstrumentedQueuedThreadPool // NOSONAR
-    extends com.codahale.metrics.jetty9.InstrumentedQueuedThreadPool
+    extends io.dropwizard.metrics.jetty12.InstrumentedQueuedThreadPool
 {
   public InstrumentedQueuedThreadPool() {
     super(SharedMetricRegistries.getOrCreate("nexus"));

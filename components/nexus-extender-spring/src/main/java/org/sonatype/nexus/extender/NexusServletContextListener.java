@@ -20,6 +20,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 import org.sonatype.nexus.bootstrap.application.DelegatingFilter;
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
 import org.sonatype.nexus.common.app.ManagedLifecycleManager;
 import org.sonatype.nexus.extender.guice.NexusLifecycleManager;
@@ -32,6 +33,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.servlet.DynamicGuiceFilter;
 import com.google.inject.servlet.GuiceFilter;
+import org.eclipse.jetty.ee8.nested.ContextHandler;
 import org.eclipse.sisu.inject.InjectorBindings;
 import org.eclipse.sisu.inject.MutableBeanLocator;
 import org.joda.time.Period;
@@ -86,6 +88,13 @@ public class NexusServletContextListener
       locator.add(new InjectorBindings(injector));
 
       lifecycleManager = new NexusLifecycleManager(locator);
+      ApplicationVersion applicationVersion = injector.getInstance(ApplicationVersion.class);
+      String serverHeader = String.format("Sonatype Nexus %s %s",
+          applicationVersion.getEdition(),
+          applicationVersion.getVersion());
+      ContextHandler contextHandler = ContextHandler.getCurrentContextHandler();
+      contextHandler.setAttribute("nexus-banner", serverHeader);
+
       checkStartupPhase((NexusProperties) servletContext.getAttribute("nexusProperties"));
 
       // Push to the last phase in lifecycle, this will of course process each phase in between en route to TASKS phase
@@ -103,12 +112,10 @@ public class NexusServletContextListener
 
   @Override
   public void contextDestroyed(final ServletContextEvent event) {
-    // log uptime before triggering activity which may run into problems
     long uptime = ManagementFactory.getRuntimeMXBean().getUptime();
     log.info(
         "Uptime: {}",
         PeriodFormat.getDefault().print(new Period(uptime)));
-    // TODO: add edition back into log message
 
     try {
       moveToPhase(OFF);

@@ -26,11 +26,6 @@
   <artifactId>nexus-bootstrap-spring</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
 
-  <properties>
-    <javax.inject.version>1</javax.inject.version>
-    <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -49,8 +44,8 @@
       <artifactId>javax.inject</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-webapp</artifactId>
+      <groupId>org.eclipse.jetty.ee8</groupId>
+      <artifactId>jetty-ee8-webapp</artifactId>
     </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
@@ -58,7 +53,7 @@
     </dependency>
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-jetty9</artifactId>
+      <artifactId>metrics-jetty12</artifactId>
     </dependency>
     <dependency>
       <groupId>org.sonatype.nexus</groupId>

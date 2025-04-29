@@ -18,10 +18,10 @@ import com.codahale.metrics.SharedMetricRegistries;
 import org.eclipse.jetty.server.ConnectionFactory;
 
 /**
- * Extension of {@link com.codahale.metrics.jetty9.InstrumentedConnectionFactory}.
+ * Extension of {@link io.dropwizard.metrics.jetty12.InstrumentedConnectionFactory}.
  */
 public final class InstrumentedConnectionFactory // NOSONAR
-    extends com.codahale.metrics.jetty9.InstrumentedConnectionFactory
+    extends io.dropwizard.metrics.jetty12.InstrumentedConnectionFactory
 {
   private final ConnectionFactory connectionFactory;
 

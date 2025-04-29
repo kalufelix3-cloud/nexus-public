@@ -138,6 +138,7 @@
         <module>nexus-webhooks</module>
         <module>nexus-webresources-api</module>
         <module>nexus-self-hosted</module>
+        <module>nexus-jetty-log</module>
       </modules>
       <build>
         <pluginManagement>
