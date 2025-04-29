@@ -196,7 +196,8 @@ $card-width: 1016px;
   }
 
   .nx-tile {
-    max-width: $card-width;
+    // card-width - padding*2, accommodates for padding so that the right edge aligns with other items on the page
+    max-width: calc(#{$card-width} - 2 * var(--nx-spacing-6x));
   }
 
   .nx-tile-header__subtitle {
