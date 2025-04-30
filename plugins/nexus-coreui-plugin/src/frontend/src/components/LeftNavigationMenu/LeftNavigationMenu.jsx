@@ -28,7 +28,7 @@ import './LeftNavigationMenu.scss';
 import useSideNavbarCollapsedState from '../../hooks/useSideNavbarCollapsedState';
 
 export default function LeftNavigationMenu() {
-  const { BROWSE } = ROUTE_NAMES;
+  const { BROWSE, ADMIN } = ROUTE_NAMES;
   const [isOpen, onToggleClick] = useSideNavbarCollapsedState(true);
 
   const adminInitialRouteName = useDefaultAdminRouteName();
@@ -249,6 +249,7 @@ export default function LeftNavigationMenu() {
           <NxDivider />
           <LeftNavigationMenuItem
             name={adminInitialRouteName}
+            selectedState={ADMIN.DIRECTORY}
             text={UIStrings.ADMIN_DIRECTORY.MENU.text}
             icon={UIStrings.ADMIN_DIRECTORY.MENU.icon}
             data-analytics-id='nxrm-global-navbar-admin'
