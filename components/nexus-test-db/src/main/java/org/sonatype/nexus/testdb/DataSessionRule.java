@@ -241,9 +241,9 @@ public class DataSessionRule
   }
 
   protected String startPostgres() {
-    // 11.9 is the minimum support version
+    // 13 is the minimum support version
 
-    postgres = new PostgreSQLContainer<>(DockerImageName.parse("docker-all.repo.sonatype.com/postgres:11.9")
+    postgres = new PostgreSQLContainer<>(DockerImageName.parse("docker-all.repo.sonatype.com/postgres:13.20")
         .asCompatibleSubstituteFor("postgres"));
 
     postgres.withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("postgres")))
