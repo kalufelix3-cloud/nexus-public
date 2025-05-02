@@ -23,9 +23,11 @@ import './App.scss';
 import SystemNotices from './components/widgets/SystemStatusAlerts/SystemNotices';
 import UpgradeModal from './components/pages/user/Welcome/UpgradeModal';
 import {useRedirectOnLogout} from './hooks/useRedirectOnLogout';
+import usePreventPushStateOnHash from './hooks/usePreventPushStateOnHash';
 
 export function App() {
   useRedirectOnLogout();
+  usePreventPushStateOnHash();
 
   return (
       <>

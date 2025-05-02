@@ -16,12 +16,9 @@ import { ExtJS } from '@sonatype/nexus-ui-plugin/src/frontend/src';
 import { ExtJsContainer } from "../../../widgets/ExtJsContainer/ExtJsContainer";
 import Users from "./Users";
 import UIStrings from '../../../../constants/UIStrings';
-import usePreventPushStateOnHash from "../../../../hooks/usePreventPushStateOnHash";
 
 export default function UsersExt() {
    const shouldShowReactVersion = ExtJS.useState(() => ExtJS.state().getValue('nexus.react.users', false));
-
-   usePreventPushStateOnHash();
 
    if (shouldShowReactVersion) {
        return <Users />

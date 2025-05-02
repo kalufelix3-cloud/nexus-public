@@ -33,9 +33,12 @@ jest.mock('./components/pages/admin/Users/UsersExt', () => {
 });
 
 describe('App', () => {
+  let historySpy;
+
   beforeEach(() => {
     givenExtJSState();
     givenUser();
+    historySpy = jest.spyOn(History.prototype, 'pushState');
 
     window.location.hash = '';
   });
@@ -154,6 +157,16 @@ describe('App', () => {
     router.urlService.url('some-page-that-does-not-exist', false);
 
     await assertMissingRoutePageRendered();
+  });
+
+  it("history hash pushState is intercepted and ignored", async () => {
+    await renderComponent();
+
+    history.pushState({}, '', '#');
+    expect(historySpy).not.toHaveBeenCalled();
+
+    history.pushState({}, '', '');
+    expect(historySpy).toHaveBeenCalledWith({}, '', '');
   });
 
   async function renderComponent() {

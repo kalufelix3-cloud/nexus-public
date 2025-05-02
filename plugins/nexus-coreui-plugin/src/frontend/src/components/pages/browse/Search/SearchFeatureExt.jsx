@@ -16,8 +16,6 @@ import PropTypes from "prop-types";
 
 import { ExtJsContainer } from "../../../widgets/ExtJsContainer/ExtJsContainer";
 import { ExtJS } from "@sonatype/nexus-ui-plugin";
-import usePreventPushStateOnHash from "../../../../hooks/usePreventPushStateOnHash";
-
 export default function SearchFeatureExt({
   title,
   icon,
@@ -31,8 +29,6 @@ export default function SearchFeatureExt({
   if (criterias) {
     ExtJS.useCriteria(criterias);
   }
-
-  usePreventPushStateOnHash();
 
   return (
     <ExtJsContainer
