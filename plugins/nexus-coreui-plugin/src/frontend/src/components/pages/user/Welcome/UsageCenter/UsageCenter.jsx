@@ -246,8 +246,6 @@ export default function UsageCenter() {
   const componentCountLimitDateLastExceeded = ExtJS.state().getValue('nexus.community.componentCountLimitDateLastExceeded');
   const requestPer24HoursLimitDateLastExceeded = ExtJS.state().getValue('nexus.community.requestPer24HoursLimitDateLastExceeded');
 
-  const isHa = ExtJS.state().getValue('nexus.datastore.clustered.enabled');
-
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     if (isNaN(date)) {
@@ -271,7 +269,7 @@ export default function UsageCenter() {
     ? formatDate(requestPer24HoursLimitDateLastExceeded)
     : '';
 
-  return !isHa && (
+  return (
     <div className="nxrm-usage-center" id="nxrm-usage-center">
       <NxTile>
         <UsageCenterHeader/>

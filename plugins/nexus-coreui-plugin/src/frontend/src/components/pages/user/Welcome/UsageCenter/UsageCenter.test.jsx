@@ -75,16 +75,21 @@ describe('Usage Center', () => {
     return render(<UsageCenter />);
   }
 
-  it("does not render any card when HA mode on", async() =>{
+  it("renders cards when HA mode is enabled", async () => {
     when(ExtJS.state().getValue)
         .calledWith('nexus.datastore.clustered.enabled')
         .mockReturnValue(true);
 
-    await act(async() => {
+    await act(async () => {
       render(<UsageCenter />);
     });
 
-    expect(selectors.queryAllCards().length).toBe(0);
+    // Verify that cards are rendered in HA mode
+    expect(selectors.getAllCards().length).toBeGreaterThan(0);
+
+    // Example: Check for specific card titles
+    expect(selectors.getCard('Total Components')).toBeInTheDocument();
+    expect(selectors.getCard('Requests Per Day')).toBeInTheDocument();
   });
 
   it('renders tooltips when hovering on the info icon when Community edition', async () => {

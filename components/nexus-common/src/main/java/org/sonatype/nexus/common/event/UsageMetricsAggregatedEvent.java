@@ -13,6 +13,6 @@
 package org.sonatype.nexus.common.event;
 
 public class UsageMetricsAggregatedEvent
-    implements Event
+    extends EventWithSource
 {
 }
