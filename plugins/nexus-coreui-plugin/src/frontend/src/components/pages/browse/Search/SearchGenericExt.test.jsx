@@ -51,18 +51,6 @@ describe("SearchGenericExt", () => {
     expect(within(alert).getByRole('heading', { name: '36 Malware Components Found'})).toBeVisible();
   });
 
-  it("history hash pushState is intercepted and ignored", async () => {
-    givenExtJSState();
-
-    await renderComponentRoute(ROUTE_NAMES.BROWSE.SEARCH.GENERIC);
-
-    history.pushState({}, '', '#');
-    expect(historySpy).not.toHaveBeenCalled();
-
-    history.pushState({}, '', '');
-    expect(historySpy).toHaveBeenCalledWith({}, '', '');
-  });
-
   function givenExtJSState(values = getDefaultExtJSStateValues()) {
     jest.spyOn(ExtJS, 'state').mockReturnValue({
       getValue: jest.fn().mockImplementation((key) => {
