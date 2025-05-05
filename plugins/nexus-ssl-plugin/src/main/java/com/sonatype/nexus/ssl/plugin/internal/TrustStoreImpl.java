@@ -14,14 +14,16 @@ package com.sonatype.nexus.ssl.plugin.internal;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Collection;
-
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -33,15 +35,24 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import com.sonatype.nexus.ssl.plugin.internal.keystore.KeyStoreDataEvent;
-
-import org.sonatype.goodies.common.ComponentSupport;
+import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedKeyStoreManager;
+import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedSSLCertificate;
+import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedSSLCertificateDataEvent;
+import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedSSLCertificateStore;
 import org.sonatype.nexus.common.app.FreezeService;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.distributed.event.service.api.EventType;
 import org.sonatype.nexus.distributed.event.service.api.common.CertificateDistributedEvent;
+import org.sonatype.nexus.kv.GlobalKeyValueStore;
+import org.sonatype.nexus.kv.KeyValueEvent;
 import org.sonatype.nexus.ssl.CertificateCreatedEvent;
 import org.sonatype.nexus.ssl.CertificateDeletedEvent;
+import org.sonatype.nexus.ssl.CertificateUtil;
+import org.sonatype.nexus.ssl.KeyNotFoundException;
 import org.sonatype.nexus.ssl.KeyStoreManager;
 import org.sonatype.nexus.ssl.KeystoreException;
 import org.sonatype.nexus.ssl.TrustStore;
@@ -52,6 +63,7 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.stream;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.ssl.CertificateUtil.calculateSha1;
 import static org.sonatype.nexus.ssl.CertificateUtil.decodePEMFormattedCertificate;
 
@@ -60,12 +72,15 @@ import static org.sonatype.nexus.ssl.CertificateUtil.decodePEMFormattedCertifica
  *
  * @since ssl 1.0
  */
+@ManagedLifecycle(phase = TASKS)
 @Named
 @Singleton
 public class TrustStoreImpl
-    extends ComponentSupport
+    extends StateGuardLifecycleSupport
     implements EventAware, TrustStore
 {
+  public static final String TRUSTED_CERTIFICATES_MIGRATION_COMPLETE = "trusted.certificates.migration.complete";
+
   public static final SecureRandom DEFAULT_RANDOM = null;
 
   private final FreezeService freezeService;
@@ -80,19 +95,62 @@ public class TrustStoreImpl
 
   private final KeyStoreManager keyStoreManager;
 
+  private final TrustedSSLCertificateStore trustedSSLCertificateStore;
+
+  private final TrustedKeyStoreManager trustedKeyStoreManager;
+
+  private final DatabaseCheck databaseCheck;
+
+  private final GlobalKeyValueStore globalKeyValueStore;
+
+  private volatile boolean secretMigrationComplete = false;
+
+  private volatile boolean onVersion = false;
+
   private volatile SSLContext sslcontext;
 
   @Inject
   public TrustStoreImpl(
       final EventManager eventManager,
+      final FreezeService freezeService,
       @Named("ssl") final KeyStoreManager keyStoreManager,
-      final FreezeService freezeService) throws Exception
+      final TrustedSSLCertificateStore trustedSSLCertificateStore,
+      final TrustedKeyStoreManager trustedKeyStoreManager,
+      final DatabaseCheck databaseCheck,
+      final GlobalKeyValueStore globalKeyValueStore) throws Exception
   {
     this.eventManager = checkNotNull(eventManager);
     this.keyStoreManager = checkNotNull(keyStoreManager);
     this.freezeService = checkNotNull(freezeService);
     this.keyManagers = getSystemKeyManagers();
     this.trustManagers = getTrustManagers();
+    this.trustedSSLCertificateStore = checkNotNull(trustedSSLCertificateStore);
+    this.trustedKeyStoreManager = checkNotNull(trustedKeyStoreManager);
+    this.databaseCheck = checkNotNull(databaseCheck);
+    this.globalKeyValueStore = checkNotNull(globalKeyValueStore);
+  }
+
+  @Override
+  protected void doStart() {
+    secretMigrationComplete = globalKeyValueStore
+        .getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)
+        .orElse(false);
+  }
+
+  @Subscribe
+  public void on(final KeyValueEvent event) {
+    if (TRUSTED_CERTIFICATES_MIGRATION_COMPLETE.equals(event.getKey())) {
+      secretMigrationComplete = (boolean) event.getValue();
+    }
+  }
+
+  private boolean isOnDBVersion() {
+    onVersion = onVersion || databaseCheck.isAtLeast("2.17");
+    return onVersion;
+  }
+
+  boolean isMigrationComplete() {
+    return secretMigrationComplete;
   }
 
   @Override
@@ -102,7 +160,31 @@ public class TrustStoreImpl
   {
     freezeService.checkWritable("Unable to import a certificate while database is frozen.");
 
-    keyStoreManager.importTrustCertificate(certificate, alias);
+    trustedKeyStoreManager.validateCertificateIntoKeyStore(alias, certificate);
+
+    try {
+      String pem = CertificateUtil.serializeCertificateInPEM(certificate);
+
+      if (isMigrationComplete()) {
+        // if migration is complete we only need to update the migrated table
+        log.trace("save trussed certificate in new table");
+        trustedSSLCertificateStore.save(alias, pem);
+      }
+      else if (!isOnDBVersion()) {
+        // ZDU, if db migration has not begun we can safely modify only the old store
+        log.trace("save trussed certificate in old table");
+        keyStoreManager.importTrustCertificate(certificate, alias);
+      }
+      else {
+        // DB migration has happened, table migration is in an ambiguous state so we try modifications on both
+        log.trace("save trussed certificate in both tables");
+        trustedSSLCertificateStore.save(alias, pem);
+        keyStoreManager.importTrustCertificate(certificate, alias);
+      }
+    }
+    catch (IOException e) {
+      throw new KeystoreException("Certificate cannot be saved", e);
+    }
 
     eventManager.post(new CertificateCreatedEvent(alias, certificate));
     eventManager.post(new CertificateDistributedEvent(EventType.CREATED));
@@ -121,18 +203,60 @@ public class TrustStoreImpl
       final String alias) throws KeystoreException, CertificateException
   {
     final Certificate certificate = decodePEMFormattedCertificate(certificateInPEM);
-
     return importTrustCertificate(certificate, alias);
   }
 
   @Override
   public Certificate getTrustedCertificate(final String alias) throws KeystoreException {
+    if (isMigrationComplete()) {
+      log.trace("retrieving trusted certificate from new table");
+      return getTrustedCertificateFromNewTable(alias);
+    }
+    // We'll rely on the modify methods to potentially update both tables
+    log.trace("retrieving trusted certificate from old table");
     return keyStoreManager.getTrustedCertificate(alias);
+  }
+
+  private Certificate getTrustedCertificateFromNewTable(final String alias) throws KeystoreException {
+    checkNotNull(alias, "'alias' cannot be null when looking up a trusted Certificate.");
+
+    TrustedSSLCertificate trustedSSLCertificate = trustedSSLCertificateStore.find(alias)
+        .orElseThrow(() -> new KeyNotFoundException("does not exist a certificate with alias '" + alias + "'."));
+
+    try {
+      return decodePEMFormattedCertificate(trustedSSLCertificate.getPem());
+    }
+    catch (CertificateException e) {
+      throw new KeystoreException("Unable to retrieve certificate from keystore", e);
+    }
   }
 
   @Override
   public Collection<Certificate> getTrustedCertificates() throws KeystoreException {
+    if (isMigrationComplete()) {
+      log.trace("retrieving trusted certificates from new table");
+      return getTrustedCertificatesFromNewTable();
+    }
+    // We'll rely on the modify methods to potentially update both tables
+    log.trace("retrieving trusted certificates from old table");
     return keyStoreManager.getTrustedCertificates();
+  }
+
+  private List<Certificate> getTrustedCertificatesFromNewTable() throws KeystoreException {
+    List<TrustedSSLCertificate> trustedSSLCertificates = trustedSSLCertificateStore.findAll();
+
+    List<Certificate> certificates = new ArrayList<>(trustedSSLCertificates.size());
+    for (TrustedSSLCertificate trustedSSLCertificate : trustedSSLCertificates) {
+      try {
+        Certificate certificate = decodePEMFormattedCertificate(trustedSSLCertificate.getPem());
+        certificates.add(certificate);
+      }
+      catch (CertificateException e) {
+        throw new KeystoreException("Unable to retrieve certificate from keystore", e);
+      }
+    }
+
+    return certificates;
   }
 
   @Override
@@ -140,7 +264,24 @@ public class TrustStoreImpl
     freezeService.checkWritable("Unable to remove a certificate while database is frozen.");
 
     Certificate certificate = getTrustedCertificate(alias);
-    keyStoreManager.removeTrustCertificate(alias);
+
+    if (isMigrationComplete()) {
+      // if migration is complete we only need to update the migrated table
+      log.trace("delete trussed certificate from new table");
+      trustedSSLCertificateStore.delete(alias);
+    }
+    else if (!isOnDBVersion()) {
+      // ZDU, if db migration has not begun we can safely modify only the old store
+      log.trace("delete trussed certificate from old table");
+      keyStoreManager.removeTrustCertificate(alias);
+    }
+    else {
+      // DB migration has happened, table migration is in an ambiguous state so we try modifications on both
+      log.trace("delete trussed certificate from both tables");
+      trustedSSLCertificateStore.delete(alias);
+      keyStoreManager.removeTrustCertificate(alias);
+    }
+
     sslcontext = null;
 
     eventManager.post(new CertificateDeletedEvent(alias, certificate));
@@ -156,11 +297,13 @@ public class TrustStoreImpl
   @Override
   public SSLContext getSSLContext() {
     SSLContext _sslcontext = this.sslcontext; // local variable allows concurrent removeTrustCertificate
+    // the private attribute sslcontext is set to null when a certificate is removed or a new one is added
     if (_sslcontext == null) {
       try {
         // the trusted key store may have asychronously changed when NXRM is clustered, reload the managed store used
         // for fallback so the context doesn't use stale key store
-        this.managedTrustManager = getManagedTrustManager(keyStoreManager);
+        this.managedTrustManager = getManagedTrustManager();
+
         _sslcontext = SSLContext.getInstance(SSLConnectionSocketFactory.TLS);
         _sslcontext.init(keyManagers, trustManagers, DEFAULT_RANDOM);
         this.sslcontext = _sslcontext;
@@ -185,12 +328,15 @@ public class TrustStoreImpl
   }
 
   @Subscribe
+  public void onTrustedSSLCertificateDataUpdated(final TrustedSSLCertificateDataEvent event) {
+    sslcontext = null;
+  }
+
+  @Subscribe
   public void on(final CertificateDistributedEvent event) throws Exception {
     if (!event.isLocal()) {
-      keyStoreManager.reloadTrustedKeystore();
-      if (EventType.DELETED.equals(event.getEventType())) {
-        sslcontext = null;
-      }
+      // sslcontext has to be reloaded when a certificate is added or removed
+      sslcontext = null;
     }
   }
 
@@ -212,17 +358,31 @@ public class TrustStoreImpl
     return null;
   }
 
-  private static X509TrustManager getManagedTrustManager(
-      final KeyStoreManager keyStoreManager) throws KeystoreException
-  {
-    final TrustManager[] managedTrustManagers = keyStoreManager.getTrustManagers();
-    if (managedTrustManagers != null) {
-      for (TrustManager tm : managedTrustManagers) {
+  private X509TrustManager getManagedTrustManager() throws KeystoreException {
+    TrustManager[] trustManagers;
+    if (isMigrationComplete()) {
+      log.trace("retrieving trusted certificate from new table");
+
+      List<String> certificatesAsPem = trustedSSLCertificateStore.findAll()
+          .stream()
+          .map(TrustedSSLCertificate::getPem)
+          .toList();
+      trustManagers = trustedKeyStoreManager.getTrustManagers(certificatesAsPem);
+    }
+    else {
+      // We'll rely on the modify methods to potentially update both tables
+      log.trace("retrieving trusted certificate from old table");
+      trustManagers = keyStoreManager.getTrustManagers();
+    }
+
+    if (trustManagers != null) {
+      for (TrustManager tm : trustManagers) {
         if (tm instanceof X509TrustManager) {
           return (X509TrustManager) tm;
         }
       }
     }
+
     return null;
   }
 
