@@ -124,8 +124,7 @@ export default {
       </>,
     },
     POWERED_BY: {
-      TEXT: 'Powered by',
-      IMAGE: './static/rapture/resources/images/sonatype-firewall-logo-nav.svg'
+      TEXT: 'Powered by'
     },
     MALWARE_MANAGEMENT_TASKS_COUNT: "malwareManagementTasksCount",
   }

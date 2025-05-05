@@ -12,7 +12,7 @@
  */
 
 .nxrm-settings.nx-page-sidebar{
-  background-color: white;
+  background-color: var(--nx-color-global-sidebar-2-background);
   border-right: var(--nx-border-width) solid var(--nx-color-global-sidebar-2-border);
   .nxrm-navigation-expandable-link:has(.nxrm-navigation-expandable-link__expandable-list:empty) {
     display: none;

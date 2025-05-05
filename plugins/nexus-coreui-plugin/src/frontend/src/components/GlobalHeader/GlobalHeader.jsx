@@ -20,9 +20,12 @@ import {
 } from "@sonatype/react-shared-components";
 import { faSync } from "@fortawesome/free-solid-svg-icons";
 import { ExtJS } from '@sonatype/nexus-ui-plugin';
-import proLogo from "../../../../art/logos/logo-pro-edition-header.svg"
+import proLogo from "../../../../art/logos/logo-pro-edition-header.svg";
+import proDarkLogo from "../../../../art/logos/logo-pro-edition-header-dark.svg";
 import ceLogo from "../../../../art/logos/logo-community-edition-header.svg";
+import ceDarkLogo from "../../../../art/logos/logo-community-edition-header-dark.svg";
 import coreLogo from "../../../../art/logos/logo-core-edition-header.svg";
+import coreDarkLogo from "../../../../art/logos/logo-core-edition-header-dark.svg";
 import { useRouter } from '@uirouter/react';
 
 import './Globalheader.scss'
@@ -30,6 +33,7 @@ import HelpMenu from './HelpMenu';
 import LoginAndUserButton from './LogInAndUserProfileMenu';
 import Search from './Search';
 import SystemStatus from './SystemStatus';
+import {ThemeSelector} from "@sonatype/nexus-ui-plugin/src/frontend/src";
 
 export default function GlobalHeader() {
   const COMMUNITY = "COMMUNITY";
@@ -38,7 +42,9 @@ export default function GlobalHeader() {
   const router = useRouter();
   const edition = ExtJS.useState(() => ExtJS.state().getEdition());
 
-  const refreshTitle = "Refresh"
+  const refreshTitle = "Refresh";
+
+  const showThemeSelector = window.location.search.includes('showThemeSelector');
 
   return (
       <NxGlobalHeader2
@@ -63,6 +69,8 @@ export default function GlobalHeader() {
         <HelpMenu />
 
         <LoginAndUserButton />
+
+        {showThemeSelector && <ThemeSelector />}
       </NxGlobalHeader2>);
 
   function onRefreshClick() {
@@ -76,7 +84,7 @@ export default function GlobalHeader() {
   function getLogoProps() {
     return {
       lightPath: getLogo(),
-      darkPath: getLogo(), // Needs to be replaced with a true dark mode logo before we can enable dark mode
+      darkPath: getDarkLogo(), // Needs to be replaced with a true dark mode logo before we can enable dark mode
       altText: `Sonatype Nexus Repository ${getEditionText()}`
     }
   }
@@ -85,6 +93,12 @@ export default function GlobalHeader() {
     return edition === COMMUNITY ? ceLogo
         : edition === PRO ? proLogo
         : coreLogo; // Core or catch all for unknown
+  }
+
+  function getDarkLogo() {
+    return edition === COMMUNITY ? ceDarkLogo
+        : edition === PRO ? proDarkLogo
+            : coreDarkLogo; // Core or catch all for unknown
   }
 
   function getEditionText() {

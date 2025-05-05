@@ -58,3 +58,5 @@ export {default as TokenMachine} from './interface/TokenMachine';
 export {default as isVisible} from './router/isVisible';
 export {default as useIsVisible} from './router/useIsVisible';
 export {createRouter} from './router/createRouter';
+
+export {ThemeSelector} from './components/widgets/ThemeSelector/ThemeSelector';

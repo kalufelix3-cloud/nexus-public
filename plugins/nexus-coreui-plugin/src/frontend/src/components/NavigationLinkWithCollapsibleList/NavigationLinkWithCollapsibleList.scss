@@ -21,7 +21,7 @@
     margin-top: 0;
     margin-bottom: 0;
     &:hover {
-      background-color: var(--nx-swatch-indigo-90);
+      background-color: var(--nx-color-global-sidebar-2-hover);
     } 
     &.nxrm-left-nav__link--no-icon .nx-icon {
       display: none;
@@ -79,29 +79,29 @@
       margin-left: 12px;
       padding-left: 12px;
       align-items: center;
-      color: var(--nx-swatch-indigo-20);
+      color: var(--nx-color-global-sidebar-2-link);
       font-size: var(--nx-font-size-s);
       outline-offset: calc(0px - var(--nx-focus-outline-width));
       margin-right: 0;
       font-weight: 400;
       text-decoration: none;
       &:focus {
-        outline: 2px solid var(--nx-swatch-blue-40);
-        color: var(--nx-swatch-indigo-20);
+        outline: var(--nx-focus-outline-width) solid var(--nx-color-interactive-border-focus);
+        color: var(--nx-color-global-sidebar-2-link);
         border-radius: 0 var(--nx-border-radius) var(--nx-border-radius) 0;
       }
       &:hover {
-        background-color: var(--nx-swatch-indigo-90);
-        color: var(--nx-swatch-indigo-20);
+        background-color: var(--nx-color-interactive-background-hover);
+        color: var(--nx-color-global-sidebar-2-link);
       }
       &:active, &:active:focus {
         border-radius: 0 var(--nx-border-radius) var(--nx-border-radius) 0;
-        color: var(--nx-swatch-indigo-20);
+        color: var(--nx-color-global-sidebar-2-link);
         background-color: var(--nx-swatch-indigo-97);
       }
       &.selected {
         border-left: 3px solid var(--nx-swatch-green-30);
-        background-color: var(--nx-swatch-indigo-95);
+        background-color: var(--nx-color-global-sidebar-2-link-selected);
         border-radius: 0 var(--nx-border-radius) var(--nx-border-radius) 0;
         font-weight: 600;
       }
