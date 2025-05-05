@@ -46,11 +46,12 @@
     grid-template-rows: min-content 1fr;
   }
   & .nx-global-sidebar-2__navigation-link.nx-text-link.selected {
+    color: var(--nx-swatch-white);
     .nxrm-navigation-expandable-link__chevron {
       &:focus {
-        outline-color: var(--nx-color-global-sidebar-2-link-selected);
+        outline-color: var(--nx-swatch-white);
       }
-      color: var(--nx-color-global-sidebar-2-link-selected);
+      color: var(--nx-swatch-white);
     }
   }
   &.hideIcon .nxrm-navigation-expandable-link__navigation-link > .nx-icon {
