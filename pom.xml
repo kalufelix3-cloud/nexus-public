@@ -1423,6 +1423,10 @@
           <name>public</name>
         </property>
       </activation>
+      <properties>
+        <!-- override yarn build to ignore lockfile -->
+        <npm.install>install --no-lockfile</npm.install>
+      </properties>
     </profile>
 
     <!--
