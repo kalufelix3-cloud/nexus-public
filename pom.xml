@@ -136,6 +136,7 @@
     <bcpg.fips.version>2.1.11</bcpg.fips.version>
     <bcutil.fips.version>2.1.4</bcutil.fips.version>
     <bc.fips.version>2.1.0</bc.fips.version>
+    <mockito.version>5.15.2</mockito.version>
   </properties>
 
   <modules>
@@ -1039,6 +1040,8 @@
               -XX:MaxDirectMemorySize=2G
               -XX:+HeapDumpOnOutOfMemoryError
               -XX:HeapDumpPath=${project.build.directory}/surefire-reports
+              -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
+              -Xshare:off
             </argLine>
             <excludes>
               <exclude>**/Abstract*</exclude>
