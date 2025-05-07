@@ -41,6 +41,10 @@ export default function InstallLicense({service}) {
   const [state, send] = useActor(service);
   const canEdit = ExtJS.checkPermission(Permissions.LICENSING.CREATE);
 
+  if (!ExtJS.useUser()) {
+    return null;
+  }
+
   const {
     data: {files},
     saveError,

@@ -46,6 +46,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     showErrorMessage: jest.fn(),
     showSuccessMessage: jest.fn(),
     proLicenseUrl: jest.fn().mockReturnValue('http://localhost:8081/PRO-LICENSE.html'),
+    useUser: jest.fn(() => ({ name: 'test-user' })),
   },
 }));
 

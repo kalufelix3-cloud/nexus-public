@@ -13,7 +13,6 @@
 import React from 'react';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import {NxTile} from '@sonatype/react-shared-components';
-import {faTruck} from '@fortawesome/free-solid-svg-icons';
 
 import {
   ContentBody,
@@ -31,6 +30,10 @@ import './Http.scss';
 
 export default function Http() {
   const canEdit = ExtJS.checkPermission('nexus:settings:update');
+
+  if (!ExtJS.useUser()) {
+    return null;
+  }
 
   return (
     <Page>

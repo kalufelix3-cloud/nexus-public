@@ -15,8 +15,6 @@ import {
   ExtJS
 } from '@sonatype/nexus-ui-plugin';
 
-import {faUser} from '@fortawesome/free-solid-svg-icons';
-
 import {
   ContentBody,
   Page,
@@ -32,6 +30,10 @@ import UIStrings from '../../../../constants/UIStrings';
 
 export default function AnonymousSettings() {
   const canEdit = ExtJS.checkPermission('nexus:settings:update');
+
+  if (!ExtJS.useUser()) {
+    return null;
+  }
 
   return <Page>
     <PageHeader>

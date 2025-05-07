@@ -39,6 +39,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     checkPermission: jest.fn(),
     showErrorMessage: jest.fn(),
     showSuccessMessage: jest.fn(),
+    useUser: jest.fn(() => ({ name: 'test-user' })),
     state: jest.fn().mockReturnValue({
       getValue: jest.fn(),
     }),

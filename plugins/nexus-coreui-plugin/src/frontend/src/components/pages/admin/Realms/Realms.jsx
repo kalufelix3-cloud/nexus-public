@@ -31,6 +31,10 @@ import UIStrings from '../../../../constants/UIStrings';
 export default function Realms() {
   const canEdit = ExtJS.checkPermission('nexus:settings:update');
 
+  if (!ExtJS.useUser()) {
+    return null;
+  }
+
   return (
     <Page>
       <PageHeader>

@@ -36,6 +36,10 @@ export default function EmailServer() {
   const stateMachine = useMachine(Machine, {devTools: true});
   const [state] = stateMachine;
   const actor = state.context.emailVerifyServer;
+  
+  if (!ExtJS.useUser()) {
+    return null;
+  }
 
   return (
     <Page>

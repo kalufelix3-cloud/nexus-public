@@ -30,6 +30,10 @@ import UIStrings from '../../../../constants/UIStrings';
 export default function IqServer() {
   const canEdit = ExtJS.checkPermission('nexus:settings:update');
 
+  if (!ExtJS.useUser()) {
+    return null;
+  }
+
   return <Page>
     <PageHeader>
       <PageTitle
