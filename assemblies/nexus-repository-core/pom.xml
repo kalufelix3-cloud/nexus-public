@@ -66,6 +66,11 @@
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-logging</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-test-common</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -76,6 +81,13 @@
         <configuration>
           <excludePackageNames>org.sonatype.nexus.bootstrap.*</excludePackageNames>
         </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       
       <plugin>
