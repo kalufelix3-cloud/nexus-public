@@ -111,7 +111,9 @@ public class SystemInformationGeneratorImpl
     sections.put("nexus-configuration", reportNexusConfiguration());
 
     // Merge additional system information helpers
-    sections.putAll(systemInformationHelpers);
+    sections.putAll(systemInformationHelpers.entrySet()
+        .stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getValue())));
 
     return sections;
   }
