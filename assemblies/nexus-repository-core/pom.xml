@@ -79,15 +79,8 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>
-          <excludePackageNames>org.sonatype.nexus.bootstrap.*</excludePackageNames>
+          <excludePackageNames>org.sonatype.nexus.bootstrap.entrypoint.core</excludePackageNames>
         </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       
       <plugin>
