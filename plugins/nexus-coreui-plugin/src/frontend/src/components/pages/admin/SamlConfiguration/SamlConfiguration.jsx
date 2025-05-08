@@ -30,7 +30,7 @@ import {
   PageHeader,
   PageTitle,
   Section
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import SamlConfigurationMachine from './SamlConfigurationMachine';
 import UIStrings from '../../../../constants/UIStrings';

@@ -36,7 +36,7 @@ import {
   PageHeader,
   PageTitle,
   Section
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import BlobStoresFormMachine, {canUseSpaceUsedQuotaOnly, SPACE_USED_QUOTA_ID} from './BlobStoresFormMachine';
 import UIStrings from '../../../../constants/UIStrings';

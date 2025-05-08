@@ -39,7 +39,7 @@ import {
   PageHeader,
   PageTitle,
   SectionToolbar
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 import {HelpTile} from '../../../widgets';
 
 import {canDelete, canUpdate, canCreate} from './LdapServersHelper';

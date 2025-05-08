@@ -29,7 +29,7 @@ import {
   ContentBody,
   PageHeader,
   PageTitle
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 import {HelpTile} from '../../../widgets';
 
 import UIStrings from '../../../../constants/UIStrings';

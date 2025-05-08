@@ -20,7 +20,7 @@ import {
   Page,
   PageHeader,
   PageTitle
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import LicenseDetails from './LicenseDetails';
 import InstallLicense from './InstallLicense';

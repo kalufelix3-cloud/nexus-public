@@ -15,7 +15,7 @@ import React, {Children, cloneElement, useState} from 'react';
 import { useRouter } from '@uirouter/react';
 import PropTypes from 'prop-types';
 
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import ExtJS from '../../../interface/ExtJS';
 
 import Master from './Master';
 import Detail from './Detail';

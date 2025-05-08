@@ -11,15 +11,14 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
-import {NxTile} from '@sonatype/react-shared-components';
-
 import {
   ContentBody,
+  ExtJS,
   Page,
   PageHeader,
   PageTitle
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
+import {NxTile} from '@sonatype/react-shared-components';
 
 import HttpForm from './HttpForm';
 import HttpReadOnly from './HttpReadOnly';

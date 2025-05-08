@@ -13,7 +13,7 @@
 
 import React from 'react';
 import { UIView, useCurrentStateAndParams } from '@uirouter/react';
-import { Page } from '../layout';
+import { Page } from '@sonatype/nexus-ui-plugin';
 import { NxH1, NxP, NxTile } from '@sonatype/react-shared-components';
 
 export default function DirectoryPage(

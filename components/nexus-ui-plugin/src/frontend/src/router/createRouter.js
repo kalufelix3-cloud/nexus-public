@@ -15,7 +15,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import {UIRouterReact, hashLocationPlugin, servicesPlugin} from '@uirouter/react';
-import {ExtJS, isVisible} from '@sonatype/nexus-ui-plugin';
+import ExtJS from '../interface/ExtJS';
+import isVisible from '../router/isVisible';
 
 const success = 'success';
 const failure = 'failure';

@@ -14,7 +14,15 @@ import React from 'react';
 import {useMachine, useActor} from '@xstate/react';
 import {faKey, faLock} from '@fortawesome/free-solid-svg-icons';
 import {isNil} from 'ramda';
-import {DateUtils} from '@sonatype/nexus-ui-plugin';
+import {
+  ContentBody,
+  DateUtils,
+  Page,
+  PageHeader,
+  PageTitle,
+  Section,
+  SectionFooter
+} from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxButtonBar,
@@ -26,15 +34,6 @@ import {
   NxReadOnly,
   useToggle
 } from '@sonatype/react-shared-components';
-
-import {
-  ContentBody,
-  Page,
-  PageHeader,
-  PageTitle,
-  Section,
-  SectionFooter
-} from '../../../layout';
 
  import UIStrings from '../../../../constants/UIStrings';
 import UserTokenMachine from './UserTokenMachine';

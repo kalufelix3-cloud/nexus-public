@@ -19,7 +19,7 @@ import {
   ContentBody,
   PageHeader,
   PageTitle
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import ContentSelectorsFormMachine from './ContentSelectorsFormMachine';
 import ContentSelectorsForm from './ContentSelectorsForm';

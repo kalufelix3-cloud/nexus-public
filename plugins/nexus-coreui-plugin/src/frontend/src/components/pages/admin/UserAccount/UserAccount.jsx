@@ -28,7 +28,7 @@ import {
   NxTooltip
 } from '@sonatype/react-shared-components';
 
-import {ContentBody, Page, PageHeader, PageTitle} from '../../../layout';
+import {ContentBody, Page, PageHeader, PageTitle} from '@sonatype/nexus-ui-plugin';
 
 export default function UserAccount() {
   const [state, send] = useMachine(UserAccountMachine, {devTools: true});

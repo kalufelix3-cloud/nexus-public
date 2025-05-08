@@ -25,7 +25,7 @@ import {
   NxTextInput
 } from '@sonatype/react-shared-components';
 
-import {Section} from '../../../layout';
+import {Section} from '@sonatype/nexus-ui-plugin';
 
 import ContentSelectorsPreview from './ContentSelectorsPreview';
 import UIStrings from '../../../../constants/UIStrings';

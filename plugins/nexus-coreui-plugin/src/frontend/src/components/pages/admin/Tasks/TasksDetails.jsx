@@ -13,20 +13,18 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 
-import {ValidationUtils} from '@sonatype/nexus-ui-plugin';
-
 import {
   ContentBody,
   PageHeader,
-  PageTitle
-} from '../../../layout';
+  PageTitle,
+  ValidationUtils
+} from '@sonatype/nexus-ui-plugin';
 
 import Machine from './TasksFormMachine';
 import TasksForm from './TasksForm';
 import TasksReadOnly from './TasksReadOnly';
 import {canUpdateTask} from './TasksHelper';
 
-import {faClock} from '@fortawesome/free-solid-svg-icons';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function TasksDetails({itemId, onDone}) {

@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { Page } from '../../layout';
+import { Page } from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxDivider,

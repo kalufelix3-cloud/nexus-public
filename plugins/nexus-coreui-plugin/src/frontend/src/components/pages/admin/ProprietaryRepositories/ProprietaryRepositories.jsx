@@ -21,7 +21,7 @@ import {
   PageHeader,
   PageTitle,
   Section
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import ProprietaryRepositoriesForm from './ProprietaryRepositoriesForm';
 import ProprietaryRepositoriesReadOnly from './ProprietaryRepositoriesReadOnly';

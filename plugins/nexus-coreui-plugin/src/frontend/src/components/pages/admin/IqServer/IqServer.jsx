@@ -20,7 +20,7 @@ import {
   PageHeader,
   PageTitle,
   Section
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import IqServerForm from './IqServerForm';
 import IqServerReadOnly from './IqServerReadOnly';

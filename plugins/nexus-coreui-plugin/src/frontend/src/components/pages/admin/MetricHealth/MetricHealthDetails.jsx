@@ -31,7 +31,7 @@ import {
 import {
   ContentBody,
   PageTitle
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import MetricHealthMachine from './MetricHealthMachine';
 

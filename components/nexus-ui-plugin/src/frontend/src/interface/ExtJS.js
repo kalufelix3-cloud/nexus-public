@@ -21,7 +21,7 @@ import {useEffect, useState} from 'react';
 /**
  * @since 3.22
  */
-export default class {
+export default class ExtJS {
   /**
    * Open a success message notification
    * @param text

@@ -33,7 +33,7 @@ import {
   PageActions,
   PageHeader,
   PageTitle
-} from '../../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import SupportZipHaMachine from './SupportZipHaMachine';
 import SupportZipMachine from '../SupportZipMachine';

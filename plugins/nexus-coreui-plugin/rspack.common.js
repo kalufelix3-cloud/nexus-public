@@ -97,7 +97,6 @@ module.exports = {
   externals: {
     axios: 'axios',
     luxon: 'luxon',
-    '@sonatype/nexus-ui-plugin': 'nxrmUiPlugin',
     '@sonatype/react-shared-components': 'rsc',
     react: 'react',
     xstate: 'xstate'

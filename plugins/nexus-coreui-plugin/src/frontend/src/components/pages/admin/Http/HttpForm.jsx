@@ -29,14 +29,13 @@ import {
   NxTile,
   NxTooltip
 } from '@sonatype/react-shared-components';
-import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 import {faTrashAlt, faPlusCircle} from '@fortawesome/free-solid-svg-icons';
 import UIStrings from '../../../../constants/UIStrings';
 
 const {CONFIGURATION: LABELS} = UIStrings.HTTP;
 
 import HttpMachine from './HttpMachine';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 export default function HttpForm() {
   const [current, send] = useMachine(HttpMachine, {devTools: true});

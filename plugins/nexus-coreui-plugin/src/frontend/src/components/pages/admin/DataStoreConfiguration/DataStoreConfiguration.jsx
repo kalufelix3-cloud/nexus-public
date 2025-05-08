@@ -30,7 +30,7 @@ import {
   Page,
   PageHeader,
   PageTitle
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import DataStoreConfigurationMachine from './DataStoreConfigurationMachine';
 import UIStrings from '../../../../constants/UIStrings';

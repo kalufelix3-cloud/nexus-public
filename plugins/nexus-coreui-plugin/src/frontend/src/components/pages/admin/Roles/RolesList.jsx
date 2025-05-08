@@ -13,7 +13,17 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 
-import {ExtJS, ListMachineUtils, Permissions} from '@sonatype/nexus-ui-plugin';
+import {
+  ContentBody,
+  ExtJS,
+  ListMachineUtils,
+  PageActions,
+  PageHeader,
+  PageTitle,
+  Permissions,
+  Section,
+  SectionToolbar
+} from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxFilterInput,
@@ -26,16 +36,6 @@ import {
   NxInfoAlert,
 } from '@sonatype/react-shared-components';
 
-import {faUserTag} from '@fortawesome/free-solid-svg-icons';
-
-import {
-  ContentBody,
-  PageActions,
-  PageHeader,
-  PageTitle,
-  Section,
-  SectionToolbar
-} from '../../../layout';
 import {HelpTile} from '../../../widgets';
 
 import RolesListMachine from './RolesListMachine';

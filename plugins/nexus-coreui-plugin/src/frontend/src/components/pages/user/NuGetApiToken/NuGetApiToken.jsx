@@ -23,7 +23,7 @@ import {
   PageTitle,
   Section,
   SectionFooter
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import NuGetApiTokenMachine from './NuGetApiTokenMachine';
 import NuGetApiTokenModal from './NuGetApiTokenModal';

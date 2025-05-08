@@ -21,7 +21,7 @@ import {
   Page,
   PageHeader,
   PageTitle
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import EmailServerForm from './EmailServerForm';
 import EmailServerReadOnly from './EmailServerReadOnly';

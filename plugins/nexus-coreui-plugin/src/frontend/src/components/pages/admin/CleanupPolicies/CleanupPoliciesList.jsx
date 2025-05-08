@@ -34,7 +34,7 @@ import {
   PageTitle,
   Section,
   SectionToolbar
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 import {HelpTile} from '../../../widgets';
 
 import CleanupPoliciesListMachine from './CleanupPoliciesListMachine';

@@ -14,7 +14,7 @@ import React from 'react';
 
 import {Information} from '@sonatype/nexus-ui-plugin';
 
-import {Section} from '../../../layout';
+import {Section} from '@sonatype/nexus-ui-plugin';
 
 /**
  * @since 3.24

@@ -18,7 +18,7 @@ import MasterDetail from './MasterDetail';
 import Master from './Master';
 import Detail from './Detail';
 
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import ExtJS from '../../../interface/ExtJS';
 
 jest.mock('@uirouter/react', () => ({
   useRouter: jest.fn(() => ({
@@ -28,11 +28,7 @@ jest.mock('@uirouter/react', () => ({
   })),
 }));
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ExtJS: {
-    useHistory: jest.fn()
-  }
-}));
+jest.mock('../../../interface/ExtJS');
 
 describe('MasterDetail', () => {
   it('renders the master view when at the root', () => {

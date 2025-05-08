@@ -23,7 +23,7 @@ import {
   Page,
   PageHeader,
   PageTitle
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import UserTokensReadOnly from './UserTokensReadOnly';
 import UserTokensMachine from './UserTokensMachine';

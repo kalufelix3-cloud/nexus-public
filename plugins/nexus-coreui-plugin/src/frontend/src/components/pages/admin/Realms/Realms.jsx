@@ -21,7 +21,7 @@ import {
   PageHeader,
   PageTitle,
   Section
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import RealmsForm from './RealmsForm';
 import RealmsReadOnly from './RealmsReadOnly';

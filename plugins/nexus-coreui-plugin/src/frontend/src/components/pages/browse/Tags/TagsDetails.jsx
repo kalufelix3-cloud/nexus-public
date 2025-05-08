@@ -27,7 +27,7 @@ import {
 import {
   ContentBody,
   PageTitle,
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import TagsDetailsMachine from './TagsDetailsMachine';
 import { faTags } from '@fortawesome/free-solid-svg-icons';

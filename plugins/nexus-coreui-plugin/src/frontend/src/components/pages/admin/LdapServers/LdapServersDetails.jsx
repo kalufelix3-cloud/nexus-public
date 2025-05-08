@@ -23,7 +23,7 @@ import {
 } from '@sonatype/react-shared-components';
 import {faBook} from '@fortawesome/free-solid-svg-icons';
 
-import {PageHeader, PageTitle} from '../../../layout';
+import {PageHeader, PageTitle} from '@sonatype/nexus-ui-plugin';
 
 import LdapServersConfigurationForm from './LdapServersConfigurationForm';
 import LdapServersUserAndGroupForm from './LdapServersUserAndGroupForm';

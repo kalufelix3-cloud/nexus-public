@@ -22,7 +22,7 @@ import {
   NxTextInput
 } from '@sonatype/react-shared-components';
 
-import {Section} from '../../../layout';
+import {Section} from '@sonatype/nexus-ui-plugin';
 
 import PasswordChangeMachine from './PasswordChangeMachine';
 import UIStrings from '../../../../constants/UIStrings';

@@ -32,7 +32,7 @@ import {
   PageTitle,
   Section,
   SectionToolbar
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 import {HelpTile} from '../../../widgets';
 
 import {faIdCardAlt} from '@fortawesome/free-solid-svg-icons';

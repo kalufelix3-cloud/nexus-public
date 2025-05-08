@@ -16,7 +16,7 @@ import {FieldWrapper, Textfield} from '@sonatype/nexus-ui-plugin';
 import {NxButton, NxFontAwesomeIcon} from '@sonatype/react-shared-components';
 import {faDownload} from '@fortawesome/free-solid-svg-icons';
 
-import {SectionFooter} from '../../../layout';
+import {SectionFooter} from '@sonatype/nexus-ui-plugin';
 
 export default function SupportZipResponse({response, download}) {
   return <div className='nxrm-support-zip-response'>

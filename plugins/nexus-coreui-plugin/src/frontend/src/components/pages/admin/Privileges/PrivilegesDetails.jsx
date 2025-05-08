@@ -22,7 +22,7 @@ import {
   ContentBody,
   PageHeader,
   PageTitle
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import Machine from './PrivilegesFormMachine';
 import PrivilegesForm from './PrivilegesForm';

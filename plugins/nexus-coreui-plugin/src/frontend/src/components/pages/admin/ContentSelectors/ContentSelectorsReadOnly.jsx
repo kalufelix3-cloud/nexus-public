@@ -23,7 +23,7 @@ import {
   NxInfoAlert
 } from '@sonatype/react-shared-components';
 
-import {Section} from '../../../layout';
+import {Section} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 

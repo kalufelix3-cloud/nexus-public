@@ -37,7 +37,7 @@ import {
   PageTitle,
   Section,
   SectionToolbar
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 import RoutingRulesPreview from './RoutingRulesFormPreview';

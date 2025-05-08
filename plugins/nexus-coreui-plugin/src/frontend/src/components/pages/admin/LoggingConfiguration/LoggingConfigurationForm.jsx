@@ -28,7 +28,7 @@ import {
   PageHeader,
   PageTitle,
   Section
-} from '../../../layout';
+} from '@sonatype/nexus-ui-plugin';
 
 import LoggingConfigurationFormMachine from './LoggingConfigurationFormMachine';
 

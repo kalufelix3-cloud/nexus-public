@@ -26,7 +26,7 @@ import {
   NxTableRow,
 } from '@sonatype/react-shared-components';
 
-import {Section, SectionToolbar} from '../../../layout';
+import {Section, SectionToolbar} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
