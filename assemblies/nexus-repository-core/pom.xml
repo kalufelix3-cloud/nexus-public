@@ -71,14 +71,6 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <configuration>
-          <excludePackageNames>org.sonatype.nexus.bootstrap.*</excludePackageNames>
-        </configuration>
-      </plugin>
-      
-      <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
         <executions>
@@ -584,6 +576,16 @@
             </plugin>
           </plugins>
         </pluginManagement>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <configuration>
+              <!-- this package is spring-only and will cause javadoc failures in not-spring-only  -->
+              <excludePackageNames>org.sonatype.nexus.bootstrap.entrypoint.core</excludePackageNames>
+            </configuration>
+          </plugin>
+        </plugins>
       </build>
     </profile>
   </profiles>
