@@ -62,3 +62,6 @@ export {createRouter} from './router/createRouter';
 export {ThemeSelector} from './components/widgets/ThemeSelector/ThemeSelector';
 
 export * from './components/layout';
+
+export {configureAxios} from './interface/configureAxios';
+export {configureDebug} from './interface/configureDebug';

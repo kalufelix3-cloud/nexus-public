@@ -93,12 +93,5 @@ module.exports = {
   ],
   resolve: {
     extensions: ['.js', '.jsx']
-  },
-  externals: {
-    axios: 'axios',
-    luxon: 'luxon',
-    '@sonatype/react-shared-components': 'rsc',
-    react: 'react',
-    xstate: 'xstate'
   }
 };

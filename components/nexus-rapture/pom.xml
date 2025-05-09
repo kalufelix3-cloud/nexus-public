@@ -164,10 +164,6 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>com.github.eirslett</groupId>
-        <artifactId>frontend-maven-plugin</artifactId>
-      </plugin>
     </plugins>
   </build>
 

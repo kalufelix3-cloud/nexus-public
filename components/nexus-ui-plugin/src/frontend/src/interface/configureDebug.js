@@ -16,7 +16,7 @@
  */
 import {inspect} from "@xstate/inspect";
 
-export default function configureDebug() {
+export function configureDebug() {
   if (window.location.search.startsWith('?debug')) {
     console.log('initialize xstate inspector');
     inspect({

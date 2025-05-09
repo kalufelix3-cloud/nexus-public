@@ -12,8 +12,9 @@
  */
 import React from 'react';
 import ReactDOM from 'react-dom';
+
 import {UIRouter, UIView} from '@uirouter/react';
-import {ExtJS} from '@sonatype/nexus-ui-plugin'
+import {configureAxios, configureDebug, ExtJS} from '@sonatype/nexus-ui-plugin'
 
 import { getRouter } from './routerConfig/routerConfig';
 import LeftNavigationMenu from "./components/LeftNavigationMenu/LeftNavigationMenu";
@@ -44,6 +45,9 @@ export function App() {
 }
 
 ExtJS.waitForExtJs(() => {
+  configureAxios();
+  configureDebug();
+
   const router = getRouter();
   const el = document.createElement('div');
   el.className = 'nx-page nxrm-page';
