@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rapture.internal.branding;
+package org.sonatype.nexus.coreui.internal.branding;
 
 import java.util.List;
 import java.util.Map;
@@ -91,27 +91,22 @@ public class BrandingCapabilityDescriptor
             BrandingCapabilityConfiguration.HEADER_ENABLED,
             messages.headerEnabledLabel(),
             messages.headerEnabledHelp(),
-            FormField.OPTIONAL
-        ).withInitialValue(true),
+            FormField.OPTIONAL).withInitialValue(true),
         new TextAreaFormField(
             BrandingCapabilityConfiguration.HEADER_HTML,
             messages.headerHtmlLabel(),
             messages.headerHtmlHelp(),
-            FormField.OPTIONAL
-        ),
+            FormField.OPTIONAL),
         new CheckboxFormField(
             BrandingCapabilityConfiguration.FOOTER_ENABLED,
             messages.footerEnabledLabel(),
             messages.footerEnabledHelp(),
-            FormField.OPTIONAL
-        ).withInitialValue(true),
+            FormField.OPTIONAL).withInitialValue(true),
         new TextAreaFormField(
             BrandingCapabilityConfiguration.FOOTER_HTML,
             messages.footerHtmlLabel(),
             messages.footerHtmlHelp(),
-            FormField.OPTIONAL
-        )
-    );
+            FormField.OPTIONAL));
   }
 
   @Override
