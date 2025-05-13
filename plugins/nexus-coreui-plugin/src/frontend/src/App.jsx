@@ -12,35 +12,59 @@
  */
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {UIRouter, UIView} from '@uirouter/react';
-import {ExtJS} from '@sonatype/nexus-ui-plugin'
+import { UIRouter, UIView } from '@uirouter/react';
+import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
 import { getRouter } from './routerConfig/routerConfig';
-import LeftNavigationMenu from "./components/LeftNavigationMenu/LeftNavigationMenu";
-import GlobalHeader from "./components/GlobalHeader/GlobalHeader";
+import LeftNavigationMenu from './components/LeftNavigationMenu/LeftNavigationMenu';
+import GlobalHeader from './components/GlobalHeader/GlobalHeader';
 
 import './App.scss';
 import SystemNotices from './components/widgets/SystemStatusAlerts/SystemNotices';
 import UpgradeModal from './components/pages/user/Welcome/UpgradeModal';
-import {useRedirectOnLogout} from './hooks/useRedirectOnLogout';
+import { useRedirectOnLogout } from './hooks/useRedirectOnLogout';
 import usePreventPushStateOnHash from './hooks/usePreventPushStateOnHash';
 
 export function App() {
   useRedirectOnLogout();
   usePreventPushStateOnHash();
 
+  const branding = ExtJS.state().getValue('branding');
+
+  const headerEnabled = branding?.headerEnabled;
+  const headerHtml = branding?.headerHtml;
+  const footerEnabled = branding?.footerEnabled;
+  const footerHtml = branding?.footerHtml;
+
   return (
-      <>
-        <SystemNotices/>
+    <>
+      <SystemNotices />
 
-        <GlobalHeader/>
+      {headerEnabled && (
+        <div
+          className='nxrm-branding-header'
+          data-testid='nxrm-branding-header'
+          dangerouslySetInnerHTML={{ __html: headerHtml }}
+        />
+      )}
 
-        <LeftNavigationMenu/>
+      <GlobalHeader />
 
-        <UpgradeModal/>
+      <LeftNavigationMenu />
 
-        <UIView/>
-      </>);
+      <UpgradeModal />
+
+      <UIView />
+
+      {footerEnabled && (
+        <div
+          className='nxrm-branding-footer'
+          data-testid='nxrm-branding-footer'
+          dangerouslySetInnerHTML={{ __html: footerHtml }}
+        />
+      )}
+    </>
+  );
 }
 
 ExtJS.waitForExtJs(() => {
@@ -49,7 +73,9 @@ ExtJS.waitForExtJs(() => {
   el.className = 'nx-page nxrm-page';
   document.body.appendChild(el);
   ReactDOM.render(
-      <UIRouter router={router}>
-        <App/>
-      </UIRouter>, el);
+    <UIRouter router={router}>
+      <App />
+    </UIRouter>,
+    el
+  );
 });

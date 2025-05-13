@@ -12,12 +12,25 @@
  */
 
 .nxrm-page {
-  grid-template-columns: auto auto min(var(--nx-width-sidebar), 270px) 1fr;
+  grid-template:
+    "branding-header branding-header branding-header branding-header" auto
+    "global-sidebar notices notices notices" auto
+    "global-sidebar header header header" auto
+    "global-sidebar global-sidebar-2 old-sidebar content" 1fr
+    "branding-footer branding-footer branding-footer branding-footer" auto / auto auto min(var(--nx-width-sidebar), 270px) 1fr;
   .nx-global-sidebar-2__navigation-link.nx-text-link.selected {
     background-image: none;
     background-color: var(--nx-swatch-green-30);
   }
 
+  .nxrm-branding-header {
+    grid-area: branding-header;
+  }
+
+  .nxrm-branding-footer {
+    grid-area: branding-footer;
+  }
+  
   .nx-html--dark-mode & {
     .nx-text-link.selected {
       font-weight: 700;

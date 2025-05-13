@@ -45,8 +45,89 @@ describe('App', () => {
 
   it('should render', async () => {
     renderComponent();
-
     await assertBasicPageLayoutRenders();
+  });
+
+  describe('UI Branding', () => {
+    it('should not render branding header nor footer when not branding is set', async () => {
+      renderComponent();
+      const brandingHeader = screen.queryByTestId('nxrm-branding-header');
+      const brandingFooter = screen.queryByTestId('nxrm-branding-footer');
+      expect(brandingHeader).not.toBeInTheDocument();
+      expect(brandingFooter).not.toBeInTheDocument();
+    });
+
+    it('should not render branding header and footer when both are disabled', async () => {
+      givenExtJSState({
+        ...getDefaultState(),
+        branding: {
+          headerEnabled: false,
+          headerHtml: '<div>Branding Header</div>',
+          footerEnabled: false,
+          footerHtml: '<div>Branding Footer</div>',
+        },
+      });
+      renderComponent();
+      const brandingHeader = screen.queryByTestId('nxrm-branding-header');
+      const brandingFooter = screen.queryByTestId('nxrm-branding-footer');
+      expect(brandingHeader).not.toBeInTheDocument();
+      expect(brandingFooter).not.toBeInTheDocument();
+    });
+
+    it('should render branding header and footer when enabled', async () => {
+      givenExtJSState({
+        ...getDefaultState(),
+        branding: {
+          headerEnabled: true,
+          headerHtml: '<div>Branding Header</div>',
+          footerEnabled: true,
+          footerHtml: '<div>Branding Footer</div>',
+        },
+      });
+      renderComponent();
+      const brandingHeader = screen.getByTestId('nxrm-branding-header');
+      const brandingFooter = screen.getByTestId('nxrm-branding-footer');
+      expect(brandingHeader).toBeVisible();
+      expect(within(brandingHeader).getByText('Branding Header')).toBeVisible();
+      expect(brandingFooter).toBeVisible();
+      expect(within(brandingFooter).getByText('Branding Footer')).toBeVisible();
+    });
+
+    it('should render branding header but not footer', async () => {
+      givenExtJSState({
+        ...getDefaultState(),
+        branding: {
+          headerEnabled: true,
+          headerHtml: '<div>Branding Header</div>',
+          footerEnabled: false,
+          footerHtml: '<div>Branding Footer</div>',
+        },
+      });
+      renderComponent();
+      const brandingHeader = screen.getByTestId('nxrm-branding-header');
+      const brandingFooter = screen.queryByTestId('nxrm-branding-footer');
+      expect(brandingHeader).toBeVisible();
+      expect(within(brandingHeader).getByText('Branding Header')).toBeVisible();
+      expect(brandingFooter).not.toBeInTheDocument();
+    });
+
+    it('should render branding footer but not header', async () => {
+      givenExtJSState({
+        ...getDefaultState(),
+        branding: {
+          headerEnabled: false,
+          headerHtml: '<div>Branding Header</div>',
+          footerEnabled: true,
+          footerHtml: '<div>Branding Footer</div>',
+        },
+      });
+      renderComponent();
+      const brandingHeader = screen.queryByTestId('nxrm-branding-header');
+      const brandingFooter = screen.getByTestId('nxrm-branding-footer');
+      expect(brandingHeader).not.toBeInTheDocument();
+      expect(brandingFooter).toBeVisible();
+      expect(within(brandingFooter).getByText('Branding Footer')).toBeVisible();
+    });
   });
 
   describe('Community Edition Hard Limit Banner', () => {
