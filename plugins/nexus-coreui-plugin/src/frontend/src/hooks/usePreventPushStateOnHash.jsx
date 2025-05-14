@@ -13,10 +13,12 @@
 
 import { useEffect } from "react";
 
-// This is a temporary fix for a issue caused by swagger-ui-react 
-// to prevent the URL from being updated with a hash (#) when the user adds a criteria
-// which causes the url parameters to dissapear and cause an error when searching
-// A proper fix will be implemented in NEXUS-46710
+/*
+ * This hook prevents the pushState method from being called with a hash (#) as the URL.
+ * it's is to prevent a bug caused by zenscroll combined with the hash before the path in the URL.
+ * 
+ * Related spike https://sonatype.atlassian.net/browse/NEXUS-46710?focusedCommentId=762520
+ */
 export default function usePreventPushStateOnHash() {
   useEffect(() => {
     if (!window?.history) {
