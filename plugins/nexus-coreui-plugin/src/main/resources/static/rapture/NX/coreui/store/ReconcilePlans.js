@@ -35,13 +35,5 @@ Ext.define('NX.coreui.store.ReconcilePlans', {
     buildUrl: function(request) {
       return this.url;
     }
-  },
-  load: function() {
-    var isReconcilePlanEnabled = NX.State.getValue('isReconcilePlanEnabled', false)
-    if (!isReconcilePlanEnabled) {
-      console.log('Reconcile plan is not enabled');
-      return;
-    }
-    this.callParent(arguments);
   }
 });

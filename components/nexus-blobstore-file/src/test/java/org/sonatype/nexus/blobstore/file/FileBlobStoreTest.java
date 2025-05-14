@@ -593,7 +593,6 @@ public class FileBlobStoreTest
 
     BlobId blobId = new BlobId("test-blob-id");
     Path path = underTest.attributePath(new BlobId(blobId.asUniqueString(), UTC.now()));
-    when(underTest.isReconcilePlanEnabled()).thenReturn(true);
     when(attributes.isDeleted()).thenReturn(false);
     when(underTest.getFileBlobAttributes(blobId)).thenReturn(attributes);
     when(underTest.getFileBlobAttributes(path)).thenReturn(newBlobAttributes);
@@ -608,24 +607,6 @@ public class FileBlobStoreTest
     verify(newBlobAttributes).updateFrom(attributes);
     verify(newBlobAttributes).setOriginalLocation(anyString());
     verify(newBlobAttributes).store();
-  }
-
-  @Test
-  public void testDoDeleteWithDateBasedLayoutDisabled() throws Exception {
-
-    TestFileBlobStore underTest = createFixture();
-
-    BlobId blobId = new BlobId("test-blob-id");
-    when(underTest.isReconcilePlanEnabled()).thenReturn(false);
-    when(attributes.isDeleted()).thenReturn(false);
-    when(underTest.getFileBlobAttributes(blobId)).thenReturn(attributes);
-
-    boolean result = underTest.doDelete(blobId, "test-reason");
-
-    assertTrue(result);
-    assertAttributes(blobId);
-    verify(attributes, never()).setDeletedDateTime(any());
-    verifyNoInteractions(newBlobAttributes);
   }
 
   private TestFileBlobStore createFixture() {
@@ -676,10 +657,6 @@ public class FileBlobStoreTest
           reconciliationLogger, blobStoreQuota, blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
     }
 
-    @Override
-    public boolean isReconcilePlanEnabled() {
-      return false;
-    }
   }
 
 }

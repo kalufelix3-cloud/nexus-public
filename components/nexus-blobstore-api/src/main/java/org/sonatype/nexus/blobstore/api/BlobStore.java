@@ -197,20 +197,6 @@ public interface BlobStore
   Blob copy(BlobId blobId, Map<String, String> headers);
 
   /**
-   * Returns true if the internal blob move is supported for a source and target blobstore of the same type.
-   *
-   * @since 3.8
-   */
-  boolean isInternalMoveSupported(BlobStore destBlobStore);
-
-  /**
-   * Moves a blob from one blob store to another. The blob must be in this blob store.
-   *
-   * @since 3.8
-   */
-  Blob moveInternal(BlobStore destBlobStore, BlobId blobId, Map<String, String> headers);
-
-  /**
    * Makes a blob permanent by writing the specified permanent blob headers into the blob's properties file.
    *
    * @since 3.37

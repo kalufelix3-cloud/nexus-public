@@ -400,16 +400,6 @@ public class S3BlobStore
   }
 
   @Override
-  public boolean isInternalMoveSupported(final BlobStore destBlobStore) {
-    return false;
-  }
-
-  @Override
-  public Blob moveInternal(final BlobStore destBlobStore, final BlobId blobId, final Map<String, String> headers) {
-    throw new UnsupportedOperationException("Internal move operation is not supported.");
-  }
-
-  @Override
   @Guarded(by = STARTED)
   @Timed
   public Blob writeBlobProperties(final BlobId blobId, final Map<String, String> headers) {
@@ -525,18 +515,16 @@ public class S3BlobStore
       blobAttributes.setDeletedReason(reason);
       blobAttributes.setDeletedDateTime(deletedDateTime);
 
-      if (isReconcilePlanEnabled()) {
-        String softDeletedPrefixLocation = getLocationPrefix(propRef);
-        blobAttributes.setSoftDeletedLocation(softDeletedPrefixLocation);
+      String softDeletedPrefixLocation = getLocationPrefix(propRef);
+      blobAttributes.setSoftDeletedLocation(softDeletedPrefixLocation);
 
-        // Save properties file under the new location
-        String originalPrefixLocation = getLocationPrefix(blobId);
-        if (!originalPrefixLocation.equals(softDeletedPrefixLocation)) {
-          S3BlobAttributes newBlobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), softDeletedLocation);
-          newBlobAttributes.updateFrom(blobAttributes);
-          newBlobAttributes.setOriginalLocation(originalPrefixLocation);
-          newBlobAttributes.store();
-        }
+      // Save properties file under the new location
+      String originalPrefixLocation = getLocationPrefix(blobId);
+      if (!originalPrefixLocation.equals(softDeletedPrefixLocation)) {
+        S3BlobAttributes newBlobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), softDeletedLocation);
+        newBlobAttributes.updateFrom(blobAttributes);
+        newBlobAttributes.setOriginalLocation(originalPrefixLocation);
+        newBlobAttributes.store();
       }
 
       blobAttributes.store();
@@ -810,15 +798,8 @@ public class S3BlobStore
       OffsetDateTime fromDateTime = now.minusSeconds(duration.getSeconds());
 
       Stream<BlobId> blobIdStreams;
-      if (isReconcilePlanEnabled()) {
-        // get Blob Ids from date-based location only
-        String prefix = getContentPrefix() + DateBasedHelper.getDatePathPrefix(fromDateTime, now);
-        blobIdStreams = getBlobIdStream(prefix, fromDateTime);
-      }
-      else {
-        // get Blob Ids from volume-chapter location only
-        blobIdStreams = getBlobIdStream(getContentVolumePrefix(), fromDateTime);
-      }
+      String prefix = getContentPrefix() + DateBasedHelper.getDatePathPrefix(fromDateTime, now);
+      blobIdStreams = getBlobIdStream(prefix, fromDateTime);
 
       return blobIdStreams.distinct();
     }

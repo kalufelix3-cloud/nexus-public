@@ -136,7 +136,7 @@ public class S3BlobStoreTest
     Region region = mock(Region.class);
     when(region.getName()).thenReturn("us-east-1");
     regionsMockedStatic.when(Regions::getCurrentRegion).thenReturn(region);
-    blobStore = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(true), uploader, copier, false,
+    blobStore = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(), uploader, copier, false,
         storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker);
 
     config = new MockBlobStoreConfiguration();

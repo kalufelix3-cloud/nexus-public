@@ -20,8 +20,6 @@ import org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 
-import static org.sonatype.nexus.common.app.FeatureFlags.RECONCILE_PLAN_ENABLED_NAMED;
-
 /**
  * @since 3.4
  */
@@ -32,10 +30,7 @@ public class RestoreMetadataTaskDescriptor
     extends BaseRestoreMetadataTaskDescriptor
 {
   @Inject
-  public RestoreMetadataTaskDescriptor(
-      @Named(RECONCILE_PLAN_ENABLED_NAMED) final boolean isReconcilePlanEnabled,
-      ApplicationVersion applicationVersion)
-  {
-    super(!(isReconcilePlanEnabled && applicationVersion.getEdition().equals("PRO")));
+  public RestoreMetadataTaskDescriptor(ApplicationVersion applicationVersion) {
+    super(!(applicationVersion.getEdition().equals("PRO")));
   }
 }

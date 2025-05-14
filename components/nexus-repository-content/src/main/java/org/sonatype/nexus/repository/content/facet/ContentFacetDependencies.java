@@ -28,7 +28,6 @@ import org.sonatype.nexus.security.ClientInfoProvider;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.app.FeatureFlags.RECONCILE_PLAN_ENABLED_NAMED;
 
 /**
  * Internal dependencies injected into a repository's {@link ContentFacet}.
@@ -57,8 +56,6 @@ public class ContentFacetDependencies
 
   private final Optional<RepositoryMoveService> maybeMoveService;
 
-  private final boolean isReconcilePlanEnabled;
-
   @Inject
   public ContentFacetDependencies(
       final BlobStoreManager blobStoreManager,
@@ -69,8 +66,7 @@ public class ContentFacetDependencies
       final AssetBlobValidators assetBlobValidators,
       final BlobMetadataStorage blobMetadataStorage,
       final VersionNormalizerService versionNormalizerService,
-      @Nullable final RepositoryMoveService moveService,
-      @Named(RECONCILE_PLAN_ENABLED_NAMED) final boolean isReconcilePlanEnabled)
+      @Nullable final RepositoryMoveService moveService)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.dataSessionSupplier = checkNotNull(dataSessionSupplier);
@@ -81,7 +77,6 @@ public class ContentFacetDependencies
     this.blobMetadataStorage = checkNotNull(blobMetadataStorage);
     this.versionNormalizerService = versionNormalizerService;
     this.maybeMoveService = Optional.ofNullable(moveService);
-    this.isReconcilePlanEnabled = isReconcilePlanEnabled;
   }
 
   public BlobStoreManager getBlobStoreManager() {
@@ -118,9 +113,5 @@ public class ContentFacetDependencies
 
   public Optional<RepositoryMoveService> getMoveService() {
     return maybeMoveService;
-  }
-
-  public boolean isReconcilePlanEnabled() {
-    return isReconcilePlanEnabled;
   }
 }

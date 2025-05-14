@@ -241,16 +241,6 @@ public class BlobStoreGroup
     return blob;
   }
 
-  @Override
-  public boolean isInternalMoveSupported(BlobStore destBlobStore) {
-    return false;
-  }
-
-  @Override
-  public Blob moveInternal(final BlobStore destBlobStore, final BlobId blobId, final Map<String, String> headers) {
-    return null;
-  }
-
   @Nullable
   @Override
   @Guarded(by = STARTED)

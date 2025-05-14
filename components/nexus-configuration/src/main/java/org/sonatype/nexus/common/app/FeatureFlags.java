@@ -274,10 +274,6 @@ public class FeatureFlags
   public static final String MALWARE_REMEDIATOR_TASK_IGNORE_QUARANTINE_STATE_NAMED_VALUE =
       "${nexus.malware.remediator.task.ignore.quarantine.state:true}";
 
-  public static final String RECONCILE_PLAN_ENABLED = "nexus.reconcile.plan.enabled";
-
-  public static final String RECONCILE_PLAN_ENABLED_NAMED = "${nexus.reconcile.plan.enabled:-false}";
-
   /* properties/env vars used by secrets service */
   public static final String SECRETS_FILE = "nexus.secrets.file";
 

@@ -107,26 +107,21 @@ public class TaskComponent
 
   private final boolean allowCreation;
 
-  private final boolean isReconcilePlanEnabled;
-
   @Inject
   public TaskComponent(
       final TaskScheduler taskScheduler,
       final Provider<Validator> validatorProvider,
-      @Named("${nexus.scripts.allowCreation:-false}") @Value("${nexus.scripts.allowCreation:false}") final boolean allowCreation,
-      @Named("${nexus.reconcile.plan.enabled:-false}") @Value("${nexus.reconcile.plan.enabled:false}") final boolean isReconcilePlanEnabled)
+      @Named("${nexus.scripts.allowCreation:-false}") @Value("${nexus.scripts.allowCreation:false}") final boolean allowCreation)
   {
     this.taskScheduler = checkNotNull(taskScheduler);
     this.validatorProvider = checkNotNull(validatorProvider);
     this.allowCreation = allowCreation;
-    this.isReconcilePlanEnabled = isReconcilePlanEnabled;
   }
 
   @Nullable
   @Override
   public Map<String, Object> getState() {
-    return ImmutableMap.of("allowScriptCreation", allowCreation,
-        "isReconcilePlanEnabled", isReconcilePlanEnabled);
+    return ImmutableMap.of("allowScriptCreation", allowCreation);
   }
 
   /**

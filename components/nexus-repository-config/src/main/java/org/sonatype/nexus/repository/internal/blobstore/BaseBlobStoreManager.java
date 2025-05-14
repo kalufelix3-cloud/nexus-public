@@ -594,15 +594,8 @@ public class BaseBlobStoreManager
     boolean isSrcDeleted = srcBlobAttributes.isDeleted();
 
     Map<String, String> headers = srcBlobAttributes.getHeaders();
-
-    Blob newBlob;
-    if (srcBlobStore.isInternalMoveSupported(destBlobStore)) {
-      newBlob = srcBlobStore.moveInternal(destBlobStore, blobId, headers);
-    }
-    else {
-      InputStream srcInputStream = inputStreamOfBlob(srcBlobStore, blobId);
-      newBlob = destBlobStore.create(srcInputStream, headers, blobId);
-    }
+    InputStream srcInputStream = inputStreamOfBlob(srcBlobStore, blobId);
+    Blob newBlob = destBlobStore.create(srcInputStream, headers, blobId);
     destBlobStore.setBlobAttributes(blobId, srcBlobAttributes);
 
     ensureDeletedStateTransferred(blobId, srcBlobStore, destBlobStore, isSrcDeleted);
