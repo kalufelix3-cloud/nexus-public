@@ -74,7 +74,8 @@ export default function SettingsSidebar() {
           data-analytics-id='nxrm-global-secondary-navbar-repository-cleanuppolicies'
         />
         <LeftNavigationMenuCollapsibleChildItem
-          name={ADMIN.REPOSITORY.ROUTINGRULES}
+          selectedState={ADMIN.REPOSITORY.ROUTINGRULES.DIRECTORY}
+          name={ADMIN.REPOSITORY.ROUTINGRULES.LIST}
           text={UIStrings.ROUTING_RULES.MENU.text}
           params={{ itemId: null }}
           data-analytics-id='nxrm-global-secondary-navbar-repository-routingrules'

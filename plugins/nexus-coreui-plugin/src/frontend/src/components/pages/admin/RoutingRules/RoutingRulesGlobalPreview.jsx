@@ -36,13 +36,16 @@ import {
   ContentBody,
   PageTitle,
   Section,
-  SectionToolbar
+  SectionToolbar,
+  Page
 } from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 import RoutingRulesPreview from './RoutingRulesFormPreview';
 import RoutingRulesStatus from './RoutingRulesStatus';
 import RoutingRulesGlobalPreviewMachine from './RoutingRulesGlobalPreviewMachine';
+
+import './RoutingRules.scss';
 
 const {ROUTING_RULES} = UIStrings;
 
@@ -89,7 +92,7 @@ export default function RoutingRulesList() {
     send({type: 'RETRY'});
   }
 
-  return <div className="nxrm-routing-rules">
+  return <Page className="nxrm-routing-rules">
     <PageTitle text={ROUTING_RULES.PREVIEW.TITLE}/>
     <ContentBody className="global-preview">
       <Section>
@@ -185,5 +188,5 @@ export default function RoutingRulesList() {
         <footer className="nx-footer"><NxButton onClick={closeModal}>{UIStrings.CLOSE}</NxButton></footer>
       </NxModal>}
     </ContentBody>
-  </div>;
+  </Page>;
 }

@@ -21,7 +21,6 @@ import DataStoreConfiguration from '../../components/pages/admin/DataStoreConfig
 import ProprietaryRepositories from '../../components/pages/admin/ProprietaryRepositories/ProprietaryRepositories';
 import ContentSelectors from '../../components/pages/admin/ContentSelectors/ContentSelectors';
 import CleanupPolicies from '../../components/pages/admin/CleanupPolicies/CleanupPolicies';
-import RoutingRules from '../../components/pages/admin/RoutingRules/RoutingRules';
 import Privileges from '../../components/pages/admin/Privileges/Privileges';
 import EmailServer from '../../components/pages/admin/EmailServer/EmailServer';
 import Roles from '../../components/pages/admin/Roles/Roles';
@@ -57,6 +56,9 @@ import AdminSupportDirectoryPage from '../../components/pages/AdminSupport/Admin
 const ADMIN = ROUTE_NAMES.ADMIN;
 import SettingsPageLayout from '../../components/LeftNavigationMenu/SettingsPageLayout/SettingsPageLayout';
 import LoggingConfiguration from '../../components/pages/admin/LoggingConfiguration/LoggingConfiguration';
+import RoutingRulesForm from '../../components/pages/admin/RoutingRules/RoutingRulesForm';
+import RoutingRulesList from '../../components/pages/admin/RoutingRules/RoutingRulesList';
+import RoutingRulesGlobalPreview from '../../components/pages/admin/RoutingRules/RoutingRulesGlobalPreview.jsx';
 
 // for more info on how to define routes see private/developer-documentation/frontend/client-side-routing.md
 export const adminRoutes = [
@@ -198,22 +200,39 @@ export const adminRoutes = [
   },
 
   {
-    name: ADMIN.REPOSITORY.ROUTINGRULES,
-    url: '/routingrules:itemId',
-    component: RoutingRules,
+    name: ADMIN.REPOSITORY.ROUTINGRULES.DIRECTORY,
+    abstract: true,
+    component: UIView,
     data: {
       visibilityRequirements: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: [Permissions.ADMIN]
       }
-    },
-    params: {
-      itemId: {
-        value: null,
-        raw: true,
-        dynamic: true
-      }
     }
+  },
+
+  {
+    name: ADMIN.REPOSITORY.ROUTINGRULES.LIST,
+    url: '/routingrules',
+    component: RoutingRulesList,
+  },
+
+  {
+    name: ADMIN.REPOSITORY.ROUTINGRULES.CREATE,
+    url: '/routingrules/create',
+    component: RoutingRulesForm,
+  },
+
+  {
+    name: ADMIN.REPOSITORY.ROUTINGRULES.EDIT,
+    url: '/routingrules/edit/{itemId:[a-zA-Z0-9]+}',
+    component: RoutingRulesForm,
+  },
+
+  {
+    name: ADMIN.REPOSITORY.ROUTINGRULES.PREVIEW,
+    url: '/routingrules/preview',
+    component: RoutingRulesGlobalPreview,
   },
 
   // === admin/security ===

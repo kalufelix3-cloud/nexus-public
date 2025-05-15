@@ -29,7 +29,13 @@ export default {
     PROPRIETARY: 'admin.repository.proprietary',
     SELECTORS: 'admin.repository.selectors',
     CLEANUPPOLICIES: 'admin.repository.cleanuppolicies',
-    ROUTINGRULES: 'admin.repository.routingrules'
+    ROUTINGRULES: {
+      DIRECTORY: 'admin.repository.routingrules',
+      LIST: 'admin.repository.routingrules.list',
+      CREATE: 'admin.repository.routingrules.create',
+      EDIT: 'admin.repository.routingrules.edit',
+      PREVIEW: 'admin.repository.routingrules.preview',
+    },
   },
   SECURITY: {
     DIRECTORY: 'admin.security',

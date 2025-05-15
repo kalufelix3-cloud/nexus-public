@@ -22,6 +22,8 @@ import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 
 import UIStrings from '../../../../constants/UIStrings';
 import RoutingRulesForm from './RoutingRulesForm';
+import {UIRouter, useCurrentStateAndParams} from "@uirouter/react";
+import { getRouter } from '../../../../routerConfig/routerConfig';
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'), // Use most functions from actual axios
@@ -63,17 +65,30 @@ const selectors = {
   querySubmitButton: () => screen.queryByRole('button', {name: 'Create Routing Rule'})
 };
 
+jest.mock('@uirouter/react', () => ({
+  ...jest.requireActual('@uirouter/react'),
+  useCurrentStateAndParams: jest.fn(),
+}));
+
 describe('RoutingRulesForm', function() {
   const CONFIRM = Promise.resolve();
   const onDone = jest.fn();
   const ROUTING_RULES_URL = (name) => `/service/rest/internal/ui/routing-rules/${name}`;
 
-  function renderEditView(itemId) {
-    return renderView(<RoutingRulesForm itemId={itemId} onDone={onDone}/>);
-  }
+  beforeEach(() => {
+    useCurrentStateAndParams.mockReset();
+  });
 
-  function renderCreateView() {
-    return renderView(<RoutingRulesForm onDone={onDone} />);
+  // When itemId is null, the create form is rendered
+  function renderEditView(itemId = null) {
+    useCurrentStateAndParams.mockReturnValue({params: {itemId}});
+    const router = getRouter();
+    const view = (
+      <UIRouter router={router}>
+        <RoutingRulesForm />
+      </UIRouter>
+    );
+    return renderView(view);
   }
 
   function renderView(view) {
@@ -123,7 +138,7 @@ describe('RoutingRulesForm', function() {
   });
 
   it('renders an error message when saving an invalid field', async function() {
-    const {name, createButton, getByText} = renderCreateView();
+    const {name, createButton, getByText} = renderEditView();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -150,7 +165,7 @@ describe('RoutingRulesForm', function() {
   it('requires the name, description, and at least one matcher', async function() {
     axios.get.mockResolvedValue({data: []});
 
-    const {name, description} = renderCreateView();
+    const {name, description} = renderEditView();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -178,16 +193,6 @@ describe('RoutingRulesForm', function() {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('fires onDone when cancelled', async function() {
-    const {loadingMask, cancelButton} = renderCreateView();
-
-    await waitForElementToBeRemoved(loadingMask);
-
-    userEvent.click(cancelButton());
-
-    await waitFor(() => expect(onDone).toBeCalled());
-  });
-
   it('requests confirmation when delete is requested', async function() {
     const itemId = 'allow-all';
     axios.get.mockResolvedValue({
@@ -211,14 +216,13 @@ describe('RoutingRulesForm', function() {
     userEvent.click(deleteButton());
 
     await waitFor(() => expect(axios.delete).toBeCalledWith(ROUTING_RULES_URL(itemId)));
-    expect(onDone).toBeCalled();
   });
 
   it('creates a new routing rule', async function() {
     axios.get.mockResolvedValue({data: []});
     axios.post.mockResolvedValue(null);
 
-    const {loadingMask, name, description, mode, createButton} = renderCreateView();
+    const {loadingMask, name, description, mode, createButton} = renderEditView();
 
     await waitForElementToBeRemoved(loadingMask);
 

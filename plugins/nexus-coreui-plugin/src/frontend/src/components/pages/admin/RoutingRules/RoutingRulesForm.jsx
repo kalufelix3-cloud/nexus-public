@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, { useCallback } from 'react';
 import {useMachine} from '@xstate/react';
 
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
@@ -32,7 +32,8 @@ import {
   ContentBody,
   PageHeader,
   PageTitle,
-  Section
+  Section,
+  Page
 } from '@sonatype/nexus-ui-plugin';
 
 import RoutingRuleFormMachine from './RoutingRulesFormMachine';
@@ -43,9 +44,18 @@ import RoutingRulesPreview from './RoutingRulesFormPreview';
 import RoutingRuleMatcherRow from './RoutingRuleMatcherRow';
 import { isEmpty } from 'ramda';
 
+import './RoutingRules.scss';
+import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
+import { useCurrentStateAndParams, useRouter } from '@uirouter/react';
+
+
 const {ROUTING_RULES, SETTINGS} = UIStrings;
 
-export default function RoutingRulesForm({itemId, onDone}) {
+export default function RoutingRulesForm() {
+  const router = useRouter();
+  const onDone = useCallback(() => router.stateService.go(ROUTE_NAMES.ADMIN.REPOSITORY.ROUTINGRULES.LIST));
+  const { params } = useCurrentStateAndParams();
+  const itemId = params?.itemId;
   const [current, send] = useMachine(RoutingRuleFormMachine, {
     context: {
       pristineData: {
@@ -104,7 +114,7 @@ export default function RoutingRulesForm({itemId, onDone}) {
     send({type: 'TEST'});
   }
 
-  return <div className="nxrm-routing-rules">
+  return <Page className="nxrm-routing-rules">
     {isEdit &&
     <NxInfoAlert>
       {!hasAssignedRepositories && <span dangerouslySetInnerHTML={{__html: ROUTING_RULES.FORM.UNUSED}}/>}
@@ -184,5 +194,5 @@ export default function RoutingRulesForm({itemId, onDone}) {
         </NxLoadWrapper>
       </Section>
     </ContentBody>
-  </div>;
+  </Page>;
 }

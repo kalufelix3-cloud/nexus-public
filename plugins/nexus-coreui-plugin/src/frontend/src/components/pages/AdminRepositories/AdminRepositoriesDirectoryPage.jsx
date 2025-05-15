@@ -75,7 +75,7 @@ export default function AdminRepositoriesDirectoryPage() {
               data-analytics-id="nxrm-admin-repository-directory-routingrules-lnk"
               text={UIStrings.ROUTING_RULES.MENU.text}
               description={UIStrings.ROUTING_RULES.MENU.description}
-              routeName={ADMIN.REPOSITORY.ROUTINGRULES}
+              routeName={ADMIN.REPOSITORY.ROUTINGRULES.LIST}
               params={{ itemId: null }}
           />
         </DirectoryList>

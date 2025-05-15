@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, { useCallback } from 'react';
 import {useMachine} from '@xstate/react';
 
 import {faMapSigns} from '@fortawesome/free-solid-svg-icons';
@@ -32,18 +32,27 @@ import {
   PageHeader,
   PageTitle,
   Section,
-  SectionToolbar
+  SectionToolbar,
+  Page
 } from '@sonatype/nexus-ui-plugin';
 import {HelpTile} from '../../../widgets';
 
-import RoutingRulesGlobalPreview from './RoutingRulesGlobalPreview';
 import RoutingRulesListMachine from './RoutingRulesListMachine';
 
 import UIStrings from '../../../../constants/UIStrings';
+import { useRouter } from '@uirouter/react';
+import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
+
+import './RoutingRules.scss';
 
 const {ROUTING_RULES: {LIST: LABELS, MENU}} = UIStrings;
 
-export default function RoutingRulesList({onCreate, onEdit}) {
+export default function RoutingRulesList() {
+  const router = useRouter();
+  const onEdit = useCallback(itemId => router.stateService.go(ROUTE_NAMES.ADMIN.REPOSITORY.ROUTINGRULES.EDIT, { itemId }));
+  const onCreate = useCallback(() => router.stateService.go(ROUTE_NAMES.ADMIN.REPOSITORY.ROUTINGRULES.CREATE));
+  const onPreview = useCallback(() => router.stateService.go(ROUTE_NAMES.ADMIN.REPOSITORY.ROUTINGRULES.PREVIEW));
+
   const [current, send] = useMachine(RoutingRulesListMachine, {devTools: true});
   const isLoading = current.matches('loading');
   const data = current.context.data;
@@ -67,13 +76,10 @@ export default function RoutingRulesList({onCreate, onEdit}) {
 
   function preview() {
     send({type: 'PREVIEW'});
+    onPreview();
   }
 
-  if (current.matches('preview')) {
-    return <RoutingRulesGlobalPreview/>
-  }
-
-  return <div className="nxrm-routing-rules">
+  return <Page className="nxrm-routing-rules">
     <PageHeader>
       <PageTitle icon={faMapSigns} {...MENU}/>
       <PageActions>
@@ -129,5 +135,5 @@ export default function RoutingRulesList({onCreate, onEdit}) {
       </Section>
       <HelpTile header={LABELS.HELP_TITLE} body={LABELS.HELP_TEXT}/>
     </ContentBody>
-  </div>;
+  </Page>;
 }
