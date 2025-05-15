@@ -119,7 +119,7 @@ public class FileBlobStoreConcurrencyIT
     config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, root.toString());
 
     blobStoreQuotaUsageChecker = spy(
-        new BlobStoreQuotaUsageChecker(new PeriodicJobServiceImpl(), QUOTA_CHECK_INTERVAL, quotaService));
+        new BlobStoreQuotaUsageChecker(new PeriodicJobServiceImpl(10), QUOTA_CHECK_INTERVAL, quotaService));
 
     this.underTest = new FileBlobStore(content, new DefaultBlobIdLocationResolver(), new SimpleFileOperations(),
         metricsStore, config, applicationDirectories, nodeAccess, dryRunPrefix, reconciliationLogger, 0L,
