@@ -17,7 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -26,6 +26,9 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
+import org.springframework.beans.factory.annotation.Value;
+
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
@@ -43,6 +46,19 @@ public class PeriodicJobServiceImpl
   private ScheduledExecutorService executor;
 
   private int activeClients;
+
+  private int threadPoolSize;
+
+  @Inject
+  public PeriodicJobServiceImpl(
+      @Value("${nexus.periodicJob.threadPoolSize:10}") @Named("${nexus.periodicJob.threadPoolSize:-10}") final int threadPoolSize)
+  {
+    String errorMsg =
+        String.format("PeriodicJobServiceImpl's configurable threadPool must be a positive integer, (%d) is not valid.",
+            threadPoolSize);
+    checkArgument(threadPoolSize > 0, errorMsg);
+    this.threadPoolSize = threadPoolSize;
+  }
 
   @Override
   public synchronized void startUsing() {
@@ -73,7 +89,7 @@ public class PeriodicJobServiceImpl
 
   @Override
   protected void doStart() throws Exception {
-    executor = Executors.newScheduledThreadPool(1, new NexusThreadFactory("periodic", "scheduling"));
+    executor = Executors.newScheduledThreadPool(threadPoolSize, new NexusThreadFactory("periodic", "scheduling"));
   }
 
   @Override
