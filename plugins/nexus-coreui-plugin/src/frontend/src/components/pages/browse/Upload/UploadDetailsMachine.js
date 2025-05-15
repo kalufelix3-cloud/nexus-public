@@ -296,10 +296,7 @@ export default FormUtils.buildFormMachine({
       mergeDeepRight(config, {
         states: {
           cancelling: {
-            type: 'final',
-            invoke: {
-              src: 'cancelUpload'
-            }
+            type: 'final'
           },
           saved: {
             type: 'final',
@@ -507,10 +504,6 @@ export default FormUtils.buildFormMachine({
       await Utils.timeoutPromise(500);
 
       return postResponse.data.data;
-    },
-    cancelUpload() {
-      // remove trailing colon-separated part from URL, taking us back to the Upload List page
-      window.location.hash = window.location.hash.replace(/:[^:]*$/, '');
     },
     async waitAndRedirect({ savedComponentName }) {
       await Utils.timeoutPromise(SUBMIT_MASK_SUCCESS_VISIBLE_TIME_MS);

@@ -10,10 +10,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, { useCallback } from 'react';
 import {useMachine} from '@xstate/react';
 
-import {ExtJS, ListMachineUtils} from '@sonatype/nexus-ui-plugin';
+import {ListMachineUtils} from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxButtonBar,
@@ -28,17 +28,24 @@ import {faCopy, faUpload} from '@fortawesome/free-solid-svg-icons';
 import {
   ContentBody,
   PageHeader,
-  PageTitle
+  PageTitle,
+  Page
 } from '@sonatype/nexus-ui-plugin';
 
 import UploadListMachine from './UploadListMachine';
 import UIStrings from '../../../../constants/UIStrings';
-import './Upload.scss';
+import './UploadList.scss';
+import { useRouter } from '@uirouter/react';
+import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
+import { copyUrl } from '../BrowseUtils';
 
 const {UPLOAD, FILTER} = UIStrings;
 const {COLUMNS, COPY_URL_TITLE} = UPLOAD.LIST;
 
-export default function UploadList({onEdit, copyUrl = doCopyUrl}) {
+export default function UploadList() {
+  const router = useRouter();
+  const onEdit = useCallback(itemId => router.stateService.go(ROUTE_NAMES.BROWSE.UPLOAD.EDIT, { itemId }));
+
   const [state, send] = useMachine(UploadListMachine, {devTools: true});
   const {data, error, filter: filterText} = state.context;
   const isLoading = state.matches('loading');
@@ -50,7 +57,7 @@ export default function UploadList({onEdit, copyUrl = doCopyUrl}) {
 
   const filter = (value) => send({type: 'FILTER', filter: value});
 
-  return <div className="nxrm-upload">
+  return <Page className="nxrm-upload">
     <PageHeader>
       <PageTitle icon={faUpload} {...UPLOAD.MENU}/>
     </PageHeader>
@@ -99,11 +106,5 @@ export default function UploadList({onEdit, copyUrl = doCopyUrl}) {
         </NxTile.Content>
       </NxTile>
     </ContentBody>
-  </div>
-}
-
-function doCopyUrl(event, url) {
-  event.stopPropagation();
-  navigator.clipboard.writeText(url);
-  ExtJS.showSuccessMessage(UPLOAD.URL_COPIED_MESSAGE);
+  </Page>
 }

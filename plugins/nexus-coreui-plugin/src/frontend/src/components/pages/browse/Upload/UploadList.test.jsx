@@ -22,6 +22,9 @@ import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 import UploadList from './UploadList';
 import{REPOS, FORMATS, FIELDS} from './UploadList.testdata';
 import UIStrings from '../../../../constants/UIStrings';
+import {getRouter} from "../../../../routerConfig/routerConfig";
+import {UIRouter} from "@uirouter/react";
+import {UploadDetails} from "./UploadDetails";
 
 const {COLUMNS} = UIStrings.UPLOAD.LIST;
 const {EXT: {URL, UPLOAD, REPOSITORY}} = APIConstants;
@@ -51,7 +54,13 @@ describe('UploadList', function() {
 
   async function renderView(data = REPOS) {
     mockApiResponses(data);
-    render(<UploadList />);
+    const router = getRouter();
+    const view = (
+        <UIRouter router={router}>
+          <UploadList />
+        </UIRouter>
+    )
+    render(view);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
   }
 
@@ -66,8 +75,13 @@ describe('UploadList', function() {
   it('renders the error message', async function() {
     const message = 'Error Message!';
     when(axios.post).calledWith(URL, REPOS_REQUEST).mockRejectedValue({message});
-
-    render(<UploadList />);
+    const router = getRouter();
+    const view = (
+        <UIRouter router={router}>
+          <UploadList />
+        </UIRouter>
+    )
+    render(view);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     const error = selectors.tableAlert();
@@ -83,37 +97,57 @@ describe('UploadList', function() {
     TestUtils.expectTableRows(REPOS, Object.values(FIELDS));
   });
 
-  it('renders copy button in each row with tooltips of "Copy URL to Clipboard" when hovering',
-    async function() {
-      await renderView();
-      const rows = selectors.rows(),
-        row1CopyBtn = within(rows[0]).getAllByRole('button')[0],
-        row2CopyBtn = within(rows[1]).getAllByRole('button')[0],
-        row3CopyBtn = within(rows[2]).getAllByRole('button')[0];
+  describe('copy url', ()=> {
+    beforeAll(() => {
+      // polyfill navigator.clipboard.writeText in JSDOM
+      Object.assign(navigator, {
+        clipboard: {
+          writeText: jest.fn().mockResolvedValue(undefined),
+        },
+      });
+    });
 
-      expect(row1CopyBtn).toBeInTheDocument();
-      expect(row2CopyBtn).toBeInTheDocument();
-      expect(row3CopyBtn).toBeInTheDocument();
-      await TestUtils.expectToSeeTooltipOnHover(row1CopyBtn, 'Copy URL to Clipboard');
-      await TestUtils.expectToSeeTooltipOnHover(row2CopyBtn, 'Copy URL to Clipboard');
-      await TestUtils.expectToSeeTooltipOnHover(row3CopyBtn, 'Copy URL to Clipboard');
-  });
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
 
-  it('calls onCopyUrl when copy button is clicked', async function () {
-    const onCopyUrl = jest.fn((event) => event.stopPropagation());
-
-    mockApiResponses(REPOS);
-
-    render(<UploadList copyUrl={onCopyUrl} />);
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
-
-    const copyBtn = within(selectors.rows()[1]).getAllByRole('button')[0];
-    await TestUtils.expectToSeeTooltipOnHover(copyBtn, 'Copy URL to Clipboard');
-
-    userEvent.click(copyBtn);
-
-    expect(onCopyUrl).toBeCalled();
-  });
+    it('renders copy button in each row with tooltips of "Copy URL to Clipboard" when hovering',
+      async function() {
+        await renderView();
+        const rows = selectors.rows(),
+          row1CopyBtn = within(rows[0]).getAllByRole('button')[0],
+          row2CopyBtn = within(rows[1]).getAllByRole('button')[0],
+          row3CopyBtn = within(rows[2]).getAllByRole('button')[0];
+  
+        expect(row1CopyBtn).toBeInTheDocument();
+        expect(row2CopyBtn).toBeInTheDocument();
+        expect(row3CopyBtn).toBeInTheDocument();
+        await TestUtils.expectToSeeTooltipOnHover(row1CopyBtn, 'Copy URL to Clipboard');
+        await TestUtils.expectToSeeTooltipOnHover(row2CopyBtn, 'Copy URL to Clipboard');
+        await TestUtils.expectToSeeTooltipOnHover(row3CopyBtn, 'Copy URL to Clipboard');
+    });
+  
+    it('calls onCopyUrl when copy button is clicked', async function () {
+      const onCopyUrl = jest.fn((event) => event.stopPropagation());
+  
+      mockApiResponses(REPOS);
+      const router = getRouter();
+      const view = (
+          <UIRouter router={router}>
+            <UploadList copyUrl={onCopyUrl} />
+          </UIRouter>
+      )
+      render(view);
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+  
+      const copyBtn = within(selectors.rows()[1]).getAllByRole('button')[0];
+      await TestUtils.expectToSeeTooltipOnHover(copyBtn, 'Copy URL to Clipboard');
+  
+      userEvent.click(copyBtn);
+  
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('http://localhost:8081/repository/maven-releases');
+    });
+  })
 
   it('renders a "Filter" text input', async function() {
     await renderView();

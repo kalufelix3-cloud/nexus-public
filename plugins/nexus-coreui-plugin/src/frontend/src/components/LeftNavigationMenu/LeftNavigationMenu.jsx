@@ -221,7 +221,8 @@ export default function LeftNavigationMenu() {
         data-analytics-id='nxrm-global-navbar-browse'
       />
       <LeftNavigationMenuItem
-        name={BROWSE.UPLOAD}
+        selectedState={BROWSE.UPLOAD.ROOT}
+        name={BROWSE.UPLOAD.LIST}
         text={UIStrings.UPLOAD.MENU.text}
         icon={UIStrings.UPLOAD.MENU.icon}
         params={{ itemId: null }}

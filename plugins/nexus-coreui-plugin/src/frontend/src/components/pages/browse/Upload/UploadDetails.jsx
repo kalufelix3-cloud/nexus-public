@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useMachine } from '@xstate/react';
 import {
   NxButton,
@@ -32,7 +32,7 @@ import {
 import { faPlus, faUpload, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { filter, isEmpty, keys, map, match, mapObjIndexed, path, split, test, values } from 'ramda';
 
-import { FormUtils } from '@sonatype/nexus-ui-plugin';
+import { FormUtils, Page } from '@sonatype/nexus-ui-plugin';
 
 import UploadStrings from '../../../../constants/pages/browse/upload/UploadStrings';
 
@@ -41,6 +41,8 @@ import { COMPOUND_FIELD_PARENT_NAME, ASSET_NUM_MATCHER, MAVEN_FORMAT, MAVEN_COMP
   from './UploadDetailsUtils.js';
 
 import './UploadDetails.scss';
+import { useCurrentStateAndParams, useRouter } from '@uirouter/react';
+import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames.js';
 
 /**
  * React component that renders a form group from a componentField/assetField structure and the
@@ -63,7 +65,12 @@ function Field({ displayName, helpText, name, type, optional, machineState, send
       </NxFormGroup>;
 }
 
-export default function UploadDetails({ itemId }) {
+export default function UploadDetails() {
+  const { params } = useCurrentStateAndParams();
+  const itemId = params?.itemId;
+  const router = useRouter();
+  const onCancel = useCallback(() => router.stateService.go(ROUTE_NAMES.BROWSE.UPLOAD.LIST));
+
   const [state, send] = useMachine(machine, {
         context: {
           repoId: decodeURIComponent(itemId)
@@ -85,7 +92,7 @@ export default function UploadDetails({ itemId }) {
   }
 
   return (
-    <div id="nxrm-upload-details" data-testid="nxrm-upload-details">
+    <Page id="nxrm-upload-details" data-testid="nxrm-upload-details">
       <NxPageTitle>
         <NxH1 id="upload-details-title">
           <NxFontAwesomeIcon icon={faUpload} />
@@ -100,7 +107,10 @@ export default function UploadDetails({ itemId }) {
         */}
       <div className="nx-tile">
         <NxStatefulForm { ...FormUtils.formProps(state, send) }
-                        onCancel={() => send({type: 'CANCEL'})}
+                        onCancel={() => {
+                          send({type: 'CANCEL'});
+                          onCancel();
+                        }}
                         submitBtnText={UploadStrings.UPLOAD.DETAILS.SUBMIT_BTN_LABEL}
                         aria-labelledby="upload-details-title"
                         aria-describedby="upload-details-description">
@@ -176,6 +186,6 @@ export default function UploadDetails({ itemId }) {
           }
         </NxStatefulForm>
       </div>
-    </div>
+    </Page>
   );
 }

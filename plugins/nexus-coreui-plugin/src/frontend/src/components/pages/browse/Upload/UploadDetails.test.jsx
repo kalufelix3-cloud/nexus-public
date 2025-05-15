@@ -21,6 +21,10 @@ import { when } from 'jest-when';
 import UploadDetails from './UploadDetails.jsx';
 import * as testData from './UploadDetails.testdata';
 import {Utils} from '@sonatype/nexus-ui-plugin';
+import { getRouter } from '../../../../routerConfig/routerConfig.js';
+import {UIRouter, useCurrentStateAndParams} from '@uirouter/react';
+
+import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames.js';
 
 // Immediately resolve timeoutPromise so that we don't have to wait for it in tests
 jest.spyOn(Utils, 'timeoutPromise').mockResolvedValue();
@@ -183,10 +187,15 @@ function setFileUploadValue(fileUpload, ...files) {
   fileUpload.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
+jest.mock('@uirouter/react', () => ({
+  ...jest.requireActual('@uirouter/react'),
+    useCurrentStateAndParams: jest.fn(),
+}));
+
 describe('UploadDetails', function() {
   mockFileInputFilesSetter();
   mockWindowLocation();
-
+  
   beforeEach(function() {
     jest.spyOn(axios, 'post');
 
@@ -201,8 +210,19 @@ describe('UploadDetails', function() {
     ).mockResolvedValue(testData.sampleUploadDefinitions);
   });
 
-  function render(itemId = 'simple-repo') {
-    return rtlRender(<UploadDetails itemId={itemId} />);
+  beforeEach(() => {
+    useCurrentStateAndParams.mockReset();
+    useCurrentStateAndParams.mockReturnValue({params: {itemId: 'simple-repo'}});
+  });
+
+  function render() {
+    const router = getRouter();
+    const view = (
+      <UIRouter router={router}>
+        <UploadDetails />
+      </UIRouter>
+    )
+    return {router, renderResult: rtlRender(view)};
   }
 
   describe('initial loading', function() {
@@ -339,7 +359,8 @@ describe('UploadDetails', function() {
     );
 
     it('renders an error alert with a Retry button if the repository in question does not exist in the repositorySettings', async function() {
-      render('no-such-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'no-such-repo'}});
+      render();
 
       const loadingStatus = selectors.loadingStatus();
 
@@ -353,7 +374,8 @@ describe('UploadDetails', function() {
     });
 
     it('renders an error alert with a Retry button if the repository in question is a proxy repo', async function() {
-      render('proxy-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'proxy-repo'}});
+      render();
 
       const loadingStatus = selectors.loadingStatus();
 
@@ -367,7 +389,8 @@ describe('UploadDetails', function() {
     });
 
     it('renders an error alert with a Retry button if the repository in question is a group repo', async function() {
-      render('group-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'group-repo'}});
+      render();
 
       const loadingStatus = selectors.loadingStatus();
 
@@ -381,7 +404,8 @@ describe('UploadDetails', function() {
     });
 
     it('renders an error alert with a Retry button if the repository in question is offline', async function() {
-      render('offline-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'offline-repo'}});
+      render();
 
       const loadingStatus = selectors.loadingStatus();
 
@@ -396,7 +420,8 @@ describe('UploadDetails', function() {
 
     it('renders an error alert with a Retry button if the repository in question is a maven SNAPSHOT repo',
         async function() {
-          render('snapshot-repo');
+          useCurrentStateAndParams.mockReturnValue({params: {itemId: 'snapshot-repo'}});
+          render();
 
           const loadingStatus = selectors.loadingStatus();
 
@@ -412,7 +437,8 @@ describe('UploadDetails', function() {
 
     it('renders an error alert with a Retry button if the repository in question is for a format with uiUpload set ' +
         'to false', async function() {
-      render('ui-upload-disabled-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'ui-upload-disabled-repo'}});
+      render();
 
       const loadingStatus = selectors.loadingStatus();
 
@@ -537,7 +563,8 @@ describe('UploadDetails', function() {
     });
 
     it('renders if multipleUpload is true', async function() {
-      render('multi-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+      render();
 
       const form = await selectors.form('find');
 
@@ -546,7 +573,8 @@ describe('UploadDetails', function() {
 
     it('adds another asset group with the next higher number, containing another file upload and set of asset fields',
         async function() {
-          render('multi-repo');
+          useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+          render();
 
           const region = await selectors.chooseAssetsRegion('find'),
               firstAssetGroup = selectors.assetGroup('1'),
@@ -601,7 +629,8 @@ describe('UploadDetails', function() {
 
   describe('regexMap', function() {
     it('fills in the corresponding asset fields according to the regexMap when a file is selected', async function() {
-      render('regex-map-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'regex-map-repo'}});
+      render();
 
       await userEvent.click(await selectors.addAssetBtn('find'));
 
@@ -623,7 +652,8 @@ describe('UploadDetails', function() {
     });
 
     it('does overwrite existing content in the asset fields', async function() {
-      render('regex-map-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'regex-map-repo'}});
+      render();
 
       const form = await selectors.form('find'),
           fileUpload = form.querySelector('input[type=file]'),
@@ -638,7 +668,8 @@ describe('UploadDetails', function() {
     });
 
     it('does trigger validation on regex autofill', async function() {
-      render('regex-map-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'regex-map-repo'}});
+      render();
 
       const form = await selectors.form('find'),
           fileUpload = form.querySelector('input[type=file]'),
@@ -659,7 +690,8 @@ describe('UploadDetails', function() {
 
     it('does not change the field values, trigger validation, or show an error if the regex does not match',
         async function() {
-          render('regex-map-repo');
+          useCurrentStateAndParams.mockReturnValue({params: {itemId: 'regex-map-repo'}});
+          render();
 
           const form = await selectors.form('find'),
               fileUpload = form.querySelector('input[type=file]'),
@@ -682,7 +714,8 @@ describe('UploadDetails', function() {
     );
 
     it('removes validation errors on fields as appropriate', async function() {
-      render('regex-map-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'regex-map-repo'}});
+      render();
 
       const form = await selectors.form('find'),
           fileUpload = form.querySelector('input[type=file]'),
@@ -721,7 +754,8 @@ describe('UploadDetails', function() {
     });
 
     it('appears on all asset groups once multiple asset groups are present', async function() {
-      render('multi-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+      render();
 
       const form = await selectors.form('find');
 
@@ -737,7 +771,8 @@ describe('UploadDetails', function() {
     });
 
     it('removes the asset group when clicked', async function() {
-      render('multi-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+      render();
 
       await userEvent.click(await selectors.addAssetBtn('find'));
 
@@ -775,7 +810,8 @@ describe('UploadDetails', function() {
     });
 
     it('hides the Delete button when the number of asset groups is reduced to one', async function() {
-      render('multi-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+      render();
 
       await userEvent.click(await selectors.addAssetBtn('find'));
 
@@ -845,7 +881,8 @@ describe('UploadDetails', function() {
   });
 
   it('marks the text fields that do not have the optional flag set as required', async function() {
-    render('multi-repo');
+    useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+    render();
 
     const form = await selectors.form('find'),
         field1 = selectors.fieldByNumAndGroup(1),
@@ -872,7 +909,8 @@ describe('UploadDetails', function() {
   });
 
   it('allows values to be set into the text fields', async function() {
-    render('multi-repo');
+    useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+    render();
 
     const field1 = await selectors.fieldByNumAndGroup(1, undefined, 'find'),
         field2 = selectors.fieldByNumAndGroup(2),
@@ -910,7 +948,8 @@ describe('UploadDetails', function() {
   });
 
   it('allows a file to be set into the file input and renders its name and size', async function() {
-    render('multi-repo');
+    useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+    render();
 
     const form = await selectors.form('find'),
         fileUpload = selectors.fileUploadByGroup(form);
@@ -932,7 +971,8 @@ describe('UploadDetails', function() {
   });
 
   it('renders a button to clear the selected file when there is one', async function() {
-    render('regex-map-repo');
+    useCurrentStateAndParams.mockReturnValue({params: {itemId: 'regex-map-repo'}});
+    render();
 
     const form = await selectors.form('find'),
         fileUpload = selectors.fileUploadByGroup(form);
@@ -983,7 +1023,8 @@ describe('UploadDetails', function() {
   describe('field validation', function() {
     it('adds "This field is required" error text to required text inputs when they are empty and non-pristine',
         async function() {
-          render('multi-repo');
+          useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+          render();
 
           await userEvent.click(await selectors.addAssetBtn('find'));
 
@@ -1074,7 +1115,8 @@ describe('UploadDetails', function() {
 
     it('adds "This field is required!" error text to the file upload when it is empty and non-pristine',
         async function() {
-          render('multi-repo');
+          useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+          render();
 
           await userEvent.click(await selectors.addAssetBtn('find'));
 
@@ -1119,7 +1161,8 @@ describe('UploadDetails', function() {
     );
 
     it('does not immediately add validation errors to asset fields that have been deleted and re-added', async function() {
-      render('multi-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+      render();
 
       await userEvent.click(await selectors.addAssetBtn('find'));
 
@@ -1144,7 +1187,8 @@ describe('UploadDetails', function() {
 
     it('adds "Asset not unique" text to all relevant asset fields when they match between multiple asset groups',
         async function() {
-          render('multi-repo');
+          useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+          render();
 
           await userEvent.click(await selectors.addAssetBtn('find'));
           await userEvent.click(selectors.addAssetBtn());
@@ -1196,7 +1240,8 @@ describe('UploadDetails', function() {
     );
 
     it('shows the required field message in favor of the unique asset message', async function() {
-      render('multi-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+      render();
 
       await userEvent.click(await selectors.addAssetBtn('find'));
 
@@ -1230,15 +1275,14 @@ describe('UploadDetails', function() {
   });
 
   it('has a cancel button that navigates to the Upload List page when clicked', async function() {
-    const hashSpy = jest.spyOn(window.location, 'hash', 'set');
+    const {router} = render();
+    const routerSpy = jest.spyOn(router.stateService, 'go');
 
-    render();
+    expect(routerSpy).not.toHaveBeenCalled();
 
-    expect(hashSpy).not.toHaveBeenCalled();
+    userEvent.click(await selectors.cancelBtn('find'));
 
-    await userEvent.click(await selectors.cancelBtn('find'));
-
-    expect(hashSpy).toHaveBeenCalledWith('browse/upload');
+    expect(routerSpy).toHaveBeenCalledWith(ROUTE_NAMES.BROWSE.UPLOAD.LIST);
   });
 
   describe('form submit', function() {
@@ -1251,7 +1295,8 @@ describe('UploadDetails', function() {
             return new Promise(() => {});
           });
 
-      render('multi-repo');
+        useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+        render();
 
       await userEvent.click(await selectors.addAssetBtn('find'));
 
@@ -1328,7 +1373,8 @@ describe('UploadDetails', function() {
             return new Promise(() => {});
           });
 
-      render('multi-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+      render();
 
       await userEvent.click(await selectors.addAssetBtn('find'));
       await userEvent.click(selectors.addAssetBtn());
@@ -1375,7 +1421,8 @@ describe('UploadDetails', function() {
             return new Promise(() => {});
           });
 
-      render('multi-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+      render();
 
       await userEvent.click(await selectors.addAssetBtn('find'));
       await userEvent.click(selectors.addAssetBtn());
@@ -1432,7 +1479,8 @@ describe('UploadDetails', function() {
             return new Promise(() => {});
           });
 
-      render('multi-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+      render();
 
       await userEvent.click(await selectors.addAssetBtn('find'));
       await userEvent.click(selectors.addAssetBtn());
@@ -1561,7 +1609,8 @@ describe('UploadDetails', function() {
     });
 
     it('renders validation error messages when Upload is clicked with data missing', async function() {
-      render('multi-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+      render();
 
       await userEvent.click(await selectors.addAssetBtn('find'));
 
@@ -1644,7 +1693,8 @@ describe('UploadDetails', function() {
     });
 
     it('renders validation error messages when Upload is clicked with non-unique assets', async function() {
-      render('multi-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+      render();
 
       await userEvent.click(await selectors.addAssetBtn('find'));
 
@@ -1694,7 +1744,8 @@ describe('UploadDetails', function() {
       when(axios.post).calledWith('service/rest/internal/ui/upload/multi-repo', expect.anything())
           .mockResolvedValue({ data: { success: true, data: 'foobar' } });
 
-      render('multi-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'multi-repo'}});
+      render();
 
       await userEvent.click(await selectors.addAssetBtn('find'));
 
@@ -1851,7 +1902,8 @@ describe('UploadDetails', function() {
   describe('maven special rules', function() {
     it('disables the Group ID, Artifact ID, Version, "Generate a POM file...", and Packaging fields when at least ' +
         'one asset extension is "pom" after trimming', async function() {
-      render('maven-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'maven-repo'}});
+      render();
 
       await userEvent.click(await selectors.addAssetBtn('find'));
 
@@ -1928,7 +1980,8 @@ describe('UploadDetails', function() {
     });
 
     it('disables the Packaging field whenever the "Generate..." checkbox is unchecked', async function() {
-      render('maven-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'maven-repo'}});
+      render();
 
       const extension = await selectors.mavenExtensionField(undefined, 'find'),
           generatePom = selectors.mavenGeneratePomField(),
@@ -1960,7 +2013,8 @@ describe('UploadDetails', function() {
             return new Promise(() => {});
           });
 
-      render('maven-repo');
+      useCurrentStateAndParams.mockReturnValue({params: {itemId: 'maven-repo'}});
+      render();
 
       const assetGroup1 = await selectors.assetGroup('1', 'find'),
           fileUpload = selectors.fileUploadByGroup(assetGroup1),
@@ -2012,7 +2066,8 @@ describe('UploadDetails', function() {
                 return new Promise(() => {});
               });
 
-          render('maven-repo');
+          useCurrentStateAndParams.mockReturnValue({params: {itemId: 'maven-repo'}});
+          render();
 
           await userEvent.click(await selectors.addAssetBtn('find'));
 

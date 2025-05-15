@@ -19,7 +19,11 @@ export default {
   DIRECTORY: 'browse',
   BROWSE: 'browse.browse',
   WELCOME: 'browse.welcome',
-  UPLOAD: 'browse.upload',
+  UPLOAD: {
+    ROOT: 'browse.upload',
+    LIST: 'browse.upload.list',
+    EDIT: 'browse.upload.edit',
+  },
   TAGS: 'browse.tags',
   MALWARERISK: 'browse.malwarerisk',
   SEARCH: {
@@ -45,6 +49,6 @@ export default {
     R: 'browse.search.r',
     RAW: 'browse.search.raw',
     RUBYGEMS: 'browse.search.rubygems',
-    YUM: 'browse.search.yum'
-  }
-}
+    YUM: 'browse.search.yum',
+  },
+};

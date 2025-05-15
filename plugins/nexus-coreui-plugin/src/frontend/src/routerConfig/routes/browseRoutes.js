@@ -18,7 +18,6 @@ import { Permissions } from '@sonatype/nexus-ui-plugin';
 
 import Welcome from '../../components/pages/user/Welcome/Welcome';
 import BrowseReactExt from '../../components/pages/browse/Browse/BrowseExt';
-import Upload from '../../components/pages/browse/Upload/Upload';
 import MalwareRemediation from '../../components/pages/maliciousrisk/MalwareRemediation';
 import SearchGenericExt from '../../components/pages/browse/Search/SearchGenericExt';
 import SearchAptExt from '../../components/pages/browse/Search/SearchAptExt';
@@ -42,11 +41,12 @@ import SearchRExt from '../../components/pages/browse/Search/SearchRExt';
 import SearchRawExt from '../../components/pages/browse/Search/SearchRawExt';
 import SearchRubygemsExt from '../../components/pages/browse/Search/SearchRubygemsExt';
 import SearchYumExt from '../../components/pages/browse/Search/SearchYumExt';
-;
 import FeatureFlags from '../../constants/FeatureFlags';
 import { UIView } from '@uirouter/react';
 import Tags from '../../components/pages/browse/Tags/Tags';
 import { ROUTE_NAMES } from '../routeNames/routeNames';
+import UploadList from '../../components/pages/browse/Upload/UploadList';
+import UploadDetails from '../../components/pages/browse/Upload/UploadDetails';
 
 const { MALWARE_RISK_ENABLED } = FeatureFlags;
 
@@ -59,8 +59,8 @@ export const browseRoutes = [
     url: 'browse',
     component: UIView,
     visibilityRequirements: {
-      ignoreForMenuVisibilityCheck: true
-    }
+      ignoreForMenuVisibilityCheck: true,
+    },
   },
   {
     name: BROWSE.WELCOME,
@@ -68,7 +68,7 @@ export const browseRoutes = [
     component: Welcome,
     data: {
       // make sure we don't inherit from BROWSE
-      visibilityRequirements: {}
+      visibilityRequirements: {},
     },
   },
   {
@@ -78,8 +78,8 @@ export const browseRoutes = [
     abstract: true,
     data: {
       // make sure we don't inherit from BROWSE
-      visibilityRequirements: {}
-    }
+      visibilityRequirements: {},
+    },
   },
   {
     name: BROWSE.SEARCH.GENERIC,
@@ -521,22 +521,24 @@ export const browseRoutes = [
     },
   },
   {
-    name: BROWSE.UPLOAD,
-    url: '/upload:itemId',
-    component: Upload,
+    name: BROWSE.UPLOAD.ROOT,
+    component: UIView,
     data: {
       visibilityRequirements: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: [Permissions.COMPONENT.CREATE],
       },
     },
-    params: {
-      itemId: {
-        value: null,
-        raw: true,
-        dynamic: true,
-      },
-    },
+  },
+  {
+    name: BROWSE.UPLOAD.LIST,
+    url: '/upload',
+    component: UploadList,
+  },
+  {
+    name: BROWSE.UPLOAD.EDIT,
+    url: '/upload/:itemId',
+    component: UploadDetails,
   },
   {
     name: BROWSE.TAGS,

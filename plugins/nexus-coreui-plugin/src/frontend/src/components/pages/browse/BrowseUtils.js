@@ -14,7 +14,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import { __, allPass, complement, filter, includes, isEmpty, map, path, pathEq, pipe, prop, propEq } from 'ramda';
+import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import { __, allPass, complement, filter, isEmpty, map, pathEq, prop, propEq } from 'ramda';
+import UIStrings from '../../../constants/UIStrings';
 
 const isHosted = propEq('type', 'hosted'),
     isOnline = complement(pathEq(['status', 'online'], false)),
@@ -41,4 +43,16 @@ export function filterReposByUiUpload(uploadDefinitions, repos) {
 
 export function repoSupportsUiUpload(uploadDefinitions, repo) {
   return !isEmpty(filterReposByUiUpload(uploadDefinitions, [repo]));
+}
+
+/**
+ * Copies the provided URL to the clipboard and displays a success message.
+ *
+ * @param {Event} event - The event object to stop propagation.
+ * @param {string} url - The URL to be copied to the clipboard.
+ */
+export function copyUrl(event, url) {
+  event.stopPropagation();
+  navigator.clipboard.writeText(url);
+  ExtJS.showSuccessMessage(UIStrings.UPLOAD.URL_COPIED_MESSAGE);
 }
