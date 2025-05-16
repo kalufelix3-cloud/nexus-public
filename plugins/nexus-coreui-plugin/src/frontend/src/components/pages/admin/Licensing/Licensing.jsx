@@ -34,7 +34,7 @@ import './Licensing.scss';
 import LicensedUsage from "./LicensedUsage";
 
 import { NxTabs, NxTabList, NxTab, NxTabPanel } from '@sonatype/react-shared-components';
-import LicensingHistorcalUsage from './LicensingHistoricalUsage';
+import {HistoricalUsage, historicalUsageColumns} from '@sonatype/nexus-ui-plugin';
 
 const {LICENSING: {MENU}} = UIStrings;
 
@@ -46,6 +46,15 @@ export default function Licensing() {
   const showLicensedUsage = !loadError && data?.maxRepoRequests && data?.maxRepoComponents;
   const [activeTabId, setActiveTabId] = useState(0);
   const canViewHistoricalUsage = ExtJS.checkPermission('nexus:metrics:read');
+  const requiredColumns = [
+    historicalUsageColumns.metricDateMonth,
+    historicalUsageColumns.peakComponents,
+    historicalUsageColumns.percentageChangeComponent,
+    historicalUsageColumns.totalRequests,
+    historicalUsageColumns.percentageChangeRequests,
+    historicalUsageColumns.totalEgress,
+    historicalUsageColumns.peakStorage
+  ];
 
   return <Page>
     <PageHeader>
@@ -56,23 +65,21 @@ export default function Licensing() {
       />
     </PageHeader>
     <ContentBody className="nxrm-licensing">
-      <NxTabs activeTab={activeTabId} onTabSelect={setActiveTabId}>
-        <NxTabList aria-label="Tabs in a tile with no header">
-          <NxTab data-analytics-id="license-tab">License</NxTab>
-          {canViewHistoricalUsage && <NxTab data-analytics-id="usage-tab">Usage</NxTab>}
-        </NxTabList>
-        <NxTabPanel>
-          {showDetails && <LicenseDetails service={service}/>}
-          {showLicensedUsage &&
-              <LicensedUsage maxRepoRequests={data.maxRepoRequests.toLocaleString()}
-                             maxRepoComponents={data.maxRepoComponents.toLocaleString()}/>}
-          <InstallLicense service={service}/>
-        </NxTabPanel>
-        {canViewHistoricalUsage &&
-            <NxTabPanel>
-              <LicensingHistorcalUsage/>
-            </NxTabPanel>}
-      </NxTabs>
+    <NxTabs activeTab={activeTabId} onTabSelect={setActiveTabId}>
+          <NxTabList aria-label="Tabs in a tile with no header">
+            <NxTab data-analytics-id="license-tab">License</NxTab>
+            {canViewHistoricalUsage && <NxTab data-analytics-id="usage-tab">Usage</NxTab>}
+          </NxTabList>
+          <NxTabPanel>
+            {showDetails && <LicenseDetails service={service}/>}
+            {showLicensedUsage && <LicensedUsage maxRepoRequests={data.maxRepoRequests.toLocaleString()} maxRepoComponents={data.maxRepoComponents.toLocaleString()}/>}
+            <InstallLicense service={service}/>
+          </NxTabPanel>
+          {canViewHistoricalUsage &&
+              <NxTabPanel>
+                <HistoricalUsage columns={requiredColumns}/>
+              </NxTabPanel>}
+        </NxTabs>
     </ContentBody>
   </Page>;
 }

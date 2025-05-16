@@ -13,12 +13,24 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import Axios from 'axios';
-import LicensingHistorcalUsage from './LicensingHistoricalUsage';
+import HistoricalUsage from './HistoricalUsage';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import {historicalUsageColumns} from "./HistoricalUsageColumns";
 
 describe('Licensing Historical Usage', () => {
+
+  const requiredColumns = [
+    historicalUsageColumns.metricDateMonth,
+    historicalUsageColumns.peakComponents,
+    historicalUsageColumns.percentageChangeComponent,
+    historicalUsageColumns.totalRequests,
+    historicalUsageColumns.percentageChangeRequests,
+    historicalUsageColumns.totalEgress,
+    historicalUsageColumns.peakStorage
+  ];
+
   async function renderView() {
-    return render(<LicensingHistorcalUsage />);
+    return render(<HistoricalUsage columns={requiredColumns}/>);
   }
 
   it('renders the title and description', async () => {

@@ -14,6 +14,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import HistoricalUsageStrings from "./HistoricalUsageStrings";
+
 /**
  * @since 3.21
  */
@@ -103,5 +105,6 @@ export default {
     DESCRIPTION: 'Use certificate connected to the Nexus Repository Truststore',
     VIEW_CERTIFICATE: 'View Certificate',
     NOT_SECURE_URL: 'You cannot enable this feature because your remote storage is not using a secure URL; there is no SSL certificate available.'
-  }
+  },
+  ...HistoricalUsageStrings
 };

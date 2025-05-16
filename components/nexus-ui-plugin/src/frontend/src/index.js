@@ -34,6 +34,9 @@ export {default as useSimpleMachine} from './interface/SimpleMachineUtils';
 export {default as DateUtils} from './interface/DateUtils';
 
 export {
+  default as HistoricalUsage
+} from './components/pages/admin/Usage/HistoricalUsage';
+export {
   default as CheckboxControlledWrapper
 } from './components/widgets/CheckboxControlledWrapper/CheckboxControlledWrapper';
 export {default as DynamicFormField} from './components/widgets/DynamicFormField/DynamicFormField';
@@ -62,3 +65,5 @@ export {createRouter} from './router/createRouter';
 export {ThemeSelector} from './components/widgets/ThemeSelector/ThemeSelector';
 
 export * from './components/layout';
+
+export * from './components/pages/admin/Usage/HistoricalUsageColumns';
