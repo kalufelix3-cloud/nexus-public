@@ -22,7 +22,11 @@ public class CargoAttributes
 
   @ApiModelProperty(value = "Indicates if this repository requires authentication overriding anonymous access.",
       example = "false")
-  protected final Boolean requireAuthentication;
+  protected Boolean requireAuthentication;
+
+  public CargoAttributes() {
+    this.requireAuthentication = null;
+  }
 
   @JsonCreator
   public CargoAttributes(
@@ -33,5 +37,9 @@ public class CargoAttributes
 
   public Boolean getRequireAuthentication() {
     return requireAuthentication;
+  }
+
+  public void setRequireAuthentication(final Boolean requireAuthentication) {
+    this.requireAuthentication = requireAuthentication;
   }
 }
