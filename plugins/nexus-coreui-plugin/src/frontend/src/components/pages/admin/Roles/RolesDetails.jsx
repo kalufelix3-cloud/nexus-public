@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, {useCallback, useEffect} from 'react';
 import {useMachine} from '@xstate/react';
 
 import {
@@ -21,7 +21,8 @@ import {
   ExtJS,
   PageHeader,
   PageTitle,
-  ValidationUtils
+  ValidationUtils,
+  Page,
 } from '@sonatype/nexus-ui-plugin';
 
 import Machine from './RolesFormMachine';
@@ -29,10 +30,27 @@ import RolesForm from './RolesForm';
 import RolesReadOnly from './RolesReadOnly';
 
 import UIStrings from '../../../../constants/UIStrings';
+import {useCurrentStateAndParams, useRouter} from "@uirouter/react";
+import {ROUTE_NAMES} from "../../../../routerConfig/routeNames/routeNames";
 
 const {ROLES: {FORM: LABELS}} = UIStrings;
+const ADMIN = ROUTE_NAMES.ADMIN;
 
-export default function RolesDetails({itemId, onDone}) {
+export default function RolesDetails() {
+  const router = useRouter();
+  const {state: routerState, params} = useCurrentStateAndParams();
+  const onDone = useCallback(() => router.stateService.go(ADMIN.SECURITY.ROLES.LIST), [router]);
+  const itemId = params?.itemId;
+  const isCreate = routerState.name === ADMIN.SECURITY.ROLES.CREATE;
+
+  useEffect(() => {
+    // we should not render edit form if itemId is not provided
+    if (!isCreate && !itemId) {
+      router.stateService.go(ROUTE_NAMES.MISSING_ROUTE)
+    }
+
+  }, [itemId]);
+
   const hasDeletePermissions = ExtJS.checkPermission('nexus:roles:delete');
   const hasEditPermissions = ExtJS.checkPermission('nexus:roles:update');
   const ldapQueryCharacterLimit = ExtJS.state().getValue('nexus.ldap.mapped.role.query.character.limit');
@@ -43,7 +61,8 @@ export default function RolesDetails({itemId, onDone}) {
       pristineData: {
         id: decodeURIComponent(itemId),
       },
-      ldapQueryCharacterLimit: ldapQueryCharacterLimit
+      ldapQueryCharacterLimit: ldapQueryCharacterLimit,
+      isCreate,
     },
     actions: {
       onSaveSuccess: onDone,
@@ -58,14 +77,13 @@ export default function RolesDetails({itemId, onDone}) {
   const {data: {readOnly}, pristineData: {id, name}} = current.context;
 
   const canEdit = hasEditPermissions && !readOnly;
-  const isEdit = ValidationUtils.notBlank(id);
-  const showReadOnly = isEdit && !canEdit;
+  const showReadOnly = !isCreate && !canEdit;
 
-  return <div className="nxrm-roles">
+  return <Page className="nxrm-roles">
     <PageHeader>
       <PageTitle
-          text={isEdit ? LABELS.EDIT_TILE(name || '') : LABELS.CREATE_TITLE}
-          description={isEdit ? LABELS.EDIT_DESCRIPTION : null}
+          text={isCreate ? LABELS.CREATE_TITLE : LABELS.EDIT_TILE(name || '')}
+          description={isCreate ? null : LABELS.EDIT_DESCRIPTION}
       />
     </PageHeader>
     <ContentBody className="nxrm-roles-form">
@@ -73,10 +91,15 @@ export default function RolesDetails({itemId, onDone}) {
         <NxTile.Content>
           {showReadOnly
               ? <RolesReadOnly service={service} onDone={onDone}/>
-              : <RolesForm roleId={id} service={service} onDone={onDone}/>
+              : <RolesForm
+                  roleId={id}
+                  service={service}
+                  onDone={onDone}
+                  isCreate={isCreate}
+              />
           }
         </NxTile.Content>
       </NxTile>
     </ContentBody>
-  </div>;
+  </Page>;
 }

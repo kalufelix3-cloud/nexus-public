@@ -23,7 +23,6 @@ import CleanupPoliciesList from '../../components/pages/admin/CleanupPolicies/Cl
 import CleanupPoliciesForm from '../../components/pages/admin/CleanupPolicies/CleanupPoliciesForm';
 import Privileges from '../../components/pages/admin/Privileges/Privileges';
 import EmailServer from '../../components/pages/admin/EmailServer/EmailServer';
-import Roles from '../../components/pages/admin/Roles/Roles';
 import SslCertificates from '../../components/pages/admin/SslCertificates/SslCertificates';
 import UsersExt from '../../components/pages/admin/Users/UsersExt';
 import AnonymousSettings from '../../components/pages/admin/AnonymousSettings/AnonymousSettings';
@@ -52,10 +51,13 @@ import AdminSecurityDirectoryPage from '../../components/pages/AdminSecurity/Adm
 import { ROUTE_NAMES } from '../routeNames/routeNames';
 import AdminSystemDirectoryPage from '../../components/pages/AdminSystem/AdminSystemDirectoryPage';
 import AdminSupportDirectoryPage from '../../components/pages/AdminSupport/AdminSupportDirectoryPage';
+
 import SettingsPageLayout from '../../components/LeftNavigationMenu/SettingsPageLayout/SettingsPageLayout';
 import LoggingConfiguration from '../../components/pages/admin/LoggingConfiguration/LoggingConfiguration';
 import ContentSelectorsList from '../../components/pages/admin/ContentSelectors/ContentSelectorsList';
 import ContentSelectorsDetails  from '../../components/pages/admin/ContentSelectors/ContentSelectorsDetails';
+import RolesList from "../../components/pages/admin/Roles/RolesList";
+import RolesDetails from "../../components/pages/admin/Roles/RolesDetails";
 import RoutingRulesForm from '../../components/pages/admin/RoutingRules/RoutingRulesForm';
 import RoutingRulesList from '../../components/pages/admin/RoutingRules/RoutingRulesList';
 import RoutingRulesGlobalPreview from '../../components/pages/admin/RoutingRules/RoutingRulesGlobalPreview.jsx';
@@ -296,23 +298,40 @@ export const adminRoutes = [
     }
   },
 
+  // abstract parent roles state
   {
-    name: ADMIN.SECURITY.ROLES,
-    url: '/roles:itemId',
-    component: Roles,
+    name: ADMIN.SECURITY.ROLES.ROOT,
+    component: UIView,
     data: {
       visibilityRequirements: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:roles:read', 'nexus:privileges:read']
+        permissions: [Permissions.ROLES.READ, Permissions.PRIVILEGES.READ]
       }
     },
-    params: {
-      itemId: {
-        value: null,
-        raw: true,
-        dynamic: true
+  },
+
+  {
+    name: ADMIN.SECURITY.ROLES.LIST,
+    url: '/roles',
+    component: RolesList,
+  },
+
+  {
+    name: ADMIN.SECURITY.ROLES.EDIT,
+    url: '/roles/edit/{itemId:.+}',
+    component: RolesDetails,
+  },
+
+  {
+    name: ADMIN.SECURITY.ROLES.CREATE,
+    url: '/roles/create',
+    component: RolesDetails,
+    data: {
+      visibilityRequirements: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        permissions: [Permissions.ROLES.READ, Permissions.PRIVILEGES.READ]
       }
-    }
+    },
   },
 
   {

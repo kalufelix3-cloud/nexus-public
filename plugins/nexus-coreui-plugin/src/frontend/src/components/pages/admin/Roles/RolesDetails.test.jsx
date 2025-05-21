@@ -22,6 +22,10 @@ import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 import UIStrings from '../../../../constants/UIStrings';
 import RolesDetails from './RolesDetails';
 import {TYPES, URL} from './RolesHelper';
+import {getRouter} from "../../../../routerConfig/routerConfig";
+import {UIRouter, useCurrentStateAndParams} from "@uirouter/react";
+import {ROUTE_NAMES} from "../../../../routerConfig/routeNames/routeNames";
+const ADMIN = ROUTE_NAMES.ADMIN;
 
 const { 
   ROLES: { 
@@ -162,15 +166,52 @@ const selectors = {
 
 const clickOnCheckboxes = (checkboxes) => checkboxes.forEach((it) => userEvent.click(it));
 
+let stateServiceGoMock;
+
+jest.mock('@uirouter/react', () => ({
+  ...jest.requireActual('@uirouter/react'),
+  useCurrentStateAndParams: jest.fn(),
+  useRouter: () =>({
+    stateService: {
+      go: stateServiceGoMock,
+    }
+  })
+}));
+
 describe('RolesDetails', function() {
   const CONFIRM = Promise.resolve();
-  const onDone = jest.fn();
+  let router;
 
-  function renderDetails(itemId) {
-    return render(<RolesDetails itemId={itemId || ''} onDone={onDone}/>);
+  function renderEditView(itemId) {
+    useCurrentStateAndParams.mockReturnValue({
+      state: {name: ADMIN.SECURITY.ROLES.EDIT},
+      params: {itemId}
+    });
+
+    return render(
+        <UIRouter router={router}>
+          <RolesDetails/>
+        </UIRouter>
+    );
+  }
+
+  function renderCreateView() {
+    useCurrentStateAndParams.mockReturnValue({
+      state: {name: ADMIN.SECURITY.ROLES.CREATE},
+      params: {}
+    });
+
+    return render(
+        <UIRouter router={router}>
+          <RolesDetails/>
+        </UIRouter>
+    );
   }
 
   beforeEach(() => {
+    useCurrentStateAndParams.mockReset()
+    router = getRouter();
+    stateServiceGoMock = jest.fn();
     ExtJS.state = jest.fn().mockReturnValue({
       getValue: jest.fn(),
     });
@@ -184,10 +225,14 @@ describe('RolesDetails', function() {
     ExtJS.checkPermission.mockReturnValue(true);
   });
 
+  it('redirects to 404 page if itemId is not provided for edit route', function() {
+    renderEditView('');
+    expect(stateServiceGoMock).toBeCalledWith(ROUTE_NAMES.MISSING_ROUTE);
+  });
+
   it('renders the resolved data', async function() {
     const {id, name, queryLoadingMask, description, privileges, roles, saveButton} = selectors;
-
-    renderDetails(testRoleId);
+    renderEditView(testRoleId);
     await waitForElementToBeRemoved(queryLoadingMask());
 
     expect(id()).toHaveValue(testRoleId);
@@ -212,7 +257,7 @@ describe('RolesDetails', function() {
 
     Axios.get.mockReturnValue(Promise.reject({message}));
 
-    renderDetails(testRoleId);
+    renderEditView(testRoleId);
     await waitForElementToBeRemoved(queryLoadingMask());
 
     expect(screen.getByRole('alert')).toHaveTextContent(message);
@@ -220,7 +265,7 @@ describe('RolesDetails', function() {
 
   it('requires the ID and Name fields when creating a new internal role', async function() {
     const {type, id, name, queryLoadingMask, description, privileges, roles, saveButton} = selectors;
-    renderDetails();
+    renderCreateView();
     await waitForElementToBeRemoved(queryLoadingMask());
 
     expect(id()).not.toBeInTheDocument();
@@ -245,27 +290,30 @@ describe('RolesDetails', function() {
 
   it('fires onDone when cancelled', async function() {
     const {queryLoadingMask, cancelButton} = selectors;
-    renderDetails();
+    renderCreateView();
     await waitForElementToBeRemoved(queryLoadingMask());
 
     userEvent.click(cancelButton());
 
-    await waitFor(() => expect(onDone).toBeCalled());
+    // expect onDone is called
+    expect(stateServiceGoMock).toBeCalledWith(ADMIN.SECURITY.ROLES.LIST);
   });
 
   it('requests confirmation when delete is requested', async function() {
     const {queryLoadingMask, deleteButton} = selectors;
     Axios.delete.mockReturnValue(Promise.resolve(null));
 
-    renderDetails(testRoleId);
+    renderEditView(testRoleId);
     await waitForElementToBeRemoved(queryLoadingMask());
 
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
     userEvent.click(deleteButton());
 
     await waitFor(() => expect(Axios.delete).toBeCalledWith(singleRoleUrl(testRoleId)));
-    expect(onDone).toBeCalled();
     expect(ExtJS.showSuccessMessage).toBeCalled();
+
+    // expect onDone is called
+    expect(stateServiceGoMock).toBeCalledWith(ADMIN.SECURITY.ROLES.LIST);
   });
 
   it('creates internal role', async function() {
@@ -274,7 +322,7 @@ describe('RolesDetails', function() {
 
     when(Axios.post).calledWith(rolesUrl, ROLE).mockResolvedValue({data: {}});
 
-    renderDetails();
+    renderCreateView();
     await waitForElementToBeRemoved(queryLoadingMask());
 
     userEvent.selectOptions(type(), TYPES.INTERNAL);
@@ -306,8 +354,8 @@ describe('RolesDetails', function() {
 
     when(Axios.post).calledWith(rolesUrl, externalRole).mockResolvedValue({data: {}});
     when(ExtJS.state().getValue).calledWith('nexus.ldap.mapped.role.query.character.limit').mockReturnValue(3);
-    
-    const {container} = renderDetails();
+
+    const {container} = renderCreateView();
     await waitForElementToBeRemoved(queryLoadingMask());
 
     userEvent.selectOptions(type(), TYPES.EXTERNAL);
@@ -338,7 +386,7 @@ describe('RolesDetails', function() {
     await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(rolesUrl, externalRole));
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
   });
-  
+
   it('creates a crowd external role', async function() {
     const {type, name, queryLoadingMask, description, saveButton, externalRoleType, mappedRole, roleModalButton,
       privilegeModalButton, selectionModal: {modal, confirmButton}} = selectors;
@@ -348,7 +396,7 @@ describe('RolesDetails', function() {
 
     when(Axios.post).calledWith(rolesUrl, externalRole).mockResolvedValue({data: {}});
 
-    renderDetails();
+    renderCreateView();
     await waitForElementToBeRemoved(queryLoadingMask());
 
     userEvent.selectOptions(type(), TYPES.EXTERNAL);
@@ -386,7 +434,7 @@ describe('RolesDetails', function() {
 
     Axios.put.mockReturnValue(Promise.resolve());
 
-    renderDetails(testRoleId);
+    renderEditView(testRoleId);
     await waitForElementToBeRemoved(queryLoadingMask());
 
     await TestUtils.changeField(name, data.name);
@@ -423,7 +471,7 @@ describe('RolesDetails', function() {
       }
     });
 
-    renderDetails();
+    renderCreateView();
     await waitForElementToBeRemoved(queryLoadingMask());
 
     userEvent.selectOptions(type(), TYPES.INTERNAL);
@@ -461,7 +509,7 @@ describe('RolesDetails', function() {
         data: {...ROLE, readOnly: true}
       });
 
-      renderDetails(testRoleId);
+      renderEditView(testRoleId);
       await waitForElementToBeRemoved(queryLoadingMask());
 
       expect(warning()).toBeInTheDocument();
@@ -474,7 +522,7 @@ describe('RolesDetails', function() {
 
       when(ExtJS.checkPermission).calledWith('nexus:roles:update').mockReturnValue(false);
 
-      renderDetails(testRoleId);
+      renderEditView(testRoleId);
       await waitForElementToBeRemoved(queryLoadingMask());
 
       expect(warning()).toBeInTheDocument();
@@ -486,7 +534,7 @@ describe('RolesDetails', function() {
     it('opens the modal when button is clicked', async function () {
       const { queryLoadingMask, roleModalButton, selectionModal: { modal, cancel } } = selectors;
 
-      renderDetails(testRoleId);
+      renderEditView(testRoleId);
       await waitForElementToBeRemoved(queryLoadingMask());
 
       expect(modal()).not.toBeInTheDocument();
@@ -510,7 +558,7 @@ describe('RolesDetails', function() {
         selectionModal: { modal, confirmButton }
       } = selectors;
 
-      renderDetails();
+      renderCreateView();
       await waitForElementToBeRemoved(queryLoadingMask());
 
       userEvent.selectOptions(type(), TYPES.INTERNAL);
@@ -540,7 +588,7 @@ describe('RolesDetails', function() {
     it('opens the modal when button is clicked', async function () {
       const { queryLoadingMask, privilegeModalButton, selectionModal: { modal, cancel } } = selectors;
 
-      renderDetails(testRoleId);
+      renderEditView(testRoleId);
       await waitForElementToBeRemoved(queryLoadingMask());
 
       expect(modal()).not.toBeInTheDocument();
@@ -555,7 +603,7 @@ describe('RolesDetails', function() {
     it('can have the same name as the role', async function () {
       const { queryLoadingMask, privilegeModalButton, selectionModal: { modal, cancel, filter } } = selectors;
 
-      renderDetails(testRoleId);
+      renderEditView(testRoleId);
       await waitForElementToBeRemoved(queryLoadingMask());
 
       expect(modal()).not.toBeInTheDocument();
@@ -582,7 +630,7 @@ describe('RolesDetails', function() {
         selectionModal: { modal, confirmButton }
       } = selectors;
 
-      renderDetails();
+      renderCreateView();
       await waitForElementToBeRemoved(queryLoadingMask());
 
       userEvent.selectOptions(type(), TYPES.INTERNAL);

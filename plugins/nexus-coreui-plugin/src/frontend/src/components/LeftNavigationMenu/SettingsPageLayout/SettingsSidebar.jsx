@@ -98,7 +98,8 @@ export default function SettingsSidebar() {
           data-analytics-id='nxrm-global-secondary-navbar-security-privileges'
         />
         <LeftNavigationMenuCollapsibleChildItem
-          name={ADMIN.SECURITY.ROLES}
+          name={ADMIN.SECURITY.ROLES.LIST}
+          selectedState={ADMIN.SECURITY.ROLES.ROOT}
           text={UIStrings.ROLES.MENU.text}
           params={{ itemId: null }}
           data-analytics-id='nxrm-global-secondary-navbar-security-roles'

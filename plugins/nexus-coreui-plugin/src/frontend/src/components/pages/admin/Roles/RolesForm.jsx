@@ -44,7 +44,7 @@ import PrivilegesSelectionModal from './PrivilegesSelectionModal';
 
 const {ROLES: {FORM: LABELS}} = UIStrings;
 
-export default function RolesForm({roleId, service, onDone}) {
+export default function RolesForm({roleId, service, onDone, isCreate}) {
   const stateMachine = useActor(service);
   const [state, send] = stateMachine;
 
@@ -59,7 +59,6 @@ export default function RolesForm({roleId, service, onDone}) {
     rolesListFilter
   } = state.context;
 
-  const isCreate = ValidationUtils.isBlank(roleId);
   const isEdit = !isCreate;
   const hasDeletePermissions = ExtJS.checkPermission('nexus:roles:delete');
   const canDelete = hasDeletePermissions && !data.readOnly;

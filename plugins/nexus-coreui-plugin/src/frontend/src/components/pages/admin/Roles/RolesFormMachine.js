@@ -28,8 +28,6 @@ import {TYPES, EMPTY_DATA, URL} from './RolesHelper';
 const {ROLES: {MESSAGES: LABELS}} = UIStrings;
 const {rolesUrl, privilegesUrl, sourcesApi, defaultRolesUrl, singleRoleUrl} = URL;
 
-const isEdit = (id) => ValidationUtils.notBlank(id);
-
 const validateId = (id) => {
   if (ValidationUtils.isBlank(id)) {
     return UIStrings.ERROR.FIELD_REQUIRED;
@@ -137,23 +135,23 @@ export default FormUtils.buildFormMachine({
     logDeleteSuccess: ({data}) => ExtJS.showSuccessMessage(LABELS.DELETE_SUCCESS(data.name)),
   },
   services: {
-    fetchData: ({pristineData: {id}}) => {
+    fetchData: ({pristineData: {id}, isCreate}) => {
       return Axios.all([
         Axios.get(defaultRolesUrl),
         Axios.get(privilegesUrl),
-        isEdit(id)
-            ? Promise.resolve({data: []} )
-            : ExtAPIUtils.extAPIRequest(sourcesApi.action, sourcesApi.method).then(v => v.data.result),
-        isEdit(id)
-            ? Axios.get(singleRoleUrl(id))
-            : Promise.resolve({data: EMPTY_DATA}),
+        isCreate
+            ? ExtAPIUtils.extAPIRequest(sourcesApi.action, sourcesApi.method).then(v => v.data.result)
+            : Promise.resolve({data: []} ),
+        isCreate || !id
+            ? Promise.resolve({data: EMPTY_DATA})
+            : Axios.get(singleRoleUrl(id)),
       ]);
     },
-    saveData: ({data, pristineData: {id}}) => {
-      if (isEdit(id)) {
-        return Axios.put(singleRoleUrl(data.id), data);
-      } else {
+    saveData: ({data, isCreate}) => {
+      if (isCreate) {
         return Axios.post(rolesUrl, data);
+      } else {
+        return Axios.put(singleRoleUrl(data.id), data);
       }
     },
     confirmDelete: ({data}) => ExtJS.requestConfirmation({

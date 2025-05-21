@@ -21,6 +21,8 @@ import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 
 import UIStrings from '../../../../constants/UIStrings';
 import RolesList from './RolesList';
+import {getRouter} from "../../../../routerConfig/routerConfig";
+import {UIRouter} from "@uirouter/react";
 
 const {ROLES: {LIST: LABELS}} = UIStrings;
 const {EXT: {CAPABILITY: {ACTION, METHODS}, URL: EXT_URL}} = APIConstants;
@@ -86,7 +88,13 @@ const sortRoles = (field, order = ascend) => sort(order(prop(field)), ROWS);
 describe('RolesList', function() {
 
   const renderAndWaitForLoad = async () => {
-    render(<RolesList/>);
+    const router = getRouter();
+    render(
+        <UIRouter router={router}>
+          <RolesList />
+        </UIRouter>
+    );
+
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
   }
 

@@ -50,7 +50,12 @@ export default {
   SECURITY: {
     DIRECTORY: 'admin.security',
     PRIVILEGES: 'admin.security.privileges',
-    ROLES:'admin.security.roles',
+    ROLES: {
+      ROOT: 'admin.security.roles',
+      LIST: 'admin.security.roles.list',
+      EDIT: 'admin.security.roles.edit',
+      CREATE: 'admin.security.roles.create'
+    },
     USERS: 'admin.security.users',
     ANONYMOUS: 'admin.security.anonymous',
     ATLASSIANCROWD: 'admin.security.atlassiancrowd',

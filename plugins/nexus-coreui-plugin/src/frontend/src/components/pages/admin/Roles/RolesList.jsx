@@ -22,7 +22,8 @@ import {
   PageTitle,
   Permissions,
   Section,
-  SectionToolbar
+  SectionToolbar,
+  Page,
 } from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
@@ -41,10 +42,19 @@ import {HelpTile} from '../../../widgets';
 import RolesListMachine from './RolesListMachine';
 import UIStrings from '../../../../constants/UIStrings';
 
+import {useRouter} from '@uirouter/react';
+import {ROUTE_NAMES} from '../../../../routerConfig/routeNames/routeNames';
+
+const ADMIN = ROUTE_NAMES.ADMIN;
+
 const {ROLES: {LIST: LABELS}} = UIStrings;
 const {COLUMNS} = LABELS;
 
-export default function RolesList({onCreate, onEdit}) {
+export default function RolesList() {
+  const router = useRouter();
+  const onEdit = (itemId) => router.stateService.go(ADMIN.SECURITY.ROLES.EDIT, {itemId});
+  const onCreate = () => router.stateService.go(ADMIN.SECURITY.ROLES.CREATE);
+
   const [state, send] = useMachine(RolesListMachine, {devTools: true});
   const isLoading = state.matches('loading');
   const {data, error, filter: filterText, defaultRole: {roleId, roleName, capabilityId} = {}} = state.context;
@@ -66,7 +76,7 @@ export default function RolesList({onCreate, onEdit}) {
     }
   }
 
-  return <div className="nxrm-roles">
+  return <Page className="nxrm-roles">
     <PageHeader>
       <PageTitle
           icon={UIStrings.ROLES.MENU.icon}
@@ -129,5 +139,5 @@ export default function RolesList({onCreate, onEdit}) {
       </Section>
       <HelpTile header={LABELS.HELP.TITLE} body={LABELS.HELP.TEXT}/>
     </ContentBody>
-  </div>;
+  </Page>;
 }

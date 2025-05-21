@@ -35,7 +35,7 @@ export default function AdminSecurityDirectoryPage() {
               data-analytics-id="nxrm-admin-security-directory-roles-lnk"
               text={UIStrings.ROLES.MENU.text}
               description={UIStrings.ROLES.MENU.description}
-              routeName={ADMIN.SECURITY.ROLES}
+              routeName={ADMIN.SECURITY.ROLES.LIST}
               params={{ itemId: null }}
           />
 
