@@ -33,7 +33,12 @@ export default {
       EDIT: 'admin.repository.selectors.edit',
       CREATE: 'admin.repository.selectors.create'
     },
-    CLEANUPPOLICIES: 'admin.repository.cleanuppolicies',
+    CLEANUPPOLICIES: {
+      ROOT: 'admin.repository.cleanuppolicies',
+      LIST: 'admin.repository.cleanuppolicies.list',
+      CREATE: 'admin.repository.cleanuppolicies.create',
+      EDIT: 'admin.repository.cleanuppolicies.details'
+    },
     ROUTINGRULES: {
       DIRECTORY: 'admin.repository.routingrules',
       LIST: 'admin.repository.routingrules.list',

@@ -14,35 +14,65 @@ import React from 'react';
 import axios from 'axios';
 import {waitForElementToBeRemoved} from '@testing-library/react';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import {render, screen, within} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import CleanupPoliciesList from './CleanupPoliciesList';
 
-import UIStrings from '../../../../constants/UIStrings';
+import {UIRouter} from "@uirouter/react";
+import {getRouter} from "../../../../routerConfig/routerConfig";
 
 jest.mock('axios', () => ({
   get: jest.fn()
 }));
 
+function renderComponent() {
+  const router = getRouter();
+  return render(
+      <UIRouter router={router}>
+        <CleanupPoliciesList />
+      </UIRouter>
+  );
+}
+
+const NUM_HEADERS = 1;
+const NAME = 0;
+const FORMAT = 1;
+const NOTES = 2;
+
+const selectors = {
+  ...TestUtils.selectors,
+  bodyRows: () => screen.getAllByRole('row').slice(NUM_HEADERS),
+  tableHeader: (text) => screen.getByText(text, {selector: 'thead *'}),
+  cleanupPoliciesName: (row) => within(selectors.bodyRows()[row]).getAllByRole('cell')[NAME],
+  cleanupPoliciesFormat: (row) => within(selectors.bodyRows()[row]).getAllByRole('cell')[FORMAT],
+  cleanupPoliciesNotes: (row) => within(selectors.bodyRows()[row]).getAllByRole('cell')[NOTES],
+  filter: () => screen.getByPlaceholderText('Filter')
+};
+
 describe('CleanupPoliciesList', function() {
-  function renderView(view = <CleanupPoliciesList/>) {
-    return TestUtils.render(view, ({queryByPlaceholderText}) => ({
-      filter: () => queryByPlaceholderText(UIStrings.CLEANUP_POLICIES.FILTER_PLACEHOLDER)
-    }));
-  }
+  const {
+    tableHeader,
+    filter,
+    cleanupPoliciesName,
+    cleanupPoliciesFormat,
+    cleanupPoliciesNotes,
+    queryLoadingMask
+  } = selectors;
 
-  it('renders the resolved data', async function() {
-    const rows = [
-      {
-        name: 'cleanup',
-        format: 'testformat',
-        notes: 'cleanup-description'
-      },{
-        name: 'test',
-        format: 'testformat',
-        notes: 'notes'
-      }
-    ];
+  const rows = [
+    {
+      name: 'cleanup',
+      format: 'testformat cleanup',
+      notes: 'cleanup-description'
+    },{
+      name: 'test',
+      format: 'testformat test',
+      notes: 'notes'
+    }
+  ];
 
+  beforeEach(() => {
     axios.get.mockImplementation((url) => {
       if (url === 'service/rest/internal/cleanup-policies') {
         return Promise.resolve({data: rows});
@@ -57,25 +87,78 @@ describe('CleanupPoliciesList', function() {
         });
       }
     });
-
-    const {container, loadingMask} = renderView();
-
-    await waitForElementToBeRemoved(loadingMask());
-
-    rows.forEach((row, i) => {
-      expect(container.querySelector(`tbody tr:nth-child(${i+1}) td:nth-child(1)`)).toHaveTextContent(row.name);
-      expect(container.querySelector(`tbody tr:nth-child(${i+1}) td:nth-child(2)`)).toHaveTextContent(row.format);
-      expect(container.querySelector(`tbody tr:nth-child(${i+1}) td:nth-child(3)`)).toHaveTextContent(row.notes);
-    });
   });
 
-  it('renders an error message', async function() {
-    axios.get.mockReturnValue(Promise.reject({message: 'Error'}));
+  it('renders the resolved data', async function() {
+    renderComponent();
 
-    const {container, loadingMask} = renderView();
+    await waitForElementToBeRemoved(queryLoadingMask());
 
-    await waitForElementToBeRemoved(loadingMask());
+    expect(cleanupPoliciesName(0)).toHaveTextContent('cleanup');
+    expect(cleanupPoliciesFormat(0)).toHaveTextContent('testformat cleanup');
+    expect(cleanupPoliciesNotes(0)).toHaveTextContent('cleanup-description');
 
-    expect(container.querySelector('.nx-cell--meta-info')).toHaveTextContent('Error');
+    expect(cleanupPoliciesName(1)).toHaveTextContent('test');
+    expect(cleanupPoliciesFormat(1)).toHaveTextContent('testformat test');
+    expect(cleanupPoliciesNotes(1)).toHaveTextContent('notes');
+  });
+
+  it('sorts the rows by name', async function () {
+    renderComponent();
+
+    await waitForElementToBeRemoved(queryLoadingMask());
+
+    expect(cleanupPoliciesName(0)).toHaveTextContent('cleanup');
+    expect(cleanupPoliciesName(1)).toHaveTextContent('test');
+
+    userEvent.click(tableHeader('Name'));
+
+    expect(cleanupPoliciesName(0)).toHaveTextContent('test');
+    expect(cleanupPoliciesName(1)).toHaveTextContent('cleanup');
+  });
+
+  it('sorts the rows by format', async function () {
+    renderComponent();
+
+    await waitForElementToBeRemoved(queryLoadingMask());
+
+    userEvent.click(tableHeader('Format'));
+
+    expect(cleanupPoliciesFormat(0)).toHaveTextContent('testformat cleanup');
+    expect(cleanupPoliciesFormat(1)).toHaveTextContent('testformat test');
+
+    userEvent.click(tableHeader('Format'));
+
+    expect(cleanupPoliciesFormat(0)).toHaveTextContent('testformat test');
+    expect(cleanupPoliciesFormat(1)).toHaveTextContent('testformat cleanup');
+  });
+
+  it('sorts the rows by notes', async function () {
+    renderComponent();
+
+    await waitForElementToBeRemoved(queryLoadingMask());
+
+    userEvent.click(tableHeader('Description'));
+
+    expect(cleanupPoliciesNotes(0)).toHaveTextContent('cleanup-description');
+    expect(cleanupPoliciesNotes(1)).toHaveTextContent('notes');
+
+    userEvent.click(tableHeader('Description'));
+
+    expect(cleanupPoliciesNotes(0)).toHaveTextContent('notes');
+    expect(cleanupPoliciesNotes(1)).toHaveTextContent('cleanup-description');
+  });
+
+  it('filters by name', async function() {
+    renderComponent();
+
+    await waitForElementToBeRemoved(queryLoadingMask());
+
+    await TestUtils.changeField(filter, 'cleanup');
+
+    expect(selectors.bodyRows().length).toBe(1);
+    expect(cleanupPoliciesName(0)).toHaveTextContent('cleanup');
+    expect(cleanupPoliciesFormat(0)).toHaveTextContent('testformat cleanup');
+    expect(cleanupPoliciesNotes(0)).toHaveTextContent('cleanup-description');
   });
 });

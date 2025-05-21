@@ -25,10 +25,15 @@ import {when} from 'jest-when';
 import {URL} from './CleanupPoliciesHelper';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import {UIRouter, useCurrentStateAndParams} from "@uirouter/react";
+import {getRouter} from "../../../../routerConfig/routerConfig";
+import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
 
 import CleanupPoliciesForm from './CleanupPoliciesForm';
 
 import UIStrings from '../../../../constants/UIStrings';
+
+const ADMIN = ROUTE_NAMES.ADMIN;
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
@@ -44,6 +49,18 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     requestConfirmation: jest.fn(),
     urlOf: jest.fn().mockImplementation((path) => 'https://testurl' + path),
   },
+}));
+
+const stateServiceGoMock = jest.fn();
+
+jest.mock('@uirouter/react', () => ({
+  ...jest.requireActual('@uirouter/react'),
+    useCurrentStateAndParams: jest.fn(),
+    useRouter: () =>({
+      stateService: {
+        go: stateServiceGoMock,
+      }
+    })
 }));
 
 const FORMATS_URL = 'service/rest/internal/cleanup-policies/criteria/formats';
@@ -105,7 +122,6 @@ const selectors = {
 
 describe('CleanupPoliciesForm', function () {
   const CONFIRM = Promise.resolve();
-  const onDone = jest.fn();
 
   const EDITABLE_ITEM = {
     name: 'test',
@@ -119,12 +135,25 @@ describe('CleanupPoliciesForm', function () {
     sortBy: 'version',
   };
 
-  async function renderView(itemId) {
-    const view = render(
-      <CleanupPoliciesForm itemId={itemId} onDone={onDone} />
-    );
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
-    return view;
+  async function renderEditView(itemId) {
+    useCurrentStateAndParams.mockReturnValue({state: { name: ADMIN.REPOSITORY.CLEANUPPOLICIES.EDIT }, params: {itemId}});
+    return renderView();
+  }
+
+  async function renderCreateView() {
+    useCurrentStateAndParams.mockReturnValue({state: { name: ADMIN.REPOSITORY.CLEANUPPOLICIES.CREATE }, params: {}});
+    return renderView();
+  }
+
+  async function renderView() {
+    const router = getRouter();
+    try {
+      return render(<UIRouter router={router}>
+        <CleanupPoliciesForm />
+      </UIRouter>);
+    } finally {
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    }
   }
 
   beforeEach(() => {
@@ -194,6 +223,9 @@ describe('CleanupPoliciesForm', function () {
           },
         ],
       });
+
+    useCurrentStateAndParams.mockReset();
+    useCurrentStateAndParams.mockReturnValue({state: { name: undefined }, params: {}});
   });
 
   it('renders the resolved data', async function () {
@@ -210,7 +242,7 @@ describe('CleanupPoliciesForm', function () {
       criteriaAssetRegex,
     } = selectors;
 
-    await renderView(EDITABLE_ITEM.name);
+    await renderEditView(EDITABLE_ITEM.name);
 
     expect(name()).toHaveValue(EDITABLE_ITEM.name);
     expect(format()).toHaveValue(EDITABLE_ITEM.format);
@@ -231,16 +263,22 @@ describe('CleanupPoliciesForm', function () {
   it('renders an error message', async function () {
     axios.get.mockRejectedValue({message: 'Error'});
 
-    const {container} = await renderView('itemId');
+    const {container} = await renderEditView('itemId');
 
     expect(container.querySelector('.nx-alert--error')).toHaveTextContent(
       'Error'
     );
   });
 
+  it('renders 404 page on no itemId on edit', async function () {
+    await renderEditView('');
+
+    expect(stateServiceGoMock).toHaveBeenCalledWith(ROUTE_NAMES.MISSING_ROUTE);
+  });
+
   it('requires the name, format and some criteria when creating a new cleanup policy', async function () {
     const {name, format, criteriaLastBlobUpdated, getCriteriaLastBlobUpdatedCheckbox} = selectors;
-    await renderView();
+    await renderCreateView();
 
     await TestUtils.changeField(name, EDITABLE_ITEM.name);
     userEvent.click(selectors.querySubmitButton());
@@ -258,7 +296,7 @@ describe('CleanupPoliciesForm', function () {
   it('does not allow to save if some cleanup criteria is not set' ,  async function (){
     const {name, format, saveButton} = selectors;
 
-    await renderView();
+    await renderCreateView();
 
     await TestUtils.changeField(name, EDITABLE_ITEM.name);
     await TestUtils.changeField(format, EDITABLE_ITEM.format);
@@ -278,7 +316,7 @@ describe('CleanupPoliciesForm', function () {
     const notesTooLong = 'This message is to long for the description field. This message is to long for the description field. This message is to long for the description field. This message is to long for the description field. This message is to long for the description field. This message is to long for the description field. This message is to long for the description field. This message is to long for the description field.';
 
     const {name, format, notes, criteriaLastBlobUpdated, getCriteriaLastBlobUpdatedCheckbox} = selectors;
-    await renderView();
+    await renderCreateView();
 
     await TestUtils.changeField(name, EDITABLE_ITEM.name);
     await TestUtils.changeField(format, EDITABLE_ITEM.format);
@@ -296,7 +334,7 @@ describe('CleanupPoliciesForm', function () {
 
   it('does not allow decimal values in lastBlobUpdated fields', async function () {
     const {name, format, criteriaLastBlobUpdated} = selectors;
-    const {container} = await renderView();
+    const {container} = await renderCreateView();
 
     await TestUtils.changeField(name, EDITABLE_ITEM.name);
     await TestUtils.changeField(format, EDITABLE_ITEM.format);
@@ -315,9 +353,17 @@ describe('CleanupPoliciesForm', function () {
     ).toBeInTheDocument();
   });
 
+  it('fires onDone when cancelled', async function () {
+    await renderEditView();
+
+    userEvent.click(selectors.cancelButton());
+
+    expect(stateServiceGoMock).toHaveBeenCalledWith(ADMIN.REPOSITORY.CLEANUPPOLICIES.LIST);
+  });
+
   it('does not allow decimal values in lastDownloaded fields', async function () {
     const {name, format, criteriaLastDownloaded} = selectors;
-    const {container} = await renderView();
+    const {container} = await renderCreateView();
 
     await TestUtils.changeField(name, EDITABLE_ITEM.name);
     await TestUtils.changeField(format, EDITABLE_ITEM.format);
@@ -336,14 +382,6 @@ describe('CleanupPoliciesForm', function () {
     ).toBeInTheDocument();
   });
 
-  it('fires onDone when cancelled', async function () {
-    await renderView();
-
-    userEvent.click(selectors.cancelButton());
-
-    await waitFor(() => expect(onDone).toBeCalled());
-  });
-
   it('requests confirmation when delete is requested', async function () {
     const itemId = 'test';
     when(axios.get)
@@ -356,7 +394,7 @@ describe('CleanupPoliciesForm', function () {
 
     const {deleteButton} = selectors;
 
-    await renderView(itemId);
+    await renderEditView(itemId);
 
     axios.put.mockReturnValue(Promise.resolve());
 
@@ -367,14 +405,15 @@ describe('CleanupPoliciesForm', function () {
     await waitFor(() =>
       expect(axios.delete).toBeCalledWith(URL.singleCleanupPolicyUrl(itemId))
     );
-    expect(onDone).toBeCalled();
+
+    expect(stateServiceGoMock).toHaveBeenCalledWith(ADMIN.REPOSITORY.CLEANUPPOLICIES.LIST);
   });
 
   it('saves', async function () {
     axios.post.mockReturnValue(Promise.resolve());
 
     const {name, format, notes, saveButton , criteriaLastBlobUpdated, getCriteriaLastBlobUpdatedCheckbox} = selectors;
-    await renderView();
+    await renderCreateView();
 
     expect(window.dirty).toEqual([]);
 
@@ -417,7 +456,7 @@ describe('CleanupPoliciesForm', function () {
       criteriaAssetRegex,
       saveButton,
     } = selectors;
-    const {container} = await renderView(EDITABLE_ITEM.name);
+    const {container} = await renderEditView(EDITABLE_ITEM.name);
 
     expect(criteriaLastBlobUpdated()).not.toBeDisabled();
     expect(criteriaLastDownloaded()).not.toBeDisabled();
@@ -460,7 +499,7 @@ describe('CleanupPoliciesForm', function () {
         previewCmpCount,
       } = selectors;
 
-      await renderView(EDITABLE_ITEM.name);
+      await renderEditView(EDITABLE_ITEM.name);
 
       userEvent.selectOptions(previewRepositories(), 'maven-central');
       expect(previewRepositories()).toHaveValue('maven-central');
@@ -541,7 +580,7 @@ describe('CleanupPoliciesForm', function () {
         getCriteriaAssetRegexCheckbox,
       } = selectors;
 
-      await renderView(EDITABLE_ITEM.name);
+      await renderEditView(EDITABLE_ITEM.name);
 
       userEvent.selectOptions(previewRepositories(), 'maven-central');
       expect(previewRepositories()).toHaveValue('maven-central');
@@ -609,7 +648,7 @@ describe('CleanupPoliciesForm', function () {
     it('renders the resolved data', async function () {
       const {dryRunRepositories, dryRunCreateCSVButton} = selectors;
 
-      await renderView(EDITABLE_ITEM.name);
+      await renderEditView(EDITABLE_ITEM.name);
 
       const selectDropdown = dryRunRepositories(),
         options = within(selectDropdown).queryAllByRole('option'),
@@ -625,7 +664,7 @@ describe('CleanupPoliciesForm', function () {
     it('sets disabled on the select dropdown when no format is selected', async function () {
       const {format, dryRunRepositories} = selectors;
 
-      await renderView(EDITABLE_ITEM.name);
+      await renderEditView(EDITABLE_ITEM.name);
 
       const selectDropdown = dryRunRepositories(),
         formatSelectDropdown = format();
@@ -649,7 +688,7 @@ describe('CleanupPoliciesForm', function () {
       const {dryRunRepositories, dryRunCreateCSVButton, name, format,
         criteriaLastBlobUpdated, getCriteriaLastBlobUpdatedCheckbox, querySubmitButton} = selectors;
 
-      await renderView();
+      await renderCreateView();
 
       await TestUtils.changeField(name, EDITABLE_ITEM.name);
       await TestUtils.changeField(format, EDITABLE_ITEM.format);
@@ -694,7 +733,7 @@ describe('CleanupPoliciesForm', function () {
       &criteriaRetain=${EDITABLE_ITEM.retain}
       &criteriaSortBy=${EDITABLE_ITEM.sortBy}`;
 
-      await renderView(EDITABLE_ITEM.name);
+      await renderEditView(EDITABLE_ITEM.name);
 
       const selectDropdown = dryRunRepositories(),
           createButton = dryRunCreateCSVButton();
@@ -770,7 +809,7 @@ describe('CleanupPoliciesForm', function () {
         criteriaLastBlobUpdated
       } = selectors;
 
-      await renderView();
+      await renderCreateView();
 
       expect(criteriaVersion()).not.toBeInTheDocument();
 
@@ -816,7 +855,7 @@ describe('CleanupPoliciesForm', function () {
     it('remembers the crteria version even if the release type is changed', async function () {
       const {releaseType, criteriaVersion, getCriteriaVersionCheckbox} = selectors;
 
-      await renderView(EDITABLE_ITEM.name);
+      await renderEditView(EDITABLE_ITEM.name);
 
       await act(async () => userEvent.selectOptions(releaseType(), 'RELEASES'));
       expect(releaseType()).toHaveValue('RELEASES');
@@ -859,7 +898,7 @@ describe('CleanupPoliciesForm', function () {
         querySubmitButton
       } = selectors;
 
-      await renderView(item.name);
+      await renderEditView(item.name);
 
       expect(name()).toHaveValue(item.name);
       expect(format()).toHaveValue(item.format);
@@ -896,7 +935,7 @@ describe('CleanupPoliciesForm', function () {
     ('Version criteria is visible for the format', async function(item) {
       const {name, format, notes, versionAlertMessage} = selectors;
 
-      await renderView();
+      await renderEditView();
 
       expect(versionAlertMessage()).not.toBeInTheDocument();
 
@@ -925,7 +964,7 @@ describe('CleanupPoliciesForm', function () {
         criteriaVersion,
       } = selectors;
 
-      await renderView();
+      await renderEditView();
 
       expect(normalizedVersionAlertMessage()).not.toBeInTheDocument();
 
@@ -942,7 +981,7 @@ describe('CleanupPoliciesForm', function () {
     ('saves the retain-n values', async function(item) {
       const {criteriaVersion, saveButton} = selectors;
 
-      await renderView(item.name);
+      await renderEditView(item.name);
 
       await TestUtils.changeField(criteriaVersion, '5');
 

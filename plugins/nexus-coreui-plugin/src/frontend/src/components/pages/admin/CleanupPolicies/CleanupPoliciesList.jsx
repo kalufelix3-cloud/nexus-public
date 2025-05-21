@@ -27,6 +27,8 @@ import {
   NxTableRow,
 } from '@sonatype/react-shared-components';
 
+import { Page } from '@sonatype/nexus-ui-plugin';
+
 import {
   ContentBody,
   PageActions,
@@ -41,9 +43,17 @@ import CleanupPoliciesListMachine from './CleanupPoliciesListMachine';
 
 import UIStrings from '../../../../constants/UIStrings';
 
+import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
+import { useRouter } from '@uirouter/react';
+
+const ADMIN = ROUTE_NAMES.ADMIN;
+
 const {CLEANUP_POLICIES: LABELS} = UIStrings;
 
-export default function CleanupPoliciesList({onCreate, onEdit}) {
+export default function CleanupPoliciesList() {
+  const router = useRouter();
+  const onEdit = (itemId) => router.stateService.go(ADMIN.REPOSITORY.CLEANUPPOLICIES.EDIT, {itemId});
+  const onCreate = () => router.stateService.go(ADMIN.REPOSITORY.CLEANUPPOLICIES.CREATE);
   const [current, send] = useMachine(CleanupPoliciesListMachine, {devTools: true});
   const isLoading = current.matches('loading');
   const data = current.context.data;
@@ -58,7 +68,7 @@ export default function CleanupPoliciesList({onCreate, onEdit}) {
     send({type: 'FILTER', filter: value});
   }
 
-  return <div className="nxrm-cleanup-policies">
+  return <Page className="nxrm-cleanup-policies">
     <PageHeader>
       <PageTitle icon={faBroom} {...LABELS.MENU}/>
       <PageActions>
@@ -107,5 +117,5 @@ export default function CleanupPoliciesList({onCreate, onEdit}) {
 
       <HelpTile header={LABELS.HELP_TITLE} body={LABELS.HELP_TEXT}/>
     </ContentBody>
-  </div>;
+  </Page>;
 }

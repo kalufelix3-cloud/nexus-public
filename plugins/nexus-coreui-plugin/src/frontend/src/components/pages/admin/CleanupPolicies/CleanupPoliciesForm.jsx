@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, {useCallback, useEffect} from 'react';
 import {useMachine} from '@xstate/react';
 
 import {CheckboxControlledWrapper, ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
@@ -27,6 +27,8 @@ import {
   NxFieldset
 } from '@sonatype/react-shared-components';
 
+import { Page } from '@sonatype/nexus-ui-plugin';
+
 import {
   ContentBody,
   PageHeader,
@@ -41,12 +43,19 @@ import CleanupExclusionCriteria from './CleanupExclusionCriteria';
 import UIStrings from '../../../../constants/UIStrings';
 import {faTrash} from '@fortawesome/free-solid-svg-icons';
 
+import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
 import './CleanupPolicies.scss';
 import {isEmpty} from 'ramda';
+import {useCurrentStateAndParams, useRouter} from "@uirouter/react";
 
+const ADMIN = ROUTE_NAMES.ADMIN;
 const {CLEANUP_POLICIES: LABELS} = UIStrings;
 
-export default function CleanupPoliciesForm({itemId, onDone}) {
+export default function CleanupPoliciesForm() {
+  const router = useRouter();
+  const {state: routerState, params} = useCurrentStateAndParams();
+  const onDone = useCallback(() => router.stateService.go(ADMIN.REPOSITORY.CLEANUPPOLICIES.LIST));
+  const itemId = params?.itemId;
   const [state, send, actor] = useMachine(CleanupPoliciesFormMachine, {
     context: {
       pristineData: {
@@ -61,6 +70,14 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
 
     devTools: true,
   });
+
+  useEffect(() => {
+    // we should not render edit form if itemId is not provided
+    if (routerState.name === ADMIN.REPOSITORY.CLEANUPPOLICIES.EDIT && !itemId) {
+      router.stateService.go(ROUTE_NAMES.MISSING_ROUTE);
+    }
+  }, [itemId]);
+
 
   const {
     pristineData,
@@ -134,7 +151,7 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
   }
 
   return (
-    <div className="nxrm-cleanup-policies">
+    <Page className="nxrm-cleanup-policies">
       <PageHeader>
         <PageTitle text={isEdit ? LABELS.EDIT_TITLE : LABELS.CREATE_TITLE} />
       </PageHeader>
@@ -339,6 +356,6 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
           <CleanupPoliciesPreview policyData={data} />
         )}
       </ContentBody>
-    </div>
+    </Page>
   );
 }

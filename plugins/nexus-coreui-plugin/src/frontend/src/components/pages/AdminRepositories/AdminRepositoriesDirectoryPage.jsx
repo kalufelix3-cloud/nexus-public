@@ -67,7 +67,7 @@ export default function AdminRepositoriesDirectoryPage() {
               data-analytics-id="nxrm-admin-repository-directory-cleanup-policies-lnk"
               text={UIStrings.CLEANUP_POLICIES.MENU.text}
               description={UIStrings.CLEANUP_POLICIES.MENU.description}
-              routeName={ADMIN.REPOSITORY.CLEANUPPOLICIES}
+              routeName={ADMIN.REPOSITORY.CLEANUPPOLICIES.LIST}
               params={{ itemId: null }}
           />
 

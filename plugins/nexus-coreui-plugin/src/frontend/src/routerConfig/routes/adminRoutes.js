@@ -19,7 +19,8 @@ import IqServer from '../../components/pages/admin/IqServer/IqServer';
 import RepositoriesExt from '../../components/pages/admin/Repositories/RepositoriesExt';
 import DataStoreConfiguration from '../../components/pages/admin/DataStoreConfiguration/DataStoreConfiguration';
 import ProprietaryRepositories from '../../components/pages/admin/ProprietaryRepositories/ProprietaryRepositories';
-import CleanupPolicies from '../../components/pages/admin/CleanupPolicies/CleanupPolicies';
+import CleanupPoliciesList from '../../components/pages/admin/CleanupPolicies/CleanupPoliciesList';
+import CleanupPoliciesForm from '../../components/pages/admin/CleanupPolicies/CleanupPoliciesForm';
 import Privileges from '../../components/pages/admin/Privileges/Privileges';
 import EmailServer from '../../components/pages/admin/EmailServer/EmailServer';
 import Roles from '../../components/pages/admin/Roles/Roles';
@@ -199,22 +200,32 @@ export const adminRoutes = [
   },
 
   {
-    name: ADMIN.REPOSITORY.CLEANUPPOLICIES,
-    url: '/cleanuppolicies:itemId',
-    component: CleanupPolicies,
+    name: ADMIN.REPOSITORY.CLEANUPPOLICIES.ROOT,
+    component: UIView,
     data: {
       visibilityRequirements: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: [Permissions.ADMIN]
       }
-    },
-    params: {
-      itemId: {
-        value: null,
-        raw: true,
-        dynamic: true
-      }
     }
+  },
+
+  {
+    name: ADMIN.REPOSITORY.CLEANUPPOLICIES.LIST,
+    url: '/cleanuppolicies',
+    component: CleanupPoliciesList
+  },
+
+  {
+    name: ADMIN.REPOSITORY.CLEANUPPOLICIES.CREATE,
+    url: '/cleanuppolicies/create',
+    component: CleanupPoliciesForm
+  },
+
+  {
+    name: ADMIN.REPOSITORY.CLEANUPPOLICIES.EDIT,
+    url: '/cleanuppolicies/edit/{itemId:.+}',
+    component: CleanupPoliciesForm
   },
 
   {

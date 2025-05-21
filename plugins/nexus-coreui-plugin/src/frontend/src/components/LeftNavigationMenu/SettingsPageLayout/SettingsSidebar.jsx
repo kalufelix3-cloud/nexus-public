@@ -69,9 +69,10 @@ export default function SettingsSidebar() {
           data-analytics-id='nxrm-global-secondary-navbar-repository-selectors'
         />
         <LeftNavigationMenuCollapsibleChildItem
-          name={ADMIN.REPOSITORY.CLEANUPPOLICIES}
+          name={ADMIN.REPOSITORY.CLEANUPPOLICIES.LIST}
           text={UIStrings.CLEANUP_POLICIES.MENU.text}
           params={{ itemId: null }}
+          selectedState={ADMIN.REPOSITORY.CLEANUPPOLICIES.ROOT}
           data-analytics-id='nxrm-global-secondary-navbar-repository-cleanuppolicies'
         />
         <LeftNavigationMenuCollapsibleChildItem
