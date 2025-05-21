@@ -17,6 +17,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.cert.CertificateException;
@@ -35,6 +36,8 @@ import javax.net.ssl.TrustManagerFactory;
  */
 public interface CryptoHelper
 {
+  Provider getProvider();
+
   Cipher createCipher(String transformation) throws NoSuchAlgorithmException, NoSuchPaddingException;
 
   int getCipherMaxAllowedKeyLength(String transformation) throws NoSuchAlgorithmException;
@@ -59,4 +62,3 @@ public interface CryptoHelper
 
   SecretKeyFactory createSecretKeyFactory(String algorithm) throws NoSuchAlgorithmException;
 }
-

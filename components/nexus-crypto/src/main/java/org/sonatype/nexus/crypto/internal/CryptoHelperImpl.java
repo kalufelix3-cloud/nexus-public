@@ -104,6 +104,7 @@ public class CryptoHelperImpl
     }
   }
 
+  @Override
   public Provider getProvider() {
     return provider;
   }
