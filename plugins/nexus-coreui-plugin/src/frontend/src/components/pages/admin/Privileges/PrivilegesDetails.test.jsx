@@ -23,6 +23,8 @@ import UIStrings from '../../../../constants/UIStrings';
 import PrivilegesDetails from './PrivilegesDetails';
 import {TYPES as TYPE_IDS, FIELDS, URL} from './PrivilegesHelper';
 import {BREADR_ACTIONS, TYPES, TYPES_MAP, SELECTORS, REPOSITORIES} from './Privileges.testdata';
+import { getRouter } from '../../../../routerConfig/routerConfig';
+import { UIRouter, useCurrentStateAndParams } from '@uirouter/react';
 
 const {privilegesUrl, singlePrivilegeUrl, updatePrivilegeUrl, createPrivilegeUrl} = URL;
 
@@ -38,6 +40,11 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     showErrorMessage: jest.fn(),
     showSuccessMessage: jest.fn(),
   },
+}));
+
+jest.mock('@uirouter/react', () => ({
+  ...jest.requireActual('@uirouter/react'),
+  useCurrentStateAndParams: jest.fn(),
 }));
 
 const testName = 'PrivilegeName';
@@ -95,11 +102,17 @@ const selectors = {
 };
 
 describe('PrivilegesDetails', function() {
-  const onDone = jest.fn();
   const CONFIRM = Promise.resolve();
 
   const renderAndWaitForLoad = async (itemId) => {
-    render(<PrivilegesDetails itemId={itemId || ''} onDone={onDone}/>);
+    useCurrentStateAndParams.mockReturnValue({params: {itemId}});
+    const router = getRouter();
+    const view = (
+      <UIRouter router={router}>
+        <PrivilegesDetails />
+      </UIRouter>
+    );
+    render(view);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
   }
 
@@ -110,6 +123,7 @@ describe('PrivilegesDetails', function() {
       data: {...SCRIPT_PRIVILEGE, readOnly: false}
     });
     ExtJS.checkPermission.mockReturnValue(true);
+    useCurrentStateAndParams.mockReset();
   });
 
   it('renders the resolved data', async function() {
@@ -394,17 +408,7 @@ describe('PrivilegesDetails', function() {
     userEvent.click(deleteButton());
 
     await waitFor(() => expect(Axios.delete).toBeCalledWith(singlePrivilegeUrl(testName)));
-    expect(onDone).toBeCalled();
     expect(ExtJS.showSuccessMessage).toBeCalled();
-  });
-
-  it('fires onDone when cancelled', async function() {
-    const {cancelButton} = selectors;
-    await renderAndWaitForLoad();
-
-    userEvent.click(cancelButton());
-
-    await waitFor(() => expect(onDone).toBeCalled());
   });
 
   describe('Read Only Mode', function() {
@@ -430,9 +434,6 @@ describe('PrivilegesDetails', function() {
 
       expect(scriptName()).toHaveTextContent(testScriptName);
       expect(actions()).toHaveTextContent("Run, Add");
-
-      userEvent.click(cancelButton());
-      await waitFor(() => expect(onDone).toBeCalled());
     });
 
     it('renders Repository Content Selector privilege in Read Only Mode', async () => {
@@ -453,9 +454,6 @@ describe('PrivilegesDetails', function() {
       expect(format()).toHaveTextContent(testFormat);
       expect(repository()).toHaveTextContent(testRepository);
       expect(actions()).toHaveTextContent("Browse, Read");
-
-      userEvent.click(cancelButton());
-      await waitFor(() => expect(onDone).toBeCalled());
     });
 
     it('renders Script privilege without edit permissions', async () => {

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, { useCallback } from 'react';
 import {useMachine} from '@xstate/react';
 
 import {ExtJS, ListMachineUtils} from '@sonatype/nexus-ui-plugin';
@@ -31,19 +31,24 @@ import {
   PageHeader,
   PageTitle,
   Section,
-  SectionToolbar
+  SectionToolbar,
+  Page
 } from '@sonatype/nexus-ui-plugin';
 import {HelpTile} from '../../../widgets';
 
-import {faIdBadge} from '@fortawesome/free-solid-svg-icons';
-
 import PrivilegesListMachine from './PrivilegesListMachine';
 import UIStrings from '../../../../constants/UIStrings';
+import { useRouter } from '@uirouter/react';
+import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
 
 const {PRIVILEGES: {LIST: LABELS}} = UIStrings;
 const {COLUMNS} = LABELS;
 
-export default function PrivilegesList({onCreate, onEdit}) {
+export default function PrivilegesList() {
+  const router = useRouter();
+  const onEdit = useCallback(itemId => router.stateService.go(ROUTE_NAMES.ADMIN.SECURITY.PRIVILEGES.EDIT, { itemId }));
+  const onCreate = useCallback(() => router.stateService.go(ROUTE_NAMES.ADMIN.SECURITY.PRIVILEGES.CREATE));
+  
   const [current, send] = useMachine(PrivilegesListMachine, {devTools: true});
   const isLoading = current.matches('loading');
   const {data, error, filter: filterText} = current.context;
@@ -67,7 +72,7 @@ export default function PrivilegesList({onCreate, onEdit}) {
     }
   }
 
-  return <div className="nxrm-privileges">
+  return <Page className="nxrm-privileges">
     <PageHeader>
       <PageTitle
           icon={UIStrings.PRIVILEGES.MENU.icon}
@@ -126,5 +131,5 @@ export default function PrivilegesList({onCreate, onEdit}) {
       </Section>
       <HelpTile header={LABELS.HELP.TITLE} body={LABELS.HELP.TEXT}/>
     </ContentBody>
-  </div>;
+  </Page>;
 }

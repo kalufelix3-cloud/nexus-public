@@ -21,7 +21,6 @@ import DataStoreConfiguration from '../../components/pages/admin/DataStoreConfig
 import ProprietaryRepositories from '../../components/pages/admin/ProprietaryRepositories/ProprietaryRepositories';
 import CleanupPoliciesList from '../../components/pages/admin/CleanupPolicies/CleanupPoliciesList';
 import CleanupPoliciesForm from '../../components/pages/admin/CleanupPolicies/CleanupPoliciesForm';
-import Privileges from '../../components/pages/admin/Privileges/Privileges';
 import EmailServer from '../../components/pages/admin/EmailServer/EmailServer';
 import SslCertificatesList from '../../components/pages/admin/SslCertificates/SslCertificatesList';
 import SslCertificatesAddForm from '../../components/pages/admin/SslCertificates/SslCertificatesAddForm';
@@ -56,6 +55,8 @@ import AdminSupportDirectoryPage from '../../components/pages/AdminSupport/Admin
 
 import SettingsPageLayout from '../../components/LeftNavigationMenu/SettingsPageLayout/SettingsPageLayout';
 import LoggingConfiguration from '../../components/pages/admin/LoggingConfiguration/LoggingConfiguration';
+import PrivilegesList from '../../components/pages/admin/Privileges/PrivilegesList';
+import PrivilegesDetails from '../../components/pages/admin/Privileges/PrivilegesDetails';
 import ContentSelectorsList from '../../components/pages/admin/ContentSelectors/ContentSelectorsList';
 import ContentSelectorsDetails  from '../../components/pages/admin/ContentSelectors/ContentSelectorsDetails';
 import RolesList from "../../components/pages/admin/Roles/RolesList";
@@ -111,7 +112,7 @@ export const adminRoutes = [
   },
 
   {
-    name: ADMIN.REPOSITORY.BLOBSTORES.DIRECTORY,
+    name: ADMIN.REPOSITORY.BLOBSTORES.ROOT,
     component: UIView,
     data: {
       visibilityRequirements: {
@@ -233,7 +234,7 @@ export const adminRoutes = [
   },
 
   {
-    name: ADMIN.REPOSITORY.ROUTINGRULES.DIRECTORY,
+    name: ADMIN.REPOSITORY.ROUTINGRULES.ROOT,
     abstract: true,
     component: UIView,
     data: {
@@ -282,22 +283,39 @@ export const adminRoutes = [
   },
 
   {
-    name: ADMIN.SECURITY.PRIVILEGES,
-    url: '/privileges:itemId',
-    component: Privileges,
+    name: ADMIN.SECURITY.PRIVILEGES.ROOT,
+    abstract: true,
+    component: UIView,
     data: {
       visibilityRequirements: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: [Permissions.PRIVILEGES.READ]
       }
     },
-    params: {
-      itemId: {
-        value: null,
-        raw: true,
-        dynamic: true
+  },
+
+  {
+    name: ADMIN.SECURITY.PRIVILEGES.LIST,
+    url: '/privileges',
+    component: PrivilegesList,
+  },
+
+  {
+    name: ADMIN.SECURITY.PRIVILEGES.EDIT,
+    url: '/privileges/edit/{itemId:.+}',
+    component: PrivilegesDetails,
+  },
+
+  {
+    name: ADMIN.SECURITY.PRIVILEGES.CREATE,
+    url: '/privileges/create',
+    component: PrivilegesDetails,
+    data: {
+      visibilityRequirements: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        permissions: [Permissions.PRIVILEGES.CREATE]
       }
-    }
+    },
   },
 
   // abstract parent roles state

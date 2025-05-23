@@ -22,6 +22,8 @@ import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 
 import UIStrings from '../../../../constants/UIStrings';
 import PrivilegesList from './PrivilegesList';
+import { UIRouter } from '@uirouter/react';
+import { getRouter } from '../../../../routerConfig/routerConfig';
 
 const XSS_STRING = TestUtils.XSS_STRING;
 const {PRIVILEGES: {LIST: LABELS}} = UIStrings;
@@ -104,7 +106,13 @@ const sortPrivileges = (field, order = ASC) => sort((order === ASC ? ascend : de
 describe('PrivilegesList', function() {
 
   const renderAndWaitForLoad = async () => {
-    render(<PrivilegesList/>);
+    const router = getRouter();
+    const view = (
+      <UIRouter router={router}>
+        <PrivilegesList />
+      </UIRouter>
+    );
+    render(view);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
   }
 

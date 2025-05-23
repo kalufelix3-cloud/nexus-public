@@ -76,7 +76,7 @@ export default function SettingsSidebar() {
           data-analytics-id='nxrm-global-secondary-navbar-repository-cleanuppolicies'
         />
         <LeftNavigationMenuCollapsibleChildItem
-          selectedState={ADMIN.REPOSITORY.ROUTINGRULES.DIRECTORY}
+          selectedState={ADMIN.REPOSITORY.ROUTINGRULES.ROOT}
           name={ADMIN.REPOSITORY.ROUTINGRULES.LIST}
           text={UIStrings.ROUTING_RULES.MENU.text}
           params={{ itemId: null }}
@@ -92,7 +92,8 @@ export default function SettingsSidebar() {
         isOpen={currentPageName?.startsWith(`${ADMIN.SECURITY.DIRECTORY}.`)}
       >
         <LeftNavigationMenuCollapsibleChildItem
-          name={ADMIN.SECURITY.PRIVILEGES}
+          selectedState={ADMIN.SECURITY.PRIVILEGES.ROOT}
+          name={ADMIN.SECURITY.PRIVILEGES.LIST}
           text={UIStrings.PRIVILEGES.MENU.text}
           params={{ itemId: null }}
           data-analytics-id='nxrm-global-secondary-navbar-security-privileges'

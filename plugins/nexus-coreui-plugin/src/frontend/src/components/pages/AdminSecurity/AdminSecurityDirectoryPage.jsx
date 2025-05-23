@@ -27,7 +27,7 @@ export default function AdminSecurityDirectoryPage() {
               data-analytics-id="nxrm-admin-security-directory-privleges-lnk"
               text={UIStrings.PRIVILEGES.MENU.text}
               description={UIStrings.PRIVILEGES.MENU.description}
-              routeName={ADMIN.SECURITY.PRIVILEGES}
+              routeName={ADMIN.SECURITY.PRIVILEGES.LIST}
               params={{ itemId: null }}
           />
 

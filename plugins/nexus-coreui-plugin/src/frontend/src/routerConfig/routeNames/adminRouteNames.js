@@ -21,7 +21,7 @@ export default {
     DIRECTORY: 'admin.repository',
     REPOSITORIES: 'admin.repository.repositories',
     BLOBSTORES: {
-      DIRECTORY: 'admin.repository.blobstores',
+      ROOT: 'admin.repository.blobstores',
       LIST: 'admin.repository.blobstores.list',
       DETAILS: 'admin.repository.blobstores.details'
     },
@@ -40,7 +40,7 @@ export default {
       EDIT: 'admin.repository.cleanuppolicies.details'
     },
     ROUTINGRULES: {
-      DIRECTORY: 'admin.repository.routingrules',
+      ROOT: 'admin.repository.routingrules',
       LIST: 'admin.repository.routingrules.list',
       CREATE: 'admin.repository.routingrules.create',
       EDIT: 'admin.repository.routingrules.edit',
@@ -49,7 +49,12 @@ export default {
   },
   SECURITY: {
     DIRECTORY: 'admin.security',
-    PRIVILEGES: 'admin.security.privileges',
+    PRIVILEGES:{
+      ROOT: 'admin.security.privileges',
+      LIST: 'admin.security.privileges.list',
+      EDIT: 'admin.security.privileges.edit',
+      CREATE: 'admin.security.privileges.create',
+    },
     ROLES: {
       ROOT: 'admin.security.roles',
       LIST: 'admin.security.roles.list',
