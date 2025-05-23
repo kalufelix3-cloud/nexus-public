@@ -10,55 +10,51 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui.internal.atlas;
+package org.sonatype.nexus.api.extdirect.selfhosted.atlas;
 
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.atlas.SystemInformationGenerator;
-import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.extdirect.DirectComponent;
+import org.sonatype.nexus.extdirect.DirectComponentSupport;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
+import com.softwarementors.extjs.djn.config.annotations.DirectAction;
+import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.coreui.internal.atlas.SystemInformationResource.RESOURCE_URI;
 
 /**
- * Renders system information. This is required for download of the report from the UI.
+ * System Information {@link DirectComponent}.
  */
 @Named
 @Singleton
-@Path(RESOURCE_URI)
-public class SystemInformationResource
-    extends ComponentSupport
-    implements Resource
+@DirectAction(action = "atlas_SystemInformation")
+public class SystemInformationComponent
+    extends DirectComponentSupport
 {
-  public static final String RESOURCE_URI = "/atlas/system-information";
-
   private final SystemInformationGenerator systemInformationGenerator;
 
   @Inject
-  public SystemInformationResource(final SystemInformationGenerator systemInformationGenerator) {
+  public SystemInformationComponent(final SystemInformationGenerator systemInformationGenerator) {
     this.systemInformationGenerator = checkNotNull(systemInformationGenerator);
   }
 
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
+  /**
+   * Retrieves system information.
+   *
+   * @return a tree-structured report of critical system information details
+   */
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions("nexus:atlas:read")
-  public Response report() {
-    Map<String, Object> report = systemInformationGenerator.report();
-
-    // support downloading the json directly
-    return Response.ok(report)
-        .header("Content-Disposition", "attachment; filename=\"sysinfo.json\"")
-        .build();
+  public Map<String, Object> read() {
+    return systemInformationGenerator.report();
   }
 }
