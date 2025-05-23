@@ -157,7 +157,7 @@ public abstract class FileBlobStoreITSupport
 
     fileOperations = spy(new SimpleFileOperations());
 
-    blobIdResolver = new DefaultBlobIdLocationResolver();
+    blobIdResolver = new DefaultBlobIdLocationResolver(true);
 
     underTest = createBlobStore(UUID.randomUUID().toString(), fileBlobDeletionIndex());
     reset(metricsStore, blobStoreMetricsStore);

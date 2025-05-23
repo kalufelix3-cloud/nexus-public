@@ -214,6 +214,9 @@ public class FeatureFlags
 
   public static final String ORIENT_WARNING_NAMED_VALUE = "${nexus.orient.warning:true}";
 
+  public static final String RECONCILE_PLAN_ENABLED = "nexus.reconcile.plan.enabled";
+
+  public static final String RECONCILE_PLAN_ENABLED_NAMED = "${nexus.reconcile.plan.enabled:-false}";
   /**
    * When true (default), the Secure attribute will be set on the NXSESSIONID Cookie when delivered over https.
    * In deployments with HTTP-only listeners, this setting will typically have no effect.

@@ -39,7 +39,7 @@ public class RestoreMetadataTaskDescriptorTest
     when(applicationVersion.getEdition())
         .thenReturn("RPO");
 
-    underTest = new RestoreMetadataTaskDescriptor(applicationVersion);
+    underTest = new RestoreMetadataTaskDescriptor(true, applicationVersion);
   }
 
   @Test
