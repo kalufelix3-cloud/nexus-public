@@ -13,6 +13,7 @@
 package org.sonatype.nexus.security.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 
 import org.apache.shiro.crypto.hash.Hash;
 import org.junit.Before;
@@ -31,7 +32,7 @@ public class DefaultSecurityPasswordServiceTest
 
   @Before
   public void setUp() throws Exception {
-    underTest = new DefaultSecurityPasswordService(new LegacyNexusPasswordService());
+    underTest = new DefaultSecurityPasswordService(new LegacyNexusPasswordService(), new CryptoHelperImpl(false));
   }
 
   @Test
@@ -53,7 +54,8 @@ public class DefaultSecurityPasswordServiceTest
   @Test
   public void testShiro1HashFormat() {
     String password = "admin123";
-    String shiro1Hash = "$shiro1$SHA-512$1024$zjU1u+Zg9UNwuB+HEawvtA==$IzF/OWzJxrqvB5FCe/2+UcZhhZYM2pTu0TEz7Ybnk65AbbEdUk9ntdtBzkN8P3gZby2qz6MHKqAe8Cjai9c4Gg==";
+    String shiro1Hash =
+        "$shiro1$SHA-512$1024$zjU1u+Zg9UNwuB+HEawvtA==$IzF/OWzJxrqvB5FCe/2+UcZhhZYM2pTu0TEz7Ybnk65AbbEdUk9ntdtBzkN8P3gZby2qz6MHKqAe8Cjai9c4Gg==";
 
     assertThat(underTest.passwordsMatch(password, shiro1Hash), is(true));
   }
@@ -77,7 +79,8 @@ public class DefaultSecurityPasswordServiceTest
   @Test
   public void testInvalidShiro1HashFormat() {
     String password = "admin123";
-    String shiro1Hash = "$shiro1$SHA-512$1024$zjU1u+Zg9UNwuB+HEawvtA==$IzF/OWzjxrqvB5FCe/2+UcZhhZYM2pTu0TEz7Ybnk65AbbEdUk9ntdtBzkN8P3gZby2qz6MHKqAe8Cjai9c4Gg==";
+    String shiro1Hash =
+        "$shiro1$SHA-512$1024$zjU1u+Zg9UNwuB+HEawvtA==$IzF/OWzjxrqvB5FCe/2+UcZhhZYM2pTu0TEz7Ybnk65AbbEdUk9ntdtBzkN8P3gZby2qz6MHKqAe8Cjai9c4Gg==";
 
     assertThat(underTest.passwordsMatch(password, shiro1Hash), is(false));
   }
@@ -88,5 +91,19 @@ public class DefaultSecurityPasswordServiceTest
     Hash hash = underTest.hashPassword(password);
 
     assertThat(underTest.passwordsMatch(password, hash), is(true));
+  }
+
+  @Test
+  public void testMalformedFipsHash() {
+    String password = "admin123";
+    String badHash = "$pbkdf2-sha256$i=notanumber$salt$hash";
+    assertThat(underTest.passwordsMatch(password, badHash), is(false));
+  }
+
+  @Test
+  public void testInvalidBase64FipsHash() {
+    String password = "admin123";
+    String badHash = "$pbkdf2-sha256$i=10000$invalid$hash";
+    assertThat(underTest.passwordsMatch(password, badHash), is(false));
   }
 }

@@ -143,7 +143,7 @@ public class StaticSecurityConfigurationSource
         .withId(ANONYMOUS)
         // password="anonymous"
         .withPassword(
-            "$shiro1$SHA-512$1024$CPJm1XWdYNg5eCAYp4L4HA==$HIGwnJhC07ZpgeVblZcFRD1F6KH+xPG8t7mIcEMbfycC+n5Ljudyoj9dzdinrLmChTrmKMCw2/z29F7HeLbTbQ==")
+            "$pbkdf2-sha256$i=10000$igzuVCPoepbCRY6ihMjoYg==$1EJ4/4HzlNAOquAOCGxJnNiJstxLqJpnS+F2zsLjHPI=")
         .withFirstName("Anonymous")
         .withLastName("User")
         .withStatus(CUser.STATUS_ACTIVE)

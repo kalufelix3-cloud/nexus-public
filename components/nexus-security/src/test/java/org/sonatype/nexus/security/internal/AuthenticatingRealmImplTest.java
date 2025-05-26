@@ -13,6 +13,7 @@
 package org.sonatype.nexus.security.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.security.config.CUser;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
 import org.sonatype.nexus.security.config.memory.MemoryCUser;
@@ -65,17 +66,17 @@ public class AuthenticatingRealmImplTest
   public void testLegacyPasswordIsReHashedOnOrient() {
     assertThat(testUser.getPassword(), is(LEGACY_PASSWORD_HASH));
     AuthenticatingRealmImpl underTestOrient = new AuthenticatingRealmImpl(configuration,
-        new DefaultSecurityPasswordService(new LegacyNexusPasswordService()), true);
+        new DefaultSecurityPasswordService(new LegacyNexusPasswordService(), new CryptoHelperImpl(false)), true);
     underTestOrient.getAuthenticationInfo(new UsernamePasswordToken(TEST_USERNAME, TEST_PASSWORD));
-    assertThat(testUser.getPassword(), startsWith("$shiro1$SHA-512$1024$"));
+    assertThat(testUser.getPassword(), startsWith("$pbkdf2-sha256$i"));
   }
 
   @Test
   public void testLegacyPasswordIsReHashedOnNewDB() {
     assertThat(testUser.getPassword(), is(LEGACY_PASSWORD_HASH));
     AuthenticatingRealmImpl underTestOrient = new AuthenticatingRealmImpl(configuration,
-        new DefaultSecurityPasswordService(new LegacyNexusPasswordService()), false);
+        new DefaultSecurityPasswordService(new LegacyNexusPasswordService(), new CryptoHelperImpl(false)), false);
     underTestOrient.getAuthenticationInfo(new UsernamePasswordToken(TEST_USERNAME, TEST_PASSWORD));
-    assertThat(testUser.getPassword(), startsWith("$shiro1$SHA-512$1024$"));
+    assertThat(testUser.getPassword(), startsWith("$pbkdf2-sha256$i"));
   }
 }

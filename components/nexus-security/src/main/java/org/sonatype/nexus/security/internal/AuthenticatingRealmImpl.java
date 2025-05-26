@@ -62,8 +62,6 @@ public class AuthenticatingRealmImpl
 
   public static final String NAME = DEFAULT_REALM_NAME;
 
-  private static final int MAX_LEGACY_PASSWORD_LENGTH = 40;
-
   private final SecurityConfigurationManager configuration;
 
   private final PasswordService passwordService;
@@ -104,9 +102,9 @@ public class AuthenticatingRealmImpl
     }
 
     if (user.isActive()) {
-      // Check for legacy user that has unsalted password hash
-      // Update if unsalted password hash and valid credentials were specified
-      if (hasLegacyPassword(user) && isValidCredentials(upToken, user)) {
+      // If the user has a legacy (non-FIPS) password hash and valid credentials are provided,
+      // transparently re-hash the password using the FIPS-compliant algorithm.
+      if (!DefaultSecurityPasswordService.isFipsPassword(user.getPassword()) && isValidCredentials(upToken, user)) {
         reHashPassword(user, new String(upToken.getPassword()));
       }
 
@@ -132,11 +130,8 @@ public class AuthenticatingRealmImpl
     try {
       boolean updated = false;
       do {
-        CUser toUpdate = configuration.readUser(user.getId());
-        toUpdate.setPassword(hashedPassword);
         try {
-          configuration.updateUser(toUpdate);
-          updated = true;
+          updated = updateUserPassword(user, hashedPassword);
         }
         catch (ConcurrentModificationException e) {
           logger.debug("Could not re-hash user '{}' password as user was concurrently being updated. Retrying...",
@@ -149,6 +144,16 @@ public class AuthenticatingRealmImpl
     catch (Exception e) {
       logger.error("Unable to update hash for user {}", user.getId(), e);
     }
+  }
+
+  private boolean updateUserPassword(
+      final CUser user,
+      final String newPassword) throws ConcurrentModificationException, UserNotFoundException
+  {
+    CUser toUpdate = configuration.readUser(user.getId());
+    toUpdate.setPassword(newPassword);
+    configuration.updateUser(toUpdate);
+    return true;
   }
 
   /**
@@ -170,14 +175,6 @@ public class AuthenticatingRealmImpl
     }
 
     return credentialsValid;
-  }
-
-  /**
-   * Checks to see if the specified user is a legacy user. A legacy user has an unsalted password.
-   */
-  private boolean hasLegacyPassword(final CUser user) {
-    // Legacy users have a shorter, unsalted, SHA1 or MD5 based hash
-    return user.getPassword().length() <= MAX_LEGACY_PASSWORD_LENGTH;
   }
 
   private AuthenticationInfo createAuthenticationInfo(final CUser user) {
