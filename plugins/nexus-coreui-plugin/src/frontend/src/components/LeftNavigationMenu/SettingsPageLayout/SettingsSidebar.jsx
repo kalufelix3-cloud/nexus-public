@@ -156,7 +156,8 @@ export default function SettingsSidebar() {
         data-analytics-id='nxrm-global-secondary-navbar-support'
       >
         <LeftNavigationMenuCollapsibleChildItem
-          name={ADMIN.SUPPORT.LOGGING}
+          selectedState={ADMIN.SUPPORT.LOGGING.ROOT}
+          name={ADMIN.SUPPORT.LOGGING.LIST}
           text={UIStrings.LOGGING.MENU.text}
           params={{ itemId: null }}
           data-analytics-id='nxrm-global-secondary-navbar-support-logging'

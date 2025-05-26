@@ -18,6 +18,8 @@ import axios from 'axios';
 import LoggingConfigurationList from './LoggingConfigurationList';
 
 import UIStrings from '../../../../constants/UIStrings';
+import { UIRouter } from '@uirouter/react';
+import { getRouter } from '../../../../routerConfig/routerConfig';
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'), // Use most functions from actual axios
@@ -25,7 +27,13 @@ jest.mock('axios', () => ({
 }));
 
 describe('LoggingConfigurationList', function() {
-  function renderView(view = <LoggingConfigurationList/>) {
+  function renderView() {
+    const router = getRouter();
+    const view = (
+      <UIRouter router={router}>
+        <LoggingConfigurationList/>
+      </UIRouter>
+    );
     return TestUtils.render(view, ({queryByPlaceholderText}) => ({
       filter: () => queryByPlaceholderText(UIStrings.LOGGING.FILTER_PLACEHOLDER)
     }));

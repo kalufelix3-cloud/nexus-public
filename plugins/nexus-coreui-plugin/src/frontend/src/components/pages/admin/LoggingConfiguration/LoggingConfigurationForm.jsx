@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, { useCallback } from 'react';
 import {useMachine} from '@xstate/react';
 
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
@@ -27,15 +27,22 @@ import {
   ContentBody,
   PageHeader,
   PageTitle,
-  Section
+  Section,
+  Page
 } from '@sonatype/nexus-ui-plugin';
 
 import LoggingConfigurationFormMachine from './LoggingConfigurationFormMachine';
 
 import UIStrings from '../../../../constants/UIStrings';
-import {faScroll} from '@fortawesome/free-solid-svg-icons';
+import { useCurrentStateAndParams, useRouter } from '@uirouter/react';
+import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
 
 export default function LoggingConfigurationForm({itemId, onDone}) {
+  const router = useRouter();
+  const onDone = useCallback(() => router.stateService.go(ROUTE_NAMES.ADMIN.SUPPORT.LOGGING.LIST));
+  const { params } = useCurrentStateAndParams();
+  const itemId = params?.itemId;
+
   const [current, send] = useMachine(LoggingConfigurationFormMachine, {
     context: {
       pristineData: {
@@ -91,7 +98,7 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
     send({type: 'RESET'});
   }
 
-  return <div className="nxrm-logging-configuration">
+  return <Page className="nxrm-logging-configuration">
     <PageHeader>
       <PageTitle
         icon={UIStrings.LOGGING.MENU.icon}
@@ -129,5 +136,5 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
         </NxStatefulForm>
       </Section>
     </ContentBody>
-  </div>;
+  </Page>;
 }

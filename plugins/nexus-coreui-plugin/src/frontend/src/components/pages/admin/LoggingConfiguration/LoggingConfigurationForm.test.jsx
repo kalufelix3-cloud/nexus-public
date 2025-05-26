@@ -21,6 +21,9 @@ import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 import UIStrings from '../../../../constants/UIStrings';
 
 import LoggingConfigurationForm from './LoggingConfigurationForm';
+import {UIRouter, useCurrentStateAndParams} from "@uirouter/react";
+import { getRouter } from '../../../../routerConfig/routerConfig';
+import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'), // Use most functions from actual axios
@@ -51,21 +54,35 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   }
 }));
 
-const selectors = {
-  ...TestUtils.formSelectors
-};
+let stateServiceGoMock = jest.fn();
+
+jest.mock('@uirouter/react', () => ({
+  ...jest.requireActual('@uirouter/react'),
+  useCurrentStateAndParams: jest.fn(),
+  useRouter: () =>({
+    stateService: {
+      go: stateServiceGoMock,
+    }
+  })
+}));
 
 describe('LoggingConfigurationForm', function() {
   const CONFIRM = Promise.resolve();
   const OVERRIDDEN_LOGGER = Promise.resolve({data: {override: true}});
-  const onDone = jest.fn();
 
-  function renderEditView() {
-    return renderView(<LoggingConfigurationForm itemId="ROOT" onDone={onDone}/>);
-  }
+  function renderEditView(itemId = 'ROOT') {
+    useCurrentStateAndParams.mockReturnValue({
+      state: {name: ROUTE_NAMES.ADMIN.SUPPORT.LOGGING.CREATE},
+      params: {itemId}
+    });
 
-  function renderCreateView() {
-    return renderView(<LoggingConfigurationForm onDone={onDone} />);
+    const router = getRouter();
+    const view = (
+        <UIRouter router={router}>
+          <LoggingConfigurationForm />
+        </UIRouter>
+    );
+    return renderView(view);
   }
 
   function renderView(view) {
@@ -109,8 +126,19 @@ describe('LoggingConfigurationForm', function() {
     expect(container.querySelector('.nx-alert--error')).toHaveTextContent('Error');
   });
 
+  it('fires onDone when cancelled', async function() {
+    const {loadingMask, cancelButton} = renderEditView('');
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    userEvent.click(cancelButton());
+
+    // expect onDone is called
+    expect(stateServiceGoMock).toHaveBeenCalledWith(ROUTE_NAMES.ADMIN.SUPPORT.LOGGING.LIST);
+  });
+
   it('requires the name field when creating a new logging configuration', async function() {
-    const {loadingMask, name, level, saveButton} = renderCreateView();
+    const {loadingMask, name, level, saveButton} = renderEditView('');
     await waitForElementToBeRemoved(loadingMask);
 
     expect(level()).toHaveValue('INFO');
@@ -122,18 +150,8 @@ describe('LoggingConfigurationForm', function() {
     expect(name()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
   });
 
-  it('fires onDone when cancelled', async function() {
-    const {loadingMask, cancelButton} = renderCreateView();
-
-    await waitForElementToBeRemoved(loadingMask);
-
-    userEvent.click(cancelButton());
-
-    await waitFor(() => expect(onDone).toBeCalled());
-  });
-
   it('requests confirmation when the logger is overridden and saves when requested', async function() {
-    const {loadingMask, name, level, saveButton} = renderCreateView();
+    const {loadingMask, name, level, saveButton} = renderEditView('');
 
     await waitForElementToBeRemoved(loadingMask);
 
@@ -151,7 +169,6 @@ describe('LoggingConfigurationForm', function() {
         '/service/rest/internal/ui/loggingConfiguration/name',
         {name: 'name', level: 'DEBUG'}
     ));
-    expect(onDone).toBeCalled();
   });
 
   it('saves', async function() {
@@ -194,6 +211,5 @@ describe('LoggingConfigurationForm', function() {
     await waitFor(() => expect(resetMask()).toBeInTheDocument());
 
     expect(axios.post).toBeCalledWith('/service/rest/internal/ui/loggingConfiguration/test/reset');
-    expect(onDone).toBeCalled();
   });
 });

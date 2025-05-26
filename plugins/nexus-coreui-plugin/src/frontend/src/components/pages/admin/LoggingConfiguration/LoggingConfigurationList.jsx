@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, { useCallback } from 'react';
 import {useMachine} from '@xstate/react';
 
 import {faRedo, faScroll} from '@fortawesome/free-solid-svg-icons';
@@ -33,14 +33,21 @@ import {
   PageHeader,
   PageTitle,
   Section,
-  SectionToolbar
+  SectionToolbar,
+  Page
 } from '@sonatype/nexus-ui-plugin';
 
 import LoggingConfigurationListMachine from './LoggingConfigurationListMachine';
 
 import UIStrings from '../../../../constants/UIStrings';
+import { useRouter } from '@uirouter/react';
+import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
 
-export default function LoggingConfigurationList({onCreate, onEdit}) {
+export default function LoggingConfigurationList() {
+  const router = useRouter();
+  const onEdit = useCallback(itemId => router.stateService.go(ROUTE_NAMES.ADMIN.SUPPORT.LOGGING.EDIT, { itemId }));
+  const onCreate = useCallback(() => router.stateService.go(ROUTE_NAMES.ADMIN.SUPPORT.LOGGING.CREATE));
+
   const [current, send] = useMachine(LoggingConfigurationListMachine, {devTools: true});
   const isLoading = current.matches('loading');
   const data = current.context.data;
@@ -58,7 +65,7 @@ export default function LoggingConfigurationList({onCreate, onEdit}) {
     send({type: 'RESET'});
   }
 
-  return <div className="nxrm-logging-configuration">
+  return <Page className="nxrm-logging-configuration">
     <PageHeader>
 
       <PageTitle
@@ -110,5 +117,5 @@ export default function LoggingConfigurationList({onCreate, onEdit}) {
         </NxTable>
       </Section>
     </ContentBody>
-  </div>;
+  </Page>;
 }

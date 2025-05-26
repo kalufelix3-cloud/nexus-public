@@ -54,7 +54,6 @@ import AdminSystemDirectoryPage from '../../components/pages/AdminSystem/AdminSy
 import AdminSupportDirectoryPage from '../../components/pages/AdminSupport/AdminSupportDirectoryPage';
 
 import SettingsPageLayout from '../../components/LeftNavigationMenu/SettingsPageLayout/SettingsPageLayout';
-import LoggingConfiguration from '../../components/pages/admin/LoggingConfiguration/LoggingConfiguration';
 import PrivilegesList from '../../components/pages/admin/Privileges/PrivilegesList';
 import PrivilegesDetails from '../../components/pages/admin/Privileges/PrivilegesDetails';
 import ContentSelectorsList from '../../components/pages/admin/ContentSelectors/ContentSelectorsList';
@@ -64,6 +63,8 @@ import RolesDetails from "../../components/pages/admin/Roles/RolesDetails";
 import RoutingRulesForm from '../../components/pages/admin/RoutingRules/RoutingRulesForm';
 import RoutingRulesList from '../../components/pages/admin/RoutingRules/RoutingRulesList';
 import RoutingRulesGlobalPreview from '../../components/pages/admin/RoutingRules/RoutingRulesGlobalPreview.jsx';
+import LoggingConfigurationList from '../../components/pages/admin/LoggingConfiguration/LoggingConfigurationList.jsx';
+import LoggingConfigurationForm from '../../components/pages/admin/LoggingConfiguration/LoggingConfigurationForm.jsx';
 
 const ADMIN = ROUTE_NAMES.ADMIN;
 
@@ -590,22 +591,39 @@ export const adminRoutes = [
   },
 
   {
-    name: ADMIN.SUPPORT.LOGGING,
-    url: '/logging:itemId',
-    component: LoggingConfiguration,
+    name: ADMIN.SUPPORT.LOGGING.ROOT,
+    abstract:true,
+    component: UIView,
     data: {
       visibilityRequirements: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: [Permissions.LOGGING.READ],
       }
     },
-    params: {
-      itemId: {
-        value: null,
-        raw: true,
-        dynamic: true
+  },
+  
+  {
+    name: ADMIN.SUPPORT.LOGGING.LIST,
+    url: '/logging',
+    component: LoggingConfigurationList,
+  },
+
+  {
+    name: ADMIN.SUPPORT.LOGGING.EDIT,
+    url: '/logging/edit/{itemId:.+}',
+    component: LoggingConfigurationForm,
+  },
+
+  {
+    name: ADMIN.SUPPORT.LOGGING.CREATE,
+    url: '/logging/create',
+    component: LoggingConfigurationForm,
+    data: {
+      visibilityRequirements: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        permissions: [Permissions.LOGGING.UPDATE],
       }
-    }
+    },
   },
 
   // === admin/system ===

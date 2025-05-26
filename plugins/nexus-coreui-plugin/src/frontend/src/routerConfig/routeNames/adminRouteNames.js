@@ -90,7 +90,12 @@ export default {
     DIRECTORY: 'admin.support',
     SUPPORTREQUEST: 'admin.support.supportrequest',
     LOGS: 'admin.support.logs',
-    LOGGING: 'admin.support.logging',
+    LOGGING:{
+      ROOT: 'admin.support.logging',
+      LIST: 'admin.support.logging.list',
+      CREATE: 'admin.support.logging.create',
+      EDIT: 'admin.support.logging.edit',
+    }, 
     STATUS: 'admin.support.status',
     SUPPORTZIP: 'admin.support.supportzip',
     SYSTEMINFORMATION: 'admin.support.systeminformation'

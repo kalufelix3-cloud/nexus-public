@@ -53,7 +53,7 @@ export default {
   USERS: generatePermissions('users', [READ]),
   ROLES: generatePermissions('roles'),
   TASKS: generatePermissions('tasks', [...crudOptions, START, STOP]),
-  LOGGING: generatePermissions('logging', [READ]),
+  LOGGING: generatePermissions('logging', [READ, UPDATE]),
   ATLAS: generatePermissions('atlas', [READ, CREATE]),
   METRICS: generatePermissions('metrics', [READ]),
   BUNDLES: generatePermissions('bundles', [READ]),

@@ -29,7 +29,7 @@ export default function AdminSupportDirectoryPage() {
               data-analytics-id="nxrm-admin-support-directory-logging-lnk"
               text={UIStrings.LOGGING.MENU.text}
               description={UIStrings.LOGGING.MENU.description}
-              routeName={ROUTE_NAMES.ADMIN.SUPPORT.LOGGING}
+              routeName={ROUTE_NAMES.ADMIN.SUPPORT.LOGGING.LIST}
               params={{ itemId: null }}
           />
 
