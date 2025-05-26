@@ -35,7 +35,6 @@ export default function LeftNavigationMenuCollapsibleItem({
   icon,
   selectedState,
   params,
-  isOpen,
   children,
   ...props
 }) {
@@ -51,7 +50,7 @@ export default function LeftNavigationMenuCollapsibleItem({
       isSelected={isSelected}
       href={href}
       icon={icon}
-      isOpen={isOpen}
+      name={name}
       {...props}
     >
       {children}
@@ -65,6 +64,5 @@ LeftNavigationMenuCollapsibleItem.propTypes = {
   icon: PropTypes.object,
   selectedState: PropTypes.string,
   params: PropTypes.object,
-  isOpen: PropTypes.bool,
   children: PropTypes.node,
 };

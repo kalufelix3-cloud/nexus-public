@@ -37,7 +37,6 @@ export default function SettingsSidebar() {
         name={ADMIN.REPOSITORY.DIRECTORY}
         text={UIStrings.REPOSITORY_DIRECTORY.MENU.text}
         data-analytics-id='nxrm-global-secondary-navbar-repository'
-        isOpen={currentPageName?.startsWith(`${ADMIN.REPOSITORY.DIRECTORY}.`)}
       >
         <LeftNavigationMenuCollapsibleChildItem
           name={ADMIN.REPOSITORY.REPOSITORIES}
@@ -89,7 +88,6 @@ export default function SettingsSidebar() {
         name={ADMIN.SECURITY.DIRECTORY}
         text={UIStrings.ADMIN_SECURITY_DIRECTORY.MENU.text}
         data-analytics-id='nxrm-global-secondary-navbar-security'
-        isOpen={currentPageName?.startsWith(`${ADMIN.SECURITY.DIRECTORY}.`)}
       >
         <LeftNavigationMenuCollapsibleChildItem
           selectedState={ADMIN.SECURITY.PRIVILEGES.ROOT}
@@ -156,7 +154,6 @@ export default function SettingsSidebar() {
         name={ADMIN.SUPPORT.DIRECTORY}
         text={UIStrings.ADMIN_SUPPORT_DIRECTORY.MENU.text}
         data-analytics-id='nxrm-global-secondary-navbar-support'
-        isOpen={currentPageName?.startsWith(`${ADMIN.SUPPORT.DIRECTORY}.`)}
       >
         <LeftNavigationMenuCollapsibleChildItem
           name={ADMIN.SUPPORT.LOGGING}
@@ -198,7 +195,6 @@ export default function SettingsSidebar() {
         name={ADMIN.SYSTEM.DIRECTORY}
         text={UIStrings.ADMIN_SYSTEM_DIRECTORY.MENU.text}
         data-analytics-id='nxrm-global-secondary-navbar-system'
-        isOpen={currentPageName?.startsWith(`${ADMIN.SYSTEM.DIRECTORY}.`)}
       >
         <LeftNavigationMenuCollapsibleChildItem
           name={ADMIN.SYSTEM.API}

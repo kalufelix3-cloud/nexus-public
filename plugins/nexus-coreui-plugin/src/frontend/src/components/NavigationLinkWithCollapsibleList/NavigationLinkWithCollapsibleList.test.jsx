@@ -13,20 +13,38 @@
 
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import NxCollapsibleNavigationLink from './NavigationLinkWithCollapsibleList';
+import NavigationLinkWithCollapsibleList from './NavigationLinkWithCollapsibleList';
 import { faAirFreshener } from '@fortawesome/free-solid-svg-icons';
 import userEvent from '@testing-library/user-event';
+import { UIRouter, useCurrentStateAndParams } from '@uirouter/react';
+import { getRouter } from '../../routerConfig/routerConfig';
 
-describe('NxCollapsibleNavigationLink', () => {
+jest.mock('@uirouter/react', () => ({
+  ...jest.requireActual('@uirouter/react'),
+  useCurrentStateAndParams: jest.fn(),
+}));
+
+describe('NavigationLinkWithCollapsibleList', () => {
   let renderComponent;
   beforeAll(() => {
-    const minimalProps = { text: 'base text', href: 'base href', icon: faAirFreshener };
-    renderComponent = (props, children = 'this are some children items') =>
-      render(
-        <NxCollapsibleNavigationLink {...minimalProps} {...props}>
-          {children}
-        </NxCollapsibleNavigationLink>
+    const minimalProps = { text: 'base text', href: 'base href', icon: faAirFreshener, name: 'router.other.name' };
+    renderComponent = (props, children = 'this are some children items') => {
+      useCurrentStateAndParams.mockReturnValue({
+        state: { name: 'router.name' },
+      });
+      const router = getRouter();
+      return render(
+        <UIRouter router={router}>
+          <NavigationLinkWithCollapsibleList {...minimalProps} {...props}>
+            {children}
+          </NavigationLinkWithCollapsibleList>
+        </UIRouter>
       );
+    };
+  });
+
+  afterEach(() => {
+    useCurrentStateAndParams.mockReset();
   });
 
   it('renders the link without the list', () => {
@@ -55,7 +73,7 @@ describe('NxCollapsibleNavigationLink', () => {
   });
 
   it('renders the link with the list expanded by default', () => {
-    renderComponent({ isOpen: true });
+    renderComponent({ name: 'router.name' });
     const expandableList = screen.getByRole('list');
     expect(expandableList).toBeVisible();
   });

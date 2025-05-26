@@ -14,15 +14,20 @@
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import classnames from 'classnames';
-import { NxFontAwesomeIcon, NxGlobalSidebar2NavigationLink, NxTextLink } from '@sonatype/react-shared-components';
+import { NxFontAwesomeIcon, NxGlobalSidebar2NavigationLink } from '@sonatype/react-shared-components';
 import { faChevronDown, faChevronUp, faLink } from '@fortawesome/free-solid-svg-icons';
 
 import './NavigationLinkWithCollapsibleList.scss';
 import CollapsibleListItem from './CollapsibleListItem';
+import { useCurrentStateAndParams } from '@uirouter/react';
 
-const NavigationLinkWithCollapsibleList = ({ children, text, isSelected, href, icon, isOpen = false, ...props }) => {
-  const [isExpanded, setIsExpanded] = useState(isOpen);
+const NavigationLinkWithCollapsibleList = ({ children, text, isSelected, href, icon, name, ...props }) => {
+  const {
+    state: { name: currentPageName },
+  } = useCurrentStateAndParams();
+  const [isExpanded, setIsExpanded] = useState(currentPageName?.startsWith(name));
   const chevronIcon = isExpanded ? faChevronUp : faChevronDown;
+
 
   const onChevronClick = e => {
     e.stopPropagation();
@@ -57,10 +62,10 @@ const NavigationLinkWithCollapsibleList = ({ children, text, isSelected, href, i
   });
 
   useEffect(() => {
-    if (isOpen) {
+    if (currentPageName?.startsWith(name)) {
       setIsExpanded(true);
     }
-  }, [isOpen]);
+  }, [currentPageName]);
 
   return (
     <div className={wrapperClasses}>
@@ -95,7 +100,7 @@ NavigationLinkWithCollapsibleList.propTypes = {
   icon: PropTypes.object,
   isSelected: PropTypes.bool,
   text: PropTypes.oneOfType([PropTypes.string, PropTypes.element]).isRequired,
-  isOpen: PropTypes.bool,
+  name: PropTypes.string.isRequired,
 };
 
 export default NavigationLinkWithCollapsibleList;
