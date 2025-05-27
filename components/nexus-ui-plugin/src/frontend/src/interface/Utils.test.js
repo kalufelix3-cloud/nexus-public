@@ -43,8 +43,12 @@ describe('Utils', () => {
   });
 
   describe('isInstanceOfAny', function() {
-    function Fixture() {}
-    function Fixture2() {}
+    function Fixture() {
+      // Intentionally empty
+    }
+    function Fixture2() {
+      // Intentionally empty
+    }
 
     it('returns true if the passed value is an instance of one of the specified constructors', function() {
       expect(Utils.isInstanceOfAny([Object], {})).toBe(true);
@@ -83,17 +87,17 @@ describe('Utils', () => {
       expect(Utils.isInstanceOfAny([Boolean], false)).toBe(true);
       expect(Utils.isInstanceOfAny([String], '')).toBe(true);
       expect(Utils.isInstanceOfAny([Number], 1)).toBe(true);
-      expect(Utils.isInstanceOfAny([Number], NaN)).toBe(true);
+      expect(Utils.isInstanceOfAny([Number], Number.NaN)).toBe(true);
 
       expect(Utils.isInstanceOfAny([Boolean, String], false)).toBe(true);
       expect(Utils.isInstanceOfAny([String, Number], '')).toBe(true);
       expect(Utils.isInstanceOfAny([Number, String], 1)).toBe(true);
-      expect(Utils.isInstanceOfAny([Number, Boolean], NaN)).toBe(true);
+      expect(Utils.isInstanceOfAny([Number, Boolean], Number.NaN)).toBe(true);
 
       expect(Utils.isInstanceOfAny([String], false)).toBe(false);
       expect(Utils.isInstanceOfAny([Number], '')).toBe(false);
       expect(Utils.isInstanceOfAny([String], 1)).toBe(false);
-      expect(Utils.isInstanceOfAny([Boolean], NaN)).toBe(false);
+      expect(Utils.isInstanceOfAny([Boolean], Number.NaN)).toBe(false);
     });
 
     it('returns false if the passed value is a primitive whose corresponding boxed type is a only a subtype of ' +
@@ -101,7 +105,7 @@ describe('Utils', () => {
       expect(Utils.isInstanceOfAny([Object], false)).toBe(false);
       expect(Utils.isInstanceOfAny([Object], '')).toBe(false);
       expect(Utils.isInstanceOfAny([Object], 1)).toBe(false);
-      expect(Utils.isInstanceOfAny([Object], NaN)).toBe(false);
+      expect(Utils.isInstanceOfAny([Object], Number.NaN)).toBe(false);
     });
 
     it('returns false if the passed value is null', function() {
@@ -115,7 +119,7 @@ describe('Utils', () => {
       expect(Utils.isInstanceOfAny([], false)).toBe(false);
       expect(Utils.isInstanceOfAny([], '')).toBe(false);
       expect(Utils.isInstanceOfAny([], 1)).toBe(false);
-      expect(Utils.isInstanceOfAny([], NaN)).toBe(false);
+      expect(Utils.isInstanceOfAny([], Number.NaN)).toBe(false);
       expect(Utils.isInstanceOfAny([], {})).toBe(false);
       expect(Utils.isInstanceOfAny([], [])).toBe(false);
       expect(Utils.isInstanceOfAny([], new Fixture())).toBe(false);

@@ -20,16 +20,12 @@ const CREATE = 'CREATE';
 const READ = 'READ';
 const UPDATE = 'UPDATE';
 const DELETE = 'DELETE';
-const BROWSE = 'BROWSE';
-const EDIT = 'EDIT';
-const ADD = 'ADD';
 const START = 'START';
 const STOP = 'STOP';
 const UNINSTALL = 'UNINSTALL';
 
 // default options.
 const crudOptions = [CREATE, READ, UPDATE, DELETE];
-const breadOptions = [BROWSE, READ, EDIT, ADD, DELETE];
 
 function generatePermissions(permission, options = crudOptions) {
   const base = 'nexus';

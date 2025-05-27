@@ -141,7 +141,7 @@ export default createMachine(
     services: {
       loadCertificateDetails: ({host, port}) =>
         axios.all([
-          axios.get(CERTIFICATE_DETAILS_URL + `?host=${host}&port=${port}`),
+          axios.get(`${CERTIFICATE_DETAILS_URL}?host=${host}&port=${port}`),
           axios.get(TRUSTSTORE_URL)
         ]),
       addCertificateToTruststore: ({certificateDetails}) =>

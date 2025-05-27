@@ -29,7 +29,10 @@ import APIConstants from '../../../../constants/APIConstants';
 
 const Field = ({id, dynamicProps, current:parentState, onChange}) => {
   const {storeApi, allowAutocomplete, initialValue, idMapping, nameMapping, readOnly} = dynamicProps;
-  const [action, method] = storeApi?.split('.');
+  if (typeof storeApi !== 'string') {
+    throw new Error('storeApi must be a string');
+  }
+  const [action, method] = storeApi.split('.');
   const value = parentState.context.data[id] || '';
   const loadOnInit = !allowAutocomplete || value;
 

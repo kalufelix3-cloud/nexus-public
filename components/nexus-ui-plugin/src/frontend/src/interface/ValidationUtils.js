@@ -75,7 +75,7 @@ export default class ValidationUtils {
 
     try {
       url = new URL(str);
-    } catch (_) {
+    } catch {
       return false;
     }
 
@@ -137,17 +137,17 @@ export default class ValidationUtils {
    * @param max - maximum allowed value, defaults to Infinity
    * @return {string|null} a string error message if the number falls outside of the range; null if the string is blank or within the boundaries
    */
-  static isInRange({value, min = -Infinity, max = Infinity, allowDecimals = true}) {
+  static isInRange({value, min = Number.NEGATIVE_INFINITY, max = Number.POSITIVE_INFINITY, allowDecimals = true}) {
     if (value === null || value === undefined) {
       return null;
     }
 
-    if (typeof value === 'string' && this.isBlank(value)) {
+    if (typeof value === 'string' && ValidationUtils.isBlank(value)) {
       return null;
     }
 
     const number = Number(value);
-    if (isNaN(number)) {
+    if (Number.isNaN(number)) {
       return UIStrings.ERROR.NAN
     }
 
@@ -186,7 +186,7 @@ export default class ValidationUtils {
    * @returns {string|null} an error string if name does not meet the requirements
    */
   static validateNameField(value) {
-    return this.validateNotBlank(value) || this.validateLength(value, 255) || this.validateName(value);
+    return ValidationUtils.validateNotBlank(value) || ValidationUtils.validateLength(value, 255) || ValidationUtils.validateName(value);
   }
 
   /**
@@ -194,7 +194,7 @@ export default class ValidationUtils {
    * @returns {string|null} an error string if name fails {@link ValidationUtils.isName} or null
    */
   static validateName(value) {
-    if (!this.isName(value)) {
+    if (!ValidationUtils.isName(value)) {
       return UIStrings.ERROR.INVALID_NAME_CHARS;
     }
     return null;
@@ -278,7 +278,7 @@ export default class ValidationUtils {
         return true;
       }
       else {
-        return this.isInvalid(error);
+        return ValidationUtils.isInvalid(error);
       }
     }));
   }

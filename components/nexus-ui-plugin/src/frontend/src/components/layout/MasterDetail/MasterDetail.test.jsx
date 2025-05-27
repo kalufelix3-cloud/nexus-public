@@ -88,10 +88,10 @@ describe('MasterDetail', () => {
 });
 
 // These components remove the warnings about the Master/Detail props not being used and provide hooks for validation
-function TestMaster({onCreate, onEdit}) {
+function TestMaster({onCreate}) {
   return <div data-testid="master"><button data-testid="create" onClick={onCreate} /></div>;
 }
 
-function TestDetail({itemId, onDone}) {
+function TestDetail({itemId}) {
   return <div data-testid="detail">${itemId}</div>;
 }

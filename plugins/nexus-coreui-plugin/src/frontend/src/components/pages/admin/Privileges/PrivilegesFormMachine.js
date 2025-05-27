@@ -45,16 +45,6 @@ const {singlePrivilegeUrl, updatePrivilegeUrl, createPrivilegeUrl} = URL;
 const isEdit = (name) => ValidationUtils.notBlank(name);
 const actionFieldName = FIELDS.ACTIONS.NAME;
 
-function validateName(name) {
-  if (ValidationUtils.isBlank(name)) {
-    return UIStrings.ERROR.FIELD_REQUIRED;
-  }
-  else if (!ValidationUtils.isName(name)) {
-    return UIStrings.ERROR.INVALID_NAME_CHARS;
-  }
-  return null;
-}
-
 function validateActionSelected(data) {
   if (data.hasOwnProperty(actionFieldName)) {
     const actions = data[actionFieldName];

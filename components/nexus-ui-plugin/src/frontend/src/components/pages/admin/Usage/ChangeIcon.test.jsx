@@ -14,7 +14,6 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { faCaretUp, faCaretDown, faMinus } from '@fortawesome/free-solid-svg-icons';
 import ChangeIcon from './ChangeIcon';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 describe('ChangeIcon', () => {
     it('renders the minus icon when value is "N/A"', () => {

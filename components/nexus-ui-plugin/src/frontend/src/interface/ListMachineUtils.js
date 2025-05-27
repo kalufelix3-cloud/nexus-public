@@ -84,7 +84,7 @@ export default class ListMachineUtils {
     const sortEvents = {};
     const sortActions = {};
     sortableFields.forEach(field => {
-      const eventName = `SORT_BY_${field.replace(/[A-Z]/g, c => '_' + c).toUpperCase()}`;
+      const eventName = `SORT_BY_${field.replace(/[A-Z]/g, c => `_${c}`).toUpperCase()}`;
       const actionName = `setSortBy${field}`;
       sortEvents[eventName] = {
         target: apiSorting ? 'loading' : 'loaded',
@@ -208,6 +208,7 @@ export default class ListMachineUtils {
         }),
 
         filterData: () => {
+          // Intentionally left blank for users to override
         },
 
         sortData: assign({
@@ -265,10 +266,10 @@ export default class ListMachineUtils {
    */
   static nextSortDirection(fieldName) {
     return ({sortField, sortDirection}) => {
-      if (sortField === fieldName && sortDirection === this.ASC) {
-        return this.DESC;
+      if (sortField === fieldName && sortDirection === ListMachineUtils.ASC) {
+        return ListMachineUtils.DESC;
       }
-      return this.ASC;
+      return ListMachineUtils.ASC;
     };
   }
 

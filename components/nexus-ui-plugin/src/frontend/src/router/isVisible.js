@@ -149,7 +149,7 @@ function areAllRequiredLicensesPresent(licenseValid) {
           return false;
         }
 
-        return value['licenseValid'];
+        return value.licenseValid;
       });
 }
 

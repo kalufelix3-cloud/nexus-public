@@ -17,7 +17,6 @@
 import {assign, createMachine} from 'xstate';
 import ExtJS from './ExtJS';
 import UIStrings from '../constants/UIStrings';
-import Utils from './Utils';
 import {any, dissocPath, hasPath, join, lensPath, path, pathOr, set, whereEq} from 'ramda';
 
 const FIELD_ID = 'FIELD ';
@@ -195,7 +194,9 @@ export default class FormUtils {
           data: (_, event) => event.data?.data,
           pristineData: (_, event) => event.data?.data
         }),
-        postProcessData: () => {},
+        postProcessData: () => {
+          // Intentionally left blank for users to override
+        },
         setDirtyFlag: ({isPristine}) => ExtJS.setDirtyStatus(id, !isPristine),
         clearDirtyFlag: () => ExtJS.setDirtyStatus(id, false),
 
@@ -204,8 +205,8 @@ export default class FormUtils {
           saveError: (_, event) => FormUtils.extractSaveErrorMessage(event),
           saveErrors: (_, event) => {
             const data = event.data?.response?.data;
-            if (data instanceof Array) {
-              let saveErrors = {};
+            if (Array.isArray(data)) {
+              const saveErrors = {};
               data.forEach(({id, message}) => {
                 id = id.replace(FIELD_ID, '');
                 id = id.replace(PARAMETER_ID, '');
@@ -227,7 +228,9 @@ export default class FormUtils {
           }
         },
         logSaveSuccess: () => ExtJS.showSuccessMessage(UIStrings.SAVE_SUCCESS),
-        logDeleteSuccess: () => {},
+        logDeleteSuccess: () => {
+          // Intentionally left blank for users to override
+        },
 
         setLoadError: assign({
           loadError: (_, event) => {
@@ -245,7 +248,9 @@ export default class FormUtils {
           loadError: null,
         }),
 
-        onSaveSuccess: () => {},
+        onSaveSuccess: () => {
+          // Intentionally left blank for users to override
+        },
 
         reset: assign({
           data: ({pristineData}) => pristineData,
@@ -267,12 +272,14 @@ export default class FormUtils {
           data: FormUtils.updateFormDataDefaultAction,
           isTouched: ({isTouched}, event) => {
             if (event.name) {
-              const pthArray = event.name instanceof Array ? event.name : event.name.split('.');
+              const pthArray = Array.isArray(event.name) ? event.name : event.name.split('.');
               return set(lensPath(pthArray), true, isTouched);
             }
 
             const result = {...isTouched};
-            Object.keys(event.data).forEach((key) => (result[key] = true));
+            for (const key of Object.keys(event.data)) {
+              result[key] = true;
+            }
             return result;
           }
         }),
@@ -319,7 +326,7 @@ export default class FormUtils {
    */
   static updateFormDataDefaultAction({data}, event) {
     if (event.name) {
-      const pthArray = event.name instanceof Array ? event.name : event.name.split('.');
+      const pthArray = Array.isArray(event.name) ? event.name : event.name.split('.');
       return set(lensPath(pthArray), event.value, data);
     }
     else if (event.data) {
@@ -365,13 +372,13 @@ export default class FormUtils {
           return false;
         }
         else if (Array.isArray(error)) {
-          return error.some(e => this.isInvalid(e));
+          return error.some(e => FormUtils.isInvalid(e));
         }
         else if (error.length > 0) {
           return true;
         }
         else {
-          return this.isInvalid(error);
+          return FormUtils.isInvalid(error);
         }
       })
     );
@@ -425,6 +432,7 @@ export default class FormUtils {
    * @return {{name: *, validationErrors: (*|[]), isPristine: boolean, value: (*|string)}}
    */
   static fieldProps(name, current, defaultValue = '') {
+    const fieldName = Array.isArray(name) ? name : name.split('.');
     const {
       data = {},
       isTouched = {},
@@ -433,14 +441,10 @@ export default class FormUtils {
       saveErrorData = {}
     } = current.context;
 
-    if (!Array.isArray(name)) {
-      name = name.split('.');
-    }
-
-    const saveError = path(name, saveErrors);
-    const savedValue = path(name, saveErrorData);
-    const currentValue = path(name, data);
-    const validationError = path(name, validationErrors);
+    const saveError = path(fieldName, saveErrors);
+    const savedValue = path(fieldName, saveErrorData);
+    const currentValue = path(fieldName, data);
+    const validationError = path(fieldName, validationErrors);
 
     let errors = null;
     if (Boolean(savedValue) && saveError && currentValue === savedValue) {
@@ -451,10 +455,10 @@ export default class FormUtils {
     }
 
     return {
-      id: join('.', name),
-      name: join('.', name),
-      value: String(pathOr(defaultValue, name, data)),
-      isPristine: hasPath(name, isTouched) ? !path(name, isTouched) : true,
+      id: join('.', fieldName),
+      name: join('.', fieldName),
+      value: String(pathOr(defaultValue, fieldName, data)),
+      isPristine: hasPath(fieldName, isTouched) ? !path(fieldName, isTouched) : true,
       validatable: true,
       validationErrors: errors || null
     };
@@ -468,20 +472,17 @@ export default class FormUtils {
    * @return {{name: *, isPristine: boolean, value: (*|string)}}
    */
   static selectProps(name, current, defaultValue = '') {
+    const fieldName = Array.isArray(name) ? name : name.split('.');
     const {
       data = {},
       isTouched = {}
     } = current.context;
 
-    if (!Array.isArray(name)) {
-      name = name.split('.');
-    }
-
     return {
-      id: join('.', name),
-      name: join('.', name),
-      value: String(pathOr(defaultValue, name, data)),
-      isPristine: hasPath(name, isTouched) ? !path(name, isTouched) : true
+      id: join('.', fieldName),
+      name: join('.', fieldName),
+      value: String(pathOr(defaultValue, fieldName, data)),
+      isPristine: hasPath(fieldName, isTouched) ? !path(fieldName, isTouched) : true
     };
   }
 
@@ -493,16 +494,13 @@ export default class FormUtils {
    * @return {{name: string, isChecked: boolean}}
    */
   static checkboxProps(name, current, defaultValue = false) {
+    const fieldName = Array.isArray(name) ? name : name.split('.');
     const {data = {}} = current.context;
 
-    if (!Array.isArray(name)) {
-      name = name.split('.');
-    }
-
     return {
-      checkboxId: String(join('.', name)),
-      name: String(join('.', name)),
-      isChecked: Boolean(pathOr(defaultValue, name, data))
+      checkboxId: String(join('.', fieldName)),
+      name: String(join('.', fieldName)),
+      isChecked: Boolean(pathOr(defaultValue, fieldName, data))
     };
   }
 
@@ -513,20 +511,17 @@ export default class FormUtils {
    * @return {{name: *, isPristine: boolean, files: FileList|null}}
    */
   static fileUploadProps(name, current) {
+    const fieldName = Array.isArray(name) ? name : name.split('.');
     const {
       data = {},
       isTouched = {}
     } = current.context;
 
-    if (!Array.isArray(name)) {
-      name = name.split('.');
-    }
-
     return {
-      id: join('.', name),
-      name: join('.', name),
-      files: pathOr(null, name, data),
-      isPristine: hasPath(name, isTouched) ? !path(name, isTouched) : true,
+      id: join('.', fieldName),
+      name: join('.', fieldName),
+      files: pathOr(null, fieldName, data),
+      isPristine: hasPath(fieldName, isTouched) ? !path(fieldName, isTouched) : true,
     };
   }
 
@@ -538,10 +533,7 @@ export default class FormUtils {
    */
   static handleUpdate(name, send, type = 'UPDATE') {
     return (value) => {
-      if (value instanceof Set) {
-        value = Array.from(value);
-      }
-      send({type, name, value});
+      send({type, name, value: (value instanceof Set) ? Array.from(value) : value});
     };
   }
 
@@ -554,7 +546,7 @@ export default class FormUtils {
   static trimOnBlur(name, send) {
     return (event) => {
       const value = event.target.value.trim();
-      this.handleUpdate(name, send)(value);
+      FormUtils.handleUpdate(name, send)(value);
     }
   }
 
@@ -574,8 +566,8 @@ export default class FormUtils {
 
   static getValidationErrorsMessage(state) {
     const {isPristine, validationErrors} = state.context;
-    const isInvalid = this.isInvalid(validationErrors);
-    return this.saveTooltip({isPristine, isInvalid});
+    const isInvalid = FormUtils.isInvalid(validationErrors);
+    return FormUtils.saveTooltip({isPristine, isInvalid});
   }
 
   static discardTooltip({isPristine}) {
@@ -602,7 +594,7 @@ export default class FormUtils {
    * @returns {null|boolean}
    */
   static submitMaskState(state, submittingStates = ['saving']) {
-    if (this.isInState(state, submittingStates)) {
+    if (FormUtils.isInState(state, submittingStates)) {
       return SUBMITTING;
     }
     else if (state.matches('saved')) {

@@ -69,9 +69,9 @@ export default class ExtAPIUtils {
       },
       services: {
         fetch: async (_, {options = null}) => {
-          const response = await this.extAPIRequest(action, method, options);
-          this.checkForError(response);
-          return this.extractResult(response, defaultResult);
+          const response = await ExtAPIUtils.extAPIRequest(action, method, options);
+          ExtAPIUtils.checkForError(response);
+          return ExtAPIUtils.extractResult(response, defaultResult);
         }
       }
     }));
@@ -144,7 +144,7 @@ export default class ExtAPIUtils {
       return data;
     }
 
-    let requestData = {page, limit, start};
+    const requestData = {page, limit, start};
 
     if (sortField) {
       requestData.sort = [{
@@ -177,7 +177,7 @@ export default class ExtAPIUtils {
    * @return {Object}
    */
   static createRequestBody(action, method, options = null, tid = 1) {
-    const requestData = this.createData(options);
+    const requestData = ExtAPIUtils.createData(options);
     return {action, method, data: requestData, type: 'rpc', tid};
   }
 
@@ -188,8 +188,8 @@ export default class ExtAPIUtils {
    * @return {Promise}
    */
   static extAPIRequest(action, method, options = null) {
-    this.setupTokenInterceptors();
-    return Axios.post(URL, this.createRequestBody(action, method, options));
+    ExtAPIUtils.setupTokenInterceptors();
+    return Axios.post(URL, ExtAPIUtils.createRequestBody(action, method, options));
   }
 
   /**
@@ -200,15 +200,15 @@ export default class ExtAPIUtils {
    * @return {Promise}
    */
   static extAPIBulkRequest(requests) {
-    this.setupTokenInterceptors();
+    ExtAPIUtils.setupTokenInterceptors();
     const data = requests.map(({action, method, options}, index) => {
-      return this.createRequestBody(action, method, options, index + 1);
+      return ExtAPIUtils.createRequestBody(action, method, options, index + 1);
     });
     return Axios.post(URL, data);
   }
 
   static setupTokenInterceptors() {
-    if (!this.interceptorSet && process.env.NODE_ENV !== 'test') {
+    if (!ExtAPIUtils.interceptorSet && process.env.NODE_ENV !== 'test') {
       Axios.interceptors.request.use(
           function(config) {
             const csrfToken = (document.cookie.match('(^|; )NX-ANTI-CSRF-TOKEN=([^;]*)') || 0)[2];
@@ -218,7 +218,7 @@ export default class ExtAPIUtils {
             return config;
           }
       );
-      this.interceptorSet = true;
+      ExtAPIUtils.interceptorSet = true;
     }
   }
 }

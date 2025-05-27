@@ -105,7 +105,9 @@ describe('SslCertificateDetailsModal', () => {
   });
 
   it('renders correctly when loading', async function() {
-    const UNRESOLVED = new Promise(() => {});
+    const UNRESOLVED = new Promise(() => {
+      // Intentionally left blank so the promise does not resolve
+    });
     when(axios.get).calledWith(`${baseUrl}?host=${localhost}&port=${defaultPort}`).mockReturnValue(UNRESOLVED);
 
     renderView();

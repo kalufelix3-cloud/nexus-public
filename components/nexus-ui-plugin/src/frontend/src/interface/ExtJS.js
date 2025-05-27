@@ -14,8 +14,6 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
-
 import {useEffect, useState} from 'react';
 
 /**
@@ -56,7 +54,7 @@ export default class ExtJS {
    *@returns a complete url for the PRO-LICENSE.html
    */
   static proLicenseUrl() {
-    return this.urlOf('/PRO-LICENSE.html');
+    return ExtJS.urlOf('/PRO-LICENSE.html');
   }
 
   /**
@@ -132,7 +130,7 @@ export default class ExtJS {
   static fetchAuthenticationToken(username, password) {
     const b64u = NX.util.Base64.encode(username);
     const b64p = NX.util.Base64.encode(password);
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       NX.direct.rapture_Security.authenticationToken(b64u, b64p, resolve);
     });
   }
@@ -177,7 +175,7 @@ export default class ExtJS {
    * @returns {boolean} true if the edition is PRO
    */
   static isProEdition() {
-    return this.state().getEdition() === 'PRO';
+    return ExtJS.state().getEdition() === 'PRO';
   }
 
   /**
@@ -192,21 +190,21 @@ export default class ExtJS {
    * @returns {{id: string, authenticated: boolean, administrator: boolean, authenticatedRealms: string[]} | undefined}
    */
   static useUser() {
-    return this.useState(() => NX.State.getUser());
+    return ExtJS.useState(() => NX.State.getUser());
   }
 
   /**
    * @returns {{version: string, edition: string}}
    */
   static useStatus() {
-    return this.useState(() => NX.State.getValue('status'));
+    return ExtJS.useState(() => NX.State.getValue('status'));
   }
 
   /**
    * @returns {{daysToExpiry: number}}
    */
   static useLicense() {
-    return this.useState(() => NX.State.getValue('license'));
+    return ExtJS.useState(() => NX.State.getValue('license'));
   }
 
   // don't use directly, use useIsVisible, where possible

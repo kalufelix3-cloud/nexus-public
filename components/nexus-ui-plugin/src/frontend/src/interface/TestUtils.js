@@ -34,7 +34,9 @@ export default class TestUtils {
   static NAME_VALIDATION_MESSAGE = 'Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.';
 
   static get UNRESOLVED() {
-    return new Promise(() => {});
+    return new Promise(() => {
+      // Intentionally left blank so the promise is never resolved for tests
+    });
   }
 
   /**
@@ -77,7 +79,7 @@ export default class TestUtils {
     queryLoadError: (message) => {
       const options = {selector: '.nx-load-error__message'};
       if (message) {
-        return screen.queryByText('An error occurred loading data. ' + message, options);
+        return screen.queryByText(`An error occurred loading data. ${message}`, options);
       }
       else {
         return screen.queryByText(/an error occurred loading data/i, options);
@@ -119,21 +121,21 @@ export default class TestUtils {
   };
 
   static expectTableHeaders(names) {
-    const cells = this.tableSelectors.headerCells();
+    const cells = TestUtils.tableSelectors.headerCells();
     names.forEach((name, index) => {
       expect(cells[index]).toHaveTextContent(name);
     });
   }
 
   static expectTableRows(data, keys) {
-    const rows = this.tableSelectors.rows();
+    const rows = TestUtils.tableSelectors.rows();
 
     expect(rows).toHaveLength(data.length);
 
     data.forEach((item, index) => {
       const row = rows[index];
 
-      keys.forEach(key => expect(item.hasOwnProperty(key)).toBeTruthy());
+      keys.forEach(key => expect(Object.hasOwn(item, key)).toBeTruthy());
 
       Object.values(pick(keys, item)).forEach((value, index)  => {
         expect(row.cells[index]).toHaveTextContent(value || '');
@@ -142,7 +144,7 @@ export default class TestUtils {
   }
 
   static expectProperRowsOrder(data, fieldName = 'name', columnIndex = 0) {
-    const rows = this.tableSelectors.rows();
+    const rows = TestUtils.tableSelectors.rows();
     data.forEach((item, index) => {
       expect(rows[index].cells[columnIndex]).toHaveTextContent(item[fieldName]);
     });
@@ -151,7 +153,7 @@ export default class TestUtils {
   static async expectProperFilteredItemsCount(filter, query, count) {
     userEvent.clear(filter());
     userEvent.type(filter(), query);
-    expect(this.tableSelectors.rows()).toHaveLength(count);
+    expect(TestUtils.tableSelectors.rows()).toHaveLength(count);
   }
 
   static async expectToSeeTooltipOnHover(element, tooltipMessage) {

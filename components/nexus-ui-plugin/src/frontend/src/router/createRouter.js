@@ -40,7 +40,7 @@ export function createRouter({
 
   // validate permissions and configuration on each route request
   router.transitionService.onBefore({}, async (transition) => {
-    console.debug('evaluating transition: ' + transition.to().name);
+    console.debug(`evaluating transition: ${transition.to().name}`);
 
     const redirectTo404 = () => {
       transition.abort();
@@ -82,7 +82,7 @@ export function createRouter({
   return router;
 }
 
-async function offerUserTheChanceToLoginAndRevalidate(transition, visibilityRequirements) {
+async function offerUserTheChanceToLoginAndRevalidate(_transition, visibilityRequirements) {
   try {
     const loginResult = await promptUserToLogin();
 

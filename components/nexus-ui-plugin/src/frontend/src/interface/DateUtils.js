@@ -32,7 +32,7 @@ export default class DateUtils {
     try {
       return new Date(timestamp).toString();
     }
-    catch (e) {
+    catch {
       console.debug(ERROR_MESSAGE(timestamp));
       return null;
     }
@@ -53,7 +53,7 @@ export default class DateUtils {
 
       return new Date(timestamp).toLocaleDateString("en-US", options);
     }
-    catch (e) {
+    catch {
       console.debug(ERROR_MESSAGE(timestamp));
       return null;
     }
@@ -71,7 +71,7 @@ export default class DateUtils {
       };
       return date.toLocaleString("en-US", options);
     }
-    catch (e) {
+    catch {
       console.debug(ERROR_MESSAGE(date));
       return null;
     }
@@ -96,7 +96,7 @@ export default class DateUtils {
       };
       return date.toLocaleString("en-US", options);
     }
-    catch (e) {
+    catch {
       console.debug(ERROR_MESSAGE(date));
       return null;
     }

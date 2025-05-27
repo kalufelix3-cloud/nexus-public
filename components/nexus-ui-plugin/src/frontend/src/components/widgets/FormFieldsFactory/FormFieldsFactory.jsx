@@ -19,7 +19,7 @@ import SetOfCheckboxesFieldFactory from './factory/SetOfCheckboxesFieldFactory';
 
 import {SUPPORTED_FIELD_TYPES} from './FormFieldsFactoryConstants';
 
-export default class {
+export default class FormFieldsFactory {
   static ALL_FIELDS = [
       TextFieldFactory,
       ComboboxFieldFactory,
@@ -28,7 +28,7 @@ export default class {
 
   static getFields(fields) {
     return fields.map(props => {
-      const field = this.ALL_FIELDS.find(field => field.types.includes(props.type));
+      const field = FormFieldsFactory.ALL_FIELDS.find(field => field.types.includes(props.type));
       return {
         Field: field.component,
         props,
@@ -40,7 +40,7 @@ export default class {
     const fields = types[type]?.formFields;
     const result = {};
     let value = null;
-    fields?.forEach(({attributes, id, type, initialValue}) => {
+    fields?.forEach(({id, type, initialValue}) => {
       if (initialValue) {
         value = initialValue;
       } else if (

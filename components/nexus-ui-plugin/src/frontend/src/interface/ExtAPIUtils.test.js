@@ -137,8 +137,8 @@ describe('ExtAPIUtils', () => {
       });
 
       it('returns unmodified filter parameters when presents', () => {
-        let options = {filter: [{property: 'name', value: 'test'}], filterValue: 'test'};
-        let result = [{
+        const options = {filter: [{property: 'name', value: 'test'}], filterValue: 'test'};
+        const result = [{
           ...defaultPaginationParams,
           filter: options.filter,
         }];
@@ -172,8 +172,8 @@ describe('ExtAPIUtils', () => {
       });
 
       it('returns query parameter when presents', () => {
-        let options = {query: 'test'};
-        let result = [{
+        const options = {query: 'test'};
+        const result = [{
           ...defaultPaginationParams,
           query: options.query
         }];
@@ -181,12 +181,12 @@ describe('ExtAPIUtils', () => {
       });
 
       it('returns all parameters', () => {
-        let options = {
+        const options = {
           query: 'test1',
           filterValue: 'test3',
           sortField: 'test2',
         };
-        let result = [{
+        const result = [{
           ...defaultPaginationParams,
           query: options.query,
           filter: [{

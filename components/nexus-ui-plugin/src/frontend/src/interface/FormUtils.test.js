@@ -389,7 +389,9 @@ describe('FormUtils', () => {
         invalid: 'noNameNoData'
       };
 
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {
+        // Intentionally left blank to do nothing
+      });
       FormUtils.updateFormDataDefaultAction(form, event);
       expect(consoleErrorSpy).toHaveBeenCalledWith('update event must have a name and value or a data object', event);
       consoleErrorSpy.mockRestore();
