@@ -11,9 +11,9 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import UIStrings from "../../../../constants/UIStrings";
+import UIStrings from '../../../../constants/UIStrings';
 import ChangeIcon from './ChangeIcon';
-import { HumanReadableUtils } from '@sonatype/nexus-ui-plugin';
+import HumanReadableUtils from '../../../../interface/HumanReadableUtils';
 
 const formatPercentage = (value) => {
   if (value === 'N/A') return value;
@@ -42,10 +42,9 @@ export const historicalUsageColumns = {
     key: 'percentageChangeComponent',
     Header: () => <>{UIStrings.HISTORICAL_USAGE.COMPONENTS_CHANGE}</>,
     Cell: (item) => (
-        <>
-          <ChangeIcon value={item.percentageChangeComponent} />{' '}
-          {formatPercentage(item.percentageChangeComponent)}
-        </>
+      <>
+        <ChangeIcon value={item.percentageChangeComponent} /> {formatPercentage(item.percentageChangeComponent)}
+      </>
     ),
     tooltip: UIStrings.HISTORICAL_USAGE.COMPONENTS_CHANGE_TOOLTIP
   },
@@ -58,10 +57,9 @@ export const historicalUsageColumns = {
     key: 'percentageChangeRequests',
     Header: () => <>{UIStrings.HISTORICAL_USAGE.REQUESTS_CHANGE}</>,
     Cell: (item) => (
-        <>
-          <ChangeIcon value={item.percentageChangeRequest} />{' '}
-          {formatPercentage(item.percentageChangeRequest)}
-        </>
+      <>
+        <ChangeIcon value={item.percentageChangeRequest} /> {formatPercentage(item.percentageChangeRequest)}
+      </>
     ),
     tooltip: UIStrings.HISTORICAL_USAGE.REQUESTS_CHANGE_TOOLTIP
   },
@@ -69,16 +67,15 @@ export const historicalUsageColumns = {
     key: 'responseSize',
     Header: () => <>{UIStrings.HISTORICAL_USAGE.TOTAL_EGRESS}</>,
     Cell: (item) => <>{HumanReadableUtils.bytesToString(item.responseSize)}</>,
-    tooltip: UIStrings.HISTORICAL_USAGE.TOTAL_EGRESS_TOOLTIP,
+    tooltip: UIStrings.HISTORICAL_USAGE.TOTAL_EGRESS_TOOLTIP
   },
   percentageChangeEgress: {
     key: 'percentageChangeEgress',
     Header: () => <>{UIStrings.HISTORICAL_USAGE.EGRESS_CHANGE}</>,
     Cell: (item) => (
-        <>
-          <ChangeIcon value={item.percentageChangeEgress} />{' '}
-          {formatPercentage(item.percentageChangeEgress)}
-        </>
+      <>
+        <ChangeIcon value={item.percentageChangeEgress} /> {formatPercentage(item.percentageChangeEgress)}
+      </>
     ),
     tooltip: UIStrings.HISTORICAL_USAGE.EGRESS_CHANGE_TOOLTIP
   },
@@ -91,10 +88,9 @@ export const historicalUsageColumns = {
     key: 'percentageChangeStorage',
     Header: () => <>{UIStrings.HISTORICAL_USAGE.STORAGE_CHANGE}</>,
     Cell: (item) => (
-        <>
-          <ChangeIcon value={item.percentageChangeStorage} />{' '}
-          {formatPercentage(item.percentageChangeStorage)}
-        </>
+      <>
+        <ChangeIcon value={item.percentageChangeStorage} /> {formatPercentage(item.percentageChangeStorage)}
+      </>
     ),
     tooltip: UIStrings.HISTORICAL_USAGE.STORAGE_CHANGE_TOOLTIP
   }

@@ -40,12 +40,10 @@ module.exports = {
   // collectCoverageFrom: null,
 
   // The directory where Jest should output its coverage files
-  coverageDirectory: "coverage",
+  coverageDirectory: '../../target/js-coverage',
 
   // An array of regexp pattern strings used to skip coverage collection
-  coveragePathIgnorePatterns: [
-    "/node_modules/"
-  ],
+  coveragePathIgnorePatterns: ['/node_modules/'],
 
   // A list of reporter names that Jest uses when writing coverage reports
   // coverageReporters: [
@@ -83,18 +81,18 @@ module.exports = {
 
   // An array of file extensions your modules use
   moduleFileExtensions: [
-    "js",
-  //   "json",
-    "jsx",
-  //   "ts",
-  //   "tsx",
-  //   "node"
+    'js',
+    //   "json",
+    'jsx'
+    //   "ts",
+    //   "tsx",
+    //   "node"
   ],
 
   // A map from regular expressions to module names that allow to stub out resources with a single module
   moduleNameMapper: {
-    "\\.scss$": "<rootDir>/__jest__/styleMock.js",
-    "\\.(png|svg)$": "<rootDir>/__jest__/imgMock.js"
+    '\\.scss$': '<rootDir>/__jest__/styleMock.js',
+    '\\.(png|svg)$': '<rootDir>/__jest__/imgMock.js'
   },
 
   // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
@@ -113,7 +111,7 @@ module.exports = {
   // projects: null,
 
   // Use this configuration option to add custom reporters to Jest
-  // reporters: undefined,
+  reporters: ['default', 'jest-junit'],
 
   // Automatically reset mock state between every test
   // resetMocks: false,
@@ -140,15 +138,13 @@ module.exports = {
   // setupFiles: [],
 
   // A list of paths to modules that run some code to configure or set up the testing framework before each test
-  setupFilesAfterEnv: [
-      "<rootDir>/__jest__/setup.js"
-  ],
+  setupFilesAfterEnv: ['<rootDir>/__jest__/setup.js'],
 
   // A list of paths to snapshot serializer modules Jest should use for snapshot testing
   snapshotSerializers: [],
 
   // The test environment that will be used for testing
-  testEnvironment: "jsdom",
+  testEnvironment: 'jsdom',
 
   // Options that will be passed to the testEnvironment
   // testEnvironmentOptions: {},
@@ -157,9 +153,7 @@ module.exports = {
   // testLocationInResults: false,
 
   // The glob patterns Jest uses to detect test files
-  testMatch: [
-    "**/?(*.)+(spec|test).[tj]s?(x)"
-  ],
+  testMatch: ['**/?(*.)+(spec|test).[tj]s?(x)'],
 
   // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
   // testPathIgnorePatterns: [
@@ -183,13 +177,11 @@ module.exports = {
 
   // A map from regular expressions to paths to transformers
   transform: {
-    "\\.[jt]sx?$": ["babel-jest", { configFile: './babel.config.js' }]
+    '\\.[jt]sx?$': ['babel-jest', { configFile: './babel.config.js' }]
   },
 
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
-  transformIgnorePatterns: [
-    "/node_modules/(?!@sonatype\/react-shared-components|pretty-bytes|@react-hook)"
-  ],
+  transformIgnorePatterns: ['/node_modules/(?!@sonatype/react-shared-components|pretty-bytes|@react-hook)'],
 
   // An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them
   // unmockedModulePathPatterns: undefined,

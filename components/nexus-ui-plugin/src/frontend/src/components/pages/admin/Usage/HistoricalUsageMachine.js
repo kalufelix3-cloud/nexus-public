@@ -14,18 +14,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {assign, createMachine} from "xstate";
+import { assign, createMachine } from 'xstate';
 
 import Axios from 'axios';
 
-export default createMachine({
-  id: 'LicensingHistoricalUsageMachine',
-  initial: 'loading',
+export default createMachine(
+  {
+    id: 'LicensingHistoricalUsageMachine',
+    initial: 'loading',
 
-  context: {},
+    context: {},
 
-  states: {
-    loading: {
+    states: {
+      loading: {
         invoke: {
           src: 'fetchData',
           onDone: {
@@ -44,26 +45,26 @@ export default createMachine({
       close: {},
       loadError: {
         on: {
-          'RETRY': {
+          RETRY: {
             target: 'loading',
             actions: 'clearError'
           }
         }
       }
-    },
+    }
   },
-{
-  actions: {
-    setData: assign({
-        data: (_, {data}) => data.data,
-        pristineData: (_, {data}) => data.data,
+  {
+    actions: {
+      setData: assign({
+        data: (_, { data }) => data.data,
+        pristineData: (_, { data }) => data.data
       }),
-    clearError: assign({
-      loadError: () => null
-    }),
-
-  },
-  services: {
-    fetchData: () => Axios.get('service/rest/v1/monthly-metrics')
+      clearError: assign({
+        loadError: () => null
+      })
+    },
+    services: {
+      fetchData: () => Axios.get('service/rest/v1/monthly-metrics')
+    }
   }
-});
+);

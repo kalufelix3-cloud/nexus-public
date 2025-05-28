@@ -4,10 +4,12 @@
   "private": true,
   "scripts": {
     "build": "npm-run-all --parallel build-dev build-prod",
-    "build-all": "npm-run-all build-dev build-prod",
+    "build-all": "npm-run-all format build-dev build-prod",
     "build-dev": "rspack --config rspack.dev.js",
     "build-prod": "rspack --config rspack.prod.js",
-    "test": "jest --config src/frontend/jest.config.js",
+    "check-format": "biome format --changed --no-errors-on-unmatched",
+    "format": "biome format --changed --write --no-errors-on-unmatched",
+    "test": "npm-run-all check-format  test-coverage",
     "test-coverage": "jest --config src/frontend/jest.config.js --coverage",
     "test-watch": "jest --config src/frontend/jest.config.js --watch",
     "test-watch-debug": "node --inspect-brk node_modules/.bin/jest --config src/frontend/jest.config.js --runInBand --watchAll",
@@ -15,6 +17,7 @@
   },
   "dependencies": {
     "@babel/runtime": "7.17.2",
+    "@biomejs/biome": "1.9.4",
     "@fortawesome/fontawesome-svg-core": "1.2.25",
     "@fortawesome/free-brands-svg-icons": "5.13.1",
     "@fortawesome/free-solid-svg-icons": "5.11.2",
