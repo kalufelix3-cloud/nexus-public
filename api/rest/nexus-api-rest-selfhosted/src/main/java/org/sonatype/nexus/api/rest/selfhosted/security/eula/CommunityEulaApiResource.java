@@ -20,6 +20,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.api.rest.selfhosted.security.eula.model.EulaStatus;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.kv.NexusKeyValue;
@@ -30,6 +31,7 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 public class CommunityEulaApiResource
+    extends ComponentSupport
     implements Resource, CommunityEulaApiResourceDoc
 {
 
@@ -80,7 +82,8 @@ public class CommunityEulaApiResource
       throw new IllegalArgumentException("EULA must be accepted");
     }
     else if (isAlreadyAccepted) {
-      throw new IllegalArgumentException("EULA has already been accepted");
+      log.debug("EULA was already accepted, ignoring request");
+      return;
     }
 
     if (eulaStatus.hasExpectedDisclaimer() && eulaStatus.isAccepted()) {

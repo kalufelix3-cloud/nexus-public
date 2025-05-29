@@ -24,7 +24,9 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -64,5 +66,48 @@ public class CommunityEulaApiResourceTest
     eulaStatus.setDisclaimer(EulaStatus.EXPECTED_DISCLAIMER);
     underTest.setEulaAcceptedCE(eulaStatus);
     verify(mockGlobalKeyValueStore, times(1)).setKey(any(NexusKeyValue.class));
+  }
+
+  @Test
+  public void testsAttemptToUnacceptEula() {
+    NexusKeyValue keyValue = new NexusKeyValue();
+    keyValue.setValue(Map.of("accepted", true));
+    when(mockGlobalKeyValueStore.getKey(anyString())).thenReturn(Optional.of(keyValue));
+    // Attempt to set EULA as not accepted
+    EulaStatus eulaStatus = new EulaStatus();
+    eulaStatus.setAccepted(false);
+    eulaStatus.setDisclaimer(EulaStatus.EXPECTED_DISCLAIMER);
+    IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
+      underTest.setEulaAcceptedCE(eulaStatus);
+    });
+
+    assertEquals("EULA must be accepted", thrown.getMessage());
+    verify(mockGlobalKeyValueStore, times(0)).setKey(any(NexusKeyValue.class));
+  }
+
+  @Test
+  public void testReacceptEula() {
+    NexusKeyValue keyValue = new NexusKeyValue();
+    keyValue.setValue(Map.of("accepted", true));
+    when(mockGlobalKeyValueStore.getKey(anyString())).thenReturn(Optional.of(keyValue));
+    // Accept again while previously in an accepted state
+    EulaStatus eulaStatus = new EulaStatus();
+    eulaStatus.setAccepted(true);
+    eulaStatus.setDisclaimer(EulaStatus.EXPECTED_DISCLAIMER);
+    underTest.setEulaAcceptedCE(eulaStatus);
+    verify(mockGlobalKeyValueStore, times(0)).setKey(any(NexusKeyValue.class));
+  }
+
+  @Test
+  public void testInvalidDisclaimer() {
+    EulaStatus eulaStatus = new EulaStatus();
+    eulaStatus.setAccepted(true);
+    eulaStatus.setDisclaimer("foo");
+    IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
+      underTest.setEulaAcceptedCE(eulaStatus);
+    });
+
+    assertEquals("Invalid EULA disclaimer", thrown.getMessage());
+    verify(mockGlobalKeyValueStore, times(0)).setKey(any(NexusKeyValue.class));
   }
 }
