@@ -45,6 +45,7 @@ import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.distributed.event.service.api.EventType;
 import org.sonatype.nexus.distributed.event.service.api.common.CertificateDistributedEvent;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
@@ -117,17 +118,19 @@ public class TrustStoreImpl
       final TrustedSSLCertificateStore trustedSSLCertificateStore,
       final TrustedKeyStoreManager trustedKeyStoreManager,
       final DatabaseCheck databaseCheck,
-      final GlobalKeyValueStore globalKeyValueStore) throws Exception
+      final GlobalKeyValueStore globalKeyValueStore,
+      final CryptoHelper cryptoHelper) throws Exception
   {
     this.eventManager = checkNotNull(eventManager);
     this.keyStoreManager = checkNotNull(keyStoreManager);
     this.freezeService = checkNotNull(freezeService);
-    this.keyManagers = getSystemKeyManagers();
-    this.trustManagers = getTrustManagers();
     this.trustedSSLCertificateStore = checkNotNull(trustedSSLCertificateStore);
     this.trustedKeyStoreManager = checkNotNull(trustedKeyStoreManager);
     this.databaseCheck = checkNotNull(databaseCheck);
     this.globalKeyValueStore = checkNotNull(globalKeyValueStore);
+    checkNotNull(cryptoHelper);
+    this.keyManagers = getSystemKeyManagers(cryptoHelper);
+    this.trustManagers = getTrustManagers(cryptoHelper);
   }
 
   @Override
@@ -340,8 +343,8 @@ public class TrustStoreImpl
     }
   }
 
-  private TrustManager[] getTrustManagers() throws Exception {
-    final TrustManager[] systemTrustManagers = getSystemTrustManagers();
+  private TrustManager[] getTrustManagers(final CryptoHelper cryptoHelper) throws Exception {
+    final TrustManager[] systemTrustManagers = getSystemTrustManagers(cryptoHelper);
 
     if (systemTrustManagers != null) {
       return stream(systemTrustManagers)
@@ -386,7 +389,7 @@ public class TrustStoreImpl
     return null;
   }
 
-  private static KeyManager[] getSystemKeyManagers() throws Exception {
+  private static KeyManager[] getSystemKeyManagers(final CryptoHelper cryptoHelper) throws Exception {
     KeyManagerFactory keyManagerFactory;
 
     String keyAlgorithm = System.getProperty("ssl.KeyManagerFactory.algorithm");
@@ -411,7 +414,7 @@ public class TrustStoreImpl
           keyStore = KeyStore.getInstance(keyStoreType, keyStoreProvider);
         }
         else {
-          keyStore = KeyStore.getInstance(keyStoreType);
+          keyStore = cryptoHelper.createKeyStore(keyStoreType);
         }
         String password = System.getProperty("javax.net.ssl.keyStorePassword");
         try (FileInputStream in = new FileInputStream(keyStoreFile)) {
@@ -427,7 +430,7 @@ public class TrustStoreImpl
     return keyManagerFactory.getKeyManagers();
   }
 
-  private static TrustManager[] getSystemTrustManagers() throws Exception {
+  private static TrustManager[] getSystemTrustManagers(final CryptoHelper cryptoHelper) throws Exception {
     TrustManagerFactory trustManagerFactory;
 
     String trustAlgorithm = System.getProperty("ssl.TrustManagerFactory.algorithm");
@@ -448,13 +451,14 @@ public class TrustStoreImpl
       String trustStoreFileName = System.getProperty("javax.net.ssl.trustStore");
       if (trustStoreFileName != null) {
         trustStoreFile = new File(trustStoreFileName);
-        trustManagerFactory = TrustManagerFactory.getInstance(trustAlgorithm);
         final String trustStoreProvider = System.getProperty("javax.net.ssl.trustStoreProvider");
         if (trustStoreProvider != null) {
           trustStore = KeyStore.getInstance(trustStoreType, trustStoreProvider);
+          trustManagerFactory = TrustManagerFactory.getInstance(trustAlgorithm, trustStoreProvider);
         }
         else {
-          trustStore = KeyStore.getInstance(trustStoreType);
+          trustStore = cryptoHelper.createKeyStore(trustStoreType);
+          trustManagerFactory = cryptoHelper.createTrustManagerFactory(trustAlgorithm);
         }
       }
       else {
@@ -468,8 +472,8 @@ public class TrustStoreImpl
           trustStoreFile = file;
         }
 
-        trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        trustManagerFactory = cryptoHelper.createTrustManagerFactory(TrustManagerFactory.getDefaultAlgorithm());
+        trustStore = cryptoHelper.createKeyStore(KeyStore.getDefaultType());
       }
       final String password = System.getProperty("javax.net.ssl.trustStorePassword");
       try (FileInputStream in = new FileInputStream(trustStoreFile)) {

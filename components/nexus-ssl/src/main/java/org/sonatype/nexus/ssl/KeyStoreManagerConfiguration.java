@@ -40,4 +40,6 @@ public interface KeyStoreManagerConfiguration
   char[] getTrustedKeyStorePassword();
 
   char[] getPrivateKeyPassword();
+
+  boolean isFipsEnabled();
 }

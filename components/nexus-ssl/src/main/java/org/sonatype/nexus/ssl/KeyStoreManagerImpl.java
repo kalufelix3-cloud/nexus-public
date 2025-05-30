@@ -73,27 +73,35 @@ public class KeyStoreManagerImpl
 
   private final ReentrantReadWriteLock trustedKeyStoreLock = new ReentrantReadWriteLock();
 
-
   private ReloadableX509TrustManager reloadableX509TrustManager;
 
   private ReloadableX509KeyManager reloadableX509KeyManager;
 
-  public KeyStoreManagerImpl(final CryptoHelper crypto,
-                             final KeyStoreStorageManager storageManager,
-                             final KeyStoreManagerConfiguration config)
+  public KeyStoreManagerImpl(
+      final CryptoHelper crypto,
+      final KeyStoreStorageManager storageManager,
+      final KeyStoreManagerConfiguration config)
   {
     this.crypto = checkNotNull(crypto);
     this.config = checkNotNull(config);
 
-    this.privateKeyStore = initializePrivateKeyStore(storageManager.createStorage(PRIVATE_KEY_STORE_NAME));
+    if (!config.isFipsEnabled()) {
+      this.privateKeyStore = initializePrivateKeyStore(storageManager.createStorage(PRIVATE_KEY_STORE_NAME));
+    }
+    else {
+      // This private key store will not be used in FIPS mode, so we set it to null since we cannot initialize it
+      this.privateKeyStore = null;
+    }
     this.trustedKeyStore = initializeTrustedKeyStore(storageManager.createStorage(TRUSTED_KEY_STORE_NAME));
   }
 
   @VisibleForTesting
-  KeyStoreManagerImpl(final CryptoHelper crypto,
-                      final KeyStoreManagerConfiguration config,
-                      final KeystoreInstance privateKeyStore,
-                      final KeystoreInstance trustedKeyStore) {
+  KeyStoreManagerImpl(
+      final CryptoHelper crypto,
+      final KeyStoreManagerConfiguration config,
+      final KeystoreInstance privateKeyStore,
+      final KeystoreInstance trustedKeyStore)
+  {
     this.crypto = checkNotNull(crypto);
     this.config = checkNotNull(config);
     this.privateKeyStore = privateKeyStore;
@@ -104,7 +112,7 @@ public class KeyStoreManagerImpl
    * Initializes the key-store with a default key (if not already created), so that the identity key can be removed
    * w/o invalidating the re-loadable key-manager.
    * <p/>
-   * This key is never used by anything.  Its only here to prevent the key-store from being empty of keys.
+   * This key is never used by anything. Its only here to prevent the key-store from being empty of keys.
    */
   private KeystoreInstance initializePrivateKeyStore(final KeyStoreStorage storage) {
     log.debug("Initializing private key-store: {}", storage);
@@ -115,8 +123,7 @@ public class KeyStoreManagerImpl
         PRIVATE_KEY_STORE_NAME,
         config.getPrivateKeyStorePassword(),
         config.getKeyStoreType(),
-        ImmutableMap.of(PRIVATE_KEY_ALIAS, config.getPrivateKeyPassword())
-    );
+        ImmutableMap.of(PRIVATE_KEY_ALIAS, config.getPrivateKeyPassword()));
 
     if (!isKeyPairInstalled(ks, DEFAULT00_KEY_ALIAS)) {
       try {
@@ -131,11 +138,11 @@ public class KeyStoreManagerImpl
             config.getSignatureAlgorithm(),
             config.getCertificateValidity().toDaysI(),
             DEFAULT00_KEY_ALIAS,
-            "Nexus",            //NON-NLS
-            "Sonatype",         //NON-NLS
-            "Silver Spring",    //NON-NLS
-            "MD",               //NON-NLS
-            "US"                //NON-NLS
+            "Nexus", // NON-NLS
+            "Sonatype", // NON-NLS
+            "Silver Spring", // NON-NLS
+            "MD", // NON-NLS
+            "US" // NON-NLS
         );
 
         Certificate cert =
@@ -179,12 +186,12 @@ public class KeyStoreManagerImpl
         TRUSTED_KEY_STORE_NAME,
         config.getTrustedKeyStorePassword(),
         config.getKeyStoreType(),
-        ImmutableMap.of(TRUSTED_KEY_STORE_NAME, config.getTrustedKeyStorePassword())
-    );
+        ImmutableMap.of(TRUSTED_KEY_STORE_NAME, config.getTrustedKeyStorePassword()));
 
     logTrustedCertificateAliases(ks);
 
-    // FIXME: Log a warning for edge cases when truststore is not empty, it should be (we manage this content via capability),
+    // FIXME: Log a warning for edge cases when truststore is not empty, it should be (we manage this content via
+    // capability),
     // FIXME: ... probably some bugs related to be fixed
     try {
       if (ks.listTrustCertificates(config.getTrustedKeyStorePassword()).length != 0) {
@@ -237,7 +244,8 @@ public class KeyStoreManagerImpl
         throw new KeystoreException("A ReloadableX509TrustManager could not be created.", e);
       }
       return trustManagers;
-    } finally {
+    }
+    finally {
       trustedKeyStoreLock.readLock().unlock();
     }
   }
@@ -259,7 +267,8 @@ public class KeyStoreManagerImpl
         throw new KeystoreException("A ReloadableX509KeyManager could not be created.", e);
       }
       return keyManagers;
-    } finally {
+    }
+    finally {
       privateKeyStoreLock.readLock().unlock();
     }
   }
@@ -281,14 +290,16 @@ public class KeyStoreManagerImpl
 
       // update re-loadable bits
       getTrustManagers();
-    } finally {
+    }
+    finally {
       trustedKeyStoreLock.writeLock().unlock();
     }
   }
 
   @Override
-  public void importTrustCertificate(String certificateInPEM, String alias)
-      throws KeystoreException, CertificateException
+  public void importTrustCertificate(
+      String certificateInPEM,
+      String alias) throws KeystoreException, CertificateException
   {
     // parse the cert
     Certificate certificate = CertificateUtil.decodePEMFormattedCertificate(certificateInPEM);
@@ -301,9 +312,10 @@ public class KeyStoreManagerImpl
     trustedKeyStoreLock.readLock().lock();
     try {
       return trustedKeyStore.getCertificate(
-          checkNotNull(alias, "'alias' cannot be null when looking up a trusted Certificate."), //NON-NLS
+          checkNotNull(alias, "'alias' cannot be null when looking up a trusted Certificate."), // NON-NLS
           config.getTrustedKeyStorePassword());
-    } finally {
+    }
+    finally {
       trustedKeyStoreLock.readLock().unlock();
     }
   }
@@ -325,7 +337,8 @@ public class KeyStoreManagerImpl
       }
 
       return certificates;
-    } finally {
+    }
+    finally {
       trustedKeyStoreLock.readLock().unlock();
     }
   }
@@ -342,19 +355,20 @@ public class KeyStoreManagerImpl
 
       // update re-loadable bits
       getTrustManagers();
-    } finally {
+    }
+    finally {
       trustedKeyStoreLock.writeLock().unlock();
     }
   }
 
   @Override
-  public void generateAndStoreKeyPair(final String commonName,
-                                      final String organizationalUnit,
-                                      final String organization,
-                                      final String locality,
-                                      final String state,
-                                      final String country)
-      throws KeystoreException
+  public void generateAndStoreKeyPair(
+      final String commonName,
+      final String organizationalUnit,
+      final String organization,
+      final String locality,
+      final String state,
+      final String country) throws KeystoreException
   {
     privateKeyStoreLock.writeLock().lock();
     try {
@@ -374,7 +388,8 @@ public class KeyStoreManagerImpl
 
       // update re-loadable bits
       getKeyManagers();
-    } finally {
+    }
+    finally {
       privateKeyStoreLock.writeLock().unlock();
     }
   }
@@ -395,7 +410,8 @@ public class KeyStoreManagerImpl
     privateKeyStoreLock.readLock().lock();
     try {
       return isKeyPairInstalled(privateKeyStore, PRIVATE_KEY_ALIAS);
-    } finally {
+    }
+    finally {
       privateKeyStoreLock.readLock().unlock();
     }
   }
@@ -405,7 +421,8 @@ public class KeyStoreManagerImpl
     privateKeyStoreLock.readLock().lock();
     try {
       return privateKeyStore.getCertificate(PRIVATE_KEY_ALIAS, config.getPrivateKeyStorePassword());
-    } finally {
+    }
+    finally {
       privateKeyStoreLock.readLock().unlock();
     }
   }
@@ -416,7 +433,8 @@ public class KeyStoreManagerImpl
     try {
       return privateKeyStore.getPrivateKey(PRIVATE_KEY_ALIAS, config.getPrivateKeyStorePassword(),
           config.getPrivateKeyPassword());
-    } finally {
+    }
+    finally {
       privateKeyStoreLock.readLock().unlock();
     }
   }
@@ -426,7 +444,8 @@ public class KeyStoreManagerImpl
     privateKeyStoreLock.writeLock().lock();
     try {
       privateKeyStore.deleteEntry(PRIVATE_KEY_ALIAS, config.getPrivateKeyStorePassword());
-    } finally {
+    }
+    finally {
       privateKeyStoreLock.writeLock().unlock();
     }
   }

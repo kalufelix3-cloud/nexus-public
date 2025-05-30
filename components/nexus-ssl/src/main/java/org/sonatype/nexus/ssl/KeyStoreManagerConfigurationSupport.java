@@ -51,6 +51,8 @@ public class KeyStoreManagerConfigurationSupport
 
   private char[] privateKeyPassword;
 
+  private boolean fipsEnabled;
+
   public void setKeyStoreType(final String keyStoreType) {
     this.keyStoreType = checkNotNull(keyStoreType);
     log.debug("Key-store type: {}", keyStoreType);
@@ -158,6 +160,15 @@ public class KeyStoreManagerConfigurationSupport
   @Override
   public char[] getPrivateKeyPassword() {
     return privateKeyPassword;
+  }
+
+  @Override
+  public boolean isFipsEnabled() {
+    return fipsEnabled;
+  }
+
+  public void setFipsEnabled(final boolean fipsEnabled) {
+    this.fipsEnabled = fipsEnabled;
   }
 
   @Override

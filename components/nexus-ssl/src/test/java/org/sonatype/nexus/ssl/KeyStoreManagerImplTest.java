@@ -129,6 +129,7 @@ public class KeyStoreManagerImplTest
     when(config.getPrivateKeyStorePassword()).thenReturn("pwd".toCharArray());
     when(config.getTrustedKeyStorePassword()).thenReturn("pwd".toCharArray());
     when(config.getPrivateKeyPassword()).thenReturn("pwd".toCharArray());
+    when(config.isFipsEnabled()).thenReturn(false);
     return config;
   }
 

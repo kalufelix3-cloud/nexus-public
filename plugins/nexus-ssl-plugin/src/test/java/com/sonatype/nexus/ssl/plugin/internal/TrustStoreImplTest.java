@@ -25,6 +25,8 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.crypto.CryptoHelper;
+import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.ssl.CertificateUtil;
 import org.sonatype.nexus.ssl.KeyNotFoundException;
@@ -90,13 +92,15 @@ public class TrustStoreImplTest
   @Mock
   private GlobalKeyValueStore globalKeyValueStore;
 
+  private final CryptoHelper cryptoHelper = new CryptoHelperImpl(false);
+
   private TrustStoreImpl underTest;
 
   @Before
   public void setup() throws Exception {
     underTest =
         new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
-            trustedKeyStoreManager, databaseCheck, globalKeyValueStore);
+            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
   }
 
   @Test

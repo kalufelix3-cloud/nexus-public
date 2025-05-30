@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.crypto.internal;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.KeyPairGenerator;
@@ -73,6 +75,7 @@ public class CryptoHelperImpl
 
     if (nexusSecurityFipsEnabled) {
       loadFipsProvider();
+      setFipsApprovedMode();
     }
     else {
       loadNonFipsProvider();
@@ -82,26 +85,38 @@ public class CryptoHelperImpl
   }
 
   private static void loadNonFipsProvider() {
+    // BouncyCastleProvider must be set as the last provider
     Security.addProvider(new BouncyCastleProvider());
   }
 
   private static void loadFipsProvider() {
-    Provider providerFips = createFipsProvider();
-    Security.addProvider(providerFips);
+    try {
+      Class<?> providerClass =
+          getFipsClassLoader().loadClass("org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider");
+      Provider providerFips = (Provider) providerClass.getConstructor().newInstance();
+      // BouncyCastleFipsProvider must be set as the first provider to ensure it is used by default
+      Security.insertProviderAt(providerFips, 1);
+    }
+    catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | InstantiationException
+        | IllegalAccessException e) {
+      throw new RuntimeException("Failed to initialize FIPS provider", e);
+    }
   }
 
-  private static Provider createFipsProvider() {
+  private static void setFipsApprovedMode() {
     try {
-      URL fipsJarUrl = BouncyCastleFipsProvider.class.getProtectionDomain().getCodeSource().getLocation();
-      URLClassLoader fipsClassLoader = new URLClassLoader(new URL[]{fipsJarUrl}, null);
+      Class<?> registrarClass = getFipsClassLoader().loadClass("org.bouncycastle.crypto.CryptoServicesRegistrar");
+      Method setApprovedOnly = registrarClass.getMethod("setApprovedOnlyMode", boolean.class);
+      setApprovedOnly.invoke(null, true);
+    }
+    catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+      throw new RuntimeException("Failed to initialize FIPS approved mode only", e);
+    }
+  }
 
-      Class<?> providerClass = fipsClassLoader.loadClass(
-          "org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider");
-      return (Provider) providerClass.getConstructor().newInstance();
-    }
-    catch (Exception e) {
-      throw new RuntimeException("Failed to create FIPS provider", e);
-    }
+  private static URLClassLoader getFipsClassLoader() {
+    URL fipsJarUrl = BouncyCastleFipsProvider.class.getProtectionDomain().getCodeSource().getLocation();
+    return new URLClassLoader(new URL[]{fipsJarUrl}, null);
   }
 
   @Override
