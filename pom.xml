@@ -995,7 +995,7 @@
               <removeUnusedImports/>
 
               <eclipse>
-                <file>${session.executionRootDirectory}/sonatype-config/sonatype-eclipse.xml</file>
+                <file>${maven.multiModuleProjectDirectory}/sonatype-config/sonatype-eclipse.xml</file>
               </eclipse>
             </java>
           </configuration>
