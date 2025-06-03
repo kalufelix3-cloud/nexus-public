@@ -15,7 +15,6 @@ import {useActor} from '@xstate/react';
 
 import {
   FormUtils,
-  ValidationUtils,
   ExtJS,
 } from '@sonatype/nexus-ui-plugin';
 import {

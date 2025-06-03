@@ -396,6 +396,7 @@ export default class FormUtils {
     const isInvalid = FormUtils.isInvalid(validationErrors);
     const loading = state.matches('loading');
     const saveTooltip = FormUtils.saveTooltip({isPristine, isInvalid});
+    const isConfirmDelete = state.matches('confirmDelete');
     const submitBtnText = UIStrings.SETTINGS.SAVE_BUTTON_LABEL;
     const submitMaskMessage = UIStrings.SAVING;
     const submitMaskState = FormUtils.submitMaskState(state);
@@ -420,8 +421,8 @@ export default class FormUtils {
       submitError,
       submitMaskMessage,
       submitMaskState,
-      validationErrors: saveTooltip
-    }
+      validationErrors: !isConfirmDelete ? saveTooltip : null,
+    };
   }
 
   /**
