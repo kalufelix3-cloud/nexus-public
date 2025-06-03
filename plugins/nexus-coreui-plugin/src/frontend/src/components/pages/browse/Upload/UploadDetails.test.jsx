@@ -145,7 +145,7 @@ function mockWindowLocation() {
         configurable: true,
         enumerable: true,
         set: () => {},
-        get: () => 'browse/upload:simple-repo'
+        get: () => 'browse/upload/simple-repo'
       }
     });
 

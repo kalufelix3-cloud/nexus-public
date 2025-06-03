@@ -683,7 +683,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
   onClickUploadButton: function() {
     var me = this,
         repository = me.getCurrentRepository(),
-        uploadUrl = '#browse/upload:' + encodeURIComponent(repository.get('name'));
+        uploadUrl = '#browse/upload/' + encodeURIComponent(repository.get('name'));
 
     window.open(uploadUrl, '_self');
   },
