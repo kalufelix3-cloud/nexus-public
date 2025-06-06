@@ -146,7 +146,7 @@ public abstract class FileBlobStoreITSupport
   @Before
   public void setUp() throws Exception {
     metricsStore = spy(new DatastoreFileBlobStoreMetricsService(METRICS_FLUSH_TIMEOUT, blobStoreMetricsStore,
-        new PeriodicJobServiceImpl(10)));
+        new PeriodicJobServiceImpl()));
 
     when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
     when(nodeAccess.isOldestNode()).thenReturn(true);
@@ -165,7 +165,7 @@ public abstract class FileBlobStoreITSupport
 
   protected FileBlobStore createBlobStore(final String name, final FileBlobDeletionIndex index) throws Exception {
     BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker =
-        new BlobStoreQuotaUsageChecker(new PeriodicJobServiceImpl(10), QUOTA_CHECK_INTERVAL, quotaService);
+        new BlobStoreQuotaUsageChecker(new PeriodicJobServiceImpl(), QUOTA_CHECK_INTERVAL, quotaService);
 
     final BlobStoreConfiguration config = new MockBlobStoreConfiguration();
     config.setName(name);

@@ -35,7 +35,7 @@ public class PeriodicJobServiceImplTest
 
   @Before
   public void setUp() {
-    service = new PeriodicJobServiceImpl(10);
+    service = new PeriodicJobServiceImpl();
   }
 
   private boolean isRunning() {
@@ -82,28 +82,5 @@ public class PeriodicJobServiceImplTest
   @Test(expected = IllegalStateException.class)
   public void testStopUsing_InvalidPrecondition() {
     service.stopUsing();
-  }
-
-  @Test
-  public void testThreadPoolSize() {
-    expectException(-10);
-    expectException(-5);
-    expectException(-1);
-    expectException(0);
-    service = new PeriodicJobServiceImpl(1);
-    service = new PeriodicJobServiceImpl(5);
-    service = new PeriodicJobServiceImpl(10);
-  }
-
-  private void expectException(final int threadCount) {
-    try {
-      service = new PeriodicJobServiceImpl(threadCount);
-    }
-    catch (IllegalArgumentException e) {
-      String expectedError = String.format(
-          "PeriodicJobServiceImpl's configurable threadPool must be a positive integer, (%d) is not valid.",
-          threadCount);
-      assertThat(e.getMessage(), is(expectedError));
-    }
   }
 }
