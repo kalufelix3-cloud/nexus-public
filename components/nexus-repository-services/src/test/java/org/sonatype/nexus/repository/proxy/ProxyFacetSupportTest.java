@@ -77,6 +77,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_NAME;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_VALUE;
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.PROXY_THROTTLED_ANALYTICS_MARKED;
 
 /**
  * Tests for the abstract class {@link ProxyFacetSupport}
@@ -585,5 +586,33 @@ public class ProxyFacetSupportTest
     Content result = underTest.handle300MultipleChoicesError(cachedContext, content, uri, response);
 
     assertNull(result);
+  }
+
+  @Test
+  public void testGetSendProxyThrottledRequestEvent() throws Exception {
+    when(cachedContextAttributesMap.contains(PROXY_THROTTLED_ANALYTICS_MARKED))
+        .thenReturn(false);
+    doReturn(content).when(underTest).fetch(any(), any(), any());
+
+    when(cacheController.isStale(cacheInfo)).thenReturn(true);
+    when(gracePeriodInterceptor.isInGracePeriod()).thenReturn(true);
+    when(throttlerInterceptor.shouldBlock()).thenReturn(true);
+
+    Content actual = underTest.get(cachedContext);
+    verify(eventManager).post(any(ProxyThrottledRequestEvent.class));
+  }
+
+  @Test
+  public void testGetDoNotSendProxyThrottledRequestEventWhenAlreadyMarked() throws Exception {
+    when(cachedContextAttributesMap.contains(PROXY_THROTTLED_ANALYTICS_MARKED))
+        .thenReturn(true);
+    doReturn(content).when(underTest).fetch(any(), any(), any());
+
+    when(cacheController.isStale(cacheInfo)).thenReturn(true);
+    when(gracePeriodInterceptor.isInGracePeriod()).thenReturn(true);
+    when(throttlerInterceptor.shouldBlock()).thenReturn(true);
+
+    Content actual = underTest.get(cachedContext);
+    verify(eventManager, never()).post(any(ProxyThrottledRequestEvent.class));
   }
 }

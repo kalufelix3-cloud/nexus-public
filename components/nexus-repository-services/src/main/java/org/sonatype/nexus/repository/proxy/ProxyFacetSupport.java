@@ -103,6 +103,8 @@ public abstract class ProxyFacetSupport
 
   public static final String ALTERNATIVE_URLS_PATTERN = "<(.*?)>";
 
+  public static final String PROXY_THROTTLED_ANALYTICS_MARKED = "nexus.analytics.proxy_throttled_requests.marked";
+
   @VisibleForTesting
   static final String CONFIG_KEY = "proxy";
 
@@ -320,17 +322,23 @@ public abstract class ProxyFacetSupport
         gracePeriodInterceptor.isInGracePeriod() &&
         throttlerInterceptor != null &&
         throttlerInterceptor.shouldBlock()) {
-      getEventManager().post(new ProxyThrottledRequestEvent(false));
+      sendProxyThrottledRequestEventIfNeeded(context, false);
     }
     if (gracePeriodInterceptor != null &&
         !gracePeriodInterceptor.isInGracePeriod() &&
         throttlerInterceptor != null &&
         throttlerInterceptor.shouldBlock()) {
       context.getAttributes().set(PROXY_REMOTE_FETCH_SKIP_MARKER, TRUE);
-      getEventManager().post(new ProxyThrottledRequestEvent(true));
+      sendProxyThrottledRequestEventIfNeeded(context, true);
       return content;
     }
     return get(context, content);
+  }
+
+  private void sendProxyThrottledRequestEventIfNeeded(final Context context, boolean isBlocked) {
+    if (!context.getAttributes().contains(PROXY_THROTTLED_ANALYTICS_MARKED)) {
+      getEventManager().post(new ProxyThrottledRequestEvent(isBlocked));
+    }
   }
 
   private boolean isRemoteFetchSkipMarkerEnabled(final Context context) {

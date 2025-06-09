@@ -17,6 +17,7 @@ import java.util.List;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupHandler.DispatchedRepositories;
+import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
@@ -72,8 +73,10 @@ public class GroupHandlerTest
     when(context.getRequest()).thenReturn(request);
     when(proxy1.getName()).thenReturn("Proxy 1");
     when(proxy1.facet(ViewFacet.class)).thenReturn(viewFacet1);
+    when(proxy1.getType()).thenReturn(new ProxyType());
     when(proxy2.getName()).thenReturn("Proxy 2");
     when(proxy2.facet(ViewFacet.class)).thenReturn(viewFacet2);
+    when(proxy2.getType()).thenReturn(new ProxyType());
   }
 
   @Test

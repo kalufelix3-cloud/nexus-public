@@ -22,6 +22,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
+import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Request;
@@ -32,11 +33,13 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import static java.lang.Boolean.TRUE;
 import static java.util.Collections.unmodifiableSet;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_NAME;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_VALUE;
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.PROXY_THROTTLED_ANALYTICS_MARKED;
 
 /**
  * Group handler.
@@ -123,9 +126,18 @@ public class GroupHandler
       @Nonnull final List<Repository> members,
       @Nonnull final DispatchedRepositories dispatched) throws Exception
   {
+    int repositoryProxyCount = 0;
     final Request request = context.getRequest();
     for (Repository member : members) {
       log.trace("Trying member: {}", member);
+
+      if (ProxyType.NAME.equals(member.getType().getValue())) {
+        repositoryProxyCount++;
+        if (repositoryProxyCount == 2) {
+          context.setAttribute(PROXY_THROTTLED_ANALYTICS_MARKED, TRUE);
+        }
+      }
+
       // track repositories we have dispatched to, prevent circular dispatch for nested groups
       if (dispatched.contains(member)) {
         log.trace("Skipping already dispatched member: {}", member);
