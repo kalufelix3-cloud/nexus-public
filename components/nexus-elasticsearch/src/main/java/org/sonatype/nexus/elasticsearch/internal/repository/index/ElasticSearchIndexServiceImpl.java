@@ -30,6 +30,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -190,7 +192,7 @@ public class ElasticSearchIndexServiceImpl
   public void createIndex(final Repository repository) {
     checkNotNull(repository);
     final String safeIndexName = indexNamingPolicy.indexName(repository);
-    log.debug("Creating index for {}", repository);
+    log.trace("Creating index for {}", repository.getName());
     createIndex(repository, safeIndexName);
   }
 
@@ -213,7 +215,7 @@ public class ElasticSearchIndexServiceImpl
         // merge all mapping configuration
         String source = "{}";
         for (URL url : urls) {
-          log.debug("Merging ElasticSearch mapping: {}", url);
+          log.trace("Merging ElasticSearch mapping: {}", url);
           String contributed = Resources.toString(url, StandardCharsets.UTF_8);
           log.trace("Contributed ElasticSearch mapping: {}", contributed);
           source = JsonUtils.merge(source, contributed);
@@ -226,7 +228,7 @@ public class ElasticSearchIndexServiceImpl
             .actionGet();
       }
       catch (IndexAlreadyExistsException e) {
-        log.debug("Using existing index for {}", repository, e);
+        log.trace("Using existing index for {}", repository.getName(), e);
       }
       catch (IOException e) {
         throw new UncheckedIOException(e);
@@ -240,7 +242,7 @@ public class ElasticSearchIndexServiceImpl
     checkNotNull(repository);
     String indexName = repositoryIndexNames.remove(repository.getName());
     if (indexName != null) {
-      log.debug("Removing index of {}", repository);
+      log.trace("Removing index of {}", repository.getName());
       deleteIndex(indexName);
     }
   }
@@ -260,7 +262,7 @@ public class ElasticSearchIndexServiceImpl
     checkNotNull(repository);
     String indexName = repositoryIndexNames.remove(repository.getName());
     if (indexName != null) {
-      log.debug("Rebuilding index for {}", repository);
+      log.trace("Rebuilding index for {}", repository.getName());
       deleteIndex(indexName);
       createIndex(repository, indexName);
     }
@@ -288,7 +290,7 @@ public class ElasticSearchIndexServiceImpl
     }
 
     boolean isEmpty = count == 0;
-    log.debug("Repository index: {} is {}.", indexName, isEmpty ? "empty" : "not empty");
+    log.trace("Repository index: {} is {}.", indexName, isEmpty ? "empty" : "not empty");
     return isEmpty;
   }
 
@@ -302,7 +304,7 @@ public class ElasticSearchIndexServiceImpl
       return;
     }
     updateCount.getAndIncrement();
-    log.debug("Adding to index document {} from {}: {}", identifier, repository, json);
+    log.trace("Adding to index document {} from {}: {}", identifier, repository.getName(), json);
     client.get()
         .prepareIndex(indexName, TYPE, identifier)
         .setSource(json)
@@ -311,7 +313,7 @@ public class ElasticSearchIndexServiceImpl
             {
               @Override
               public void onResponse(final IndexResponse indexResponse) {
-                log.debug("successfully added {} {} to index {}: {}", TYPE, identifier, indexName, indexResponse);
+                log.trace("successfully added {} {} to index {}: {}", TYPE, identifier, indexName, indexResponse);
               }
 
               @Override
@@ -350,7 +352,7 @@ public class ElasticSearchIndexServiceImpl
         json = filterConanAssetAttributes(json);
         updateCount.getAndIncrement();
 
-        log.debug("Bulk adding to index document {} from {}: {}", identifier, repository, json);
+        log.trace("Bulk adding to index document {} from {}: {}", identifier, repository.getName(), json);
         futures.add(executorService.submit(
             new BulkProcessorUpdater<>(bulkProcessor, createIndexRequest(indexName, identifier, json))));
       }
@@ -431,12 +433,12 @@ public class ElasticSearchIndexServiceImpl
     if (indexName == null) {
       return;
     }
-    log.debug("Removing from index document {} from {}", identifier, repository);
+    log.trace("Removing from index document {} from {}", identifier, repository.getName());
     client.get().prepareDelete(indexName, TYPE, identifier).execute(new ActionListener<DeleteResponse>()
     {
       @Override
       public void onResponse(final DeleteResponse deleteResponse) {
-        log.debug("successfully removed {} {} from index {}: {}", TYPE, identifier, indexName, deleteResponse);
+        log.trace("successfully removed {} {} from index {}: {}", TYPE, identifier, indexName, deleteResponse);
       }
 
       @Override
@@ -452,28 +454,39 @@ public class ElasticSearchIndexServiceImpl
   public void bulkDelete(@Nullable final Repository repository, final Iterable<String> identifiers) {
     checkNotNull(identifiers);
 
+    // Collect identifiers into a List to ensure reusability
+    List<String> identifierList = StreamSupport.stream(identifiers.spliterator(), false).collect(Collectors.toList());
+
     final Entry<BulkProcessor, ExecutorService> bulkProcessorToExecutorPair = pickABulkProcessor();
     final BulkProcessor bulkProcessor = bulkProcessorToExecutorPair.getKey();
     final ExecutorService executorService = bulkProcessorToExecutorPair.getValue();
+
     if (repository != null) {
       String indexName = repositoryIndexNames.get(repository.getName());
       if (indexName == null) {
+        log.trace("Skipping bulk deletion of repository {}", repository.getName());
         return; // index has gone, nothing to delete
       }
 
-      identifiers.forEach(id -> {
-        log.debug("Bulk removing from index document {} from {}", id, repository);
+      log.trace("Starting bulk removal of {} documents from repository {} and index {}",
+          identifierList.size(), repository.getName(), indexName);
+
+      identifierList.forEach(id -> {
+        log.trace("Removing document with ID {} from repository {} and index {}", id, repository.getName(), indexName);
         final DeleteRequest deleteRequest = client.get().prepareDelete(indexName, TYPE, id).request();
         executorService.submit(new BulkProcessorUpdater<>(bulkProcessor, deleteRequest)); // NOSONAR
       });
+
+      log.trace("Completed bulk removal of {} documents from repository {} and index {}",
+          identifierList.size(), repository.getName(), indexName);
     }
     else {
-
       // When bulk-deleting documents based on the write-ahead-log we won't have the owning index.
       // Since delete is a single-index operation we need to discover the index for each identifier
       // before we can delete its document. Chunking is used to keep queries to a reasonable size.
+      Iterables.partition(identifierList, 100).forEach(chunk -> {
+        log.trace("Processing chunk of {} identifiers for bulk removal", chunk.size());
 
-      Iterables.partition(identifiers, 100).forEach(chunk -> {
         SearchResponse toDelete = client.get()
             .prepareSearch("_all")
             .setFetchSource(false)
@@ -481,12 +494,15 @@ public class ElasticSearchIndexServiceImpl
             .setSize(chunk.size())
             .execute()
             .actionGet();
+        log.trace("Search response returned {} hits for the current chunk", toDelete.getHits().getHits().length);
 
         toDelete.getHits().forEach(hit -> {
-          log.debug("Bulk removing from index document {} from {}", hit.getId(), hit.index());
+          log.trace("Bulk removing from index document {} from {}", hit.getId(), hit.index());
           final DeleteRequest request = client.get().prepareDelete(hit.index(), TYPE, hit.getId()).request();
           executorService.submit(new BulkProcessorUpdater<>(bulkProcessor, request)); // NOSONAR
         });
+
+        log.trace("Completed processing chunk of {} identifiers", chunk.size());
       });
     }
 
@@ -592,7 +608,7 @@ public class ElasticSearchIndexServiceImpl
         log.info("Index {} is not ready: {}", health.getIndex(), health.getStatus());
         return false;
       }
-      log.debug("Index {} is ready: {}", health.getIndex(), health.getStatus());
+      log.trace("Index {} is ready: {}", health.getIndex(), health.getStatus());
     }
     return true;
   }

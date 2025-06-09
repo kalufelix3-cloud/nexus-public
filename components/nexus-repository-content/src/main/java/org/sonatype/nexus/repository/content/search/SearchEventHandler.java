@@ -338,7 +338,12 @@ public abstract class SearchEventHandler
       return;
     }
 
-    requestPurge(event.getFormat(), internalComponentId(event.getComponent()), repository.get());
+    String format = event.getFormat();
+    int componentId = internalComponentId(event.getComponent());
+
+    log.trace("Requesting purge for component {} in repository {} with format {}", componentId,
+        repository.get().getName(), format);
+    requestPurge(format, componentId, repository.get());
   }
 
   private void requestIndex(final AssetEvent event) {
