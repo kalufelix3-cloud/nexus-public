@@ -17,17 +17,31 @@
 
 export default {
   DIRECTORY: 'browse',
-  BROWSE: 'browse.browse',
-  WELCOME: 'browse.welcome',
+  BROWSE: {
+    ROOT: 'browse.browse',
+    TITLE: 'Browse',
+  },
+  WELCOME: {
+    ROOT: 'browse.welcome',
+    TITLE: 'Dashboard',
+  },
   UPLOAD: {
     ROOT: 'browse.upload',
+    TITLE: 'Upload',
     LIST: 'browse.upload.list',
     EDIT: 'browse.upload.edit',
   },
-  TAGS: 'browse.tags',
-  MALWARERISK: 'browse.malwarerisk',
+  TAGS: {
+    ROOT: 'browse.tags',
+    TITLE: 'Tags',
+  },
+  MALWARERISK: {
+    ROOT: 'browse.malwarerisk',
+    TITLE: 'Malicious Risk',
+  },
   SEARCH: {
     ROOT: 'browse.search',
+    TITLE: 'Search',
     GENERIC: 'browse.search.generic',
     CUSTOM: 'browse.search.custom',
     APT: 'browse.search.apt',

@@ -79,6 +79,14 @@ export function createRouter({ initialRoute, menuRoutes, missingRoute }) {
     { priority: 1000 }
   ); // this hook given a high priority to ensure it runs first
 
+  // validate permissions and configuration on each route request
+  router.transitionService.onSuccess({}, async (transition) => {
+    const customTitle = ExtJS.state().getValue('uiSettings')?.title || 'Nexus Repository Manager';
+    const { title: currentPageTitle } = transition.to().data;
+    const title = currentPageTitle ? `${currentPageTitle} - ${customTitle}` : customTitle;
+    document.title = title;
+  });
+
   menuRoutes.forEach((route) => router.stateRegistry.register(route));
 
   // explicitely register the missing route

@@ -51,7 +51,7 @@ export default function LeftNavigationMenu() {
       logoLink='#'
     >
       <LeftNavigationMenuItem
-        name={BROWSE.WELCOME}
+        name={BROWSE.WELCOME.ROOT}
         text={UIStrings.WELCOME.MENU.text}
         icon={UIStrings.WELCOME.MENU.icon}
         data-analytics-id='nxrm-global-navbar-welcome'
@@ -214,7 +214,7 @@ export default function LeftNavigationMenu() {
       </LeftNavigationMenuCollapsibleItem>
 
       <LeftNavigationMenuItem
-        name={BROWSE.BROWSE}
+        name={BROWSE.BROWSE.ROOT}
         text={UIStrings.BROWSE.MENU.text}
         icon={UIStrings.BROWSE.MENU.icon}
         params={{ repo: null }}
@@ -229,7 +229,7 @@ export default function LeftNavigationMenu() {
         data-analytics-id='nxrm-global-navbar-upload'
       />
       <LeftNavigationMenuItem
-        name={BROWSE.TAGS}
+        name={BROWSE.TAGS.ROOT}
         text={UIStrings.TAGS.MENU.text}
         icon={UIStrings.TAGS.MENU.icon}
         params={{ itemId: null }}
@@ -237,7 +237,7 @@ export default function LeftNavigationMenu() {
       />
 
       <LeftNavigationMenuItem
-        name={BROWSE.MALWARERISK}
+        name={BROWSE.MALWARERISK.ROOT}
         text={UIStrings.MALICIOUS_RISK.MENU.text}
         icon={UIStrings.MALICIOUS_RISK.MENU.icon}
         data-analytics-id='nxrm-global-navbar-malwarerisk'

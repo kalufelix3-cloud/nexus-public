@@ -268,7 +268,7 @@ describe('App', () => {
 
       act(() => {
         window.dirty = ['some unsaved changes'];
-        router.stateService.go(BROWSE.BROWSE);
+        router.stateService.go(BROWSE.BROWSE.ROOT);
       });
 
       expect(selectors.modalTitle()).toBeVisible();
@@ -279,7 +279,7 @@ describe('App', () => {
       await assertBasicPageLayoutRenders();
 
       act(() => {
-        router.stateService.go(BROWSE.BROWSE);
+        router.stateService.go(BROWSE.BROWSE.ROOT);
       });
 
       expect(selectors.modalTitle()).not.toBeInTheDocument();
@@ -291,7 +291,7 @@ describe('App', () => {
 
       act(() => {
         window.dirty = ['some unsaved changes'];
-        router.stateService.go(BROWSE.BROWSE);
+        router.stateService.go(BROWSE.BROWSE.ROOT);
       });
 
       expect(selectors.modalTitle()).toBeVisible();
@@ -313,7 +313,7 @@ describe('App', () => {
 
       act(() => {
         window.dirty = ['some unsaved changes'];
-        router.stateService.go(BROWSE.BROWSE);
+        router.stateService.go(BROWSE.BROWSE.ROOT);
       });
 
       expect(selectors.modalTitle()).toBeVisible();

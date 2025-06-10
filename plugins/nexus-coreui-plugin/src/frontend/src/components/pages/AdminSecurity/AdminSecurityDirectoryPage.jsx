@@ -43,7 +43,7 @@ export default function AdminSecurityDirectoryPage() {
               data-analytics-id="nxrm-admin-security-directory-users-lnk"
               text={UIStrings.USERS.MENU.text}
               description={UIStrings.USERS.MENU.description}
-              routeName={ADMIN.SECURITY.USERS}
+              routeName={ADMIN.SECURITY.USERS.ROOT}
               params={{ itemId: null }}
           />
 
@@ -51,21 +51,21 @@ export default function AdminSecurityDirectoryPage() {
               data-analytics-id="nxrm-admin-security-directory-anonymous-lnk"
               text={UIStrings.ANONYMOUS_SETTINGS.MENU.text}
               description={UIStrings.ANONYMOUS_SETTINGS.MENU.description}
-              routeName={ADMIN.SECURITY.ANONYMOUS}
+              routeName={ADMIN.SECURITY.ANONYMOUS.ROOT}
           />
 
           <DirectoryList.DirectoryListItem
               data-analytics-id="nxrm-admin-security-directory-crowd-lnk"
               text={UIStrings.CROWD_SETTINGS.MENU.text}
               description={UIStrings.CROWD_SETTINGS.MENU.description}
-              routeName={ADMIN.SECURITY.ATLASSIANCROWD}
+              routeName={ADMIN.SECURITY.ATLASSIANCROWD.ROOT}
           />
 
           <DirectoryList.DirectoryListItem
               data-analytics-id="nxrm-admin-security-directory-ldap-lnk"
               text={UIStrings.LDAP_SERVERS.MENU.text}
               description={UIStrings.LDAP_SERVERS.MENU.description}
-              routeName={ADMIN.SECURITY.LDAP}
+              routeName={ADMIN.SECURITY.LDAP.ROOT}
               params={{ itemId: null }}
           />
 
@@ -73,14 +73,14 @@ export default function AdminSecurityDirectoryPage() {
               data-analytics-id="nxrm-admin-security-directory-realms-lnk"
               text={UIStrings.REALMS.MENU.text}
               description={UIStrings.REALMS.MENU.description}
-              routeName={ADMIN.SECURITY.REALMS}
+              routeName={ADMIN.SECURITY.REALMS.ROOT}
           />
 
           <DirectoryList.DirectoryListItem
               data-analytics-id="nxrm-admin-security-directory-saml-config-lnk"
               text={UIStrings.SAML_CONFIGURATION.MENU.text}
               description={UIStrings.SAML_CONFIGURATION.MENU.description}
-              routeName={ADMIN.SECURITY.SAML}
+              routeName={ADMIN.SECURITY.SAML.ROOT}
           />
 
           <DirectoryList.DirectoryListItem
@@ -95,7 +95,7 @@ export default function AdminSecurityDirectoryPage() {
               data-analytics-id="nxrm-admin-security-directory-user-token-config-lnk"
               text={UIStrings.USER_TOKEN_CONFIGURATION.MENU.text}
               description={UIStrings.USER_TOKEN_CONFIGURATION.MENU.description}
-              routeName={ADMIN.SECURITY.USERTOKEN}
+              routeName={ADMIN.SECURITY.USERTOKEN.ROOT}
           />
 
         </DirectoryList>

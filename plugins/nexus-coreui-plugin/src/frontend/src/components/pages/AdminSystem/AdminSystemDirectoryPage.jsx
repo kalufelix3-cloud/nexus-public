@@ -32,14 +32,14 @@ export default function AdminSystemDirectoryPage() {
               data-analytics-id="nxrm-admin-system-directory-api-lnk"
               text={UIStrings.API.MENU.text}
               description={UIStrings.API.MENU.description}
-              routeName={ADMIN.SYSTEM.API}
+              routeName={ADMIN.SYSTEM.API.ROOT}
           />
 
           <DirectoryList.DirectoryListItem
               data-analytics-id="nxrm-admin-system-directory-capabilities-lnk"
               text={UIStrings.CAPABILITIES.MENU.text}
               description={UIStrings.CAPABILITIES.MENU.description}
-              routeName={ADMIN.SYSTEM.CAPABILITIES}
+              routeName={ADMIN.SYSTEM.CAPABILITIES.ROOT}
               params={{ id: null }}
           />
 
@@ -47,7 +47,7 @@ export default function AdminSystemDirectoryPage() {
               data-analytics-id="nxrm-admin-system-directory-email-server-lnk"
               text={UIStrings.EMAIL_SERVER.MENU.text}
               description={UIStrings.EMAIL_SERVER.MENU.description}
-              routeName={ADMIN.SYSTEM.EMAILSERVER}
+              routeName={ADMIN.SYSTEM.EMAILSERVER.ROOT}
           />
 
 
@@ -55,28 +55,28 @@ export default function AdminSystemDirectoryPage() {
               data-analytics-id="nxrm-admin-system-directory-http-lnk"
               text={UIStrings.HTTP.MENU.text}
               description={UIStrings.HTTP.MENU.description}
-              routeName={ADMIN.SYSTEM.HTTP}
+              routeName={ADMIN.SYSTEM.HTTP.ROOT}
           />
 
           <DirectoryList.DirectoryListItem
               data-analytics-id="nxrm-admin-system-directory-licensing-lnk"
               text={UIStrings.LICENSING.MENU.text}
               description={UIStrings.LICENSING.MENU.description}
-              routeName={ADMIN.SYSTEM.LICENSING}
+              routeName={ADMIN.SYSTEM.LICENSING.ROOT}
           />
 
           <DirectoryList.DirectoryListItem
               data-analytics-id="nxrm-admin-system-directory-nodes-lnk"
               text={UIStrings.NODES.MENU.text}
               description={UIStrings.NODES.MENU.description}
-              routeName={ADMIN.SYSTEM.NODES}
+              routeName={ADMIN.SYSTEM.NODES.ROOT}
           />
 
           <DirectoryList.DirectoryListItem
               data-analytics-id="nxrm-admin-system-directory-tasks-lnk"
               text={UIStrings.TASKS.MENU.text}
               description={UIStrings.TASKS.MENU.description}
-              routeName={ADMIN.SYSTEM.TASKS}
+              routeName={ADMIN.SYSTEM.TASKS.ROOT}
               params={{ taskId: null }}
           />
 
@@ -84,7 +84,7 @@ export default function AdminSystemDirectoryPage() {
               data-analytics-id="nxrm-admin-system-directory-upgrade-lnk"
               text={UIStrings.UPGRADE.MENU.text}
               description={UIStrings.UPGRADE.MENU.description}
-              routeName={ADMIN.SYSTEM.UPGRADE}
+              routeName={ADMIN.SYSTEM.UPGRADE.ROOT}
           />
         </DirectoryList>
       </DirectoryPage>);

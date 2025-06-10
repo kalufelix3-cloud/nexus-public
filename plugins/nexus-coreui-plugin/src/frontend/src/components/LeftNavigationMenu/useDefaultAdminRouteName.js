@@ -37,7 +37,7 @@ export function useDefaultAdminRouteName() {
   const securityVisible = isRouteVisible(ADMIN.SECURITY.DIRECTORY);
   const systemVisible = isRouteVisible(ADMIN.SYSTEM.DIRECTORY);
   const supportVisible = isRouteVisible(ADMIN.SUPPORT.DIRECTORY);
-  const iqVisible = isRouteVisible(ADMIN.IQ);
+  const iqVisible = isRouteVisible(ADMIN.IQ.ROOT);
 
   if (repoVisible) {
     return ADMIN.REPOSITORY.DIRECTORY;
@@ -52,7 +52,7 @@ export function useDefaultAdminRouteName() {
     return ADMIN.SUPPORT.DIRECTORY;
   }
   if (iqVisible) {
-    return ADMIN.IQ;
+    return ADMIN.IQ.ROOT;
   }
 
   return null;

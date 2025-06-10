@@ -16,7 +16,7 @@
  */
 import UserAccount from '../../components/pages/admin/UserAccount/UserAccount';
 import NuGetApiToken from '../../components/pages/user/NuGetApiToken/NuGetApiToken';
-import {UIView} from '@uirouter/react';
+import { UIView } from '@uirouter/react';
 import UserToken from '../../components/pages/user/UserToken/UserToken';
 import { ROUTE_NAMES } from '../routeNames/routeNames';
 
@@ -30,9 +30,10 @@ export const userRoutes = [
     component: UIView,
     data: {
       visibilityRequirements: {
-        ignoreForMenuVisibilityCheck: true
-      }
-    }
+        ignoreForMenuVisibilityCheck: true,
+      },
+      title: USER.TITLE,
+    },
   },
 
   {
@@ -42,7 +43,8 @@ export const userRoutes = [
     data: {
       visibilityRequirements: {
         requiresUser: true,
-      }
+      },
+      title: USER.TITLE,
     },
   },
 
@@ -53,7 +55,8 @@ export const userRoutes = [
     data: {
       visibilityRequirements: {
         requiresUser: true,
-      }
+      },
+      title: USER.TITLE,
     },
   },
 
@@ -67,12 +70,13 @@ export const userRoutes = [
         statesEnabled: [
           {
             key: 'usertoken',
-            defaultValue: {enabled: false}
-          }
+            defaultValue: { enabled: false },
+          },
         ],
         permissions: ['nexus:usertoken-current:read'],
         editions: ['PRO'],
-      }
+      },
+      title: USER.TITLE,
     },
-  }
-]
+  },
+];

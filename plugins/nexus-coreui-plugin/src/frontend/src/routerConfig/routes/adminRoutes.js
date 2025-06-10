@@ -43,10 +43,10 @@ import Upgrade from '../../components/pages/admin/Upgrade/Upgrade';
 import NodesExt from '../../components/pages/admin/Nodes/NodesExt';
 import TasksExtJSWrapper from '../../components/pages/admin/Tasks/TasksExtJSWrapper';
 import Capabilities from '../../components/pages/admin/Capabilities/Capabilities';
-import BlobStoresList from "../../components/pages/admin/BlobStores/BlobStoresList";
-import { BlobStoresFormRouterAwareContainer } from "../../components/pages/admin/BlobStores/BlobStoresForm";
-import { UIView } from "@uirouter/react";
-import LdapServersExt from "../../components/pages/admin/LdapServers/LdapServersExt";
+import BlobStoresList from '../../components/pages/admin/BlobStores/BlobStoresList';
+import { BlobStoresFormRouterAwareContainer } from '../../components/pages/admin/BlobStores/BlobStoresForm';
+import { UIView } from '@uirouter/react';
+import LdapServersExt from '../../components/pages/admin/LdapServers/LdapServersExt';
 import AdminRepositoriesDirectoryPage from '../../components/pages/AdminRepositories/AdminRepositoriesDirectoryPage';
 import AdminSecurityDirectoryPage from '../../components/pages/AdminSecurity/AdminSecurityDirectoryPage';
 import { ROUTE_NAMES } from '../routeNames/routeNames';
@@ -57,9 +57,9 @@ import SettingsPageLayout from '../../components/LeftNavigationMenu/SettingsPage
 import PrivilegesList from '../../components/pages/admin/Privileges/PrivilegesList';
 import PrivilegesDetails from '../../components/pages/admin/Privileges/PrivilegesDetails';
 import ContentSelectorsList from '../../components/pages/admin/ContentSelectors/ContentSelectorsList';
-import ContentSelectorsDetails  from '../../components/pages/admin/ContentSelectors/ContentSelectorsDetails';
-import RolesList from "../../components/pages/admin/Roles/RolesList";
-import RolesDetails from "../../components/pages/admin/Roles/RolesDetails";
+import ContentSelectorsDetails from '../../components/pages/admin/ContentSelectors/ContentSelectorsDetails';
+import RolesList from '../../components/pages/admin/Roles/RolesList';
+import RolesDetails from '../../components/pages/admin/Roles/RolesDetails';
 import RoutingRulesForm from '../../components/pages/admin/RoutingRules/RoutingRulesForm';
 import RoutingRulesList from '../../components/pages/admin/RoutingRules/RoutingRulesList';
 import RoutingRulesGlobalPreview from '../../components/pages/admin/RoutingRules/RoutingRulesGlobalPreview.jsx';
@@ -76,8 +76,7 @@ export const adminRoutes = [
     component: SettingsPageLayout,
     abstract: true,
     data: {
-      visibilityRequirements: {
-      },
+      visibilityRequirements: {},
     },
   },
 
@@ -89,27 +88,29 @@ export const adminRoutes = [
     data: {
       visibilityRequirements: {
         requiresUser: true,
-        ignoreForMenuVisibilityCheck: true
-      }
-    }
+        ignoreForMenuVisibilityCheck: true,
+      },
+      title: ADMIN.REPOSITORY.TITLE,
+    },
   },
 
   {
-    name: ADMIN.REPOSITORY.REPOSITORIES,
+    name: ADMIN.REPOSITORY.REPOSITORIES.ROOT,
     url: '/repositories:itemId',
     component: RepositoriesExt,
     data: {
       visibilityRequirements: {
         permissions: ['nexus:repository-admin:*:*:read'],
       },
+      title: ADMIN.REPOSITORY.REPOSITORIES.TITLE,
     },
     params: {
       itemId: {
         value: null,
         raw: true,
-        dynamic: true
-      }
-    }
+        dynamic: true,
+      },
+    },
   },
 
   {
@@ -119,8 +120,9 @@ export const adminRoutes = [
       visibilityRequirements: {
         requiresUser: true,
         ignoreForMenuVisibilityCheck: true,
-      }
-    }
+      },
+      title: ADMIN.REPOSITORY.BLOBSTORES.TITLE,
+    },
   },
 
   {
@@ -129,8 +131,9 @@ export const adminRoutes = [
     component: BlobStoresList,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.BLOB_STORES.READ]
-      }
+        permissions: [Permissions.BLOB_STORES.READ],
+      },
+      title: ADMIN.REPOSITORY.BLOBSTORES.TITLE,
     },
   },
 
@@ -140,32 +143,35 @@ export const adminRoutes = [
     component: BlobStoresFormRouterAwareContainer,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.BLOB_STORES.READ]
-      }
+        permissions: [Permissions.BLOB_STORES.READ],
+      },
+      title: ADMIN.REPOSITORY.BLOBSTORES.TITLE,
     },
   },
 
   {
-    name: ADMIN.REPOSITORY.DATASTORE,
+    name: ADMIN.REPOSITORY.DATASTORE.ROOT,
     url: '/datastore',
     component: DataStoreConfiguration,
     data: {
       visibilityRequirements: {
         bundle: 'com.sonatype.nexus.plugins.nexus-pro-datastore-plugin',
         permissions: ['nexus:*'],
-        editions: ['PRO', 'COMMUNITY']
-      }
+        editions: ['PRO', 'COMMUNITY'],
+      },
+      title: ADMIN.REPOSITORY.DATASTORE.TITLE,
     },
   },
 
   {
-    name: ADMIN.REPOSITORY.PROPRIETARY,
+    name: ADMIN.REPOSITORY.PROPRIETARY.ROOT,
     url: '/proprietary',
     component: ProprietaryRepositories,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.SETTINGS.READ]
-      }
+        permissions: [Permissions.SETTINGS.READ],
+      },
+      title: ADMIN.REPOSITORY.PROPRIETARY.TITLE,
     },
   },
 
@@ -176,8 +182,9 @@ export const adminRoutes = [
     data: {
       visibilityRequirements: {
         permissions: [Permissions.SELECTORS.READ],
-      }
-    }
+      },
+      title: ADMIN.REPOSITORY.SELECTORS.TITLE,
+    },
   },
 
   {
@@ -199,8 +206,9 @@ export const adminRoutes = [
     data: {
       visibilityRequirements: {
         permissions: [Permissions.SELECTORS.CREATE],
-      }
-    }
+      },
+      title: ADMIN.REPOSITORY.SELECTORS.TITLE,
+    },
   },
 
   {
@@ -208,27 +216,28 @@ export const adminRoutes = [
     component: UIView,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.ADMIN]
-      }
-    }
+        permissions: [Permissions.ADMIN],
+      },
+      title: ADMIN.REPOSITORY.CLEANUPPOLICIES.TITLE,
+    },
   },
 
   {
     name: ADMIN.REPOSITORY.CLEANUPPOLICIES.LIST,
     url: '/cleanuppolicies',
-    component: CleanupPoliciesList
+    component: CleanupPoliciesList,
   },
 
   {
     name: ADMIN.REPOSITORY.CLEANUPPOLICIES.CREATE,
     url: '/cleanuppolicies/create',
-    component: CleanupPoliciesForm
+    component: CleanupPoliciesForm,
   },
 
   {
     name: ADMIN.REPOSITORY.CLEANUPPOLICIES.EDIT,
     url: '/cleanuppolicies/edit/{itemId:.+}',
-    component: CleanupPoliciesForm
+    component: CleanupPoliciesForm,
   },
 
   {
@@ -237,9 +246,10 @@ export const adminRoutes = [
     component: UIView,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.ADMIN]
-      }
-    }
+        permissions: [Permissions.ADMIN],
+      },
+      title: ADMIN.REPOSITORY.ROUTINGRULES.TITLE,
+    },
   },
 
   {
@@ -274,9 +284,10 @@ export const adminRoutes = [
     data: {
       visibilityRequirements: {
         requiresUser: true,
-        ignoreForMenuVisibilityCheck: true
-      }
-    }
+        ignoreForMenuVisibilityCheck: true,
+      },
+      title: ADMIN.SECURITY.TITLE,
+    },
   },
 
   {
@@ -285,8 +296,9 @@ export const adminRoutes = [
     component: UIView,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.PRIVILEGES.READ]
-      }
+        permissions: [Permissions.PRIVILEGES.READ],
+      },
+      title: ADMIN.SECURITY.PRIVILEGES.TITLE,
     },
   },
 
@@ -308,8 +320,9 @@ export const adminRoutes = [
     component: PrivilegesDetails,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.PRIVILEGES.CREATE]
-      }
+        permissions: [Permissions.PRIVILEGES.CREATE],
+      },
+      title: ADMIN.SECURITY.PRIVILEGES.TITLE,
     },
   },
 
@@ -319,8 +332,9 @@ export const adminRoutes = [
     component: UIView,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.ROLES.READ, Permissions.PRIVILEGES.READ]
-      }
+        permissions: [Permissions.ROLES.READ, Permissions.PRIVILEGES.READ],
+      },
+      title: ADMIN.SECURITY.ROLES.TITLE,
     },
   },
 
@@ -342,8 +356,9 @@ export const adminRoutes = [
     component: RolesDetails,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.ROLES.READ, Permissions.PRIVILEGES.READ]
-      }
+        permissions: [Permissions.ROLES.READ, Permissions.PRIVILEGES.READ],
+      },
+      title: ADMIN.SECURITY.ROLES.TITLE,
     },
   },
 
@@ -352,15 +367,16 @@ export const adminRoutes = [
     component: UIView,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.SSL_TRUSTSTORE.READ]
-      }
-    }
+        permissions: [Permissions.SSL_TRUSTSTORE.READ],
+      },
+      title: ADMIN.SECURITY.SSLCERTIFICATES.TITLE,
+    },
   },
 
   {
     name: ADMIN.SECURITY.SSLCERTIFICATES.LIST,
     url: '/sslcertificates',
-    component: SslCertificatesList
+    component: SslCertificatesList,
   },
 
   {
@@ -369,77 +385,82 @@ export const adminRoutes = [
     component: SslCertificatesAddForm,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.SSL_TRUSTSTORE.CREATE]
-      }
-    }
+        permissions: [Permissions.SSL_TRUSTSTORE.CREATE],
+      },
+      title: ADMIN.SECURITY.SSLCERTIFICATES.TITLE,
+    },
   },
 
   {
     name: ADMIN.SECURITY.SSLCERTIFICATES.EDIT,
     url: '/sslcertificates/edit/{itemId:.+}',
-    component: SslCertificatesDetailsForm
+    component: SslCertificatesDetailsForm,
   },
 
   {
-    name: ADMIN.SECURITY.LDAP,
+    name: ADMIN.SECURITY.LDAP.ROOT,
     url: '/ldap:itemId',
     component: LdapServersExt,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.LDAP.READ]
-      }
+        permissions: [Permissions.LDAP.READ],
+      },
+      title: ADMIN.SECURITY.LDAP.TITLE,
     },
     params: {
       itemId: {
         value: null,
         raw: true,
-        dynamic: true
-      }
-    }
+        dynamic: true,
+      },
+    },
   },
 
   {
-    name: ADMIN.SECURITY.USERS,
+    name: ADMIN.SECURITY.USERS.ROOT,
     url: '/users:itemId',
     component: UsersExt,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.USERS.READ, Permissions.ROLES.READ]
-      }
+        permissions: [Permissions.USERS.READ, Permissions.ROLES.READ],
+      },
+      title: ADMIN.SECURITY.USERS.TITLE,
     },
     params: {
       itemId: {
         value: null,
         raw: true,
-        dynamic: true
-      }
-    }
+        dynamic: true,
+      },
+    },
   },
 
   {
-    name: ADMIN.SECURITY.ANONYMOUS,
+    name: ADMIN.SECURITY.ANONYMOUS.ROOT,
     url: '/anonymous',
     component: AnonymousSettings,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.SETTINGS.READ]
-      }
-    }
+        permissions: [Permissions.SETTINGS.READ],
+      },
+      title: ADMIN.SECURITY.ANONYMOUS.TITLE,
+    },
   },
 
   {
-    name: ADMIN.SECURITY.REALMS,
+    name: ADMIN.SECURITY.REALMS.ROOT,
     url: '/realms',
     component: Realms,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.SETTINGS.READ]
-      }
-    }
+        permissions: [Permissions.SETTINGS.READ],
+      },
+      title: ADMIN.SECURITY.REALMS.TITLE,
+    },
   },
 
   {
-    name: ADMIN.SECURITY.USERTOKEN,
+    name: ADMIN.SECURITY.USERTOKEN.ROOT,
     url: '/usertoken',
     component: UserTokens,
     data: {
@@ -449,15 +470,16 @@ export const adminRoutes = [
         licenseValid: [
           {
             key: 'usertoken',
-            defaultValue: false
-          }
+            defaultValue: false,
+          },
         ],
-      }
-    }
+      },
+      title: ADMIN.SECURITY.USERTOKEN.TITLE,
+    },
   },
 
   {
-    name: ADMIN.SECURITY.ATLASSIANCROWD,
+    name: ADMIN.SECURITY.ATLASSIANCROWD.ROOT,
     url: '/atlassiancrowd',
     component: CrowdSettings,
     data: {
@@ -466,25 +488,27 @@ export const adminRoutes = [
         licenseValid: [
           {
             key: 'crowd',
-            defaultValue: false
-          }
+            defaultValue: false,
+          },
         ],
-        permissions: ['nexus:crowd:read']
-      }
-    }
+        permissions: ['nexus:crowd:read'],
+      },
+      title: ADMIN.SECURITY.ATLASSIANCROWD.TITLE,
+    },
   },
 
   {
-    name: ADMIN.SECURITY.SAML,
+    name: ADMIN.SECURITY.SAML.ROOT,
     url: '/saml',
     component: SamlConfiguration,
     data: {
       visibilityRequirements: {
         bundle: 'com.sonatype.nexus.plugins.nexus-saml-plugin',
         permissions: ['nexus:*'],
-        editions: ['PRO']
-      }
-    }
+        editions: ['PRO'],
+      },
+      title: ADMIN.SECURITY.SAML.TITLE,
+    },
   },
 
   // === admin/support ===
@@ -495,93 +519,100 @@ export const adminRoutes = [
     data: {
       visibilityRequirements: {
         requiresUser: true,
-        ignoreForMenuVisibilityCheck: true
-      }
-    }
+        ignoreForMenuVisibilityCheck: true,
+      },
+      title: ADMIN.SUPPORT.TITLE,
+    },
   },
 
   {
-    name: ADMIN.SUPPORT.SUPPORTREQUEST,
+    name: ADMIN.SUPPORT.SUPPORTREQUEST.ROOT,
     url: '/supportrequest',
     component: SupportRequest,
     data: {
       visibilityRequirements: {
         permissions: [Permissions.ATLAS.CREATE],
-        editions: ['PRO']
-      }
-    }
+        editions: ['PRO'],
+      },
+      title: ADMIN.SUPPORT.SUPPORTREQUEST.TITLE,
+    },
   },
 
   {
-    name: ADMIN.SUPPORT.SYSTEMINFORMATION,
+    name: ADMIN.SUPPORT.SYSTEMINFORMATION.ROOT,
     url: '/systeminformation',
     component: SystemInformation,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.ATLAS.READ]
-      }
-    }
+        permissions: [Permissions.ATLAS.READ],
+      },
+      title: ADMIN.SUPPORT.SYSTEMINFORMATION.TITLE,
+    },
   },
 
   {
-    name: ADMIN.SUPPORT.STATUS,
+    name: ADMIN.SUPPORT.STATUS.ROOT,
     url: '/status:itemId',
     component: MetricHealth,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.METRICS.READ]
-      }
+        permissions: [Permissions.METRICS.READ],
+      },
+      title: ADMIN.SUPPORT.STATUS.TITLE,
     },
     params: {
       itemId: {
         value: null,
         raw: true,
-        dynamic: true
-      }
-    }
+        dynamic: true,
+      },
+    },
   },
 
   {
-    name: ADMIN.SUPPORT.SUPPORTZIP,
+    name: ADMIN.SUPPORT.SUPPORTZIP.ROOT,
     url: '/supportzip',
     component: SupportZip,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.ATLAS.READ]
-      }
-    }
+        permissions: [Permissions.ATLAS.READ],
+      },
+      title: ADMIN.SUPPORT.SUPPORTZIP.TITLE,
+    },
   },
 
   {
-    name: ADMIN.SUPPORT.LOGS,
+    name: ADMIN.SUPPORT.LOGS.ROOT,
     url: '/logs:itemId',
     component: Logs,
     data: {
       visibilityRequirements: {
         permissions: [Permissions.LOGGING.READ],
-        notClustered: true
-      }
+        notClustered: true,
+      },
+      title: ADMIN.SUPPORT.LOGS.TITLE,
     },
     params: {
       itemId: {
         value: null,
         raw: true,
-        dynamic: true
-      }
-    }
+        dynamic: true,
+      },
+    },
   },
 
   {
     name: ADMIN.SUPPORT.LOGGING.ROOT,
-    abstract:true,
+    abstract: true,
     component: UIView,
     data: {
       visibilityRequirements: {
         permissions: [Permissions.LOGGING.READ],
-      }
+      },
+      title: ADMIN.SUPPORT.LOGGING.TITLE,
     },
   },
-  
+
   {
     name: ADMIN.SUPPORT.LOGGING.LIST,
     url: '/logging',
@@ -601,7 +632,8 @@ export const adminRoutes = [
     data: {
       visibilityRequirements: {
         permissions: [Permissions.LOGGING.UPDATE],
-      }
+      },
+      title: ADMIN.SUPPORT.LOGGING.TITLE,
     },
   },
 
@@ -613,124 +645,133 @@ export const adminRoutes = [
     data: {
       visibilityRequirements: {
         requiresUser: true,
-        ignoreForMenuVisibilityCheck: true
-      }
-    }
+        ignoreForMenuVisibilityCheck: true,
+      },
+      title: ADMIN.SYSTEM.TITLE,
+    },
   },
 
   {
-    name: ADMIN.SYSTEM.TASKS,
+    name: ADMIN.SYSTEM.TASKS.ROOT,
     url: '/tasks:taskId',
     component: TasksExtJSWrapper,
     params: {
       taskId: {
         value: null,
         raw: true,
-        dynamic: true
-      }
+        dynamic: true,
+      },
     },
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.TASKS.READ]
-      }
-    }
+        permissions: [Permissions.TASKS.READ],
+      },
+      title: ADMIN.SYSTEM.TASKS.TITLE,
+    },
   },
 
   {
-    name: ADMIN.SYSTEM.API,
+    name: ADMIN.SYSTEM.API.ROOT,
     url: '/api',
     component: Api,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.SETTINGS.READ]
-      }
-    }
+        permissions: [Permissions.SETTINGS.READ],
+      },
+      title: ADMIN.SYSTEM.API.TITLE,
+    },
   },
 
   {
-    name: ADMIN.SYSTEM.CAPABILITIES,
+    name: ADMIN.SYSTEM.CAPABILITIES.ROOT,
     url: '/capabilities:id',
     component: Capabilities,
     params: {
       id: {
         value: null,
         raw: true,
-        dynamic: true
-      }
+        dynamic: true,
+      },
     },
     data: {
       visibilityRequirements: {
-        permissions: ['nexus:capabilities:read']
-      }
-    }
+        permissions: ['nexus:capabilities:read'],
+      },
+      title: ADMIN.SYSTEM.CAPABILITIES.TITLE,
+    },
   },
 
   {
-    name: ADMIN.SYSTEM.EMAILSERVER,
+    name: ADMIN.SYSTEM.EMAILSERVER.ROOT,
     url: '/emailserver',
     component: EmailServer,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.SETTINGS.READ]
-      }
-    }
+        permissions: [Permissions.SETTINGS.READ],
+      },
+      title: ADMIN.SYSTEM.EMAILSERVER.TITLE,
+    },
   },
 
   {
-    name: ADMIN.SYSTEM.HTTP,
+    name: ADMIN.SYSTEM.HTTP.ROOT,
     url: '/http',
     component: HTTP,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.SETTINGS.READ]
-      }
-    }
+        permissions: [Permissions.SETTINGS.READ],
+      },
+      title: ADMIN.SYSTEM.HTTP.TITLE,
+    },
   },
 
   {
-    name: ADMIN.SYSTEM.LICENSING,
+    name: ADMIN.SYSTEM.LICENSING.ROOT,
     url: '/licensing',
     component: Licensing,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.LICENSING.READ]
-      }
-    }
+        permissions: [Permissions.LICENSING.READ],
+      },
+      title: ADMIN.SYSTEM.LICENSING.TITLE,
+    },
   },
 
   {
-    name: ADMIN.SYSTEM.NODES,
+    name: ADMIN.SYSTEM.NODES.ROOT,
     url: '/nodes',
     component: NodesExt,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.ADMIN]
-      }
-    }
+        permissions: [Permissions.ADMIN],
+      },
+      title: ADMIN.SYSTEM.NODES.TITLE,
+    },
   },
 
   {
-    name: ADMIN.SYSTEM.UPGRADE,
+    name: ADMIN.SYSTEM.UPGRADE.ROOT,
     url: '/upgrade',
     component: Upgrade,
     data: {
       visibilityRequirements: {
         permissions: [Permissions.MIGRATION.READ],
-        capability: 'migration'
-
-      }
-    }
+        capability: 'migration',
+      },
+      title: ADMIN.SYSTEM.UPGRADE.TITLE,
+    },
   },
 
   // === iq ===
   {
-    name: ADMIN.IQ,
+    name: ADMIN.IQ.ROOT,
     url: '/iq',
     component: IqServer,
     data: {
       visibilityRequirements: {
         permissions: [Permissions.SETTINGS.READ],
       },
+      title: ADMIN.IQ.TITLE,
     },
   },
 ];

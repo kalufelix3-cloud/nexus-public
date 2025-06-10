@@ -58,17 +58,21 @@ export const browseRoutes = [
     name: BROWSE.DIRECTORY,
     url: 'browse',
     component: UIView,
-    visibilityRequirements: {
-      ignoreForMenuVisibilityCheck: true,
+    data: {
+      visibilityRequirements: {
+        ignoreForMenuVisibilityCheck: true,
+      },
+      title: BROWSE.BROWSE.TITLE,
     },
   },
   {
-    name: BROWSE.WELCOME,
+    name: BROWSE.WELCOME.ROOT,
     url: '/welcome',
     component: Welcome,
     data: {
       // make sure we don't inherit from BROWSE
       visibilityRequirements: {},
+      title: BROWSE.WELCOME.TITLE,
     },
   },
   {
@@ -79,6 +83,7 @@ export const browseRoutes = [
     data: {
       // make sure we don't inherit from BROWSE
       visibilityRequirements: {},
+      title: BROWSE.SEARCH.TITLE,
     },
   },
   {
@@ -96,6 +101,7 @@ export const browseRoutes = [
       visibilityRequirements: {
         permissions: ['nexus:search:read'],
       },
+      title: BROWSE.SEARCH.TITLE,
     },
   },
   {
@@ -113,6 +119,7 @@ export const browseRoutes = [
       visibilityRequirements: {
         permissions: ['nexus:search:read'],
       },
+      title: BROWSE.SEARCH.TITLE,
     },
   },
   {
@@ -124,6 +131,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'apt',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -142,6 +150,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'cargo',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -160,6 +169,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'cocoapods',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -178,6 +188,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'composer',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -196,6 +207,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'conan',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -214,6 +226,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'conda',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -232,6 +245,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'docker',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -250,6 +264,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'gitlfs',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -268,6 +283,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'go',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -286,6 +302,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'helm',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -304,6 +321,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'huggingface',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -322,6 +340,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'maven2',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -340,6 +359,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'npm',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -358,6 +378,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'nuget',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -376,6 +397,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'p2',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -394,6 +416,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'pypi',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -412,6 +435,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'r',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -430,6 +454,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'raw',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -448,6 +473,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'rubygems',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -466,6 +492,7 @@ export const browseRoutes = [
         permissions: ['nexus:search:read'],
         browseableFormat: 'yum',
       },
+      title: BROWSE.SEARCH.TITLE,
     },
     params: {
       keyword: {
@@ -476,7 +503,7 @@ export const browseRoutes = [
     },
   },
   {
-    name: BROWSE.BROWSE,
+    name: BROWSE.BROWSE.ROOT,
     url: '/browse:repo',
     component: BrowseReactExt,
     data: {
@@ -488,6 +515,7 @@ export const browseRoutes = [
           },
         ],
       },
+      title: BROWSE.BROWSE.TITLE,
     },
     params: {
       repo: {
@@ -504,6 +532,7 @@ export const browseRoutes = [
       visibilityRequirements: {
         permissions: [Permissions.COMPONENT.CREATE],
       },
+      title: BROWSE.UPLOAD.TITLE,
     },
   },
   {
@@ -517,7 +546,7 @@ export const browseRoutes = [
     component: UploadDetails,
   },
   {
-    name: BROWSE.TAGS,
+    name: BROWSE.TAGS.ROOT,
     url: '/tags:itemId',
     component: Tags,
     data: {
@@ -525,6 +554,7 @@ export const browseRoutes = [
         permissions: [Permissions.TAGS.READ],
         editions: ['PRO'],
       },
+      title: BROWSE.TAGS.TITLE,
     },
     params: {
       itemId: {
@@ -535,7 +565,7 @@ export const browseRoutes = [
     },
   },
   {
-    name: BROWSE.MALWARERISK,
+    name: BROWSE.MALWARERISK.ROOT,
     url: '/malwarerisk',
     component: MalwareRemediation,
     data: {
@@ -549,6 +579,7 @@ export const browseRoutes = [
         ],
         editions: ['PRO'],
       },
+      title: BROWSE.MALWARERISK.TITLE,
     },
   },
 ];

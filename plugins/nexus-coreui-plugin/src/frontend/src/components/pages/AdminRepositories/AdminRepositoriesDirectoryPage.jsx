@@ -31,7 +31,7 @@ export default function AdminRepositoriesDirectoryPage() {
               data-analytics-id="nxrm-admin-repository-directory-repositories-lnk"
               text={UIStrings.REPOSITORIES.MENU.text}
               description={UIStrings.REPOSITORIES.MENU.description}
-              routeName={ADMIN.REPOSITORY.REPOSITORIES}
+              routeName={ADMIN.REPOSITORY.REPOSITORIES.ROOT}
               params={{ itemId: null }}
           />
 
@@ -46,13 +46,13 @@ export default function AdminRepositoriesDirectoryPage() {
               data-analytics-id="nxrm-admin-repository-directory-datastore-lnk"
               text={UIStrings.DATASTORE_CONFIGURATION.MENU.text}
               description={UIStrings.DATASTORE_CONFIGURATION.MENU.description}
-              routeName={ADMIN.REPOSITORY.DATASTORE}
+              routeName={ADMIN.REPOSITORY.DATASTORE.ROOT}
           />
 
           <DirectoryList.DirectoryListItem
               data-analytics-id="nxrm-admin-repository-directory-proprietary-lnk"
               {...UIStrings.PROPRIETARY_REPOSITORIES.MENU}
-              routeName={ADMIN.REPOSITORY.PROPRIETARY}
+              routeName={ADMIN.REPOSITORY.PROPRIETARY.ROOT}
           />
 
           <DirectoryList.DirectoryListItem

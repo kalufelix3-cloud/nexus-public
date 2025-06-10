@@ -37,7 +37,7 @@ export default function AdminSupportDirectoryPage() {
               data-analytics-id="nxrm-admin-support-directory-logs-lnk"
               text={UIStrings.LOGS.MENU.text}
               description={UIStrings.LOGS.MENU.description}
-              routeName={ROUTE_NAMES.ADMIN.SUPPORT.LOGS}
+              routeName={ROUTE_NAMES.ADMIN.SUPPORT.LOGS.ROOT}
               params={{ itemId: null }}
           />
 
@@ -45,7 +45,7 @@ export default function AdminSupportDirectoryPage() {
               data-analytics-id="nxrm-admin-support-directory-status-lnk"
               text={UIStrings.METRIC_HEALTH.MENU.text}
               description={UIStrings.METRIC_HEALTH.MENU.description}
-              routeName={ROUTE_NAMES.ADMIN.SUPPORT.STATUS}
+              routeName={ROUTE_NAMES.ADMIN.SUPPORT.STATUS.ROOT}
               params={{ itemId: null }}
           />
 
@@ -53,21 +53,21 @@ export default function AdminSupportDirectoryPage() {
               data-analytics-id="nxrm-admin-support-directory-supportreqeuest-lnk"
               text={UIStrings.SUPPORT_REQUEST.MENU.text}
               description={UIStrings.SUPPORT_REQUEST.MENU.description}
-              routeName={ROUTE_NAMES.ADMIN.SUPPORT.SUPPORTREQUEST}
+              routeName={ROUTE_NAMES.ADMIN.SUPPORT.SUPPORTREQUEST.ROOT}
           />
 
           <DirectoryList.DirectoryListItem
               data-analytics-id="nxrm-admin-support-directory-supportzip-lnk"
               text={UIStrings.SUPPORT_ZIP.MENU.text}
               description={UIStrings.SUPPORT_ZIP.MENU.description}
-              routeName={ROUTE_NAMES.ADMIN.SUPPORT.SUPPORTZIP}
+              routeName={ROUTE_NAMES.ADMIN.SUPPORT.SUPPORTZIP.ROOT}
           />
 
           <DirectoryList.DirectoryListItem
               data-analytics-id="nxrm-admin-support-directory-system-info-lnk"
               text={UIStrings.SYSTEM_INFORMATION.MENU.text}
               description={UIStrings.SYSTEM_INFORMATION.MENU.description}
-              routeName={ROUTE_NAMES.ADMIN.SUPPORT.SYSTEMINFORMATION}
+              routeName={ROUTE_NAMES.ADMIN.SUPPORT.SYSTEMINFORMATION.ROOT}
           />
         </DirectoryList>
       </DirectoryPage>);

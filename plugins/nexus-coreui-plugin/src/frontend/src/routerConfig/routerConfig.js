@@ -22,7 +22,7 @@ import {userRoutes} from './routes/userRoutes';
 import {MissingRoutePage} from '../components/pages/MissingRoutePage/MissingRoutePage';
 
 export function getRouter() {
-  const initialRoute = ROUTE_NAMES.BROWSE.WELCOME;
+  const initialRoute = ROUTE_NAMES.BROWSE.WELCOME.ROOT;
 
   const menuRoutes = [
     ...browseRoutes,

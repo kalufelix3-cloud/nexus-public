@@ -162,7 +162,7 @@ export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}
               error={error}
               emptyMessage={REPOSITORIES.LIST.EMPTY_LIST}
             >
-              {data.map(({name, type, format, url, status, firewallStatus}) => (
+              {data.map(({name, type, format, url, status}) => (
                 <NxTableRow key={name} onClick={() => onEdit(name)} isClickable>
                   <NxTableCell>{name}</NxTableCell>
                   <NxTableCell>{type}</NxTableCell>
