@@ -17,7 +17,7 @@
 import {assign, createMachine} from 'xstate';
 import ExtJS from './ExtJS';
 import UIStrings from '../constants/UIStrings';
-import {any, dissocPath, hasPath, join, lensPath, path, pathOr, set, whereEq} from 'ramda';
+import {any, dissocPath, equals, hasPath, join, lensPath, path, pathOr, set, whereEq} from 'ramda';
 
 const FIELD_ID = 'FIELD ';
 const PARAMETER_ID = 'PARAMETER ';
@@ -286,7 +286,7 @@ export default class FormUtils {
 
         setIsPristine: assign({
           isPristine: ({data, pristineData}) => {
-            return whereEq(pristineData)(data);
+            return equals(data, pristineData);
           }
         }),
 
