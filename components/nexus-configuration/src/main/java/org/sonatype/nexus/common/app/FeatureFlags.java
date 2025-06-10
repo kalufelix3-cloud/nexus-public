@@ -292,4 +292,7 @@ public class FeatureFlags
   public static final String NEXUS_SECURITY_OAUTH2_ENABLED = "nexus.security.oauth2.enabled";
 
   public static final String NEXUS_SECURITY_FIPS_ENABLED = "${nexus.security.fips.enabled:-false}";
+
+  public static final String NEXUS_SECURITY_AUTH0_USER_MANAGEMENT_ENABLED =
+      "nexus.security.auth0.userManagement.enabled";
 }
