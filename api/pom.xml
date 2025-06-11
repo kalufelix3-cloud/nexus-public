@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-parent</artifactId>
-    <version>3.81.1-SNAPSHOT</version>
+    <version>3.81.1-01</version>
   </parent>
 
   <groupId>org.sonatype.nexus.api</groupId>
@@ -40,7 +40,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-all</artifactId>
         <type>pom</type>
-        <version>3.81.1-SNAPSHOT</version>
+        <version>3.81.1-01</version>
         <scope>import</scope>
       </dependency>
 
@@ -48,32 +48,32 @@
         <groupId>org.sonatype.nexus.plugins</groupId>
         <artifactId>nexus-plugins</artifactId>
         <type>pom</type>
-        <version>3.81.1-SNAPSHOT</version>
+        <version>3.81.1-01</version>
         <scope>import</scope>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus.api.rest</groupId>
         <artifactId>nexus-api-rest-common</artifactId>
-        <version>3.81.1-SNAPSHOT</version>
+        <version>3.81.1-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus.api.rest</groupId>
         <artifactId>nexus-api-rest-selfhosted</artifactId>
-        <version>3.81.1-SNAPSHOT</version>
+        <version>3.81.1-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus.api.extdirect</groupId>
         <artifactId>nexus-api-extdirect-common</artifactId>
-        <version>3.81.1-SNAPSHOT</version>
+        <version>3.81.1-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus.api.extdirect</groupId>
         <artifactId>nexus-api-extdirect-selfhosted</artifactId>
-        <version>3.81.1-SNAPSHOT</version>
+        <version>3.81.1-01</version>
       </dependency>
 
     </dependencies>
