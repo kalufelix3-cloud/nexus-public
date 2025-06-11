@@ -181,6 +181,7 @@ public class KeyStoreManagerConfigurationSupport
         ", signatureAlgorithm='" + signatureAlgorithm + '\'' +
         ", keyManagerAlgorithm='" + keyManagerAlgorithm + '\'' +
         ", trustManagerAlgorithm='" + trustManagerAlgorithm + '\'' +
+        ", fipsEnabled=" + fipsEnabled +
         '}';
   }
 }

@@ -17,6 +17,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.ssl.KeyStoreManagerConfiguration;
 import org.sonatype.nexus.ssl.KeyStoreManagerConfigurationSupport;
 
@@ -57,7 +58,8 @@ public class KeyStoreManagerConfigurationImpl
       @Named(CPREFIX + ".certificateValidity:-36500d}") final Time certificateValidity,
       @Named(CPREFIX + ".signatureAlgorithm:-SHA1WITHRSA}") final String signatureAlgorithm,
       @Named(CPREFIX + ".keyManagerAlgorithm:-DEFAULT}") final String keyManagerAlgorithm,
-      @Named(CPREFIX + ".trustManagerAlgorithm:-DEFAULT}") final String trustManagerAlgorithm)
+      @Named(CPREFIX + ".trustManagerAlgorithm:-DEFAULT}") final String trustManagerAlgorithm,
+      @Named(FeatureFlags.NEXUS_SECURITY_FIPS_ENABLED) final boolean isFipsEnabled)
   {
     setPrivateKeyStorePassword(PKSP);
     setTrustedKeyStorePassword(TKSP);
@@ -69,6 +71,7 @@ public class KeyStoreManagerConfigurationImpl
     setSignatureAlgorithm(signatureAlgorithm);
     setKeyManagerAlgorithm(keyManagerAlgorithm);
     setTrustManagerAlgorithm(trustManagerAlgorithm);
+    setFipsEnabled(isFipsEnabled);
   }
 
   @VisibleForTesting
