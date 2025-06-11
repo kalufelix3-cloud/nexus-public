@@ -1447,7 +1447,7 @@
       </activation>
       <properties>
         <!-- override yarn build to generate new lockfile -->
-        <npm.install>install --refresh-lockfile</npm.install>
+        <npm.install>install --mode update-lockfile</npm.install>
       </properties>
     </profile>
 
