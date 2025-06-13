@@ -18,6 +18,7 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Set;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.inject.Inject;
@@ -25,12 +26,15 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.crypto.CryptoHelper;
+import org.sonatype.nexus.security.authc.AuthenticationFailureReason;
+import org.sonatype.nexus.security.authc.NexusAuthenticationException;
 
 import org.apache.shiro.authc.credential.DefaultPasswordService;
 import org.apache.shiro.authc.credential.HashingPasswordService;
 import org.apache.shiro.authc.credential.PasswordService;
 import org.apache.shiro.crypto.hash.DefaultHashService;
 import org.apache.shiro.crypto.hash.Hash;
+import org.bouncycastle.crypto.fips.FipsUnapprovedOperationError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,10 +44,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Default {@link PasswordService}.
  *
  * A PasswordService that provides a default password policy.
- * 
+ *
  * The intent of the password service is to encapsulate all password handling
  * details, such as password comparisons, hashing algorithm, hash iterations, salting policy, etc.
- * 
+ *
  * This class is just a wrapper around DefaultPasswordService to apply the default password policy,
  * and provide backward compatibility with legacy SHA1 and MD5 based passwords.
  */
@@ -127,7 +131,13 @@ public class DefaultSecurityPasswordService
     }
     catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
       log.error("Failed to encrypt password due to algorithm issue", e);
-      return null;
+      throw new NexusAuthenticationException("Password is not strong enough",
+          Set.of(AuthenticationFailureReason.UNKNOWN));
+    }
+    catch (FipsUnapprovedOperationError e) {
+      log.error("Failed to encrypt password", e);
+      throw new NexusAuthenticationException("Password is not strong enough",
+          Set.of(AuthenticationFailureReason.INCORRECT_CREDENTIALS));
     }
     finally {
       spec.clearPassword();
