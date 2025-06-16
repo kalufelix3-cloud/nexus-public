@@ -194,7 +194,10 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
       log.debug("Undelete invoked with copied attributes. Retrying with original location: {}",
           originalLocation.get());
       BlobId originalBlobId = createBlobIdForTimePath(blobId, originalLocation.get());
-      return undelete(inUseChecker, originalBlobId, getBlobAttributes(originalBlobId), isDryRun);
+      // Prevent self-referential recursion by ensuring the originalBlobId differs from the current blobId.
+      if (!blobId.equals(originalBlobId)) {
+        return undelete(inUseChecker, originalBlobId, getBlobAttributes(originalBlobId), isDryRun);
+      }
     }
 
     if (attributes.isDeleted() && inUseChecker != null && inUseChecker.test(this, blobId, blobName.get())) {
