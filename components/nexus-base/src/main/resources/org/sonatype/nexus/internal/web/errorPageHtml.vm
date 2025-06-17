@@ -34,27 +34,20 @@
 ## END favicon links
 
   <link rel="stylesheet" type="text/css" href="$relativePath/static/css/nexus-content.css?$urlSuffix"/>
+  <link rel="stylesheet" type="text/css" href="$relativePath/static/css/error-styles.css?$urlSuffix"/>
 </head>
 <body>
 <div class="nexus-header">
   <a href="$relativePath">
     <div class="product-logo">
-      <img src="$relativePath/static/rapture/resources/nxrm-reverse-icon.png?$urlSuffix" alt="Product logo"/>
-    </div>
-    <div class="product-id">
-      <div class="product-id__line-1">
-        <span class="product-name">Sonatype Nexus Repository</span>
-      </div>
-      <div class="product-id__line-2">
-        <span class="product-spec">$nexusBrandedEditionAndVersion</span>
-      </div>
+      <img src="$relativePath/static/rapture/resources/sonatype-repository-logo-nav.png?$urlSuffix" alt="Product logo"/>
     </div>
   </a>
 </div>
 
 <div class="nexus-body">
   <div class="content-header">
-    <img src="$relativePath/static/rapture/resources/icons/x32/exclamation.png?$urlSuffix" alt="Exclamation point" aria-role="presentation"/>
+    <img src="$relativePath/static/rapture/resources/404-error-image.svg?$urlSuffix" alt="404 Error illustration" aria-role="presentation"/>
     <span class="title">Error $errorCode</span>
     <span class="description">$errorName</span>
   </div>
