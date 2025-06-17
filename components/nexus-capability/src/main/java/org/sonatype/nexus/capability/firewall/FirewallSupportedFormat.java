@@ -31,7 +31,8 @@ public enum FirewallSupportedFormat
   MAVEN2("maven2"),
   COMPOSER("composer"),
   COCOAPODS("cocoapods"),
-  HUGGINGFACE("huggingface");
+  HUGGINGFACE("huggingface"),
+  DOCKER("docker");
 
   private final String value;
 
