@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.deletetemp;
+package org.sonatype.nexus.self.hosted.blobstore.deletetemp;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -21,8 +21,8 @@ import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.blobstore.deletetemp.DeleteBlobstoreTempFilesTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
-import static org.sonatype.nexus.blobstore.deletetemp.DeleteBlobstoreTempFilesTaskDescriptor.DAYS_OLDER_THAN;
+import static org.sonatype.nexus.self.hosted.blobstore.deletetemp.DeleteBlobstoreTempFilesTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
+import static org.sonatype.nexus.self.hosted.blobstore.deletetemp.DeleteBlobstoreTempFilesTaskDescriptor.DAYS_OLDER_THAN;
 
 @Named
 public class DeleteBlobstoreTempFilesTask
@@ -32,8 +32,7 @@ public class DeleteBlobstoreTempFilesTask
   private final BlobStoreManager blobStoreManager;
 
   @Inject
-  public DeleteBlobstoreTempFilesTask(final BlobStoreManager blobStoreManager)
-  {
+  public DeleteBlobstoreTempFilesTask(final BlobStoreManager blobStoreManager) {
     this.blobStoreManager = checkNotNull(blobStoreManager);
   }
 
@@ -59,5 +58,7 @@ public class DeleteBlobstoreTempFilesTask
     return getConfiguration().getString(BLOB_STORE_NAME_FIELD_ID);
   }
 
-  private String getDaysOlderThan() { return getConfiguration().getString(DAYS_OLDER_THAN); }
+  private String getDaysOlderThan() {
+    return getConfiguration().getString(DAYS_OLDER_THAN);
+  }
 }

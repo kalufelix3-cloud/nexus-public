@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.deletetemp;
+package org.sonatype.nexus.self.hosted.blobstore.deletetemp;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -47,11 +47,9 @@ public class DeleteBlobstoreTempFilesTaskDescriptor
             BLOB_STORE_NAME_FIELD_ID,
             "Blob store",
             "Select the blob store to delete temporary files",
-            MANDATORY
-        ).withStoreApi("coreui_Blobstore.read").withIdMapping("name"),
+            MANDATORY).withStoreApi("coreui_Blobstore.read").withIdMapping("name"),
         new NumberTextFormField(DAYS_OLDER_THAN,
             "Delete Files Older Than X days",
-            "Delete files that are older than X days", OPTIONAL).withMinimumValue(0)
-    );
+            "Delete files that are older than X days", OPTIONAL).withMinimumValue(0));
   }
 }
