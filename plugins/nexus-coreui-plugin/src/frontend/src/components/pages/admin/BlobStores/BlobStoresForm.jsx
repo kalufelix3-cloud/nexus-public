@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, {useCallback, useEffect} from 'react';
+import React, {useCallback} from 'react';
 import {useMachine} from '@xstate/react';
 import {path} from 'ramda';
 import {faTrash} from "@fortawesome/free-solid-svg-icons";
@@ -44,27 +44,25 @@ import CustomBlobStoreSettings from './CustomBlobStoreSettings';
 import BlobStoreWarning from './BlobStoreWarning';
 import BlobStoresConvertModal from './BlobStoresConvertModal';
 import {useCurrentStateAndParams, useRouter} from "@uirouter/react";
-import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
 
 const {BLOB_STORES: {FORM}} = UIStrings;
 
-const ADMIN = ROUTE_NAMES.ADMIN;
-
-export default function BlobStoresForm() {
+// ui-router aware container separates ui-router from the BlobStoresForm component,
+// so that we can test the BlobStoresForm component in isolation (and reuse current tests)
+export function BlobStoresFormRouterAwareContainer() {
   const router = useRouter();
-  const {state: routerState, params} = useCurrentStateAndParams();
-  const onDone = useCallback(() => router.stateService.go(ADMIN.REPOSITORY.BLOBSTORES.LIST));
-  const pristineData = params.type && params.name ? {
-    type: decodeURIComponent(params.type),
-    name: decodeURIComponent(params.name)
-  } : {};
+  const {params} = useCurrentStateAndParams();
+  const onDone = useCallback(() => router.stateService.go('admin.repository.blobstores.list'));
+  const itemId = params?.itemId;
+  return <BlobStoresForm itemId={itemId} onDone={onDone}/>;
+}
 
-  useEffect(() => {
-    // we should not render edit form if type or name are not provided
-    if (routerState.name === ADMIN.REPOSITORY.BLOBSTORES.EDIT && (!params.type || !params.name)) {
-      router.stateService.go(ROUTE_NAMES.MISSING_ROUTE);
-    }
-  }, [params.type, params.name, routerState.name]);
+export function BlobStoresForm({itemId, onDone}) {
+  const idParts = itemId?.split('/');
+  const pristineData = idParts?.length ? {
+    type: idParts[0] && decodeURIComponent(idParts[0]),
+    name: idParts[1] && decodeURIComponent(idParts[1])
+  } : {};
 
   const [current, send, service] = useMachine(BlobStoresFormMachine, {
     context: {
@@ -80,7 +78,7 @@ export default function BlobStoresForm() {
   });
 
   const showConvertToGroupModal = current.matches('modalConvertToGroup');
-  const isCreate = routerState.name === ADMIN.REPOSITORY.BLOBSTORES.CREATE;
+  const isCreate = itemId === '';
   const isEdit = !isCreate;
   const {
     blobStoreUsage,
@@ -148,7 +146,7 @@ export default function BlobStoresForm() {
         {...FormUtils.formProps(current, send)}
         submitErrorTitleMessage={getErrorTitleMessage()}
         onCancel={onDone}
-        additionalFooterBtns={isEdit &&
+        additionalFooterBtns={itemId &&
           <NxTooltip title={deleteTooltip}>
             <NxButton variant="tertiary" className={cannotDelete && 'disabled'} onClick={confirmDelete} type="button">
               <NxFontAwesomeIcon icon={faTrash}/>

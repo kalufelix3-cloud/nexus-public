@@ -13,21 +13,18 @@
 import React from 'react';
 import axios from 'axios';
 import {when} from 'jest-when';
-import {screen, waitFor, waitForElementToBeRemoved, within, render} from '@testing-library/react'
+import {screen, waitFor, waitForElementToBeRemoved, within} from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
-import BlobStoresForm from './BlobStoresForm';
+import {BlobStoresForm} from './BlobStoresForm';
 
 import {URLs} from './BlobStoresHelper';
 
 import blobstoreTypes from './testData/mockBlobStoreTypes.json';
 import quotaTypes from './testData/mockQuotaTypes.json';
 import {blobStoreFormSelectors} from './testUtils/blobStoreFormSelectors';
-import { UIRouter, useCurrentStateAndParams } from '@uirouter/react';
-import { getRouter } from '../../../../routerConfig/routerConfig';
-import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
 
 const {
   deleteBlobStoreUrl,
@@ -38,8 +35,6 @@ const {
   blobStoreQuotaTypesUrl,
   blobStoreUsageUrl,
 } = URLs;
-
-const ADMIN = ROUTE_NAMES.ADMIN;
 
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
@@ -55,18 +50,6 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
 
 jest.mock("swagger-ui-react", () => jest.fn());
 jest.mock("swagger-ui-react/swagger-ui.css", () => jest.fn());
-
-const stateServiceGoMock = jest.fn();
-
-jest.mock('@uirouter/react', () => ({
-  ...jest.requireActual('@uirouter/react'),
-    useCurrentStateAndParams: jest.fn(),
-    useRouter: () =>({
-      stateService: {
-        go: stateServiceGoMock,
-      }
-    })
-}));
 
 const selectors = {
   ...TestUtils.selectors,
@@ -93,35 +76,22 @@ const selectors = {
 
 // skipping due to flaky tests
 describe('BlobStoresForm', function() {
+  const onDone = jest.fn();
   const SOFT_QUOTA_1_TERABYTE_IN_MEGABYTES = '1048576'; // 1 Terabyte = 1048576 Megabytes
   const SOFT_QUOTA_1_TERABYTE_IN_BYTES = 1099511627776; // 1 Terabyte = 1048576 Megabytes = 1099511627776 bytes
 
-  function renderEditView(itemId) {
-    const [ type, name ] = itemId.split('/');
-    useCurrentStateAndParams.mockReturnValue({state: { name: ADMIN.REPOSITORY.BLOBSTORES.EDIT }, params: {type, name}});
-    return renderComponent();
-  }
-
-  function renderCreateView() {
-    useCurrentStateAndParams.mockReturnValue({state: { name: ADMIN.REPOSITORY.BLOBSTORES.CREATE }, params: {}});
-    return renderComponent();
-  }
-
-  function renderComponent() {
-    const router = getRouter();
-    return render(<UIRouter router={router}><BlobStoresForm /></UIRouter>);
+  function render(itemId) {
+    return TestUtils.render(<BlobStoresForm itemId={itemId || ''} onDone={onDone}/>,
+        ({getByRole, getByLabelText}) => ({}));
   }
 
   beforeEach(() => {
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
-
-    useCurrentStateAndParams.mockReset();
-    useCurrentStateAndParams.mockReturnValue({state: { name: undefined }, params: {}});
   });
 
   it('renders the type selection for create', async function() {
-    renderCreateView();
+    render();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -137,7 +107,7 @@ describe('BlobStoresForm', function() {
   });
 
   it('renders the form and buttons when the File type is selected', async function() {
-    renderCreateView();
+    render();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -146,7 +116,7 @@ describe('BlobStoresForm', function() {
   });
 
   it('validates the name field', async function() {
-    renderCreateView();
+    render();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -167,7 +137,7 @@ describe('BlobStoresForm', function() {
   });
 
   it('renders the name field and dynamic path field when the File type is selected', async function() {
-    renderCreateView();
+    render();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -181,7 +151,7 @@ describe('BlobStoresForm', function() {
   });
 
   it('renders the soft quota fields when the blobstore type is selected', async function() {
-    renderCreateView();
+    render();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -200,7 +170,7 @@ describe('BlobStoresForm', function() {
   });
 
   it('enables the save button when there are changes', async function() {
-    renderCreateView();
+    render();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -240,7 +210,7 @@ describe('BlobStoresForm', function() {
   });
 
   it('creates a new file blob store', async function() {
-    renderCreateView();
+    render();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -285,7 +255,7 @@ describe('BlobStoresForm', function() {
       }
     });
 
-    renderEditView('file/test');
+    render('file/test');
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -303,7 +273,7 @@ describe('BlobStoresForm', function() {
       }
     });
 
-    renderEditView('file/test');
+    render('file/test');
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -329,7 +299,7 @@ describe('BlobStoresForm', function() {
       }
     });
 
-    renderEditView('group/test');
+    render('group/test');
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -352,7 +322,7 @@ describe('BlobStoresForm', function() {
       }
     });
 
-    renderEditView('group/test');
+    render('group/test');
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -374,7 +344,7 @@ describe('BlobStoresForm', function() {
     });
     when(axios.post).calledWith(convertUrl).mockRejectedValue({message: errorMessage});
 
-    renderEditView('file/a-file%2Fee%3A%23%24%25%40');
+    render('file/a-file%2Fee%3A%23%24%25%40');
     const {convertModal: {modal, title: modalTitle, warning, newName, convertButton, cancel}} = selectors;
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -386,7 +356,7 @@ describe('BlobStoresForm', function() {
     expect(modal()).toBeInTheDocument();
 
     userEvent.click(cancel());
-    expect(stateServiceGoMock).not.toHaveBeenCalled();
+    expect(onDone).not.toBeCalled();
     expect(modal()).not.toBeInTheDocument();
 
     userEvent.click(selectors.queryConvertToGroupButton());
@@ -405,13 +375,13 @@ describe('BlobStoresForm', function() {
 
     userEvent.click(convertButton());
     await waitFor(() => expect(axios.post).toHaveBeenCalledWith(convertUrl));
-    expect(stateServiceGoMock).not.toHaveBeenCalled();
+    expect(onDone).not.toBeCalled();
     expect(selectors.querySaveError(errorMessage)).toBeInTheDocument();
 
     when(axios.post).calledWith(convertUrl).mockResolvedValue({data: {}});
     userEvent.click(convertButton());
 
-    await waitFor(() => expect(stateServiceGoMock).toHaveBeenCalled());
+    await waitFor(() => expect(onDone).toBeCalled());
   });
 
   it('log save error message when blobstore can not be added to group', async function() {
@@ -431,7 +401,7 @@ describe('BlobStoresForm', function() {
       response: {data: [{"id": "*", "message": errorMessage}]}
     });
 
-    renderEditView('group/test');
+    render('group/test');
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -471,12 +441,4 @@ describe('BlobStoresForm', function() {
     expect(blobStoreUsageUrl(invalidName)).toBe(
         '/service/rest/internal/ui/blobstores/usage/%2Ftest%25%24%23%408*%3E%3F');
   });
-
-  it('redirects to 404 when blob store type is not found', async function() {
-    useCurrentStateAndParams.mockReturnValue({state: { name: ADMIN.REPOSITORY.BLOBSTORES.EDIT }, params: {itemId: ''}});
-
-    renderComponent();
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
-    expect(stateServiceGoMock).toHaveBeenCalledWith(ROUTE_NAMES.MISSING_ROUTE);
-  }); 
 });

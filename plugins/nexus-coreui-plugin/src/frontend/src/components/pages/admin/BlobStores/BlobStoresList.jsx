@@ -14,10 +14,8 @@ import React from 'react';
 import {useMachine} from '@xstate/react';
 
 import {
-  ExtJS,
   HumanReadableUtils,
-  ListMachineUtils,
-  Permissions
+  ListMachineUtils
 } from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
@@ -49,23 +47,17 @@ import {HelpTile} from '../../../widgets';
 import BlobStoresListMachine from './BlobStoresListMachine';
 import UIStrings from '../../../../constants/UIStrings';
 import {useRouter} from "@uirouter/react";
-import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
 
 const {BLOB_STORES} = UIStrings;
 const {COLUMNS} = BLOB_STORES.LIST;
 
-const ADMIN = ROUTE_NAMES.ADMIN;
-
 export default function BlobStoresList() {
   const router = useRouter();
-  const onEdit = (type, name) => router.stateService.go(ADMIN.REPOSITORY.BLOBSTORES.EDIT, {type, name});
-  const onCreate = () => router.stateService.go(ADMIN.REPOSITORY.BLOBSTORES.CREATE);
+  const onEdit = (itemId) => router.stateService.go('admin.repository.blobstores.details', {itemId});
+  const onCreate = () => router.stateService.go('admin.repository.blobstores.details', {itemId: null});
   const [current, send] = useMachine(BlobStoresListMachine, {devTools: true});
   const isLoading = current.matches('loading');
   const {data, error, filter: filterText} = current.context;
-  const hasUser = ExtJS.useUser() ?? false;
-  const canEdit = ExtJS.usePermission(() => ExtJS.checkPermission(Permissions.BLOB_STORES.UPDATE), [hasUser]);
-  const canCreate = ExtJS.usePermission(() => ExtJS.checkPermission(Permissions.BLOB_STORES.CREATE), [hasUser]);
 
   const nameSortDir = ListMachineUtils.getSortDirection('name', current.context);
   const pathSortDir = ListMachineUtils.getSortDirection('path', current.context);
@@ -88,9 +80,7 @@ export default function BlobStoresList() {
     <PageHeader>
       <PageTitle icon={faServer} {...BLOB_STORES.MENU} />
       <PageActions>
-        {canCreate &&
-          <NxButton variant="primary" onClick={onCreate}>{BLOB_STORES.LIST.CREATE_BUTTON}</NxButton>
-        }
+        <NxButton variant="primary" onClick={onCreate}>{BLOB_STORES.LIST.CREATE_BUTTON}</NxButton>
       </PageActions>
     </PageHeader>
     <ContentBody className="nxrm-blob-stores-list">
@@ -123,7 +113,7 @@ export default function BlobStoresList() {
           <NxTableBody isLoading={isLoading} error={error} emptyMessage={BLOB_STORES.LIST.EMPTY_LIST}>
             {data.map(
                 ({name, path, typeId, typeName, available, unavailable, blobCount, totalSizeInBytes, availableSpaceInBytes, unlimited}) => (
-                    <NxTableRow key={name} onClick={canEdit ? () => onEdit(`${encodeURIComponent(typeId)}`, `${encodeURIComponent(name)}`) : undefined} isClickable={canEdit}>
+                    <NxTableRow key={name} onClick={() => onEdit(`${encodeURIComponent(typeId)}/${encodeURIComponent(name)}`)} isClickable>
                       <NxTableCell>{name}</NxTableCell>
                       <NxTableCell className="blob-store-path">{path}</NxTableCell>
                       <NxTableCell>{typeName}</NxTableCell>
@@ -142,9 +132,7 @@ export default function BlobStoresList() {
                           HumanReadableUtils.bytesToString(availableSpaceInBytes)
                         }
                       </NxTableCell>
-                      {canEdit &&
-                        <NxTableCell chevron/>
-                      }
+                      <NxTableCell chevron/>
                     </NxTableRow>
                 ))}
           </NxTableBody>
