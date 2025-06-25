@@ -22,14 +22,17 @@
 Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
   extend: 'Ext.form.FieldContainer',
   alias: 'widget.nx-coreui-repository-docker-connector-facet',
-  requires: ['NX.I18n', 'NX.State'],
+  requires: [
+    'NX.I18n',
+    'NX.State'
+  ],
 
   /**
    * @override
    */
-  initComponent: function () {
+  initComponent: function() {
     var me = this,
-      subdomainVisibility = NX.State.getEdition() === 'PRO';
+        subdomainVisibility = (NX.State.getEdition() === 'PRO');
 
     me.items = [
       {
@@ -56,35 +59,35 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
               }
             ]
           },
-          {
-            xtype: 'checkbox',
-            name: 'attributes.docker.pathEnabled',
-            fieldLabel: NX.I18n.get('Repository_Facet_Docker_PathEnabled_FieldLabel'),
-            helpText: NX.I18n.get('Repository_Facet_Docker_PathEnabledHelpText'),
-            value: false
-          },
-          subdomainVisibility
-            ? {
-                xtype: 'fieldcontainer',
-                fieldLabel: NX.I18n.get('Repository_Facet_Docker_Subdomain_FieldLabel'),
-                helpText: NX.I18n.get('Repository_Facet_Docker_Subdomain_HelpText'),
-                layout: 'hbox',
-                items: [me.createCheckbox('subdomain'), me.createSubdomain('subdomain')]
-              }
-            : undefined,
+          subdomainVisibility ? {
+            xtype: 'fieldcontainer',
+            fieldLabel: NX.I18n.get('Repository_Facet_Docker_Subdomain_FieldLabel'),
+            helpText: NX.I18n.get('Repository_Facet_Docker_Subdomain_HelpText'),
+            layout: 'hbox',
+            items: [
+              me.createCheckbox('subdomain'),
+              me.createSubdomain('subdomain')
+            ]
+          } : undefined,
           {
             xtype: 'fieldcontainer',
             fieldLabel: NX.I18n.get('Repository_Facet_DockerConnectorFacet_HttpPort_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_DockerConnectorFacet_HttpPort_HelpText'),
             layout: 'hbox',
-            items: [me.createCheckbox('http'), me.createPort('http')]
+            items: [
+              me.createCheckbox('http'),
+              me.createPort('http')
+            ]
           },
           {
             xtype: 'fieldcontainer',
             fieldLabel: NX.I18n.get('Repository_Facet_DockerConnectorFacet_HttpsPort_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_DockerConnectorFacet_HttpsPort_HelpText'),
             layout: 'hbox',
-            items: [me.createCheckbox('https'), me.createPort('https')]
+            items: [
+              me.createCheckbox('https'),
+              me.createPort('https')
+            ]
           },
           {
             xtype: 'checkbox',
@@ -98,21 +101,22 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
     ];
 
     Ext.override(me.up('form'), {
-      doGetValues: function (values) {
+      doGetValues: function(values) {
         var processed = { attributes: {} };
 
-        Ext.Object.each(values, function (key, value) {
+        Ext.Object.each(values, function(key, value) {
           if (key === 'attributes.docker.forceBasicAuth') {
             value = !value;
           }
 
           var segments = key.split('.'),
-            parent = processed;
+              parent = processed;
 
-          Ext.each(segments, function (segment, pos) {
+          Ext.each(segments, function(segment, pos) {
             if (pos === segments.length - 1) {
               parent[segment] = value;
-            } else {
+            }
+            else {
               if (!parent[segment]) {
                 parent[segment] = {};
               }
@@ -124,9 +128,9 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
         return processed;
       },
 
-      doSetValues: function (values) {
-        var process = function (child, prefix) {
-          Ext.Object.each(child, function (key, value) {
+      doSetValues: function(values) {
+        var process = function(child, prefix) {
+          Ext.Object.each(child, function(key, value) {
             var newPrefix = (prefix ? prefix + '.' : '') + key;
 
             if (newPrefix === 'attributes.docker.forceBasicAuth') {
@@ -135,7 +139,8 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
 
             if (Ext.isObject(value)) {
               process(value, newPrefix);
-            } else {
+            }
+            else {
               values[newPrefix] = value;
             }
           });
@@ -148,7 +153,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
     me.callParent();
   },
 
-  createCheckbox: function (type) {
+  createCheckbox: function(type) {
     return {
       xtype: 'checkbox',
       itemId: type + 'Enabled',
@@ -157,12 +162,13 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
         /**
          * Enable/Disable the port.
          */
-        change: function () {
+        change: function() {
           var form = this.up('form'),
-            port = form.down('#' + type + 'Port');
+              port = form.down('#' + type + 'Port');
           if (this.getValue()) {
             port.enable();
-          } else {
+          }
+          else {
             port.disable();
           }
           form.isValid();
@@ -171,7 +177,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
     };
   },
 
-  createPort: function (type) {
+  createPort: function(type) {
     return {
       xtype: 'numberfield',
       name: 'attributes.docker.' + type + 'Port',
@@ -190,7 +196,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
         /**
          * Check the checkbox if port has value.
          */
-        change: function () {
+        change: function() {
           var checkbox = this.up('form').down('#' + type + 'Enabled');
           if (this.getValue() && !checkbox.getValue()) {
             checkbox.setValue(true);
@@ -201,7 +207,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
     };
   },
 
-  createSubdomain: function (type) {
+  createSubdomain: function(type) {
     return {
       xtype: 'textfield',
       name: 'attributes.docker.subdomain',
@@ -217,14 +223,14 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
         /**
          * Check the checkbox if subdomain has value.
          */
-        change: function () {
+        change: function() {
           var checkbox = this.up('form').down('#' + type + 'Enabled');
           if (this.getValue() && !checkbox.getValue()) {
             checkbox.setValue(true);
             checkbox.resetOriginalValue();
           }
         },
-        enable: function () {
+        enable: function() {
           if (this.getValue() === '') {
             const repositoryName = this.up('form').down('#name').value;
             this.setValue(repositoryName);
@@ -233,4 +239,5 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
       }
     };
   }
+
 });

@@ -396,9 +396,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
         '<a href="https://links.sonatype.com/products/nexus/docker-ssl-connector/docs" target="_blank" rel="noopener">documentation</a>' +
         ' for which connector is appropriate for your use case. For information on scaling the repositories' +
         ' see our <a href="https://links.sonatype.com/products/nexus/docker-scaling-repositories/docs" target="_blank" rel="noopener">scaling documentation</a>.</em>',
-    Repository_Facet_Docker_PathEnabled_FieldLabel: 'Enable path based routing',
-    Repository_Facet_Docker_PathEnabledHelpText:
-        'Enable this to provide the repository name in the URL path. </br>(e.g docker pull company.com/<b>repo-name</b>/image:tag)',
     Repository_Facet_Docker_Subdomain_FieldLabel: 'Allow Subdomain Routing',
     Repository_Facet_Docker_Subdomain_HelpText: 'Use the following subdomain to make push and pull requests for this repository.',
     Repository_Facet_DockerConnectorFacet_HttpPort_FieldLabel: 'HTTP',
