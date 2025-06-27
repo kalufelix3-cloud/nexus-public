@@ -43,10 +43,10 @@ import Upgrade from '../../components/pages/admin/Upgrade/Upgrade';
 import NodesExt from '../../components/pages/admin/Nodes/NodesExt';
 import TasksExtJSWrapper from '../../components/pages/admin/Tasks/TasksExtJSWrapper';
 import Capabilities from '../../components/pages/admin/Capabilities/Capabilities';
-import BlobStoresList from '../../components/pages/admin/BlobStores/BlobStoresList';
-import { BlobStoresFormRouterAwareContainer } from '../../components/pages/admin/BlobStores/BlobStoresForm';
-import { UIView } from '@uirouter/react';
-import LdapServersExt from '../../components/pages/admin/LdapServers/LdapServersExt';
+import BlobStoresList from "../../components/pages/admin/BlobStores/BlobStoresList";
+import BlobStoresForm from "../../components/pages/admin/BlobStores/BlobStoresForm";
+import { UIView } from "@uirouter/react";
+import LdapServersExt from "../../components/pages/admin/LdapServers/LdapServersExt";
 import AdminRepositoriesDirectoryPage from '../../components/pages/AdminRepositories/AdminRepositoriesDirectoryPage';
 import AdminSecurityDirectoryPage from '../../components/pages/AdminSecurity/AdminSecurityDirectoryPage';
 import { ROUTE_NAMES } from '../routeNames/routeNames';
@@ -115,11 +115,11 @@ export const adminRoutes = [
 
   {
     name: ADMIN.REPOSITORY.BLOBSTORES.ROOT,
+    url: '/blobstores',
     component: UIView,
     data: {
       visibilityRequirements: {
-        requiresUser: true,
-        ignoreForMenuVisibilityCheck: true,
+        permissions: [Permissions.BLOB_STORES.READ],
       },
       title: ADMIN.REPOSITORY.BLOBSTORES.TITLE,
     },
@@ -129,21 +129,26 @@ export const adminRoutes = [
     name: ADMIN.REPOSITORY.BLOBSTORES.LIST,
     url: '/blobstores',
     component: BlobStoresList,
+  },
+
+  {
+    name: ADMIN.REPOSITORY.BLOBSTORES.CREATE,
+    url: '/blobstores/create',
+    component: BlobStoresForm,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.BLOB_STORES.READ],
-      },
-      title: ADMIN.REPOSITORY.BLOBSTORES.TITLE,
+        permissions: [Permissions.BLOB_STORES.CREATE]
+      }
     },
   },
 
   {
-    name: ADMIN.REPOSITORY.BLOBSTORES.DETAILS,
-    url: '/blobstores/:itemId',
-    component: BlobStoresFormRouterAwareContainer,
+    name: ADMIN.REPOSITORY.BLOBSTORES.EDIT,
+    url: '/blobstores/edit/{type:.+}/{name:.+}',
+    component: BlobStoresForm,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.BLOB_STORES.READ],
+        permissions: [Permissions.BLOB_STORES.UPDATE]
       },
       title: ADMIN.REPOSITORY.BLOBSTORES.TITLE,
     },

@@ -42,7 +42,7 @@ function generatePermissions(permission, options = crudOptions) {
 export default {
   ADMIN: 'nexus:*',
   SSL_TRUSTSTORE: generatePermissions('ssl-truststore'),
-  BLOB_STORES: generatePermissions('blobstores', [READ]),
+  BLOB_STORES: generatePermissions('blobstores'),
   PRIVILEGES: generatePermissions('privileges', [READ, CREATE]),
   SELECTORS: generatePermissions('selectors', [READ, CREATE]),
   SETTINGS: generatePermissions('settings', [READ, UPDATE]),

@@ -31,7 +31,8 @@ export default {
       ROOT: 'admin.repository.blobstores',
       TITLE: 'Blob Stores',
       LIST: 'admin.repository.blobstores.list',
-      DETAILS: 'admin.repository.blobstores.details',
+      CREATE: 'admin.repository.blobstores.create',
+      EDIT: 'admin.repository.blobstores.edit'
     },
     DATASTORE: {
       ROOT: 'admin.repository.datastore',

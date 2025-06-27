@@ -17,7 +17,7 @@ import {render, screen, waitForElementToBeRemoved} from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
-import {BlobStoresForm} from '../BlobStoresForm';
+import BlobStoresForm from '../BlobStoresForm';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import blobstoreTypes from '../testData/mockBlobStoreTypes.json';
@@ -28,6 +28,8 @@ import GoogleBlobStoreActions from './GoogleBlobStoreActions';
 import {blobStoreFormSelectors} from '../testUtils/blobStoreFormSelectors';
 import {enableSoftQueryReadOnlyAndChangeLimit} from '../testUtils/enableSoftQueryReadOnlyAndChangeLimit';
 import UIStrings from '../../../../../constants/UIStrings';
+import { useCurrentStateAndParams } from '@uirouter/react';
+import { ROUTE_NAMES } from '../../../../../routerConfig/routeNames/routeNames';
 
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
@@ -40,6 +42,20 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     isProEdition: jest.fn()
   }
 }));
+
+const stateServiceGoMock = jest.fn();
+
+jest.mock('@uirouter/react', () => ({
+  ...jest.requireActual('@uirouter/react'),
+    useCurrentStateAndParams: jest.fn(),
+    useRouter: () =>({
+      stateService: {
+        go: stateServiceGoMock,
+      }
+    })
+}));
+
+const ADMIN = ROUTE_NAMES.ADMIN;
 
 const selectors = {
   ...TestUtils.selectors,
@@ -58,8 +74,6 @@ const selectors = {
 };
 
 describe('BlobStoresForm-GCP', () => {
-  const onDone = jest.fn();
-
   window.BlobStoreTypes = {
     google: {
       Settings: GoogleBlobStoreSettings,
@@ -71,10 +85,22 @@ describe('BlobStoresForm-GCP', () => {
     ExtJS.isProEdition.mockReturnValue(false);
     when(axios.get).calledWith(URLs.blobStoreTypesUrl).mockResolvedValue(blobstoreTypes);
     when(axios.get).calledWith(URLs.blobStoreQuotaTypesUrl).mockResolvedValue(quotaTypes);
+
+    useCurrentStateAndParams.mockReset();
+    useCurrentStateAndParams.mockReturnValue({state: { name: undefined }, params: {}});
   });
 
+  function renderCreateView() {
+    useCurrentStateAndParams.mockReturnValue({state: { name: ADMIN.REPOSITORY.BLOBSTORES.CREATE }, params: {}});
+    return renderComponent();
+  }
+
+  function renderComponent() {
+    return render(<BlobStoresForm />);
+  }
+
   it('creates a new GCP blob store. region is a read-only', async function() {
-    render(<BlobStoresForm itemId="" onDone={onDone}/>);
+    renderCreateView();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -86,7 +112,7 @@ describe('BlobStoresForm-GCP', () => {
   });
 
   it('creates a new GCP blob store with default application authentication', async function() {
-    render(<BlobStoresForm itemId="" onDone={onDone}/>);
+    renderCreateView();
 
     const data = {
       name: 'gcp-blob-store',
@@ -128,7 +154,7 @@ describe('BlobStoresForm-GCP', () => {
   });
 
   it('creates a new GCP blob store with JSON credentials authentication', async function() {
-    render(<BlobStoresForm itemId="" onDone={onDone}/>);
+    renderCreateView();
 
     const data = {
       name: 'gcp-blob-store',
@@ -174,7 +200,7 @@ describe('BlobStoresForm-GCP', () => {
   });
 
   it('creates a new GCP blob store with default encryption', async function() {
-    render(<BlobStoresForm itemId="" onDone={onDone}/>);
+    renderCreateView();
 
     const data = {
       name: 'gcp-blob-store',
@@ -216,7 +242,7 @@ describe('BlobStoresForm-GCP', () => {
   });
 
   it('creates a new GCP blob store with KMS encryption', async function() {
-    render(<BlobStoresForm itemId="" onDone={onDone}/>);
+    renderCreateView();
 
     const data = {
       name: 'gcp-blob-store',

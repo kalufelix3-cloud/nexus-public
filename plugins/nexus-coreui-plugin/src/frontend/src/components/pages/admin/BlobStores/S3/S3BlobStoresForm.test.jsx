@@ -17,7 +17,7 @@ import {render, screen, waitForElementToBeRemoved, within} from '@testing-librar
 import userEvent from '@testing-library/user-event';
 
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
-import {BlobStoresForm} from '../BlobStoresForm';
+import BlobStoresForm from '../BlobStoresForm';
 import UIStrings from '../../../../../constants/UIStrings';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
@@ -28,6 +28,8 @@ import S3BlobStoreSettings from './S3BlobStoreSettings';
 import S3BlobStoreWarning from './S3BlobStoreWarning';
 import S3BlobStoreActions from './S3BlobStoreActions';
 import {blobStoreFormSelectors} from '../testUtils/blobStoreFormSelectors';
+import { ROUTE_NAMES } from '../../../../../routerConfig/routeNames/routeNames';
+import { useCurrentStateAndParams } from '@uirouter/react';
 
 const S3_STRINGS = UIStrings.S3_BLOBSTORE_CONFIGURATION;
 const MAX_REPLICATION_BUCKETS = 5;
@@ -43,6 +45,20 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     isProEdition: jest.fn()
   }
 }));
+
+const stateServiceGoMock = jest.fn();
+
+jest.mock('@uirouter/react', () => ({
+  ...jest.requireActual('@uirouter/react'),
+    useCurrentStateAndParams: jest.fn(),
+    useRouter: () =>({
+      stateService: {
+        go: stateServiceGoMock,
+      }
+    })
+}));
+
+const ADMIN = ROUTE_NAMES.ADMIN;
 
 const selectors = {
   ...TestUtils.selectors,
@@ -74,8 +90,6 @@ const selectors = {
 };
 
 describe('BlobStoresForm-S3', () => {
-  const onDone = jest.fn();
-
   window.BlobStoreTypes = {
     s3: {
       Settings: S3BlobStoreSettings,
@@ -89,10 +103,28 @@ describe('BlobStoresForm-S3', () => {
     when(ExtJS.state().getValue).calledWith('S3FailoverEnabled', expect.any(Boolean)).mockReturnValue(false);
     when(axios.get).calledWith(URLs.blobStoreTypesUrl).mockResolvedValue(blobstoreTypes);
     when(axios.get).calledWith(URLs.blobStoreQuotaTypesUrl).mockResolvedValue(quotaTypes);
+
+    useCurrentStateAndParams.mockReset();
+    useCurrentStateAndParams.mockReturnValue({state: { name: undefined }, params: {}});
   });
 
+  function renderEditView(itemId) {
+    const [ type, name ] = itemId.split('/');
+    useCurrentStateAndParams.mockReturnValue({state: { name: ADMIN.REPOSITORY.BLOBSTORES.EDIT }, params: {type, name}});
+    return renderComponent();
+  }
+
+  function renderCreateView() {
+    useCurrentStateAndParams.mockReturnValue({state: { name: ADMIN.REPOSITORY.BLOBSTORES.CREATE }, params: {}});
+    return renderComponent();
+  }
+
+  function renderComponent() {
+    return render(<BlobStoresForm />);
+  }
+
   it('renders the form and buttons when the S3 type is selected', async function() {
-    render(<BlobStoresForm itemId="" onDone={onDone}/>);
+    renderCreateView();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -101,7 +133,7 @@ describe('BlobStoresForm-S3', () => {
   });
 
   it('renders S3 specific form fields', async function() {
-    render(<BlobStoresForm itemId="" onDone={onDone}/>);
+    renderCreateView();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -123,7 +155,7 @@ describe('BlobStoresForm-S3', () => {
 
   describe('create s3 blob store', () => {
     it('handles form field validation and changes correctly', async () => {
-      render(<BlobStoresForm itemId="" onDone={onDone}/>);
+      renderCreateView();
 
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -176,7 +208,7 @@ describe('BlobStoresForm-S3', () => {
 
     it('allows manipulation of replication buckets', async () => {
       when(ExtJS.state().getValue).calledWith('S3FailoverEnabled', expect.any(Boolean)).mockReturnValue(true);
-      render(<BlobStoresForm itemId="" onDone={onDone}/>);
+      renderCreateView();
 
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -205,7 +237,7 @@ describe('BlobStoresForm-S3', () => {
     });
 
     it ('creates a new S3 blob store failover buckets not visible', async () => {
-      render(<BlobStoresForm itemId="" onDone={onDone}/>);
+      renderCreateView();
 
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -219,7 +251,7 @@ describe('BlobStoresForm-S3', () => {
     it('creates a new S3 blob store with the expected request', async () => {
       when(ExtJS.state().getValue).calledWith('S3FailoverEnabled', expect.any(Boolean)).mockReturnValue(true);
 
-      render(<BlobStoresForm itemId="" onDone={onDone}/>);
+      renderCreateView();
 
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -272,7 +304,7 @@ describe('BlobStoresForm-S3', () => {
     it('PRO - creates a new S3 blob store', async () => {
       ExtJS.isProEdition.mockReturnValue(true);
 
-      render(<BlobStoresForm itemId="" onDone={onDone}/>);
+      renderCreateView();
 
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -301,7 +333,7 @@ describe('BlobStoresForm-S3', () => {
       when(ExtJS.state().getValue).calledWith('S3FailoverEnabled', expect.any(Boolean)).mockReturnValue(true);
       const blobStoreConfiguration = mockBlobStoreForEdit();
 
-      render(<BlobStoresForm itemId="s3/test" onDone={onDone}/>);
+      renderEditView('s3/test');
 
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -351,7 +383,7 @@ describe('BlobStoresForm-S3', () => {
 
       mockBlobStoreForEdit();
 
-      render(<BlobStoresForm itemId="s3/test" onDone={onDone}/>);
+      renderEditView('s3/test');
 
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -364,7 +396,7 @@ describe('BlobStoresForm-S3', () => {
 
       mockBlobStoreForEdit();
 
-      render(<BlobStoresForm itemId="s3/test" onDone={onDone}/>);
+      renderEditView('s3/test');
 
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
 

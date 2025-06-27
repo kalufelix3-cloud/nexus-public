@@ -26,8 +26,9 @@ import AzureBlobStoreSettings from './AzureBlobStoreSettings';
 import AzureBlobStoreActions from './AzureBlobStoreActions';
 import {blobStoreFormSelectors} from '../testUtils/blobStoreFormSelectors';
 import {enableSoftQueryReadOnlyAndChangeLimit} from '../testUtils/enableSoftQueryReadOnlyAndChangeLimit';
-import {BlobStoresForm} from '../BlobStoresForm';
-
+import BlobStoresForm from '../BlobStoresForm';
+import { UIRouter, useCurrentStateAndParams, useRouter } from '@uirouter/react';
+import { ROUTE_NAMES } from '../../../../../routerConfig/routeNames/routeNames';
 
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
@@ -41,6 +42,20 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   }
 }));
 
+const stateServiceGoMock = jest.fn();
+
+jest.mock('@uirouter/react', () => ({
+  ...jest.requireActual('@uirouter/react'),
+    useCurrentStateAndParams: jest.fn(),
+    useRouter: () =>({
+      stateService: {
+        go: stateServiceGoMock,
+      }
+    })
+}));
+
+const ADMIN = ROUTE_NAMES.ADMIN;
+
 const selectors = {
   ...TestUtils.selectors,
   ...TestUtils.formSelectors,
@@ -53,8 +68,6 @@ const selectors = {
 };
 
 describe('BlobStoresForm-Azure', () => {
-  const onDone = jest.fn();
-
   window.BlobStoreTypes = {
     azure: {
       Settings: AzureBlobStoreSettings,
@@ -66,10 +79,15 @@ describe('BlobStoresForm-Azure', () => {
     ExtJS.isProEdition.mockReturnValue(false);
     when(axios.get).calledWith(URLs.blobStoreTypesUrl).mockResolvedValue(blobstoreTypes);
     when(axios.get).calledWith(URLs.blobStoreQuotaTypesUrl).mockResolvedValue(quotaTypes);
+
+    useCurrentStateAndParams.mockReset();
+    useCurrentStateAndParams.mockReturnValue({state: { name: undefined }, params: {}});
   });
 
   it('creates a new Azure blob store', async function() {
-    render(<BlobStoresForm itemId="" onDone={onDone}/>);
+    useCurrentStateAndParams.mockReturnValue({state: { name: ADMIN.REPOSITORY.BLOBSTORES.CREATE }, params: {}});
+
+    render(<BlobStoresForm />);
 
     const name = 'azure-blob-store';
     const accountName = 'azure-account';
