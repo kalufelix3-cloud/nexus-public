@@ -15,12 +15,13 @@ package org.sonatype.nexus.repository.httpbridge.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
 import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.ServletException;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.http.HttpMethods;
@@ -29,6 +30,8 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.Status;
+
+import org.apache.shiro.web.servlet.ShiroHttpServletResponse;
 
 /**
  * Default {@link HttpResponseSender}.
@@ -63,6 +66,15 @@ public class DefaultHttpResponseSender
       }
       else {
         httpResponse.setStatus(status.getCode(), statusMessage);
+        if (httpResponse instanceof ShiroHttpServletResponse) {
+          ServletResponse resp = ((ShiroHttpServletResponse) httpResponse).getResponse();
+          while (resp instanceof HttpServletResponseWrapper) {
+            resp = ((HttpServletResponseWrapper) resp).getResponse();
+          }
+          if (resp instanceof org.eclipse.jetty.ee8.nested.Response) {
+            ((org.eclipse.jetty.ee8.nested.Response) resp).setStatusWithReason(status.getCode(), statusMessage);
+          }
+        }
       }
       if (payload != null) {
         log.trace("Attaching payload: {}", payload);

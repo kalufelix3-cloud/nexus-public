@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
     Sonatype Nexus (TM) Open Source Version
@@ -14,53 +15,66 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.sonatype.nexus.buildsupport</groupId>
-    <artifactId>nexus-buildsupport</artifactId>
+    <groupId>org.sonatype.nexus</groupId>
+    <artifactId>nexus-parent</artifactId>
     <version>3.83.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>nexus-buildsupport-jetty</artifactId>
+  <groupId>org.sonatype.nexus.jetty</groupId>
+  <artifactId>jetty-modifications</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <properties>
-    <eclipse-jetty.version>12.0.17</eclipse-jetty.version>
-  </properties>
+  <modules>
+    <module>jetty-server</module>
+    <module>jetty-security</module>
+    <module>jetty-ee8-nested</module>
+  </modules>
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>javax.servlet</groupId>
-        <artifactId>javax.servlet-api</artifactId>
-        <version>4.0.1</version>
-      </dependency>
 
       <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-bom</artifactId>
-        <version>${eclipse-jetty.version}</version>
-        <scope>import</scope>
+        <groupId>org.sonatype.nexus.buildsupport</groupId>
+        <artifactId>nexus-buildsupport-jetty</artifactId>
         <type>pom</type>
-      </dependency>
-
-      <dependency>
-        <groupId>org.eclipse.jetty.ee8</groupId>
-        <artifactId>jetty-ee8-bom</artifactId>
-        <version>${eclipse-jetty.version}</version>
+        <version>3.83.0-SNAPSHOT</version>
         <scope>import</scope>
-        <type>pom</type>
       </dependency>
 
       <dependency>
-        <groupId>org.eclipse.jetty.toolchain</groupId>
-        <artifactId>jetty-servlet-api</artifactId>
-        <version>4.0.6</version>
+        <groupId>org.sonatype.nexus.jetty</groupId>
+        <artifactId>jetty-ee8-nested</artifactId>
+        <version>3.83.0-SNAPSHOT</version>
       </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.jetty</groupId>
+        <artifactId>jetty-security</artifactId>
+        <version>3.83.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.jetty</groupId>
+        <artifactId>jetty-server</artifactId>
+        <version>3.83.0-SNAPSHOT</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

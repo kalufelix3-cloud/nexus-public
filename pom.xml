@@ -143,6 +143,7 @@
     <module>components</module>
     <module>plugins</module>
     <module>api</module>
+    <module>jetty-modifications</module>
   </modules>
 
   <dependencyManagement>
@@ -835,6 +836,9 @@
 
                   <!-- Exclude developers local scripts folder-->
                   <exclude>myscripts/**</exclude>
+
+                  <!-- Exclude jetty modifications -->
+                  <exclude>jetty-modifications/**</exclude>
                 </excludes>
               </licenseSet>
 

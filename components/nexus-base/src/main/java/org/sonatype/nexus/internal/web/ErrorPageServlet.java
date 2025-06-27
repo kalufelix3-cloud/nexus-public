@@ -21,9 +21,11 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.ServletException;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
 import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.common.template.TemplateHelper;
@@ -33,6 +35,7 @@ import org.sonatype.nexus.servlet.ServletHelper;
 import org.sonatype.nexus.servlet.XFrameOptions;
 
 import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.shiro.web.servlet.ShiroHttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,6 +132,15 @@ public class ErrorPageServlet
     }
     else {
       response.setStatus(errorCode, errorMessage);
+      if (response instanceof ShiroHttpServletResponse) {
+        ServletResponse resp = ((ShiroHttpServletResponse) response).getResponse();
+        while (resp instanceof HttpServletResponseWrapper) {
+          resp = ((HttpServletResponseWrapper) resp).getResponse();
+        }
+        if (resp instanceof org.eclipse.jetty.ee8.nested.Response) {
+          ((org.eclipse.jetty.ee8.nested.Response) resp).setStatusWithReason(errorCode, errorMessage);
+        }
+      }
     }
 
     response.setHeader(X_FRAME_OPTIONS, xFrameOptions.getValueForPath(request.getPathInfo()));

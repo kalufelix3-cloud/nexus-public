@@ -174,7 +174,7 @@ public class ViewServletTest
     String message = "message";
     when(httpServletRequest.getPathInfo()).thenThrow(new BadRequestException(message));
     underTest.service(httpServletRequest, servletResponse);
-    verify(servletResponse).setStatus(SC_BAD_REQUEST, message);
+    verify(servletResponse).sendError(SC_BAD_REQUEST, message);
   }
 
   @Test
