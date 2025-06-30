@@ -297,6 +297,17 @@ public class FeatureFlags
 
   public static final String NEXUS_SECURITY_FIPS_ENABLED_NAMED_VALUE = "${nexus.security.fips.enabled:false}";
 
+  public static final String NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED = "${nexus.security.password.algorithm:-shiro1}";
+
+  public static final String NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED_VALUE =
+      "${nexus.security.password.algorithm:shiro1}";
+
+  public static final String CONTAINER_IMAGES_EVAL_ENABLED = "nexus.container.images.eval.enabled";
+
+  public static final String CONTAINER_IMAGES_EVAL_ENABLED_NAMED = "${nexus.container.images.eval.enabled:-false}";
+
+  public static final String CONTAINER_IMAGES_EVAL_ENABLED_NAMED_VALUE = "${nexus.container.images.eval.enabled:false}";
+
   public static final String NEXUS_SECURITY_AUTH0_USER_MANAGEMENT_ENABLED =
       "nexus.security.auth0.userManagement.enabled";
 }

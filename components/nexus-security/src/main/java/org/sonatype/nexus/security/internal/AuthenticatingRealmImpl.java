@@ -18,6 +18,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.security.NexusSimpleAuthenticationInfo;
 import org.sonatype.nexus.security.RealmCaseMapping;
 import org.sonatype.nexus.security.config.CUser;
@@ -68,14 +69,18 @@ public class AuthenticatingRealmImpl
 
   private final boolean orient;
 
+  private final String nexusPasswordAlgorithm;
+
   @Inject
   public AuthenticatingRealmImpl(
       final SecurityConfigurationManager configuration,
       final PasswordService passwordService,
-      @Named("${nexus.orient.enabled:-false}") @Value("${nexus.orient.enabled:false}") final boolean orient)
+      @Named("${nexus.orient.enabled:-false}") @Value("${nexus.orient.enabled:false}") final boolean orient,
+      @Named(FeatureFlags.NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED) @Value(FeatureFlags.NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED_VALUE) final String nexusPasswordAlgorithm)
   {
     this.configuration = configuration;
     this.passwordService = passwordService;
+    this.nexusPasswordAlgorithm = nexusPasswordAlgorithm;
 
     PasswordMatcher passwordMatcher = new PasswordMatcher();
     passwordMatcher.setPasswordService(this.passwordService);
@@ -102,9 +107,9 @@ public class AuthenticatingRealmImpl
     }
 
     if (user.isActive()) {
-      // If the user has a legacy (non-FIPS) password hash and valid credentials are provided,
-      // transparently re-hash the password using the FIPS-compliant algorithm.
-      if (!DefaultSecurityPasswordService.isFipsPassword(user.getPassword()) && isValidCredentials(upToken, user)) {
+      // If the user has a password hashed with a different algorithm as configured and valid credentials are provided,
+      // transparently re-hash the password using the configured algorithm.
+      if (!isUsingConfiguredAlgorithm(user.getPassword()) && isValidCredentials(upToken, user)) {
         reHashPassword(user, new String(upToken.getPassword()));
       }
 
@@ -117,6 +122,10 @@ public class AuthenticatingRealmImpl
       throw new AccountException(
           "User '" + upToken.getUsername() + "' is in illegal status '" + user.getStatus() + "'.");
     }
+  }
+
+  private boolean isUsingConfiguredAlgorithm(final String password) {
+    return password != null && password.startsWith("$" + this.nexusPasswordAlgorithm);
   }
 
   /**

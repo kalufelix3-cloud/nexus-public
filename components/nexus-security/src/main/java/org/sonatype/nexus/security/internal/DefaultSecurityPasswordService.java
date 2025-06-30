@@ -25,6 +25,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.security.authc.AuthenticationFailureReason;
 import org.sonatype.nexus.security.authc.NexusAuthenticationException;
@@ -37,6 +38,7 @@ import org.apache.shiro.crypto.hash.Hash;
 import org.bouncycastle.crypto.fips.FipsUnapprovedOperationError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -58,6 +60,8 @@ public class DefaultSecurityPasswordService
 {
 
   private static final Logger log = LoggerFactory.getLogger(DefaultSecurityPasswordService.class);
+
+  private static final String SHIRO_PASSWORD_ALGORITHM = "shiro1";
 
   private static final String DEFAULT_HASH_ALGORITHM = "SHA-512";
 
@@ -84,15 +88,19 @@ public class DefaultSecurityPasswordService
    */
   private final PasswordService legacyPasswordService;
 
+  private final String nexusPasswordAlgorithm;
+
   private final CryptoHelper crypto;
 
   @Inject
   public DefaultSecurityPasswordService(
       @Named("legacy") final PasswordService legacyPasswordService,
+      @Named(FeatureFlags.NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED) @Value(FeatureFlags.NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED_VALUE) final String nexusPasswordAlgorithm,
       final CryptoHelper crypto)
   {
     this.passwordService = new DefaultPasswordService();
     this.legacyPasswordService = checkNotNull(legacyPasswordService);
+    this.nexusPasswordAlgorithm = checkNotNull(nexusPasswordAlgorithm);
 
     // Create and set a hash service according to our hashing policies
     DefaultHashService hashService = new DefaultHashService();
@@ -105,6 +113,10 @@ public class DefaultSecurityPasswordService
 
   @Override
   public String encryptPassword(final Object plaintextPassword) {
+    if (nexusPasswordAlgorithm.equals(SHIRO_PASSWORD_ALGORITHM)) {
+      return passwordService.encryptPassword(plaintextPassword);
+    }
+
     // Generate random salt
     byte[] salt = new byte[SALT_LENGTH];
 
@@ -185,7 +197,7 @@ public class DefaultSecurityPasswordService
       return new char[0]; // Return empty array for null input
     }
     else if (plaintext instanceof char[]) {
-      return (char[]) plaintext;
+      return ((char[]) plaintext).clone();
     }
     else if (plaintext instanceof String) {
       return ((String) plaintext).toCharArray();
