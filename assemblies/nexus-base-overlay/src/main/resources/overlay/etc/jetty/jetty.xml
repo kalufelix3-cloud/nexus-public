@@ -17,7 +17,7 @@
   </Arg>
   <Arg><Ref refid="byteBufferPool"/></Arg>
 
-  <New id="httpConfig" class="org.eclipse.jetty.server.HttpConfiguration">
+  <New id="baseHttpConfig" class="org.eclipse.jetty.server.HttpConfiguration">
     <Set name="secureScheme" property="jetty.httpConfig.secureScheme"/>
     <Set name="securePort" property="jetty.httpConfig.securePort"/>
     <Set name="outputBufferSize" property="jetty.httpConfig.outputBufferSize"/>
@@ -56,6 +56,7 @@
         </Arg>
       </Call>
     </Set>
+    <!-- ForwardedRequestCustomizer must always be the first customizer -->
     <Call name="addCustomizer">
       <Arg>
         <New class="org.eclipse.jetty.server.ForwardedRequestCustomizer">

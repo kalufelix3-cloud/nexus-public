@@ -2,6 +2,10 @@
 <!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "https://jetty.org/configure_10_0.dtd">
 <Configure id="Server" class="org.eclipse.jetty.server.Server">
 
+  <New id="httpConfig" class="org.eclipse.jetty.server.HttpConfiguration">
+    <Arg><Ref refid="baseHttpConfig"/></Arg>
+  </New>
+
   <Call name="addConnector">
     <Arg>
       <New id="httpConnector" class="org.eclipse.jetty.server.ServerConnector">
