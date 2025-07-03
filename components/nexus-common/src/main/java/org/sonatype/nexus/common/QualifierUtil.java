@@ -118,9 +118,8 @@ public final class QualifierUtil
     }
     return listOfDeps
         .stream()
-        .filter(dep -> value(dep).isPresent())
         .collect(Collectors.toMap(
-            dep -> value(dep).get(),
+            dep -> value(dep).orElse(dep.getClass().toString()),
             Function.identity()));
   }
 
