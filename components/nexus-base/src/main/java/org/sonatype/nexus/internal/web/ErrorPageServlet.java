@@ -138,14 +138,15 @@ public class ErrorPageServlet
     }
     else {
       response.setStatus(errorCode, errorMessage);
+      ServletResponse resp = response;
       if (response instanceof ShiroHttpServletResponse) {
-        ServletResponse resp = ((ShiroHttpServletResponse) response).getResponse();
+        resp = ((ShiroHttpServletResponse) response).getResponse();
         while (resp instanceof HttpServletResponseWrapper) {
           resp = ((HttpServletResponseWrapper) resp).getResponse();
         }
-        if (resp instanceof org.eclipse.jetty.ee8.nested.Response) {
-          ((org.eclipse.jetty.ee8.nested.Response) resp).setStatusWithReason(errorCode, errorMessage);
-        }
+      }
+      if (resp instanceof org.eclipse.jetty.ee8.nested.Response) {
+        ((org.eclipse.jetty.ee8.nested.Response) resp).setStatusWithReason(errorCode, errorMessage);
       }
     }
 

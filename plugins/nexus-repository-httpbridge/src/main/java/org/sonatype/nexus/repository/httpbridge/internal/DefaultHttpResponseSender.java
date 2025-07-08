@@ -68,14 +68,15 @@ public class DefaultHttpResponseSender
       }
       else {
         httpResponse.setStatus(status.getCode(), statusMessage);
+        ServletResponse resp = httpResponse;
         if (httpResponse instanceof ShiroHttpServletResponse) {
-          ServletResponse resp = ((ShiroHttpServletResponse) httpResponse).getResponse();
+          resp = ((ShiroHttpServletResponse) httpResponse).getResponse();
           while (resp instanceof HttpServletResponseWrapper) {
             resp = ((HttpServletResponseWrapper) resp).getResponse();
           }
-          if (resp instanceof org.eclipse.jetty.ee8.nested.Response) {
-            ((org.eclipse.jetty.ee8.nested.Response) resp).setStatusWithReason(status.getCode(), statusMessage);
-          }
+        }
+        if (resp instanceof org.eclipse.jetty.ee8.nested.Response) {
+          ((org.eclipse.jetty.ee8.nested.Response) resp).setStatusWithReason(status.getCode(), statusMessage);
         }
       }
       if (payload != null) {
