@@ -38,9 +38,18 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     state: jest.fn().mockReturnValue({
       getValue: jest.fn().mockReturnValue(true)
     }),
-    isProEdition: jest.fn()
+    isProEdition: jest.fn(),
+    checkPermission: jest.fn(key => {
+      return BlobStoresFormTestPermissions[key] ?? false;
+    }),
   }
 }));
+
+let BlobStoresFormTestPermissions = {};
+
+function givenBlobStoresPermissions(permissionLookup) {
+  BlobStoresFormTestPermissions = permissionLookup;
+}
 
 const stateServiceGoMock = jest.fn();
 
@@ -82,6 +91,7 @@ describe('BlobStoresForm-Azure', () => {
 
     useCurrentStateAndParams.mockReset();
     useCurrentStateAndParams.mockReturnValue({state: { name: undefined }, params: {}});
+    givenBlobStoresPermissions({ 'nexus:blobstores:update': true, 'nexus:blobstores:delete': true });
   });
 
   it('creates a new Azure blob store', async function() {

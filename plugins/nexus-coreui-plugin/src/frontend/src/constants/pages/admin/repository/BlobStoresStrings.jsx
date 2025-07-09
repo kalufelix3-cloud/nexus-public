@@ -34,8 +34,10 @@ export default {
         YES: 'Delete',
         NO: 'Cancel'
       },
-      CANNOT_DELETE: (repositoryUsage, blobStoreUsage) =>
-          `This blob store is in use by ${repositoryUsage} repositories and ${blobStoreUsage} blob stores`,
+      CANNOT_DELETE: (repositoryUsage, blobStoreUsage, hasDeletePermissions) =>
+        !hasDeletePermissions
+          ? 'You don’t have permission to delete blob stores. Contact your administrator to request access.'
+          : `This blob store is in use by ${repositoryUsage} repositories and ${blobStoreUsage} blob stores`,
       CONFIRM_PROMOTE: {
         TITLE: 'Promote Blob Store',
         MESSAGE: 'Warning: The blob store will be promoted to a new group blob store containing the original blob store as a member. This operation cannot be undone.',
@@ -81,6 +83,7 @@ export default {
         Updating the blob store configuration will cause it to be temporarily unavailable for a short period of time. \
         Edits to configuration may also leave the blob store in a non-functional state.\
       ',
+      NO_PERMISSION_WARNING: 'You don’t have permission to edit this page. Contact your administrator to request access.',
       EDIT_TILE: (name) => `Edit ${name}`,
       EDIT_DESCRIPTION: (type) => `${type} Blob Store`,
       CONVERT_TO_GROUP_BUTTON: 'Convert to Group',

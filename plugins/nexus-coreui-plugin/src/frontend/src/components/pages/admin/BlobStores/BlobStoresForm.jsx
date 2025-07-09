@@ -15,7 +15,7 @@ import {useMachine} from '@xstate/react';
 import {path} from 'ramda';
 import {faTrash} from "@fortawesome/free-solid-svg-icons";
 
-import {DynamicFormField, FormUtils} from '@sonatype/nexus-ui-plugin';
+import {DynamicFormField, ExtJS, FormUtils, Permissions} from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxCheckbox,
@@ -27,7 +27,8 @@ import {
   NxP,
   NxStatefulForm,
   NxTextInput,
-  NxTooltip
+  NxTooltip,
+  NxWarningAlert
 } from '@sonatype/react-shared-components';
 
 import {
@@ -58,6 +59,9 @@ export default function BlobStoresForm() {
     type: decodeURIComponent(params.type),
     name: decodeURIComponent(params.name)
   } : {};
+
+  const hasUpdatePermissions = ExtJS.checkPermission(Permissions.BLOB_STORES.UPDATE);
+  const hasDeletePermission = ExtJS.checkPermission(Permissions.BLOB_STORES.DELETE);
 
   useEffect(() => {
     // we should not render edit form if type or name are not provided
@@ -93,9 +97,9 @@ export default function BlobStoresForm() {
     bucketEncryptionMismatch
   } = current.context;
   const hasSoftQuota = path(['softQuota', 'enabled'], data);
-  const cannotDelete = blobStoreUsage > 0 || repositoryUsage > 0;
+  const cannotDelete = blobStoreUsage > 0 || repositoryUsage > 0 || !hasDeletePermission;
   const deleteTooltip = cannotDelete ?
-      UIStrings.BLOB_STORES.MESSAGES.CANNOT_DELETE(repositoryUsage, blobStoreUsage) :
+      UIStrings.BLOB_STORES.MESSAGES.CANNOT_DELETE(repositoryUsage, blobStoreUsage, hasDeletePermission) :
       null;
   const isTypeSelected = Boolean(type)
 
@@ -133,21 +137,26 @@ export default function BlobStoresForm() {
     return undefined;
   }
 
+  const formProps = FormUtils.formProps(current, send);
+  formProps.onSubmit = hasUpdatePermissions ? formProps.onSubmit : () => {};
+  formProps.validationErrors = hasUpdatePermissions ? formProps.validationErrors : null;
+
   return <Page className="nxrm-blob-stores">
     <PageHeader>
       <PageTitle text={isEdit ? FORM.EDIT_TILE(pristineData.name) : FORM.CREATE_TITLE}
                  description={isEdit ? FORM.EDIT_DESCRIPTION(type?.name || pristineData.type) : null}/>
       {isEdit && type?.id !== 'group' && types?.some(type => type.id === 'group') &&
       <PageActions>
-        <NxButton variant="primary" onClick={modalConvertToGroupOpen}>{FORM.CONVERT_TO_GROUP_BUTTON}</NxButton>
+        <NxButton variant="primary" onClick={modalConvertToGroupOpen} disabled={!hasUpdatePermissions}>{FORM.CONVERT_TO_GROUP_BUTTON}</NxButton>
       </PageActions>
       }
     </PageHeader>
     <Section>
       <NxStatefulForm className="nxrm-blob-stores-form"
-        {...FormUtils.formProps(current, send)}
+        {...formProps}
         submitErrorTitleMessage={getErrorTitleMessage()}
         onCancel={onDone}
+        submitBtnClasses={!hasUpdatePermissions && 'disabled'}
         additionalFooterBtns={isEdit &&
           <NxTooltip title={deleteTooltip}>
             <NxButton variant="tertiary" className={cannotDelete && 'disabled'} onClick={confirmDelete} type="button">
@@ -157,7 +166,8 @@ export default function BlobStoresForm() {
           </NxTooltip>
         }
       >
-        {isEdit && <NxInfoAlert>{FORM.EDIT_WARNING}</NxInfoAlert>}
+        {isEdit && hasUpdatePermissions && <NxInfoAlert>{FORM.EDIT_WARNING}</NxInfoAlert>}
+        {isEdit && !hasUpdatePermissions && <NxWarningAlert>{FORM.NO_PERMISSION_WARNING}</NxWarningAlert>}
         {isCreate &&
         <NxFormGroup label={FORM.TYPE.label} sublabel={FORM.TYPE.sublabel} isRequired>
           <NxFormSelect {...FormUtils.selectProps('type', current)} value={type?.id} onChange={setType}>

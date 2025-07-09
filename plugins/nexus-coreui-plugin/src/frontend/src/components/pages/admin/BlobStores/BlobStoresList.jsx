@@ -64,7 +64,6 @@ export default function BlobStoresList() {
   const isLoading = current.matches('loading');
   const {data, error, filter: filterText} = current.context;
   const hasUser = ExtJS.useUser() ?? false;
-  const canEdit = ExtJS.usePermission(() => ExtJS.checkPermission(Permissions.BLOB_STORES.UPDATE), [hasUser]);
   const canCreate = ExtJS.usePermission(() => ExtJS.checkPermission(Permissions.BLOB_STORES.CREATE), [hasUser]);
 
   const nameSortDir = ListMachineUtils.getSortDirection('name', current.context);
@@ -88,9 +87,7 @@ export default function BlobStoresList() {
     <PageHeader>
       <PageTitle icon={faServer} {...BLOB_STORES.MENU} />
       <PageActions>
-        {canCreate &&
-          <NxButton variant="primary" onClick={onCreate}>{BLOB_STORES.LIST.CREATE_BUTTON}</NxButton>
-        }
+        <NxButton variant="primary" onClick={onCreate} disabled={!canCreate}>{BLOB_STORES.LIST.CREATE_BUTTON}</NxButton>
       </PageActions>
     </PageHeader>
     <ContentBody className="nxrm-blob-stores-list">
@@ -123,7 +120,7 @@ export default function BlobStoresList() {
           <NxTableBody isLoading={isLoading} error={error} emptyMessage={BLOB_STORES.LIST.EMPTY_LIST}>
             {data.map(
                 ({name, path, typeId, typeName, available, unavailable, blobCount, totalSizeInBytes, availableSpaceInBytes, unlimited}) => (
-                    <NxTableRow key={name} onClick={canEdit ? () => onEdit(`${encodeURIComponent(typeId)}`, `${encodeURIComponent(name)}`) : undefined} isClickable={canEdit}>
+                    <NxTableRow isClickable key={name} onClick={() => onEdit(`${encodeURIComponent(typeId)}`, `${encodeURIComponent(name)}`)}>
                       <NxTableCell>{name}</NxTableCell>
                       <NxTableCell className="blob-store-path">{path}</NxTableCell>
                       <NxTableCell>{typeName}</NxTableCell>
@@ -142,9 +139,7 @@ export default function BlobStoresList() {
                           HumanReadableUtils.bytesToString(availableSpaceInBytes)
                         }
                       </NxTableCell>
-                      {canEdit &&
                         <NxTableCell chevron/>
-                      }
                     </NxTableRow>
                 ))}
           </NxTableBody>

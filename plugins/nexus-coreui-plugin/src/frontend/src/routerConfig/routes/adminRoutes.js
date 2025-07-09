@@ -43,10 +43,10 @@ import Upgrade from '../../components/pages/admin/Upgrade/Upgrade';
 import NodesExt from '../../components/pages/admin/Nodes/NodesExt';
 import TasksExtJSWrapper from '../../components/pages/admin/Tasks/TasksExtJSWrapper';
 import Capabilities from '../../components/pages/admin/Capabilities/Capabilities';
-import BlobStoresList from "../../components/pages/admin/BlobStores/BlobStoresList";
-import BlobStoresForm from "../../components/pages/admin/BlobStores/BlobStoresForm";
-import { UIView } from "@uirouter/react";
-import LdapServersExt from "../../components/pages/admin/LdapServers/LdapServersExt";
+import BlobStoresList from '../../components/pages/admin/BlobStores/BlobStoresList';
+import BlobStoresForm from '../../components/pages/admin/BlobStores/BlobStoresForm';
+import { UIView } from '@uirouter/react';
+import LdapServersExt from '../../components/pages/admin/LdapServers/LdapServersExt';
 import AdminRepositoriesDirectoryPage from '../../components/pages/AdminRepositories/AdminRepositoriesDirectoryPage';
 import AdminSecurityDirectoryPage from '../../components/pages/AdminSecurity/AdminSecurityDirectoryPage';
 import { ROUTE_NAMES } from '../routeNames/routeNames';
@@ -115,7 +115,6 @@ export const adminRoutes = [
 
   {
     name: ADMIN.REPOSITORY.BLOBSTORES.ROOT,
-    url: '/blobstores',
     component: UIView,
     data: {
       visibilityRequirements: {
@@ -137,8 +136,8 @@ export const adminRoutes = [
     component: BlobStoresForm,
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.BLOB_STORES.CREATE]
-      }
+        permissions: [Permissions.BLOB_STORES.CREATE],
+      },
     },
   },
 
@@ -146,12 +145,6 @@ export const adminRoutes = [
     name: ADMIN.REPOSITORY.BLOBSTORES.EDIT,
     url: '/blobstores/edit/{type:.+}/{name:.+}',
     component: BlobStoresForm,
-    data: {
-      visibilityRequirements: {
-        permissions: [Permissions.BLOB_STORES.UPDATE]
-      },
-      title: ADMIN.REPOSITORY.BLOBSTORES.TITLE,
-    },
   },
 
   {
