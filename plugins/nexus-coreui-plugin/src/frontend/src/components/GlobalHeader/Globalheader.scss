@@ -15,7 +15,7 @@
   &.nx-global-header-2 {
     padding-left: var(--nx-spacing-3x);
   }
-  
+
   .nx-text-link, .nx-text-input__box {
     font-size: 14px;
   }
@@ -38,7 +38,8 @@
   }
   // needed so that menu items render above ExtJs components
   .nx-dropdown-menu {
-    z-index: 99;
+    // needs to be one above the extjx x-mask which is z-index 100
+    z-index: 101;
   }
 
   .nxrm-health-check-alert-circle {
@@ -46,7 +47,7 @@
   }
 
   .nx-navigation-dropdown .nx-dropdown-menu {
-    .nx-dropdown-link, 
+    .nx-dropdown-link,
     .nx-dropdown-button {
       font-size: 14px;
       &:hover {
