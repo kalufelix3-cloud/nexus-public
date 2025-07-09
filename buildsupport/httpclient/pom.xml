@@ -27,9 +27,6 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <properties>
-    <projectreactor.netty.version>1.0.39</projectreactor.netty.version>
-  </properties>
   <dependencyManagement>
     <dependencies>
 
@@ -55,25 +52,6 @@
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpcore</artifactId>
         <version>4.4.15</version>
-      </dependency>
-
-      <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty-bom</artifactId>
-        <scope>import</scope>
-        <type>pom</type>
-        <version>4.1.119.Final</version>
-      </dependency>
-
-      <dependency>
-        <groupId>io.projectreactor.netty</groupId>
-        <artifactId>reactor-netty-core</artifactId>
-        <version>${projectreactor.netty.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.projectreactor.netty</groupId>
-        <artifactId>reactor-netty-http</artifactId>
-        <version>${projectreactor.netty.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
