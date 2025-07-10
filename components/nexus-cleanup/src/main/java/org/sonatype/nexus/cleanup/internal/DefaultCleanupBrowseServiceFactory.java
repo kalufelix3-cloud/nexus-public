@@ -13,6 +13,9 @@
 package org.sonatype.nexus.cleanup.internal;
 
 import java.util.Objects;
+
+import com.sonatype.nexus.bootstrap.entrypoint.conditional.ConditionalOnEdition;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -24,6 +27,7 @@ import org.sonatype.nexus.repository.Format;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
+@ConditionalOnEdition(community = true)
 @Primary
 @Component
 @Singleton
