@@ -12,16 +12,11 @@
  */
 package org.sonatype.nexus.crypto.internal;
 
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -29,14 +24,22 @@ import jakarta.inject.Singleton;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.internal.error.CipherException;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
+import org.sonatype.nexus.crypto.HashingHandler;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
 
-import com.fasterxml.jackson.core.Base64Variants;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import org.bouncycastle.util.encoders.Hex;
+import org.springframework.beans.factory.annotation.Value;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE;
+import static org.sonatype.nexus.crypto.internal.EncryptionHelper.KEY_ITERATION_PHC;
+import static org.sonatype.nexus.crypto.internal.EncryptionHelper.KEY_LEN_PHC;
+import static org.sonatype.nexus.crypto.internal.EncryptionHelper.fromBase64;
+import static org.sonatype.nexus.crypto.internal.EncryptionHelper.toBase64;
+import static org.sonatype.nexus.crypto.internal.HashingHandlerFactoryImpl.KEY_FACTORY_ALGORITHM_SHA1;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -49,115 +52,167 @@ public class PbeCipherFactoryImpl
 {
   private final CryptoHelper cryptoHelper;
 
+  private final HashingHandlerFactory hashingHandlerFactory;
+
+  private final String nexusSecretsAlgorithm;
+
   @Inject
-  public PbeCipherFactoryImpl(final CryptoHelper cryptoHelper) {
+  public PbeCipherFactoryImpl(
+      final CryptoHelper cryptoHelper,
+      final HashingHandlerFactory hashingHandlerFactory,
+      final @Value(NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE) String nexusSecretsAlgorithm)
+  {
     this.cryptoHelper = checkNotNull(cryptoHelper);
+    this.hashingHandlerFactory = checkNotNull(hashingHandlerFactory);
+    this.nexusSecretsAlgorithm = nexusSecretsAlgorithm;
   }
 
   @Override
   public PbeCipher create(final SecretEncryptionKey secretEncryptionKey) throws CipherException {
+    return doCreate(secretEncryptionKey, null, null, null);
+  }
+
+  @Override
+  public PbeCipher create(
+      final SecretEncryptionKey secretEncryptionKey,
+      final String encryptedSecret) throws CipherException
+  {
+    return doCreate(secretEncryptionKey, encryptedSecret, null, null);
+  }
+
+  @Override
+  public PbeCipher create(
+      final SecretEncryptionKey secretEncryptionKey,
+      final String salt,
+      final String iv) throws CipherException
+  {
+    return doCreate(secretEncryptionKey, null, salt, iv);
+  }
+
+  private PbeCipher doCreate(
+      final SecretEncryptionKey secretEncryptionKey,
+      final String encryptedSecret,
+      final String salt,
+      final String iv)
+  {
     checkNotNull(secretEncryptionKey);
-    return new PbeCipherImpl(cryptoHelper, secretEncryptionKey);
+    EncryptedSecret storedEncryptedSecret = null;
+    String algorithm = nexusSecretsAlgorithm;
+    boolean isDefaultCipher = true;
+
+    byte[] saltToBeUsed = salt != null ? salt.getBytes() : null;
+
+    if (encryptedSecret != null) {
+      storedEncryptedSecret = EncryptedSecret.parse(encryptedSecret);
+      algorithm = getAlgorithm(storedEncryptedSecret);
+      isDefaultCipher = nexusSecretsAlgorithm.equals(algorithm);
+      saltToBeUsed = fromBase64(storedEncryptedSecret.getSalt());
+    }
+
+    HashingHandler hashingHandler = hashingHandlerFactory.create(algorithm, saltToBeUsed);
+
+    return new PbeCipherImpl(cryptoHelper, hashingHandler, secretEncryptionKey, storedEncryptedSecret, isDefaultCipher,
+        iv);
   }
 
-  private static String toBase64(final byte[] value) {
-    return Base64Variants.getDefaultVariant().encode(value);
-  }
-
-  private static byte[] fromBase64(final String encoded) {
-    return Base64Variants.getDefaultVariant().decode(encoded);
+  private static String getAlgorithm(final EncryptedSecret storedEncryptedSecret) {
+    String algorithm = storedEncryptedSecret.getAlgorithm();
+    // this is for backwards compatibility since it was being used as PHC identifier
+    if (PbeCipherImpl.ALGORITHM.equals(algorithm)) {
+      algorithm = KEY_FACTORY_ALGORITHM_SHA1;
+    }
+    return algorithm;
   }
 
   /**
-   * Default {@link PbeCipher} implementation , uses AES_128 with random IV/Salt
+   * Abstract {@link PbeCipher} implementation, defines all the logic with no configuration.
    */
-  class PbeCipherImpl
+  static class PbeCipherImpl
       implements PbeCipher
   {
     private static final String ALGORITHM = "AES/CBC/PKCS5Padding";
 
-    private static final String KEY_FACTORY_ALGORITHM = "PBKDF2WithHmacSHA1";
-
     private static final String KEY_ALGORITHM = "AES";
 
-    private static final int KEY_ITERATIONS = 1024;
+    private static final int IV_SIZE = 16;
 
-    private static final int KEY_LENGTH = 128;
-
-    private final SecureRandom random;
+    private static final String IV_PHC = "iv";
 
     private final CryptoHelper cryptoHelper;
 
     private final SecretEncryptionKey secretEncryptionKey;
 
-    private final SecretKeyFactory keyFactory;
+    private final HashingHandler hashingHandler;
 
-    public PbeCipherImpl(
+    private final EncryptedSecret storedEncryptedSecret;
+
+    private final boolean isDefaultCipher;
+
+    private final byte[] iv;
+
+    PbeCipherImpl(
         final CryptoHelper cryptoHelper,
-        final SecretEncryptionKey secretEncryptionKey) throws CipherException
+        final HashingHandler hashingHandler,
+        final SecretEncryptionKey secretEncryptionKey,
+        final EncryptedSecret storedEncryptedSecret,
+        final boolean isDefaultCipher,
+        final String iv) throws CipherException
     {
-      this.random = cryptoHelper.createSecureRandom();
       this.cryptoHelper = cryptoHelper;
-      this.secretEncryptionKey = secretEncryptionKey;
+      this.hashingHandler = hashingHandler;
 
-      try {
-        this.keyFactory = cryptoHelper.createSecretKeyFactory(KEY_FACTORY_ALGORITHM);
+      this.secretEncryptionKey = secretEncryptionKey;
+      this.storedEncryptedSecret = storedEncryptedSecret;
+      this.isDefaultCipher = isDefaultCipher;
+      if (storedEncryptedSecret != null) {
+        String ivStored = storedEncryptedSecret.getAttributes().get(IV_PHC);
+        this.iv = ivStored != null ? Hex.decode(ivStored) : null;
       }
-      catch (NoSuchAlgorithmException e) {
-        throw new CipherException(e.getMessage(), e);
+      else {
+        this.iv = iv == null ? generateRandomBytes(IV_SIZE) : iv.getBytes();
       }
     }
 
-    private byte[] randomBytes(final int size) {
-      byte[] bytes = new byte[size];
-
-      random.nextBytes(bytes);
-      return bytes;
+    @Override
+    public boolean isDefaultCipher() {
+      return this.isDefaultCipher;
     }
 
     @Override
     public EncryptedSecret encrypt(final byte[] bytes) throws CipherException {
-      try {
-        // define random initialization vector & salt with 16 bytes long (128 bits)
-        byte[] iv = randomBytes(16);
-        byte[] salt = randomBytes(16);
+      EncryptedSecret encryptedSecretHash = hashingHandler.hash(secretEncryptionKey.getKey().toCharArray());
 
-        AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv); // NOSONAR
-        KeySpec spec = new PBEKeySpec(secretEncryptionKey.getKey().toCharArray(), salt, KEY_ITERATIONS, KEY_LENGTH);
-        SecretKey tmp = keyFactory.generateSecret(spec);
-        SecretKey secretKey = new SecretKeySpec(tmp.getEncoded(), KEY_ALGORITHM);
+      String saltBase64 = encryptedSecretHash.getSalt();
+      SecretKey secretKey = new SecretKeySpec(fromBase64(encryptedSecretHash.getValue()), KEY_ALGORITHM);
+      AlgorithmParameterSpec paramSpec = new IvParameterSpec(this.iv); // NOSONAR
+      byte[] encrypted = transform(Cipher.ENCRYPT_MODE, secretKey, paramSpec, bytes);
 
-        byte[] encrypted = transform(Cipher.ENCRYPT_MODE, secretKey, paramSpec, bytes);
-
-        return new EncryptedSecret(ALGORITHM, null, toBase64(salt), toBase64(encrypted),
-            ImmutableMap.of("iv", Hex.toHexString(iv),
-                "key_iteration", String.valueOf(KEY_ITERATIONS),
-                "key_len", String.valueOf(KEY_LENGTH)));
-      }
-      catch (InvalidKeySpecException e) {
-        throw new CipherException(e.getMessage(), e);
-      }
+      return new EncryptedSecret(encryptedSecretHash.getAlgorithm(), null, saltBase64, toBase64(encrypted),
+          ImmutableMap.of(IV_PHC, Hex.toHexString(this.iv),
+              KEY_ITERATION_PHC, encryptedSecretHash.getAttributes().get(KEY_ITERATION_PHC),
+              KEY_LEN_PHC, encryptedSecretHash.getAttributes().get(KEY_LEN_PHC)));
     }
 
     @Override
-    public byte[] decrypt(final EncryptedSecret secret) throws CipherException {
-      try {
-        byte[] iv = Hex.decode(secret.getAttributes().get("iv"));
-        byte[] salt = fromBase64(secret.getSalt());
-        byte[] encrypted = fromBase64(secret.getValue());
-        int iterations = Integer.parseInt(secret.getAttributes().get("key_iteration"));
-        int length = Integer.parseInt(secret.getAttributes().get("key_len"));
+    public byte[] decrypt() throws CipherException {
+      return decrypt(fromBase64(storedEncryptedSecret.getValue()));
+    }
 
-        AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv); // NOSONAR
-        KeySpec spec = new PBEKeySpec(secretEncryptionKey.getKey().toCharArray(), salt, iterations, length);
-        SecretKey tmp = keyFactory.generateSecret(spec);
-        SecretKey secretKey = new SecretKeySpec(tmp.getEncoded(), KEY_ALGORITHM);
+    @Override
+    public byte[] decrypt(byte[] encrypted) throws CipherException {
+      EncryptedSecret encryptedSecretHash = hashingHandler.hash(secretEncryptionKey.getKey().toCharArray());
 
-        return transform(Cipher.DECRYPT_MODE, secretKey, paramSpec, encrypted);
-      }
-      catch (InvalidKeySpecException e) {
-        throw new CipherException(e.getMessage(), e);
-      }
+      SecretKey secretKey = new SecretKeySpec(fromBase64(encryptedSecretHash.getValue()), KEY_ALGORITHM);
+      AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv); // NOSONAR
+
+      return transform(Cipher.DECRYPT_MODE, secretKey, paramSpec, encrypted);
+    }
+
+    private byte[] generateRandomBytes(final int size) {
+      SecureRandom localRandom = cryptoHelper.createSecureRandom();
+      byte[] bytes = new byte[size];
+      localRandom.nextBytes(bytes);
+      return bytes;
     }
 
     private byte[] transform(

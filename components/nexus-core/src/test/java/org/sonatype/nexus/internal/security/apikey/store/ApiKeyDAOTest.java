@@ -55,21 +55,21 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
 public class ApiKeyDAOTest
     extends TestSupport
 {
-  private static final String DOMAIN = "a domain";
+  private static final String DOMAIN = "domain";
 
-  private static final String ANOTHER_DOMAIN = "another domain";
+  private static final String ANOTHER_DOMAIN = "a domain";
 
-  private static final char[] API_KEY1 = "api_key;:\"|\\}{}[]+-=-=3/><+\"|:@!^%$£&*~`_+_o".toCharArray();
+  private static final char[] API_KEY1 = "api_key".toCharArray();
 
-  private static final char[] API_KEY2 = "api_key2;:\"|\\}{}[]+-=-=3/><+\"|:@!^%$£&*~`_+_o".toCharArray();
+  private static final char[] API_KEY2 = "api_key2".toCharArray();
 
-  private static final char[] API_KEY3 = "api_key3;:\"|\\}{}[]+-=-=3/><+\"|:@!^%$£&*~`_+_o".toCharArray();
+  private static final char[] API_KEY3 = "api_key3".toCharArray();
 
-  private static final char[] API_KEY4 = "api_key4;:\"|\\}{}[]+-=-=3/><+\"|:@!^%$£&*~`_+_o".toCharArray();
+  private static final char[] API_KEY4 = "api_key4".toCharArray();
 
-  private static final String A_PRINCIPAL = "principal1";
+  private static final String A_PRINCIPAL = "p1";
 
-  private static final String ANOTHER_PRINCIPAL = "another_principal1";
+  private static final String ANOTHER_PRINCIPAL = "a_p1";
 
   private static final String A_REALM = "realm1";
 

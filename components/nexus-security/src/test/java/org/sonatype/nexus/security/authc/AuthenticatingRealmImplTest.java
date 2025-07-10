@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.Set;
+
 import javax.crypto.Cipher;
 import javax.crypto.SecretKeyFactory;
 
@@ -30,7 +31,6 @@ import org.sonatype.nexus.security.config.CUser;
 import org.sonatype.nexus.security.config.memory.MemoryCPrivilege;
 import org.sonatype.nexus.security.config.memory.MemoryCUser;
 import org.sonatype.nexus.security.internal.AuthenticatingRealmImpl;
-import org.sonatype.nexus.security.internal.DefaultSecurityPasswordService;
 import org.sonatype.nexus.security.internal.SecurityConfigurationManagerImpl;
 
 import com.google.common.hash.Hashing;
@@ -40,7 +40,6 @@ import org.apache.shiro.authc.DisabledAccountException;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.authc.credential.PasswordService;
 import org.apache.shiro.realm.Realm;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,18 +50,20 @@ import org.springframework.context.annotation.Primary;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Import(AuthenticatingRealmImplTestConfiguration.class)
 public class AuthenticatingRealmImplTest
     extends AbstractSecurityTest
 {
+  public static final String ENCRYPTED_PASSWORD_PHC_STRING = "$pbkdf2-sha256$restOfPhcString";
+
   protected static class AuthenticatingRealmImplTestConfiguration
       extends BaseSecurityConfiguration
   {
@@ -93,8 +94,6 @@ public class AuthenticatingRealmImplTest
 
   private SecurityConfigurationManagerImpl configurationManager;
 
-  private PasswordService passwordService;
-
   private CPrivilege testPrivilege;
 
   private CRole testRole;
@@ -108,7 +107,6 @@ public class AuthenticatingRealmImplTest
 
     realm = (AuthenticatingRealmImpl) lookup(Realm.class, AuthenticatingRealmImpl.NAME);
     configurationManager = lookup(SecurityConfigurationManagerImpl.class);
-    passwordService = lookup(PasswordService.class, "default");
   }
 
   @AfterEach
@@ -128,16 +126,22 @@ public class AuthenticatingRealmImplTest
 
   @Test
   public void testSuccessfulAuthentication() throws Exception {
+    when(passwordService.encryptPassword(any()))
+        .thenReturn(ENCRYPTED_PASSWORD_PHC_STRING);
+
+    when(passwordService.passwordsMatch(any(), anyString())).thenReturn(true);
     buildTestAuthenticationConfig(CUser.STATUS_ACTIVE);
 
-    UsernamePasswordToken upToken = new UsernamePasswordToken("username", "password");
+    UsernamePasswordToken upToken = new UsernamePasswordToken("username", "somePassword");
     AuthenticationInfo ai = realm.getAuthenticationInfo(upToken);
     String password = new String((char[]) ai.getCredentials());
-    assertThat(this.passwordService.passwordsMatch("password", password), is(true));
+
+    assertThat(password, equalTo(ENCRYPTED_PASSWORD_PHC_STRING));
   }
 
   @Test
-  public void testCreateWithPassowrd() throws Exception {
+  public void testCreateWithPassword() throws Exception {
+
     buildTestAuthenticationConfig(CUser.STATUS_ACTIVE);
 
     String clearPassword = "default-password";
@@ -149,17 +153,25 @@ public class AuthenticatingRealmImplTest
     Set<String> roles = new HashSet<String>();
     roles.add("role");
 
+    when(passwordService.passwordsMatch(any(), anyString())).thenReturn(true);
+
+    when(passwordService.encryptPassword(any()))
+        .thenReturn(ENCRYPTED_PASSWORD_PHC_STRING);
+
     configurationManager.createUser(user, clearPassword, roles);
 
     UsernamePasswordToken upToken = new UsernamePasswordToken("testCreateWithPassowrdEmailUserId", clearPassword);
     AuthenticationInfo ai = realm.getAuthenticationInfo(upToken);
     String password = new String((char[]) ai.getCredentials());
 
-    assertThat(passwordService.passwordsMatch(clearPassword, password), is(true));
+    assertThat(password, equalTo(ENCRYPTED_PASSWORD_PHC_STRING));
   }
 
   @Test
   public void testFailedAuthentication() throws Exception {
+    when(passwordService.encryptPassword(any()))
+        .thenAnswer(inv -> "pbkdf2-sha1" + inv.getArgument(0).toString());
+
     buildTestAuthenticationConfig(CUser.STATUS_ACTIVE);
 
     UsernamePasswordToken upToken = new UsernamePasswordToken("username", "badpassword");
@@ -169,6 +181,9 @@ public class AuthenticatingRealmImplTest
 
   @Test
   public void testDisabledAuthentication() throws Exception {
+    when(passwordService.encryptPassword(any()))
+        .thenAnswer(inv -> "pbkdf2-sha1" + inv.getArgument(0).toString());
+
     buildTestAuthenticationConfig(CUser.STATUS_DISABLED);
     UsernamePasswordToken upToken = new UsernamePasswordToken("username", "password");
 
@@ -177,12 +192,17 @@ public class AuthenticatingRealmImplTest
 
   @Test
   public void testGetAuthenticationInfo_userStatusChangePassword() throws Exception {
+    when(passwordService.encryptPassword(any()))
+        .thenReturn(ENCRYPTED_PASSWORD_PHC_STRING);
+
+    when(passwordService.passwordsMatch(any(), anyString())).thenReturn(true);
     buildTestAuthenticationConfig(CUser.STATUS_CHANGE_PASSWORD);
 
     UsernamePasswordToken upToken = new UsernamePasswordToken("username", "password");
     AuthenticationInfo ai = realm.getAuthenticationInfo(upToken);
     String password = new String((char[]) ai.getCredentials());
-    assertThat(this.passwordService.passwordsMatch("password", password), is(true));
+    assertThat(password, equalTo(ENCRYPTED_PASSWORD_PHC_STRING));
+    verify(passwordService, atMostOnce()).passwordsMatch("password", password);
   }
 
   @Test
@@ -191,13 +211,17 @@ public class AuthenticatingRealmImplTest
     String username = "username";
     buildLegacyTestAuthenticationConfig(password);
 
+    when(passwordService.passwordsMatch(any(), anyString())).thenReturn(true);
+    when(passwordService.encryptPassword(any()))
+        .thenReturn(ENCRYPTED_PASSWORD_PHC_STRING);
+
     UsernamePasswordToken upToken = new UsernamePasswordToken(username, password);
     AuthenticationInfo ai = realm.getAuthenticationInfo(upToken);
     CUser updatedUser = this.configurationManager.readUser(username);
     String hash = new String((char[]) ai.getCredentials());
 
-    assertThat(passwordService.passwordsMatch(password, hash), is(true));
-    assertThat(passwordService.passwordsMatch(password, updatedUser.getPassword()), is(true));
+    assertThat(hash, equalTo(ENCRYPTED_PASSWORD_PHC_STRING));
+    assertThat(updatedUser.getPassword(), equalTo(ENCRYPTED_PASSWORD_PHC_STRING));
   }
 
   @Test
@@ -216,74 +240,8 @@ public class AuthenticatingRealmImplTest
     assertThrows(CredentialsException.class, () -> realm.getAuthenticationInfo(upToken));
   }
 
-  @Test
-  public void testDoGetAuthenticationInfo_DoesNotRehashFipsPassword() throws Exception {
-    String password = "password";
-    String username = "fipsUser";
-
-    String fipsHash = passwordService.encryptPassword(password);
-    assumeTrue(DefaultSecurityPasswordService.isFipsPassword(fipsHash));
-
-    buildTestAuthenticationConfig(CUser.STATUS_ACTIVE, fipsHash, username);
-
-    assertTrue(passwordService.passwordsMatch(password, fipsHash));
-
-    UsernamePasswordToken upToken = new UsernamePasswordToken(username, password);
-    realm.getAuthenticationInfo(upToken);
-
-    String afterHash = configurationManager.readUser(username).getPassword();
-    assertThat("FIPS password should not be rehashed", afterHash, equalTo(fipsHash));
-  }
-
-  @Test
-  public void testDoGetAuthenticationInfo_DoesNotRehashPasswordWhenCredentialsInvalid() throws Exception {
-    String password = "password";
-    String username = "nonFipsUser";
-    String initialHash = passwordService.encryptPassword(password);
-
-    buildTestAuthenticationConfig(CUser.STATUS_ACTIVE, initialHash, username);
-
-    UsernamePasswordToken upToken = new UsernamePasswordToken(username, "wrongpassword");
-    assertThrows(IncorrectCredentialsException.class, () -> realm.getAuthenticationInfo(upToken));
-    String afterHash = configurationManager.readUser(username).getPassword();
-    assertThat("Password should not be rehashed for failed auth", afterHash, equalTo(initialHash));
-  }
-
-  private void buildTestAuthenticationConfig(
-      final String status,
-      final String hash,
-      final String username) throws Exception
-  {
-    CPrivilege priv = new MemoryCPrivilege();
-    priv.setId("priv-" + username);
-    priv.setName("name");
-    priv.setDescription("desc");
-    priv.setType("method");
-    priv.setProperty("method", "read");
-    priv.setProperty("permission", "somevalue");
-
-    testPrivilege = priv;
-    configurationManager.createPrivilege(priv);
-
-    CRole role = configurationManager.newRole();
-    role.setName("name");
-    role.setId("role-" + username);
-    role.setDescription("desc");
-    role.addPrivilege("priv-" + username);
-
-    testRole = role;
-    configurationManager.createRole(role);
-
-    testUser = user("dummyemail@somewhere", "dummyFirstName", "dummyLastName", status, username, hash);
-
-    Set<String> roles = new HashSet<String>();
-    roles.add("role-" + username);
-
-    configurationManager.createUser(testUser, roles);
-  }
-
   private void buildTestAuthenticationConfig(final String status) throws Exception {
-    buildTestAuthenticationConfig(status, this.hashPassword("password"));
+    buildTestAuthenticationConfig(status, this.hashPassword("somePassword"));
   }
 
   private void buildTestAuthenticationConfig(final String status, final String hash) throws Exception {

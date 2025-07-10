@@ -67,8 +67,8 @@ public interface ApiKeyV2DAO
    * Browse all API Keys in the specified domain (paginated)
    *
    * @param domain the domain, e.g. npm keys, nuget keys
-   * @param skip   the amount of records to skip/offset
-   * @param limit  the amount of records to limit the query to
+   * @param skip the amount of records to skip/offset
+   * @param limit the amount of records to limit the query to
    */
   Collection<ApiKeyInternal> browsePaginated(
       @Param("domain") String domain,
@@ -95,7 +95,7 @@ public interface ApiKeyV2DAO
    * Find {@link ApiKeyInternal} record in the domain for the specified user name.
    *
    * @param domain the domain for the token (e.g. NuGetApiKey)
-   * @param user  the user name to locate
+   * @param user the user name to locate
    */
   Collection<ApiKeyV2Data> findApiKey(
       @Param("domain") String domain,
@@ -104,7 +104,7 @@ public interface ApiKeyV2DAO
   /**
    * Find {@link ApiKeyInternal} records across all domains with the specified user.
    *
-   * @param user  the user name to locate
+   * @param user the user name to locate
    */
   Collection<ApiKeyV2Data> findApiKeysForUser(@Param("username") String user);
 

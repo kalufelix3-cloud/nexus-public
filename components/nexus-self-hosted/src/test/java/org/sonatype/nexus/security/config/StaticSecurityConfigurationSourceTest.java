@@ -22,6 +22,7 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -62,7 +63,7 @@ public class StaticSecurityConfigurationSourceTest
 
     assertThat(user.getPassword(), is("encrypted"));
     verify(adminPasswordSource).getPassword(true);
-    verify(passwordService).encryptPassword(any());
+    verify(passwordService, times(2)).encryptPassword(any());
   }
 
   @Test

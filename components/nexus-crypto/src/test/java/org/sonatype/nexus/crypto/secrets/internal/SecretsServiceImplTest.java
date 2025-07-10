@@ -17,9 +17,12 @@ import java.util.Random;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
+import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.LegacyCipherFactory;
 import org.sonatype.nexus.crypto.PhraseService;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
+import org.sonatype.nexus.crypto.internal.HashingHandlerFactory;
+import org.sonatype.nexus.crypto.internal.HashingHandlerFactoryImpl;
 import org.sonatype.nexus.crypto.internal.LegacyCipherFactoryImpl;
 import org.sonatype.nexus.crypto.internal.MavenCipherImpl;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory;
@@ -50,6 +53,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
@@ -71,20 +75,29 @@ public class SecretsServiceImplTest
   @Captor
   private ArgumentCaptor<String> encryptedValue;
 
-  private final LegacyCipherFactory cipherFactory = new LegacyCipherFactoryImpl(new CryptoHelperImpl(false));
+  private final CryptoHelper cryptoHelper = new CryptoHelperImpl(false);
 
-  private final PbeCipherFactory pbeCipherFactory = new PbeCipherFactoryImpl(new CryptoHelperImpl(false));
+  private final LegacyCipherFactory cipherFactory = new LegacyCipherFactoryImpl(cryptoHelper);
 
-  private final MavenCipher mavenCipher = new MavenCipherImpl(new CryptoHelperImpl(false));
-
-  private SecretsServiceImpl underTest;
+  private final MavenCipher mavenCipher = new MavenCipherImpl(cryptoHelper);
 
   private final Random random = new Random();
 
+  private SecretsServiceImpl underTestSha1;
+
+  private SecretsServiceImpl underTestSha256;
+
   @Before
   public void setup() throws Exception {
-    underTest =
-        new SecretsServiceImpl(cipherFactory, mavenCipher, PhraseService.LEGACY_PHRASE_SERVICE, pbeCipherFactory,
+    HashingHandlerFactory hashingHandlerFactory = new HashingHandlerFactoryImpl(cryptoHelper);
+    PbeCipherFactory sha1Factory = new PbeCipherFactoryImpl(cryptoHelper, hashingHandlerFactory, "PBKDF2WithHmacSHA1");
+    PbeCipherFactory sha256Factory =
+        new PbeCipherFactoryImpl(cryptoHelper, hashingHandlerFactory, "PBKDF2WithHmacSHA256");
+
+    underTestSha1 = new SecretsServiceImpl(cipherFactory, mavenCipher, PhraseService.LEGACY_PHRASE_SERVICE, sha1Factory,
+        secretsStore, encryptionKeySource, databaseCheck);
+    underTestSha256 =
+        new SecretsServiceImpl(cipherFactory, mavenCipher, PhraseService.LEGACY_PHRASE_SERVICE, sha256Factory,
             secretsStore, encryptionKeySource, databaseCheck);
   }
 
@@ -94,7 +107,7 @@ public class SecretsServiceImplTest
 
     char[] secret = "my-secret".toCharArray();
 
-    Secret encrypted = underTest.encryptMaven("testing", secret, null);
+    Secret encrypted = underTestSha1.encryptMaven("testing", secret, null);
     //validate encrypted value was encrypted using maven cipher
     assertTrue(mavenCipher.isPasswordCipher(encrypted.getId()));
 
@@ -106,12 +119,12 @@ public class SecretsServiceImplTest
   public void testFromLegacyMaven() {
     char[] secret = "my-secret".toCharArray();
 
-    Secret encrypted = underTest.encryptMaven("testing", secret, null);
+    Secret encrypted = underTestSha1.encryptMaven("testing", secret, null);
     // validate encrypted value was encrypted using maven cipher
     assertTrue(mavenCipher.isPasswordCipher(encrypted.getId()));
 
     // Simulate reading an old value
-    Secret fromEncrypted = underTest.from(encrypted.getId());
+    Secret fromEncrypted = underTestSha1.from(encrypted.getId());
 
     verifyNoInteractions(secretsStore, encryptionKeySource);
     assertThat(fromEncrypted.decrypt(), is(secret));
@@ -123,7 +136,7 @@ public class SecretsServiceImplTest
 
     char[] secret = "my-secret".toCharArray();
 
-    Secret encrypted = underTest.encrypt("testing", secret, null);
+    Secret encrypted = underTestSha1.encrypt("testing", secret, null);
 
     verifyNoInteractions(secretsStore, encryptionKeySource);
     assertThat(encrypted.decrypt(), is(secret));
@@ -133,10 +146,10 @@ public class SecretsServiceImplTest
   public void testFromLegacyPbe() {
     char[] secret = "my-secret".toCharArray();
 
-    Secret encrypted = underTest.encrypt("testing", secret, null);
+    Secret encrypted = underTestSha1.encrypt("testing", secret, null);
 
     // Simulate reading an old value
-    Secret fromEncrypted = underTest.from(encrypted.getId());
+    Secret fromEncrypted = underTestSha1.from(encrypted.getId());
 
     verifyNoInteractions(secretsStore, encryptionKeySource);
     assertThat(fromEncrypted.decrypt(), is(secret));
@@ -151,7 +164,7 @@ public class SecretsServiceImplTest
 
     char[] secret = "my-secret".toCharArray();
 
-    Secret encrypted = underTest.encrypt("testing", secret, null);
+    Secret encrypted = underTestSha1.encrypt("testing", secret, null);
 
     // validate legacy secret was stored
     verify(secretsStore).create(eq("testing"), eq(null), encryptedValue.capture(), eq(null));
@@ -172,7 +185,7 @@ public class SecretsServiceImplTest
 
     char[] secret = "phc-secret".toCharArray();
 
-    Secret encrypted = underTest.encrypt("phc-testing", secret, "test-userid");
+    Secret encrypted = underTestSha1.encrypt("phc-testing", secret, "test-userid");
 
     verify(secretsStore).create(eq("phc-testing"), eq("test"), encryptedValue.capture(), eq("test-userid"));
 
@@ -197,7 +210,7 @@ public class SecretsServiceImplTest
 
     char[] secret = "expected-failure".toCharArray();
 
-    Secret encrypted = underTest.encrypt("phc-testing", secret, "test-userid");
+    Secret encrypted = underTestSha1.encrypt("phc-testing", secret, "test-userid");
 
     verify(secretsStore).create(eq("phc-testing"), eq("fake-key"), encryptedValue.capture(), eq("test-userid"));
 
@@ -220,29 +233,29 @@ public class SecretsServiceImplTest
 
     char[] secret = "failure".toCharArray();
 
-    Secret encrypted = underTest.encrypt("testing failure", secret, null);
+    Secret encrypted = underTestSha1.encrypt("testing failure", secret, null);
 
     when(secretsStore.read(anyInt())).thenReturn(Optional.empty());
 
     CipherException expected = assertThrows(CipherException.class, encrypted::decrypt);
-    assertThat(expected.getMessage(), is("Unable find secret for the specified token"));
+    assertThat(expected.getMessage(), is("Unable to find secret for the specified token"));
   }
 
   @Test
   public void testRemoveWorksAsExpected() {
     int fakeId = random.nextInt();
-    Secret secret = underTest.from("_" + fakeId);
+    Secret secret = underTestSha1.from("_" + fakeId);
 
-    underTest.remove(secret);
+    underTestSha1.remove(secret);
 
     verify(secretsStore).delete(fakeId);
   }
 
   @Test
   public void testRemoveDoesNothingWithLegacyToken() {
-    Secret secret = underTest.from("legacy_token");
+    Secret secret = underTestSha1.from("legacy_token");
 
-    underTest.remove(secret);
+    underTestSha1.remove(secret);
 
     verifyNoInteractions(secretsStore);
   }
@@ -265,7 +278,7 @@ public class SecretsServiceImplTest
     SecretData secretData =
         getMockSecretData(secretId, oldKey, getEncryptedSecret(secretId, "secret" + secretId, mockSecretKey));
 
-    underTest.reEncrypt(secretData, newKey);
+    underTestSha1.reEncrypt(secretData, newKey);
     verify(secretsStore).update(anyInt(), anyString(), eq(newKey), anyString());
   }
 
@@ -275,20 +288,111 @@ public class SecretsServiceImplTest
     when(encryptionKeySource.getActiveKey()).thenReturn(Optional.of(mockSecretKey));
     when(secretsStore.existWithDifferentKeyId("active-key")).thenReturn(true);
 
-    assertTrue(underTest.isReEncryptRequired());
+    assertTrue(underTestSha1.isReEncryptRequired());
 
     when(secretsStore.existWithDifferentKeyId("active-key")).thenReturn(false);
-    assertFalse(underTest.isReEncryptRequired());
+    assertFalse(underTestSha1.isReEncryptRequired());
 
     when(encryptionKeySource.getActiveKey()).thenReturn(Optional.empty());
-    assertFalse(underTest.isReEncryptRequired());
+    assertFalse(underTestSha1.isReEncryptRequired());
   }
 
   @Test
   public void testActiveKeyChangedOnEvent() {
     ActiveKeyChangeEvent event = new ActiveKeyChangeEvent("new-key", "old-key", null);
-    underTest.on(event);
+    underTestSha1.on(event);
     verify(encryptionKeySource).setActiveKey("new-key");
+  }
+
+  @Test
+  public void testSha1AlgorithmUsedWhenConfigured() {
+    int fakeId = random.nextInt();
+    when(databaseCheck.isAtLeast(anyString())).thenReturn(true);
+    when(secretsStore.create(anyString(), any(), anyString(), any())).thenReturn(fakeId);
+
+    char[] secret = "test-secret".toCharArray();
+    underTestSha1.encrypt("test", secret, null);
+
+    verify(secretsStore).create(anyString(), any(), encryptedValue.capture(), any());
+    EncryptedSecret phc = EncryptedSecret.parse(encryptedValue.getValue());
+
+    assertThat(phc.getAlgorithm(), is("PBKDF2WithHmacSHA1"));
+  }
+
+  @Test
+  public void testSha256AlgorithmUsedWhenConfigured() {
+    int fakeId = random.nextInt();
+    when(databaseCheck.isAtLeast(anyString())).thenReturn(true);
+    when(secretsStore.create(anyString(), any(), anyString(), any())).thenReturn(fakeId);
+
+    char[] secret = "test-secret".toCharArray();
+    underTestSha256.encrypt("test", secret, null);
+
+    verify(secretsStore).create(anyString(), any(), encryptedValue.capture(), any());
+    EncryptedSecret phc = EncryptedSecret.parse(encryptedValue.getValue());
+
+    assertThat(phc.getAlgorithm(), is("PBKDF2WithHmacSHA256"));
+  }
+
+  @Test
+  public void testMigrationFromSha1ToSha256() {
+    // First encrypt with SHA1
+    int fakeId = random.nextInt();
+    when(databaseCheck.isAtLeast(anyString())).thenReturn(true);
+    when(secretsStore.create(anyString(), any(), anyString(), any())).thenReturn(fakeId);
+
+    char[] secret = "migrate-me".toCharArray();
+    underTestSha1.encrypt("test", secret, null);
+
+    verify(secretsStore).create(anyString(), any(), encryptedValue.capture(), any());
+    String sha1Encrypted = encryptedValue.getValue();
+
+    // Now decrypt with SHA256 configured (should trigger re-encryption)
+    when(secretsStore.read(fakeId)).thenReturn(Optional.of(
+        getMockSecretData(fakeId, null, sha1Encrypted)));
+
+    // Create a new secret from the stored ID
+    Secret secretToDecrypt = underTestSha256.from("_" + fakeId);
+    char[] decrypted = secretToDecrypt.decrypt();
+
+    // Verify re-encryption occurred with SHA256
+    verify(secretsStore).update(eq(fakeId), anyString(), eq(null),
+        argThat(newValue -> {
+          EncryptedSecret phc = EncryptedSecret.parse(newValue);
+          return phc.getAlgorithm().equals("PBKDF2WithHmacSHA256");
+        }));
+    assertThat(decrypted, is(secret));
+  }
+
+  @Test
+  public void testMigrationFromSha256ToSha1() {
+    // First encrypt with SHA256
+    int fakeId = random.nextInt();
+    when(databaseCheck.isAtLeast(anyString())).thenReturn(true);
+    when(secretsStore.create(anyString(), any(), anyString(), any())).thenReturn(fakeId);
+
+    char[] secret = "migrate-me".toCharArray();
+    underTestSha256.encrypt("test", secret, null);
+
+    // Capture the SHA256 encrypted value
+    verify(secretsStore).create(anyString(), any(), encryptedValue.capture(), any());
+    String sha256Encrypted = encryptedValue.getValue();
+
+    // Now decrypt with SHA1 configured (should trigger re-encryption)
+    when(secretsStore.read(fakeId)).thenReturn(Optional.of(
+        getMockSecretData(fakeId, null, sha256Encrypted)));
+
+    // Create a new secret from the stored ID
+    Secret secretToDecrypt = underTestSha1.from("_" + fakeId);
+    char[] decrypted = secretToDecrypt.decrypt();
+
+    // Verify re-encryption occurred with SHA1
+    verify(secretsStore).update(eq(fakeId), anyString(), eq(null),
+        argThat(newValue -> {
+          EncryptedSecret phc = EncryptedSecret.parse(newValue);
+          return phc.getAlgorithm().equals("PBKDF2WithHmacSHA1");
+        }));
+    assertThat(decrypted, is(secret));
   }
 
   private void assertIsPhcSecret(final String value) {
@@ -329,7 +433,7 @@ public class SecretsServiceImplTest
     when(databaseCheck.isAtLeast(anyString())).thenReturn(true);
     when(secretsStore.create(anyString(), any(), anyString(), any())).thenReturn(secretId);
     when(encryptionKeySource.getActiveKey()).thenReturn(Optional.of(encryptionKey));
-    underTest.encrypt("testing", secret.toCharArray(), null);
+    underTestSha1.encrypt("testing", secret.toCharArray(), null);
     verify(secretsStore, atLeastOnce()).create(eq("testing"), eq(encryptionKey.getId()), encryptedValue.capture(),
         eq(null));
     return encryptedValue.getValue();

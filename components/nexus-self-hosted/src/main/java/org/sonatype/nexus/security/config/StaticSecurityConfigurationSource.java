@@ -62,6 +62,8 @@ public class StaticSecurityConfigurationSource
 
   private SecurityConfiguration configuration;
 
+  public static final String ANONYMOUS = "anonymous";
+
   @Inject
   public StaticSecurityConfigurationSource(
       final PasswordService passwordService,
@@ -143,12 +145,11 @@ public class StaticSecurityConfigurationSource
         .withEmail("admin@example.org");
   }
 
-  private static MemoryCUser getAnonymousUser() {
+  private MemoryCUser getAnonymousUser() {
     return new MemoryCUser()
         .withId(ANONYMOUS)
-        // password="anonymous"
         .withPassword(
-            "$pbkdf2-sha256$i=10000$igzuVCPoepbCRY6ihMjoYg==$1EJ4/4HzlNAOquAOCGxJnNiJstxLqJpnS+F2zsLjHPI=")
+            passwordService.encryptPassword(ANONYMOUS))
         .withFirstName("Anonymous")
         .withLastName("User")
         .withStatus(CUser.STATUS_ACTIVE)

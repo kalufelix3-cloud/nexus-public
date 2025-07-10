@@ -41,6 +41,8 @@ public class EncryptionKeyList
 
   public static class SecretEncryptionKey
   {
+    private static final String DEFAULT_KEY = "key";
+
     private String id;
 
     private String key;
@@ -51,6 +53,11 @@ public class EncryptionKeyList
     public SecretEncryptionKey(final String id, final String key) {
       this.id = id;
       this.key = key;
+    }
+
+    public SecretEncryptionKey(final String key) {
+      this.key = key;
+      this.id = DEFAULT_KEY;
     }
 
     public String getId() {

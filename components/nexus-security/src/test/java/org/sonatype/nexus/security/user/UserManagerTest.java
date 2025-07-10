@@ -29,7 +29,6 @@ import org.sonatype.nexus.security.config.memory.MemoryCUser;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.UserManagerTest.UserManagerTestSecurityConfiguration;
 
-import org.apache.shiro.authc.credential.PasswordService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,6 +43,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 // FIXME: resolve with other UserManager2Test
 
@@ -51,13 +52,11 @@ import static org.junit.jupiter.api.Assertions.fail;
 class UserManagerTest
     extends AbstractSecurityTest
 {
-  private PasswordService passwordService;
 
   @Override
   @BeforeEach
   protected void setUp() throws Exception {
     super.setUp();
-    passwordService = lookup(PasswordService.class, "default");
   }
 
   @AfterEach
@@ -103,8 +102,9 @@ class UserManagerTest
 
   @Test
   void testAddUser() throws Exception {
+    when(passwordService.encryptPassword(eq("my-password")))
+        .thenReturn("$PBKDF2WithHmacSHA256$mocking$mocked-hashed-password");
     UserManager userManager = this.getUserManager();
-
     User user = new User();
     user.setUserId("testCreateUser");
     user.setName(user.getUserId() + "-name");
@@ -123,8 +123,7 @@ class UserManagerTest
     assertEquals(secUser.getEmail(), user.getEmailAddress());
     assertEquals(secUser.getFirstName(), user.getFirstName());
     assertEquals(secUser.getLastName(), user.getLastName());
-    assertThat(this.passwordService.passwordsMatch("my-password", secUser.getPassword()), is(true));
-
+    assertEquals(secUser.getPassword(), "$PBKDF2WithHmacSHA256$mocking$mocked-hashed-password");
     assertEquals(secUser.getStatus(), user.getStatus().name());
 
     CUserRoleMapping roleMapping = config.readUserRoleMapping("testCreateUser", "default");
@@ -141,11 +140,13 @@ class UserManagerTest
 
   @Test
   void testChangePassword() throws Exception {
+    when(passwordService.encryptPassword(eq("new-user-password")))
+        .thenReturn("$PBKDF2WithHmacSHA1$mocking$new-user-password-hashed");
     UserManager userManager = this.getUserManager();
     userManager.changePassword("test-user", "new-user-password");
 
     CUser user = this.getConfigurationManager().readUser("test-user");
-    assertThat(this.passwordService.passwordsMatch("new-user-password", user.getPassword()), is(true));
+    assertThat(user.getPassword().startsWith("$PBKDF2WithHmacSHA1"), is(true));
   }
 
   @Test
@@ -157,7 +158,7 @@ class UserManagerTest
     user.setName("new Name");
     user.setEmailAddress("newemail@foo");
 
-    Set<RoleIdentifier> roles = new HashSet<RoleIdentifier>();
+    Set<RoleIdentifier> roles = new HashSet<>();
     roles.add(new RoleIdentifier("default", "role3"));
     user.setRoles(roles);
     userManager.updateUser(user);
@@ -258,7 +259,7 @@ class UserManagerTest
   void testSetUsersRoles() throws Exception {
     SecuritySystem securitySystem = this.getSecuritySystem();
 
-    Set<RoleIdentifier> roleIdentifiers = new HashSet<RoleIdentifier>();
+    Set<RoleIdentifier> roleIdentifiers = new HashSet<>();
     RoleIdentifier roleIdentifier = new RoleIdentifier("default", "role2");
     roleIdentifiers.add(roleIdentifier);
 
@@ -283,7 +284,7 @@ class UserManagerTest
   }
 
   private static List<String> getRoleIds(final User user) {
-    List<String> roleIds = new ArrayList<String>();
+    List<String> roleIds = new ArrayList<>();
 
     for (RoleIdentifier role : user.getRoles()) {
       roleIds.add(role.getRoleId());

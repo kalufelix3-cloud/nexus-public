@@ -35,11 +35,15 @@ import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
+import org.mockito.ArgumentMatchers;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests adding, updating, searching, authc, and authz a user that has an empty role (a role that does not contain any
@@ -49,6 +53,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class EmptyRoleTest
     extends AbstractSecurityTest
 {
+
   @Test
   void testCreateEmptyRole() throws Exception {
     SecuritySystem securitySystem = this.lookup(SecuritySystem.class);
@@ -95,6 +100,8 @@ class EmptyRoleTest
 
   @Test
   void testAuthorizeUserWithEmptyRole() throws Exception {
+    when(passwordService.encryptPassword(eq("password"))).thenReturn("PBKDF2WithHmacSHA1");
+    when(passwordService.passwordsMatch(ArgumentMatchers.any(), anyString())).thenReturn(true);
     SecuritySystem securitySystem = this.lookup(SecuritySystem.class);
 
     RealmManager realmManager = lookup(RealmManager.class);
@@ -109,7 +116,7 @@ class EmptyRoleTest
     authManager.addRole(emptyRole);
 
     Role normalRole = new Role("normalRole-" + Math.random(), "NormalRole", "Normal Role", "default", false,
-        new HashSet<String>(), new HashSet<String>());
+        new HashSet<>(), new HashSet<>());
 
     normalRole.addPrivilege(this.createTestPriv());
     authManager.addRole(normalRole);

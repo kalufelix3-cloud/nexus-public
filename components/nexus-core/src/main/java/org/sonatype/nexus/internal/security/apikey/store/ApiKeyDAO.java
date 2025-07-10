@@ -42,7 +42,9 @@ public interface ApiKeyDAO
    * @param domain the domain for the token (e.g. NuGetApiKey)
    * @param primaryPrincipal the primary principal to locatte
    */
-  Collection<ApiKeyInternal> findApiKeys(@Param("domain") String domain, @Param("primaryPrincipal") String primaryPrincipal);
+  Collection<ApiKeyInternal> findApiKeys(
+      @Param("domain") String domain,
+      @Param("primaryPrincipal") String primaryPrincipal);
 
   /**
    * Find {@link ApiKeyInternal} records across all domains with the specified primary principal.
@@ -83,7 +85,9 @@ public interface ApiKeyDAO
    * @param domain the domain, e.g. npm keys, nuget keys
    * @param created the date created
    */
-  Collection<ApiKeyInternal> browseByCreatedDate(@Param("domain") String domain, @Param("created") OffsetDateTime created);
+  Collection<ApiKeyInternal> browseByCreatedDate(
+      @Param("domain") String domain,
+      @Param("created") OffsetDateTime created);
 
   /**
    * Count the number of API Keys in the specified domain
@@ -115,8 +119,8 @@ public interface ApiKeyDAO
    * Browse all API Keys in the specified domain (paginated)
    *
    * @param domain the domain, e.g. npm keys, nuget keys
-   * @param skip   the amount of records to skip/offset
-   * @param limit  the amount of records to limit the query to
+   * @param skip the amount of records to skip/offset
+   * @param limit the amount of records to limit the query to
    */
   Collection<ApiKeyInternal> browsePaginated(
       @Param("domain") String domain,
@@ -125,10 +129,11 @@ public interface ApiKeyDAO
 
   /**
    * @param created a date to use as the starting point for the pagination
-   * @param limit  the number of records
+   * @param limit the number of records
    *
    * @deprecated exists only for migration
    */
   @Deprecated
   Collection<ApiKeyData> browseAllSince(@Param("created") OffsetDateTime created, @Param("limit") int limit);
+
 }

@@ -230,14 +230,13 @@ public class FeatureFlags
 
   public static final String NEXUS_SECURITY_FIPS_ENABLED = "nexus.security.fips.enabled";
 
-  public static final String NEXUS_SECURITY_FIPS_ENABLED_NAMED = "${nexus.security.fips.enabled:-false}";
-
   public static final String NEXUS_SECURITY_FIPS_ENABLED_NAMED_VALUE = "${nexus.security.fips.enabled:false}";
-
-  public static final String NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED = "${nexus.security.password.algorithm:-shiro1}";
 
   public static final String NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED_VALUE =
       "${nexus.security.password.algorithm:shiro1}";
+
+  public static final String NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE =
+      "${nexus.security.secrets.algorithm:PBKDF2WithHmacSHA1}";
 
   public static final String CONTAINER_IMAGES_EVAL_ENABLED = "nexus.container.images.eval.enabled";
 

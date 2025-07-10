@@ -48,7 +48,7 @@ public class SecretsEncryptionApiResourceV1Tests
   public void testTaskCreated() {
     ReEncryptionRequestApiXO request = new ReEncryptionRequestApiXO("test-key", null);
     Response response = underTest.reEncrypt(request);
-    assertThat(response.getStatus()).isEqualTo(Response.Status.CREATED.getStatusCode());
+    assertThat(response.getStatus()).isEqualTo(Response.Status.ACCEPTED.getStatusCode());
   }
 
   @Test

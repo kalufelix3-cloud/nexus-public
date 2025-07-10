@@ -18,7 +18,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-
 import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -204,11 +203,11 @@ public class SecretsServiceImpl
   }
 
   private String doEncrypt(final char[] secret, final Optional<SecretEncryptionKey> customKey) throws CipherException {
-    if (customKey.isPresent()) {
-      return cipherFactory.create(customKey.get()).encrypt(toBytes(secret)).toPhcString();
-    }
+    SecretEncryptionKey keyToUse = customKey.orElse(defaultKey);
+    PbeCipherFactory.PbeCipher pbeCipher = cipherFactory.create(keyToUse);
+    EncryptedSecret encryptedSecret = pbeCipher.encrypt(toBytes(secret));
 
-    return cipherFactory.create(defaultKey).encrypt(toBytes(secret)).toPhcString();
+    return encryptedSecret.toPhcString();
   }
 
   @Override
@@ -234,32 +233,40 @@ public class SecretsServiceImpl
       return decryptLegacy(token);
     }
 
-    Optional<SecretData> secret = secretsStore.read(parseToken(token));
-
-    if (!secret.isPresent()) {
-      throw new CipherException("Unable find secret for the specified token");
-    }
-
-    SecretData data = secret.get();
+    SecretData data = secretsStore.read(parseToken(token))
+        .orElseThrow(() -> new CipherException("Unable to find secret for the specified token"));
 
     return doDecrypt(data);
   }
 
-  private char[] doDecrypt(SecretData data) {
-    Optional<SecretEncryptionKey> secretKey = Optional.ofNullable(data.getKeyId())
-        .flatMap(encryptionKeySource::getKey);
-
-    if (secretKey.isPresent()) {
-      return toChars(cipherFactory.create(secretKey.get()).decrypt(EncryptedSecret.parse(data.getSecret())));
-    }
-
-    if (data.getKeyId() != null) {
-      log.warn("key id '{}' present in record but not found in existing secrets, secret id : {}", data.getKeyId(),
-          data.getId());
+  private char[] doDecrypt(final SecretData data) {
+    // First check if a key ID is specified but not found
+    if (data.getKeyId() != null && !encryptionKeySource.getKey(data.getKeyId()).isPresent()) {
       throw new CipherException(format("unable to find secret key with id '%s'.", data.getKeyId()));
     }
+    SecretEncryptionKey key = Optional.ofNullable(data.getKeyId())
+        .flatMap(encryptionKeySource::getKey)
+        .orElse(defaultKey);
 
-    return toChars(cipherFactory.create(defaultKey).decrypt(EncryptedSecret.parse(data.getSecret())));
+    PbeCipherFactory.PbeCipher pbeCipher = cipherFactory.create(key, data.getSecret());
+    char[] decrypted = toChars(pbeCipher.decrypt());
+
+    // If algorithm needs migration, re-encrypt with current algorithm
+    if (!pbeCipher.isDefaultCipher()) {
+      reEncryptWithCurrentAlgorithm(data, decrypted);
+    }
+    return decrypted;
+  }
+
+  private void reEncryptWithCurrentAlgorithm(
+      final SecretData data,
+      final char[] valueToEncrypt) throws CipherException
+  {
+    Optional<SecretEncryptionKey> customKey = Optional.ofNullable(data.getKeyId()).flatMap(encryptionKeySource::getKey);
+
+    String newEncrypted = doEncrypt(valueToEncrypt, customKey);
+
+    secretsStore.update(data.getId(), data.getSecret(), data.getKeyId(), newEncrypted);
   }
 
   /**
@@ -371,7 +378,7 @@ public class SecretsServiceImpl
       try {
         return SecretsServiceImpl.this.doDecrypt(tokenId);
       }
-      catch (CipherException e) {
+      catch (CipherException | IllegalArgumentException | NullPointerException e) {
         if (isLegacy) {
           log.debug("Failed to decrypt legacy secret, tokenId will be returned as secret");
           return tokenId.toCharArray();

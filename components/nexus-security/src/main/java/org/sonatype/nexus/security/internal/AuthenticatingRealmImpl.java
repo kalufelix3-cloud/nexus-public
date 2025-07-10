@@ -137,8 +137,8 @@ public class AuthenticatingRealmImpl
    * @param password clear-text password to hash
    */
   private void reHashPassword(final CUser user, final String password) {
-    String hashedPassword = passwordService.encryptPassword(password);
     try {
+      String hashedPassword = passwordService.encryptPassword(password);
       boolean updated = false;
       do {
         try {

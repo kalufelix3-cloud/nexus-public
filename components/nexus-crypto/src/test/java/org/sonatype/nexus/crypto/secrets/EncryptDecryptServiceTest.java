@@ -13,6 +13,7 @@
 package org.sonatype.nexus.crypto.secrets;
 
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
+import org.sonatype.nexus.crypto.internal.HashingHandlerFactoryImpl;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactoryImpl;
 
 import org.junit.Test;
@@ -23,7 +24,8 @@ public class EncryptDecryptServiceTest
 {
 
   EncryptDecryptService encryptDecryptService =
-      new EncryptDecryptService(new PbeCipherFactoryImpl(new CryptoHelperImpl(false)));
+      new EncryptDecryptService(new PbeCipherFactoryImpl(new CryptoHelperImpl(false),
+          new HashingHandlerFactoryImpl(new CryptoHelperImpl(false)), "PBKDF2WithHmacSHA1"));
 
   @Test
   public void testEncryptionDecryption() {

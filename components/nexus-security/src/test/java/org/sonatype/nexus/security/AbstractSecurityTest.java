@@ -35,6 +35,7 @@ import org.sonatype.nexus.security.realm.TestRealmConfiguration;
 import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.testcommon.event.SimpleEventManager;
 
+import org.apache.shiro.authc.credential.PasswordService;
 import org.apache.shiro.util.ThreadContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -65,6 +67,9 @@ public abstract class AbstractSecurityTest
 {
   @Autowired
   protected ApplicationContext applicationContext;
+
+  @MockBean
+  protected PasswordService passwordService;
 
   @BeforeEach
   protected void setUp() throws Exception {
@@ -157,7 +162,7 @@ public abstract class AbstractSecurityTest
     }
 
     @Bean
-    public SecretsStore secrestsStore() {
+    public SecretsStore secretsStore() {
       return mock(SecretsStore.class);
     }
 

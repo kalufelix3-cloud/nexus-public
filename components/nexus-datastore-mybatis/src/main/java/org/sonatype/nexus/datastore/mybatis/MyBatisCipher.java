@@ -12,25 +12,30 @@
  */
 package org.sonatype.nexus.datastore.mybatis;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
-import org.sonatype.nexus.crypto.LegacyCipherFactory;
 import org.sonatype.nexus.crypto.LegacyCipherFactory.PbeCipher;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
-import org.sonatype.nexus.crypto.internal.LegacyCipherFactoryImpl;
+import org.sonatype.nexus.crypto.internal.HashingHandlerFactoryImpl;
+import org.sonatype.nexus.crypto.internal.PbeCipherFactory;
+import org.sonatype.nexus.crypto.internal.PbeCipherFactoryImpl;
+import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
+import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
 import org.sonatype.nexus.security.PasswordHelper;
 
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.eclipse.sisu.Hidden;
 import org.eclipse.sisu.Typed;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Qualifier;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.crypto.internal.EncryptionHelper.fromBase64;
 
 /**
  * Database cipher shared between all MyBatis handlers that want to encrypt data at rest.
- *
+ * <p>
  * Note this is different from nested password attributes which should be encrypted with
  * {@link PasswordHelper}, this is about encrypting the entire content of a database cell.
  *
@@ -44,29 +49,34 @@ import org.springframework.beans.factory.annotation.Qualifier;
 final class MyBatisCipher
     implements PbeCipher
 {
-  private PbeCipher pbeCipher;
+  private final PbeCipherFactory.PbeCipher pbeCipher;
 
   @Inject
   MyBatisCipher(
-      final LegacyCipherFactory legacyCipherFactory,
       @Value("${nexus.mybatis.cipher.password:changeme}") final String password,
       @Value("${nexus.mybatis.cipher.salt:changeme}") final String salt,
-      @Value("${nexus.mybatis.cipher.iv:0123456789ABCDEF}") final String iv) throws Exception
+      @Value("${nexus.mybatis.cipher.iv:0123456789ABCDEF}") final String iv,
+      final PbeCipherFactory pbeCipherFactory)
   {
-    this.pbeCipher = legacyCipherFactory.create(password, salt, iv);
+    SecretEncryptionKey secretKey = new SecretEncryptionKey(null, password);
+    this.pbeCipher = checkNotNull(pbeCipherFactory).create(secretKey, salt, iv);
   }
 
   /**
    * Static configuration for testing purposes.
    */
   @VisibleForTesting
-  MyBatisCipher() throws Exception {
-    this(new LegacyCipherFactoryImpl(new CryptoHelperImpl(false)), "changeme", "changeme", "0123456789ABCDEF");
+  MyBatisCipher() {
+    this("changeme", "changeme", "0123456789ABCDEF",
+        new PbeCipherFactoryImpl(new CryptoHelperImpl(false),
+            new HashingHandlerFactoryImpl(new CryptoHelperImpl(false)), "PBKDF2WithHmacSHA1"));
   }
 
   @Override
   public byte[] encrypt(final byte[] bytes) {
-    return pbeCipher.encrypt(bytes);
+    EncryptedSecret encryptedSecret = pbeCipher.encrypt(bytes);
+    String base64Value = encryptedSecret.getValue();
+    return fromBase64(base64Value);
   }
 
   @Override

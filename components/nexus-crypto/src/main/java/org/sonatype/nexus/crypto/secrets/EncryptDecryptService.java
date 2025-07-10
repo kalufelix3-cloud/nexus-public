@@ -31,8 +31,6 @@ public class EncryptDecryptService
     extends ComponentSupport
     implements EncryptDecrypt<String, String, String>
 {
-  private PbeCipher pbeCipher;
-
   private final PbeCipherFactory pbeCipherFactory;
 
   private String secret = "changeme";
@@ -40,7 +38,6 @@ public class EncryptDecryptService
   @Inject
   public EncryptDecryptService(final PbeCipherFactory pbeCipherFactory) {
     this.pbeCipherFactory = checkNotNull(pbeCipherFactory);
-    initCipher();
   }
 
   @Override
@@ -55,27 +52,31 @@ public class EncryptDecryptService
 
   @Override
   public String encrypt(String stringToEncrypt) {
-    return pbeCipher.encrypt(stringToEncrypt.getBytes(UTF_8)).toPhcString();
+    try {
+      SecretEncryptionKey secretKey = new SecretEncryptionKey(secret);
+      PbeCipher pbeCipher = pbeCipherFactory.create(secretKey);
+      return pbeCipher.encrypt(stringToEncrypt.getBytes(UTF_8)).toPhcString();
+    }
+    catch (Exception e) {
+      log.error("Failed to encrypt", e);
+      throw new RuntimeException("Unable to encrypt.", e);
+    }
   }
 
   @Override
   public String decrypt(String stringToDecrypt) {
-    return new String(pbeCipher.decrypt(EncryptedSecret.parse(stringToDecrypt)), UTF_8);
+    try {
+      SecretEncryptionKey secretKey = new SecretEncryptionKey(secret);
+      PbeCipher pbeCipher = pbeCipherFactory.create(secretKey, stringToDecrypt);
+      return new String(pbeCipher.decrypt(), UTF_8);
+    }
+    catch (Exception e) {
+      log.error("Failed to decrypt", e);
+      throw new RuntimeException("Unable to decrypt.", e);
+    }
   }
 
   public void setSecret(String secret) {
     this.secret = secret;
-    initCipher();
-  }
-
-  private void initCipher() {
-    try {
-      SecretEncryptionKey secretKey = new SecretEncryptionKey("key", secret);
-      pbeCipher = pbeCipherFactory.create(secretKey);
-    }
-    catch (Exception e) {
-      log.error("Failed to load cipher", e);
-      throw new RuntimeException("Unable to initialize encryption.", e);
-    }
   }
 }

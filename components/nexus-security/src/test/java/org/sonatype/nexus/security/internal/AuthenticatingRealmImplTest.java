@@ -13,12 +13,12 @@
 package org.sonatype.nexus.security.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.security.config.CUser;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
 import org.sonatype.nexus.security.config.memory.MemoryCUser;
 
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authc.credential.PasswordService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -27,6 +27,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
@@ -46,7 +47,10 @@ public class AuthenticatingRealmImplTest
   @Mock
   private SecurityConfigurationManager configuration;
 
-  private CUser testUser = new MemoryCUser();
+  @Mock
+  private PasswordService passwordService;
+
+  private final CUser testUser = new MemoryCUser();
 
   @Before
   public void setUp() throws Exception {
@@ -64,48 +68,48 @@ public class AuthenticatingRealmImplTest
       testUser.setPassword(((CUser) inv.getArguments()[0]).getPassword());
       return null;
     }).when(configuration).updateUser(any());
+
+    when(passwordService.passwordsMatch(any(), eq("f865b53623b121fd34ee5426c792e5c33af8c227"))).thenReturn(true);
+    when(passwordService.passwordsMatch(any(), eq(
+        "$shiro1$SHA-512$1024$jp/XAZ6ZsFoy8Tshw1/xGw==$CbW0M68TR1Sp+mS4SfQGolAv2tBiUTbp6PZVhzhVSnWeAtR1NWt1Hn2S+OlvIWg+qYKDmWRvbDEVwdJt9La4ng==")))
+            .thenReturn(true);
+    when(passwordService.passwordsMatch(any(), eq(
+        "$pbkdf2-sha256$i=1024$jp/XAZ6ZsFoy8Tshw1/xGw==$CbW0M68TR1Sp+mS4SfQGolAv2tBiUTbp6PZVhzhVSnWeAtR1NWt1Hn2S+OlvIWg+qYKDmWRvbDEVwdJt9La4ng==")))
+            .thenReturn(true);
   }
 
   @Test
   public void testLegacyPasswordIsReHashedUsingShiroOnOrient() {
+    when(passwordService.encryptPassword("admin123")).thenReturn("$shiro1$SHA-512$1024$jp/XAZ6ZsFoy8Tshw1/xGw==$CbW0M68TR1Sp+mS4SfQGolAv2tBiUTbp6PZVhzhVSnWeAtR1NWt1Hn2S+OlvIWg+qYKDmWRvbDEVwdJt9La4ng==");
     assertThat(testUser.getPassword(), is(LEGACY_PASSWORD_HASH));
-    AuthenticatingRealmImpl underTestOrient = new AuthenticatingRealmImpl(configuration,
-        new DefaultSecurityPasswordService(new LegacyNexusPasswordService(), SHIRO_PASSWORD_ALGORITHM,
-            new CryptoHelperImpl(false)),
-        true, SHIRO_PASSWORD_ALGORITHM);
+    AuthenticatingRealmImpl underTestOrient = new AuthenticatingRealmImpl(configuration, passwordService, true, SHIRO_PASSWORD_ALGORITHM);
     underTestOrient.getAuthenticationInfo(new UsernamePasswordToken(TEST_USERNAME, TEST_PASSWORD));
     assertThat(testUser.getPassword(), startsWith("$shiro1$SHA-512$"));
   }
 
   @Test
   public void testLegacyPasswordIsReHashedUsingShiroOnNewDB() {
+    when(passwordService.encryptPassword("admin123")).thenReturn("$shiro1$SHA-512$1024$jp/XAZ6ZsFoy8Tshw1/xGw==$CbW0M68TR1Sp+mS4SfQGolAv2tBiUTbp6PZVhzhVSnWeAtR1NWt1Hn2S+OlvIWg+qYKDmWRvbDEVwdJt9La4ng==");
     assertThat(testUser.getPassword(), is(LEGACY_PASSWORD_HASH));
-    AuthenticatingRealmImpl underTestOrient = new AuthenticatingRealmImpl(configuration,
-        new DefaultSecurityPasswordService(new LegacyNexusPasswordService(), SHIRO_PASSWORD_ALGORITHM,
-            new CryptoHelperImpl(false)),
-        false, SHIRO_PASSWORD_ALGORITHM);
+    AuthenticatingRealmImpl underTestOrient = new AuthenticatingRealmImpl(configuration, passwordService, false, SHIRO_PASSWORD_ALGORITHM);
     underTestOrient.getAuthenticationInfo(new UsernamePasswordToken(TEST_USERNAME, TEST_PASSWORD));
-    assertThat(testUser.getPassword(), startsWith("$shiro1$SHA-512$"));
+    assertThat(testUser.getPassword(), startsWith("$shiro1$SHA-512"));
   }
 
   @Test
   public void testLegacyPasswordIsReHashedToSha256OnOrient() {
+    when(passwordService.encryptPassword("admin123")).thenReturn("$pbkdf2-sha256$i=1024$jp/XAZ6ZsFoy8Tshw1/xGw==$CbW0M68TR1Sp+mS4SfQGolAv2tBiUTbp6PZVhzhVSnWeAtR1NWt1Hn2S+OlvIWg+qYKDmWRvbDEVwdJt9La4ng==");
     assertThat(testUser.getPassword(), is(LEGACY_PASSWORD_HASH));
-    AuthenticatingRealmImpl underTestOrient = new AuthenticatingRealmImpl(configuration,
-        new DefaultSecurityPasswordService(new LegacyNexusPasswordService(), SHA256_PASSWORD_ALGORITHM,
-            new CryptoHelperImpl(false)),
-        true, SHA256_PASSWORD_ALGORITHM);
+    AuthenticatingRealmImpl underTestOrient = new AuthenticatingRealmImpl(configuration, passwordService, true, SHA256_PASSWORD_ALGORITHM);
     underTestOrient.getAuthenticationInfo(new UsernamePasswordToken(TEST_USERNAME, TEST_PASSWORD));
     assertThat(testUser.getPassword(), startsWith("$pbkdf2-sha256$i"));
   }
 
   @Test
   public void testLegacyPasswordIsReHashedToSha256OnNewDB() {
+    when(passwordService.encryptPassword("admin123")).thenReturn("$pbkdf2-sha256$i=1024$jp/XAZ6ZsFoy8Tshw1/xGw==$CbW0M68TR1Sp+mS4SfQGolAv2tBiUTbp6PZVhzhVSnWeAtR1NWt1Hn2S+OlvIWg+qYKDmWRvbDEVwdJt9La4ng==");
     assertThat(testUser.getPassword(), is(LEGACY_PASSWORD_HASH));
-    AuthenticatingRealmImpl underTestOrient = new AuthenticatingRealmImpl(configuration,
-        new DefaultSecurityPasswordService(new LegacyNexusPasswordService(), SHA256_PASSWORD_ALGORITHM,
-            new CryptoHelperImpl(false)),
-        false, SHA256_PASSWORD_ALGORITHM);
+    AuthenticatingRealmImpl underTestOrient = new AuthenticatingRealmImpl(configuration, passwordService, false, SHA256_PASSWORD_ALGORITHM);
     underTestOrient.getAuthenticationInfo(new UsernamePasswordToken(TEST_USERNAME, TEST_PASSWORD));
     assertThat(testUser.getPassword(), startsWith("$pbkdf2-sha256$i"));
   }

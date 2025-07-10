@@ -28,11 +28,20 @@ public interface PbeCipherFactory
   {
     EncryptedSecret encrypt(final byte[] bytes) throws CipherException;
 
-    byte[] decrypt(EncryptedSecret secret) throws CipherException;
+    byte[] decrypt() throws CipherException;
+
+    byte[] decrypt(byte[] value) throws CipherException;
+
+    boolean isDefaultCipher();
   }
 
-  /**
-   * Creates a {@link PbeCipher} with the given {@link SecretEncryptionKey}.
-   */
+  // Create a PBE cipher using an algorithm from NEXUS_SECRETS_ALGORITHM property(e.g., PBKDF2 with SHA-256 or SHA-1),
+  // needed for encryption
   PbeCipher create(SecretEncryptionKey secretEncryptionKey) throws CipherException;
+
+  // Create a PBE cipher using the specified algorithm from encryptedSecret, needed for decryption and verify
+  PbeCipher create(SecretEncryptionKey secretEncryptionKey, String encryptedSecret) throws CipherException;
+
+  // create a PBE cipher using an algorithm from NEXUS_SECRETS_ALGORITHM property, salt, and IV
+  PbeCipher create(SecretEncryptionKey secretEncryptionKey, String salt, String iv) throws CipherException;
 }

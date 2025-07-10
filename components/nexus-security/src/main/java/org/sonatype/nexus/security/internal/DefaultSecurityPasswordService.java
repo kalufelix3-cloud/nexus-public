@@ -12,19 +12,14 @@
  */
 package org.sonatype.nexus.security.internal;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
-import java.util.Base64;
+import java.util.Optional;
 import java.util.Set;
 
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-
-import org.sonatype.nexus.common.app.FeatureFlags;
-import org.sonatype.nexus.crypto.CryptoHelper;
+import org.sonatype.nexus.crypto.internal.HashingHandlerFactory;
+import org.sonatype.nexus.crypto.internal.error.CipherException;
+import org.sonatype.nexus.crypto.HashingHandler;
 import org.sonatype.nexus.security.authc.AuthenticationFailureReason;
 import org.sonatype.nexus.security.authc.NexusAuthenticationException;
 
@@ -44,6 +39,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED_VALUE;
 
 /**
  * Default {@link PasswordService}.
@@ -72,81 +68,51 @@ public class DefaultSecurityPasswordService
 
   private static final int DEFAULT_HASH_ITERATIONS = 1024;
 
-  private static final String FIPS_COMPLIANT_ALGORITHM = "$pbkdf2-sha256$";
-
-  private static final String PBKDF2_SHA256 = "PBKDF2WithHmacSHA256";
-
-  private static final int FIPS_ITERATIONS = 10000;
-
-  private static final int SALT_LENGTH = 16;
-
-  private static final int KEY_LENGTH = 256;
-
   /**
    * Provides the actual implementation of PasswordService.
    * We are just wrapping to apply default policy
    */
-  private final DefaultPasswordService passwordService;
+  private final DefaultPasswordService defaultShiroPasswordService;
 
   /**
    * Provides password services for legacy passwords (e.g. pre-2.5 SHA-1/MD5-based hashes)
    */
-  private final PasswordService legacyPasswordService;
+  private final PasswordService legacyNexusPasswordService;
 
   private final String nexusPasswordAlgorithm;
 
-  private final CryptoHelper crypto;
+  private final HashingHandlerFactory hashingHandlerFactory;
 
   @Inject
   public DefaultSecurityPasswordService(
       @Qualifier("legacy") final PasswordService legacyPasswordService,
-      @Value(FeatureFlags.NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED_VALUE) final String nexusPasswordAlgorithm,
-      final CryptoHelper crypto)
+      @Value(NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED_VALUE) final String nexusPasswordAlgorithm,
+      HashingHandlerFactory hashingHandlerFactory)
   {
-    this.passwordService = new DefaultPasswordService();
-    this.legacyPasswordService = checkNotNull(legacyPasswordService);
-    this.nexusPasswordAlgorithm = checkNotNull(nexusPasswordAlgorithm);
+    this.legacyNexusPasswordService = checkNotNull(legacyPasswordService);
 
+    this.defaultShiroPasswordService = new DefaultPasswordService();
     // Create and set a hash service according to our hashing policies
     DefaultHashService hashService = new DefaultHashService();
     hashService.setHashAlgorithmName(DEFAULT_HASH_ALGORITHM);
     hashService.setHashIterations(DEFAULT_HASH_ITERATIONS);
     hashService.setGeneratePublicSalt(true);
-    this.passwordService.setHashService(hashService);
-    this.crypto = checkNotNull(crypto);
+    this.defaultShiroPasswordService.setHashService(hashService);
+
+    this.nexusPasswordAlgorithm = checkNotNull(nexusPasswordAlgorithm);
+    this.hashingHandlerFactory = hashingHandlerFactory;
   }
 
   @Override
   public String encryptPassword(final Object plaintextPassword) {
     if (nexusPasswordAlgorithm.equals(SHIRO_PASSWORD_ALGORITHM)) {
-      return passwordService.encryptPassword(plaintextPassword);
+      return defaultShiroPasswordService.encryptPassword(plaintextPassword);
     }
-
-    // Generate random salt
-    byte[] salt = new byte[SALT_LENGTH];
-
-    SecureRandom secureRandom = crypto.createSecureRandom();
-    secureRandom.nextBytes(salt);
-
-    // Create hash using PBKDF2
-    PBEKeySpec spec = new PBEKeySpec(
-        convertToCharArray(plaintextPassword),
-        salt,
-        FIPS_ITERATIONS,
-        KEY_LENGTH);
     try {
-      SecretKeyFactory factory = SecretKeyFactory.getInstance(PBKDF2_SHA256);
-      byte[] hash = factory.generateSecret(spec).getEncoded();
-      spec.clearPassword();
-
-      // Format: $algorithm$i=iterations$salt$hash
-      return String.format("%si=%d$%s$%s",
-          FIPS_COMPLIANT_ALGORITHM,
-          FIPS_ITERATIONS,
-          Base64.getEncoder().encodeToString(salt),
-          Base64.getEncoder().encodeToString(hash));
+      HashingHandler hashingHandler = hashingHandlerFactory.create(nexusPasswordAlgorithm, null);
+      return hashingHandler.hash(convertToCharArray(plaintextPassword)).toPhcString();
     }
-    catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+    catch (CipherException | IllegalArgumentException | NullPointerException e) {
       log.error("Failed to encrypt password due to algorithm issue", e);
       throw new NexusAuthenticationException("Password is not strong enough",
           Set.of(AuthenticationFailureReason.UNKNOWN));
@@ -156,46 +122,34 @@ public class DefaultSecurityPasswordService
       throw new NexusAuthenticationException("Password is not strong enough",
           Set.of(AuthenticationFailureReason.INCORRECT_CREDENTIALS));
     }
-    finally {
-      spec.clearPassword();
-    }
   }
 
   @Override
-
   public boolean passwordsMatch(final Object submittedPlaintextPassword, final String storedHash) {
     if (storedHash == null || submittedPlaintextPassword == null) {
       return false;
     }
 
-    if (isFipsPassword(storedHash)) {
-      try {
-        FipsHash storedFipsHash = parseFipsHash(storedHash);
-        char[] submittedPassword = convertToCharArray(submittedPlaintextPassword);
-        boolean matches = verifyFipsHash(submittedPassword, storedFipsHash);
-        // Clear sensitive data from memory
-        Arrays.fill(submittedPassword, '\0');
-        storedFipsHash.clear();
-        return matches;
-      }
-      catch (Exception e) {
-        log.warn("FIPS password verification failed", e);
-        return false;
-      }
+    Optional<Boolean> validPassword = validatePassword(submittedPlaintextPassword, storedHash);
+    if (validPassword.isPresent()) {
+      return validPassword.get();
     }
 
-    return passwordService.passwordsMatch(submittedPlaintextPassword, storedHash) ||
-        legacyPasswordService.passwordsMatch(submittedPlaintextPassword, storedHash);
+    log.debug("PHC format invalid, falling back to legacy password service");
+    // When hash is just a string, it could be a legacy password.
+    // Check shiro password service or legacy nexus password service
+    return defaultShiroPasswordService.passwordsMatch(submittedPlaintextPassword, storedHash) ||
+        legacyNexusPasswordService.passwordsMatch(submittedPlaintextPassword, storedHash);
   }
 
   @Override
   public Hash hashPassword(final Object plaintext) {
-    return passwordService.hashPassword(plaintext);
+    return defaultShiroPasswordService.hashPassword(plaintext);
   }
 
   @Override
   public boolean passwordsMatch(final Object plaintext, final Hash savedPasswordHash) {
-    return passwordService.passwordsMatch(plaintext, savedPasswordHash);
+    return defaultShiroPasswordService.passwordsMatch(plaintext, savedPasswordHash);
   }
 
   private static char[] convertToCharArray(final Object plaintext) {
@@ -213,69 +167,18 @@ public class DefaultSecurityPasswordService
     }
   }
 
-  public static boolean isFipsPassword(final String password) {
-    return password != null && password.startsWith(FIPS_COMPLIANT_ALGORITHM);
-  }
-
-  private static class FipsHash
-  {
-    String algorithm;
-
-    int iterations;
-
-    byte[] salt;
-
-    byte[] hash;
-
-    String fullHash;
-
-    void clear() {
-      if (salt != null)
-        Arrays.fill(salt, (byte) 0);
-      if (hash != null)
-        Arrays.fill(hash, (byte) 0);
-    }
-  }
-
-  private static FipsHash parseFipsHash(final String hash) throws IllegalArgumentException {
-    String[] parts = hash.split("\\$");
-    if (parts.length < 5) {
-      throw new IllegalArgumentException("Invalid FIPS hash format");
-    }
-
-    FipsHash result = new FipsHash();
-    result.algorithm = parts[1];
-
+  private Optional<Boolean> validatePassword(final Object submittedPlaintextPassword, final String storedHash) {
+    char[] submittedPassword = convertToCharArray(submittedPlaintextPassword);
     try {
-      result.iterations = Integer.parseInt(parts[2].substring(2));
-      result.salt = Base64.getDecoder().decode(parts[3]);
-      result.hash = Base64.getDecoder().decode(parts[4]);
-      result.fullHash = hash;
-      return result;
+      HashingHandler hashingHandler = hashingHandlerFactory.create(storedHash);
+      return Optional.of(hashingHandler.verify(submittedPassword, storedHash));
     }
-    catch (Exception e) {
-      throw new IllegalArgumentException("Failed to parse FIPS hash", e);
-    }
-  }
-
-  private static boolean verifyFipsHash(final char[] password, final FipsHash storedFipsHash) {
-    PBEKeySpec spec = new PBEKeySpec(
-        password,
-        storedFipsHash.salt,
-        storedFipsHash.iterations,
-        KEY_LENGTH);
-
-    try {
-      SecretKeyFactory factory = SecretKeyFactory.getInstance(PBKDF2_SHA256);
-      byte[] hash = factory.generateSecret(spec).getEncoded();
-      return MessageDigest.isEqual(hash, storedFipsHash.hash);
-    }
-    catch (Exception e) {
-      log.warn("FIPS verification failed", e);
-      return false;
+    catch (IllegalArgumentException | NullPointerException | InvalidKeySpecException e) {
+      return Optional.empty();
     }
     finally {
-      spec.clearPassword();
+      // Clear the password array to prevent sensitive data
+      Arrays.fill(submittedPassword, '\0');
     }
   }
 }
