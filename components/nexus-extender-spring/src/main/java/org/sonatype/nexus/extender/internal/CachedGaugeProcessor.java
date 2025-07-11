@@ -16,17 +16,16 @@ import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.annotation.CachedGauge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.env.PropertyResolver;
+import org.springframework.stereotype.Component;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Boolean.parseBoolean;
 
 /**
@@ -34,8 +33,9 @@ import static java.lang.Boolean.parseBoolean;
  *
  * @since 3.26
  */
+@Component
 public class CachedGaugeProcessor
-    implements BeanPostProcessor
+    extends AbstractGaugeProcessor<CachedGauge>
 {
   private static final String CACHE_DISABLE_ALL = "nexus.analytics.cache.disableAll";
 
@@ -49,59 +49,45 @@ public class CachedGaugeProcessor
 
   private final Logger log = LoggerFactory.getLogger(getClass().getName());
 
-  private final MetricRegistry metricRegistry;
-
   private final PropertyResolver nexusProperties;
 
-  public CachedGaugeProcessor(
-      final MetricRegistry metricRegistry,
-      final PropertyResolver nexusProperties)
-  {
-    this.metricRegistry = checkNotNull(metricRegistry);
+  @Lazy
+  @Autowired
+  public CachedGaugeProcessor(final PropertyResolver nexusProperties) {
     this.nexusProperties = nexusProperties;
   }
 
   @Override
-  public Object postProcessAfterInitialization(final Object bean, final String beanName) throws BeansException {
-    for (Class<?> clazz = bean.getClass(); clazz != null; clazz = clazz.getSuperclass()) {
-      for (Method method : clazz.getDeclaredMethods()) {
-        processAnnotationMethod(method, bean);
-      }
-    }
-    return bean;
-  }
-
-  private void processAnnotationMethod(final Method method, final Object bean) {
-    if (method.isSynthetic()) {
-      return;
-    }
-
-    final CachedGauge annotation = AnnotationUtils.getAnnotation(method, CachedGauge.class);
-    if (annotation == null) {
-      return;
-    }
-
-    if (method.getParameterCount() != 0) {
-      log.error("Method %s is annotated with @CachedGauge but requires parameters.", method);
-      return;
-    }
-
-    final String metricName = metricName(method, annotation);
-
+  protected void registerMetric(Object bean, Method method, CachedGauge gauge, String metricName) {
     if (parseBoolean(nexusProperties.getProperty(metricName + GAUGE_DISABLE_SUFFIX))) {
       log.info("Removed Analytics for {} as directed in nexus.properties", metricName);
       return;
     }
-
-    // deprecated method in java 9, but replacement is not available in java 8
-    if (!method.isAccessible()) {
-      method.setAccessible(true);
-    }
-
-    buildInjectionListener(bean, metricName, method, annotation);
+    registerGaugeAsCachedIfEnabled(bean, metricName, method, gauge);
   }
 
-  private void buildInjectionListener(
+  @Override
+  protected String gaugeName() {
+    return "@CachedGauge";
+  }
+
+  @Override
+  protected CachedGauge getAnnotation(Method method) {
+    return AnnotationUtils.getAnnotation(method, CachedGauge.class);
+  }
+
+  @Override
+  protected String metricName(Method method, CachedGauge gauge) {
+    if (gauge.absolute()) {
+      return gauge.name();
+    }
+    if (gauge.name().isEmpty()) {
+      return name(method.getDeclaringClass(), method.getName(), "gauge");
+    }
+    return name(method.getDeclaringClass(), gauge.name());
+  }
+
+  private void registerGaugeAsCachedIfEnabled(
       final Object bean,
       final String metricName,
       final Method method,
@@ -110,20 +96,19 @@ public class CachedGaugeProcessor
     if (parseBoolean(nexusProperties.getProperty(CACHE_DISABLE_ALL))
         || parseBoolean(nexusProperties.getProperty(CACHE_DISABLE_PREFIX + metricName))) {
       log.info("Disabled Analytics Cache for {} as directed in nexus.properties", metricName);
-
-      metricRegistry.register(metricName, new com.codahale.metrics.Gauge<Object>()
-      {
-        @Override
-        public Object getValue() {
-          try {
-            return method.invoke(bean);
-          }
-          catch (Exception e) {
-            return new RuntimeException(e);
-          }
-        }
-      });
+      registerMetricAsGauge(bean, metricName, method);
     }
+    else {
+      registerMetricAsCachedGauges(bean, metricName, method, annotation);
+    }
+  }
+
+  private void registerMetricAsCachedGauges(
+      final Object bean,
+      final String metricName,
+      final Method method,
+      final CachedGauge annotation)
+  {
     long timeout = annotation.timeout();
     Optional<Long> timeoutOverride = getTimeoutOverride(metricName);
     if (timeoutOverride.isPresent()) {
@@ -187,18 +172,5 @@ public class CachedGaugeProcessor
       }
     }
     return Optional.empty();
-  }
-
-  private static String metricName(final Method method, final CachedGauge gauge) {
-    if (gauge.absolute()) {
-      return gauge.name();
-    }
-
-    if (gauge.name().isEmpty()) {
-      return name(method.getDeclaringClass(), method.getName(), "gauge");
-    }
-
-    return name(method.getDeclaringClass(), gauge.name());
-
   }
 }

@@ -41,7 +41,7 @@ public class LogEventComponentTest
   @Before
   public void setup() {
     // Required for class setup
-    loggerFactory.when(() -> LoggerFactory.getLogger(LogEventComponent.class))
+    loggerFactory.when(() -> LoggerFactory.getLogger(any(Class.class)))
         .thenReturn(mock(Logger.class));
 
     // The logger we care about
