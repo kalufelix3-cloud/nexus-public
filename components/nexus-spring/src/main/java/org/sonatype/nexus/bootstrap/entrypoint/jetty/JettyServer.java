@@ -36,6 +36,7 @@ import org.sonatype.nexus.bootstrap.entrypoint.configuration.PropertyMap;
 import org.sonatype.nexus.bootstrap.entrypoint.jvm.ShutdownDelegate;
 import org.sonatype.nexus.bootstrap.jetty.ConnectorConfiguration;
 import org.sonatype.nexus.bootstrap.jetty.ConnectorManager;
+import org.sonatype.nexus.bootstrap.jetty.InstrumentedHandler;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.text.Strings2;
 
@@ -48,7 +49,6 @@ import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.resource.ResourceFactory;
@@ -215,8 +215,11 @@ public class JettyServer
   }
 
   private void registerServlets(final ApplicationContext context, final Server server) {
-    ContextHandlerCollection handler = ((ContextHandlerCollection) server.getHandler());
-    ServletContextHandler servletContext = new ServletContextHandler(handler, null);
+    InstrumentedHandler defaultHandler = server.getBean(InstrumentedHandler.class);
+    if (defaultHandler == null) {
+      throw new IllegalStateException("Missing default handler");
+    }
+    ServletContextHandler servletContext = new ServletContextHandler(defaultHandler, null);
     context.getBeansOfType(HttpServlet.class)
         .values()
         .stream()
@@ -235,7 +238,7 @@ public class JettyServer
         .map(EventListener.class::cast)
         .forEach(servletContext::addEventListener);
 
-    handler.addHandler(servletContext);
+    defaultHandler.setHandler(servletContext);
 
     setErrorPage(servletContext);
   }
