@@ -10,98 +10,37 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.app;
+package org.sonatype.nexus.common.app;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import javax.servlet.DispatcherType;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.app.BaseUrlHolder;
-import org.sonatype.nexus.common.app.BaseUrlManager;
 
 import com.google.common.base.Strings;
-import org.springframework.beans.factory.annotation.Value;
+import jakarta.inject.Provider;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.springframework.stereotype.Component;
 
-/**
- * Default {@link BaseUrlManager}.
- *
- * @since 3.0
- */
-@Component
-@Singleton
-public class BaseUrlManagerImpl
+public abstract class AbstractBaseUrlManager
     extends ComponentSupport
     implements BaseUrlManager
 {
   private final Provider<HttpServletRequest> requestProvider;
 
-  private volatile String url;
+  protected volatile String url;
 
-  private volatile boolean force;
-
-  @Inject
-  public BaseUrlManagerImpl(
-      final Provider<HttpServletRequest> requestProvider,
-      @Value("${org.sonatype.nexus.internal.app.BaseUrlManagerImpl.force:false}") final boolean force)
-  {
+  @Autowired
+  protected AbstractBaseUrlManager(final Provider<HttpServletRequest> requestProvider) {
     this.requestProvider = checkNotNull(requestProvider);
-    this.force = force;
-    log.debug("Force: {}", force);
   }
 
-  @Override
-  public void setUrl(final String url) {
-    this.url = url;
-  }
-
-  @Override
-  public String getUrl() {
-    return url;
-  }
-
-  @Override
-  public boolean isForce() {
-    return force;
-  }
-
-  @Override
-  public void setForce(final boolean force) {
-    this.force = force;
-  }
-
-  /**
-   * Return the current HTTP servlet-request if there is one in the current scope.
-   */
-  @Nullable
-  private HttpServletRequest httpRequest() {
-    try {
-      return requestProvider.get();
-    }
-    catch (Exception e) {
-      log.trace("Unable to resolve HTTP servlet-request", e);
-      return null;
-    }
-  }
-
-  /**
-   * Detect base-url from forced settings, request or non-forced settings.
-   */
   @Nullable
   @Override
   public String detectUrl() {
-    // force base-url always wins if set
-    if (force && !Strings.isNullOrEmpty(url)) {
-      return url;
-    }
-
     // attempt to detect from HTTP request
     HttpServletRequest request = httpRequest();
     if (request != null) {
@@ -153,35 +92,6 @@ public class BaseUrlManagerImpl
     return "";
   }
 
-  private static String createRelativePath(final int length) {
-    if (length == 0) {
-      return ".";
-    }
-
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < length; i++) {
-      sb.append("../");
-    }
-    // guarantee it does not end in a slash
-    return sb.substring(0, sb.length() - 1);
-  }
-
-  private static int countSlashes(final String path) {
-    int count = 0;
-    // we start at 1 to avoid leading slashes
-    int previousIndex = 0;
-    for (int i = 1; i < path.length(); i++) {
-      if (path.charAt(i) == '/') {
-        // skip double slashes
-        if (previousIndex != (i - 1)) {
-          ++count;
-        }
-        previousIndex = i;
-      }
-    }
-    return count;
-  }
-
   /**
    * Detect and set (if non-null) the base-url.
    */
@@ -196,5 +106,48 @@ public class BaseUrlManagerImpl
     else {
       log.debug("Unable to detect base-url");
     }
+  }
+
+  /**
+   * Return the current HTTP servlet-request if there is one in the current scope.
+   */
+  @Nullable
+  protected HttpServletRequest httpRequest() {
+    try {
+      return requestProvider.get();
+    }
+    catch (Exception e) {
+      log.trace("Unable to resolve HTTP servlet-request", e);
+      return null;
+    }
+  }
+
+  protected static String createRelativePath(final int length) {
+    if (length == 0) {
+      return ".";
+    }
+
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < length; i++) {
+      sb.append("../");
+    }
+    // guarantee it does not end in a slash
+    return sb.substring(0, sb.length() - 1);
+  }
+
+  protected static int countSlashes(final String path) {
+    int count = 0;
+    // we start at 1 to avoid leading slashes
+    int previousIndex = 0;
+    for (int i = 1; i < path.length(); i++) {
+      if (path.charAt(i) == '/') {
+        // skip double slashes
+        if (previousIndex != (i - 1)) {
+          ++count;
+        }
+        previousIndex = i;
+      }
+    }
+    return count;
   }
 }
