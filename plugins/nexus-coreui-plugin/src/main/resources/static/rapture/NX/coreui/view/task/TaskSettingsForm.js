@@ -249,16 +249,6 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
     this.down('nx-coreui-formfield-settingsfieldset').markInvalid(errors);
   },
 
-  disableComponents: function (disabled) {
-    this.disableComponent(this.down('[name="sinceDays"]'), disabled);
-    this.disableComponent(this.down('[name="sinceHours"]'), disabled);
-    this.disableComponent(this.down('[name="sinceMinutes"]'), disabled);
-    this.disableComponent(this.down('[name="taskScheduleTime"]'), disabled);
-    this.disableComponent(this.down('[name="property_blobstoreName"]'), disabled);
-    this.disableComponent(this.down('[name="property_repositoryName"]'), disabled);
-    this.disableComponent(this.down('[name="property_dryRun"]'), disabled);
-    this.disableComponent(this.down('[name="taskScope"]'), disabled);
-  },
   disableComponent: function (component, disabled) {
     if (component != null) {
       component.setDisabled(disabled);
