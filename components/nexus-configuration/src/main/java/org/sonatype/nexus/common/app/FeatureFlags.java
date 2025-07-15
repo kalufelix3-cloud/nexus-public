@@ -222,8 +222,6 @@ public class FeatureFlags
 
   public static final String RECONCILE_CLEANUP_DAYS_AGO_VALUE = "${nexus.reconcile.cleanup.daysAgo:7}";
 
-  public static final String RECONCILE_EXECUTE_CREATED_HOURS_AGO_VALUE = "${nexus.reconcile.execute.plans.created:2h}";
-
   public static final String SECRETS_API_ENABLED = "nexus.secrets.api.enabled";
 
   public static final String NEXUS_SECURITY_OAUTH2_ENABLED = "nexus.security.oauth2.enabled";
