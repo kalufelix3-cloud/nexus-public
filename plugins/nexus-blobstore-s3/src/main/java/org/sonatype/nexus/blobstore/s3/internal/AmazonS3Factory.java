@@ -84,7 +84,7 @@ public class AmazonS3Factory
 
   @Inject
   public AmazonS3Factory(
-      @Value("${nexus.s3.connection.pool:1}") final int connectionPoolSize,
+      @Value("${nexus.s3.connection.pool:-1}") final int connectionPoolSize,
       @Nullable @Value("${nexus.s3.connection.ttl:#{null}}") final Time connectionTtl,
       @Value("${nexus.s3.cloudwatchmetrics.enabled:false}") final boolean cloudWatchMetricsEnabled,
       @Value("${nexus.s3.cloudwatchmetrics.namespace:nexus-blobstore-s3}") final String cloudWatchMetricsNamespace,
