@@ -63,7 +63,7 @@ public class StaticSecurityConfigurationSourceTest
 
     assertThat(user.getPassword(), is("encrypted"));
     verify(adminPasswordSource).getPassword(true);
-    verify(passwordService, times(2)).encryptPassword(any());
+    verify(passwordService, times(1)).encryptPassword(any());
   }
 
   @Test

@@ -148,8 +148,7 @@ public class StaticSecurityConfigurationSource
   private MemoryCUser getAnonymousUser() {
     return new MemoryCUser()
         .withId(ANONYMOUS)
-        .withPassword(
-            passwordService.encryptPassword(ANONYMOUS))
+        .withPassword("unused")
         .withFirstName("Anonymous")
         .withLastName("User")
         .withStatus(CUser.STATUS_ACTIVE)
