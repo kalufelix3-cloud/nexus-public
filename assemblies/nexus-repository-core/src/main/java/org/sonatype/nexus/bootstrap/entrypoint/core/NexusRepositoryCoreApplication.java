@@ -35,7 +35,7 @@ public class NexusRepositoryCoreApplication
     // Ensure karaf.data is set as logback needs it early
     NexusDirectoryConfiguration.load();
     // since logback is going to start on its own, we need to tell it where to find its configuration
-    System.setProperty("logback.configurationFile", "etc/logback/logback.xml");
+    System.setProperty("logging.config", "etc/logback/logback.xml");
 
     new SpringApplicationBuilder(NexusRepositoryCoreApplication.class)
         .bannerMode(OFF)
