@@ -14,7 +14,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {filter, find, findIndex, indexBy, insert, keys, prop, propEq} from 'ramda';
+import {clone, filter, find, findIndex, indexBy, insert, keys, prop, propEq} from 'ramda';
 import {APIConstants} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -91,31 +91,33 @@ const updatePrivilegeUrl = (type, name) => `${privilegesUrl}/${encodeURIComponen
 export const URL = {privilegesUrl, singlePrivilegeUrl, updatePrivilegeUrl, createPrivilegeUrl};
 
 export const convertActionsToArray = data => {
+  const clonedData = clone(data);
   const fieldName = FIELDS.ACTIONS.NAME;
-  if (data.hasOwnProperty(fieldName)) {
-    const actionsArr = keys(filter(v => v === true, data[fieldName])).map(e => {
+  if (clonedData.hasOwnProperty(fieldName)) {
+    const actionsArr = keys(filter(v => v === true, clonedData[fieldName])).map(e => {
       return e === 'create' ? ACTIONS.ADD : e === 'update' ? ACTIONS.EDIT : e;
     })
 
-    data[fieldName] = actionsArr;
+    clonedData[fieldName] = actionsArr;
   }
-  return data;
+  return clonedData;
 };
 
 export const convertActionsToObject = data => {
+  const clonedData = clone(data);
   const fieldName = FIELDS.ACTIONS.NAME;
-  if (data.hasOwnProperty(fieldName)) {
-    const actionsObj = Object.assign(...data[fieldName].map(e => {
-      if (data.type === TYPES.APPLICATION) {
+  if (clonedData.hasOwnProperty(fieldName)) {
+    const actionsObj = Object.assign(...clonedData[fieldName].map(e => {
+      if (clonedData.type === TYPES.APPLICATION) {
         return e === ACTIONS.ADD ? {'create': true} : e === ACTIONS.EDIT ? {'update': true} : {[e.toLowerCase()]: true};
       } else {
         return {[e.toLowerCase()]: true};
       }
     }));
 
-    data[fieldName] = actionsObj;
+    clonedData[fieldName] = actionsObj;
   }
-  return data;
+  return clonedData;
 };
 
 const renameScriptId = types => {
