@@ -53,6 +53,10 @@
     The classloader uses the first matching provider found, so order affects which implementation is loaded.
     Changing this order may break cryptographic operations or FIPS compliance.
     -->
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-fips</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.bouncycastle</groupId>
@@ -82,11 +86,6 @@
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bc-fips</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpkix-fips</artifactId>
     </dependency>
 
     <dependency>
