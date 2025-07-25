@@ -18,9 +18,6 @@ import org.sonatype.nexus.crypto.secrets.ReEncryptionNotSupportedException;
 public interface ApiKeysReEncryptService
 {
   String submitReEncryption(
-      String password,
-      String salt,
-      String iv,
-      String algorithm,
+      String algorithmForDecryption,
       String notifyEmail) throws MissingKeyException, ReEncryptionNotSupportedException;
 }

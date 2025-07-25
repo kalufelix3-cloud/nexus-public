@@ -96,16 +96,32 @@ public class ApiKeysReEncryptServiceImplTest
         .thenReturn(configuration);
     when(taskScheduler.getTaskById(ReEncryptPrincipalsTaskDescriptor.TYPE_ID)).thenReturn(null).thenReturn(taskInfo);
 
-    underTest.submitReEncryption("password", "salt", "iv", "algorithm", null);
+    underTest.submitReEncryption("algorithmToBeUsed", null);
+
+    verify(taskScheduler).submit(taskConfigurationCaptor.capture());
+    TaskConfiguration submittedTask = taskConfigurationCaptor.getValue();
+    assertThat(submittedTask).isNotNull();
+    assertThat(submittedTask.getAlertEmail()).isNull();
+    verify(submittedTask).setString("algorithmForDecryption", "algorithmToBeUsed");
+  }
+
+  @Test
+  public void testSubmitReEncryption_ScheduledTaskWithNoParams() {
+    String taskId = UUID.randomUUID().toString();
+    when(taskInfo.getId()).thenReturn(taskId);
+    when(taskInfo.getConfiguration()).thenReturn(configuration);
+    when(taskScheduler.submit(configuration)).thenReturn(taskInfo);
+    when(taskScheduler.createTaskConfigurationInstance(ReEncryptPrincipalsTaskDescriptor.TYPE_ID))
+        .thenReturn(configuration);
+    when(taskScheduler.getTaskById(ReEncryptPrincipalsTaskDescriptor.TYPE_ID)).thenReturn(null).thenReturn(taskInfo);
+
+    underTest.submitReEncryption(null, null);
     verify(taskScheduler).submit(taskConfigurationCaptor.capture());
 
     TaskConfiguration submittedTask = taskConfigurationCaptor.getValue();
     assertThat(submittedTask).isNotNull();
     assertThat(submittedTask.getAlertEmail()).isNull();
-    verify(submittedTask).setString("password", "password");
-    verify(submittedTask).setString("salt", "salt");
-    verify(submittedTask).setString("iv", "iv");
-    verify(submittedTask).setString("algorithm", "algorithm");
+    verify(submittedTask).setString("algorithmForDecryption", null);
   }
 
   @Test
@@ -120,27 +136,24 @@ public class ApiKeysReEncryptServiceImplTest
         .thenReturn(configuration);
     when(taskScheduler.getTaskById(ReEncryptPrincipalsTaskDescriptor.TYPE_ID)).thenReturn(null).thenReturn(taskInfo);
 
-    underTest.submitReEncryption("password", "salt", "iv", "algorithm", notifyEmail);
+    underTest.submitReEncryption("algorithmToBeUsed", notifyEmail);
     verify(taskScheduler).submit(taskConfigurationCaptor.capture());
 
     TaskConfiguration submittedTask = taskConfigurationCaptor.getValue();
     assertThat(submittedTask).isNotNull();
     verify(submittedTask).setAlertEmail(notifyEmail);
-    verify(submittedTask).setString("password", "password");
-    verify(submittedTask).setString("salt", "salt");
-    verify(submittedTask).setString("iv", "iv");
-    verify(submittedTask).setString("algorithm", "algorithm");
+    verify(submittedTask).setString("algorithmForDecryption", "algorithmToBeUsed");
   }
 
   @Test
   public void testSubmitReEncryption_OnUnsupportedVersion() {
     when(databaseCheck.isAtLeast(anyString())).thenReturn(false);
-    assertThrows(ReEncryptionNotSupportedException.class, () -> underTest.submitReEncryption("password", "salt", "iv", "algorithm", null));
+    assertThrows(ReEncryptionNotSupportedException.class, () -> underTest.submitReEncryption("algorithmToBeUsed", null));
   }
 
   @Test
   public void testSubmitReEncryption_TaskAlreadySubmitted() {
     when(taskScheduler.getTaskByTypeId(ReEncryptPrincipalsTaskDescriptor.TYPE_ID)).thenReturn(taskInfo);
-    assertThrows(IllegalStateException.class, () -> underTest.submitReEncryption("password", "salt", "iv", "algorithm", null));
+    assertThrows(IllegalStateException.class, () -> underTest.submitReEncryption(null, null));
   }
 }

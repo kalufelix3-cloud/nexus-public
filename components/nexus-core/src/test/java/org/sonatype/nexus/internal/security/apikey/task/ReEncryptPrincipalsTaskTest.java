@@ -15,16 +15,22 @@ package org.sonatype.nexus.internal.security.apikey.task;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory.PbeCipher;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
+import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.FixedEncryption;
+import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
+import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeySource;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.internal.security.secrets.tasks.ReEncryptTaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -32,9 +38,9 @@ import org.mockito.Mock;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -60,59 +66,45 @@ public class ReEncryptPrincipalsTaskTest
   private DataSessionSupplier sessionSupplier;
 
   @Mock
+  private EncryptionKeySource encryptionKeySource;
+
+  @Mock
   private PbeCipherFactory pbeCipherFactory;
 
   private ReEncryptPrincipalsTask underTest;
 
+  private PreparedStatement mockPreparedStatementSelect;
+
+  private PreparedStatement mockPreparedStatementUpdate;
+
+  private PbeCipher mockPbeCipherToEncrypt;
+
   @Before
-  public void setup() {
+  public void setup() throws Exception {
     underTest =
-        spy(new ReEncryptPrincipalsTask(sessionSupplier, pbeCipherFactory, "password", "salt", "iv", "algorithm"));
+        spy(new ReEncryptPrincipalsTask(sessionSupplier, encryptionKeySource, pbeCipherFactory, "password", "salt",
+            "iv", "algorithm"));
     doReturn(setupTaskConfig()).when(underTest).taskConfiguration();
-  }
 
-  @Test
-  public void testExecute_WhenThereAreNotChange() throws Exception {
-    TaskConfiguration taskConfigurationEmpty = new TaskConfiguration();
-    taskConfigurationEmpty.setId(UUID.randomUUID().toString());
-    taskConfigurationEmpty.setTypeId(ReEncryptTaskDescriptor.TYPE_ID);
-    when(underTest.taskConfiguration()).thenReturn(taskConfigurationEmpty);
+    Connection mockConnection = mock(Connection.class);
+    when(sessionSupplier.openConnection("nexus")).thenReturn(mockConnection);
 
-    Object result = underTest.execute();
+    mockPreparedStatementSelect = mock(PreparedStatement.class);
+    when(mockConnection.prepareStatement(SELECT)).thenReturn(mockPreparedStatementSelect);
+    ResultSet mockResultSet = getMockResultSet();
+    when(mockPreparedStatementSelect.executeQuery()).thenReturn(mockResultSet);
 
-    assertThat(result).isEqualTo(0);
-    verify(pbeCipherFactory, never()).create(any(), any(), any());
-    verify(sessionSupplier, never()).openConnection(anyString());
+    mockPreparedStatementUpdate = mock(PreparedStatement.class);
+    when(mockConnection.prepareStatement(UPDATE)).thenReturn(mockPreparedStatementUpdate);
+
+    mockPbeCipherToEncrypt = mock(PbeCipher.class);
+    when(pbeCipherFactory.create(any(), any(), any())).thenReturn(mockPbeCipherToEncrypt);
+    when(mockPbeCipherToEncrypt.encrypt(any()))
+        .thenReturn(EncryptedSecret.parse("$test2$kv1=v1,kv2=v2$test-salt2$dGVzdA=="));
   }
 
   @Test
   public void testExecute() throws Exception {
-    Connection mockConnection = mock(Connection.class);
-    when(sessionSupplier.openConnection("nexus")).thenReturn(mockConnection);
-
-    PreparedStatement mockPreparedStatementSelect = mock(PreparedStatement.class);
-    when(mockConnection.prepareStatement(SELECT)).thenReturn(mockPreparedStatementSelect);
-
-    ResultSet mockResultSet = mock(ResultSet.class);
-    when(mockPreparedStatementSelect.executeQuery()).thenReturn(mockResultSet);
-
-    PreparedStatement mockPreparedStatementUpdate = mock(PreparedStatement.class);
-    when(mockConnection.prepareStatement(UPDATE)).thenReturn(mockPreparedStatementUpdate);
-
-    // only one page of results
-    when(mockResultSet.isBeforeFirst()).thenReturn(true, false);
-    // 3 rows in the result set
-    when(mockResultSet.next()).thenReturn(true, true, true, false);
-    when(mockResultSet.getBytes("principals")).thenReturn("new-principals1".getBytes(), "new-principals2".getBytes(),
-        "new-principals3".getBytes());
-    when(mockResultSet.getString("domain")).thenReturn("domain1", "domain2", "domain3");
-    when(mockResultSet.getString("username")).thenReturn("user1", "user2", "user3");
-    when(mockResultSet.getString("access_key")).thenReturn("access-key-1", "access-key-2", "access-key-3");
-
-    PbeCipher mockPbeCipherToEncrypt = mock(PbeCipher.class);
-    when(pbeCipherFactory.create(any(), any(), any())).thenReturn(mockPbeCipherToEncrypt);
-    when(mockPbeCipherToEncrypt.encrypt(any()))
-        .thenReturn(EncryptedSecret.parse("$test2$kv1=v1,kv2=v2$test-salt2$dGVzdA=="));
     PbeCipher mockPbeCipherToDecrypt = mock(PbeCipher.class);
     when(pbeCipherFactory.create(any(), any())).thenReturn(mockPbeCipherToDecrypt);
     when(mockPbeCipherToDecrypt.decrypt()).thenReturn("decrypted".getBytes());
@@ -121,7 +113,7 @@ public class ReEncryptPrincipalsTaskTest
 
     assertThat(result).isEqualTo(3);
     verify(sessionSupplier, times(1)).openConnection(anyString());
-    verify(pbeCipherFactory, times(1)).create(any(), any(), any());
+    verify(pbeCipherFactory, times(1)).create(any(), eq("salt"), eq("iv"));
     verify(pbeCipherFactory, times(3)).create(any(), any());
     verify(mockPreparedStatementSelect, times(2)).executeQuery();
     verify(mockPbeCipherToDecrypt, times(3)).decrypt();
@@ -130,33 +122,66 @@ public class ReEncryptPrincipalsTaskTest
   }
 
   @Test
+  public void testExecuteWithFixedEncryptionConfigured() throws Exception {
+    // Simulate fixed encryption configuration
+    SecretEncryptionKey keyToBeUsed = new SecretEncryptionKey("test-key-id", "somePassword");
+    when(encryptionKeySource.getFixedEncryption()).thenReturn(
+        Optional.of(new FixedEncryption("test-key-id", "test-salt", "test-iv")));
+    when(encryptionKeySource.getKey("test-key-id")).thenReturn(Optional.of(keyToBeUsed));
+
+    PbeCipher mockPbeCipherToDecrypt = mock(PbeCipher.class);
+    when(pbeCipherFactory.create(any(), any())).thenReturn(mockPbeCipherToDecrypt);
+    when(mockPbeCipherToDecrypt.decrypt()).thenReturn("decrypted".getBytes());
+
+    Object result = underTest.execute();
+
+    assertThat(result).isEqualTo(3);
+    verify(sessionSupplier, times(1)).openConnection(anyString());
+    verify(pbeCipherFactory, times(1)).create(keyToBeUsed, "test-salt", "test-iv");
+    verify(pbeCipherFactory, times(1)).create(any(), eq("$old-algorithm$iv=6976$c2FsdA==$bmV3LXByaW5jaXBhbHMx"));
+    verify(pbeCipherFactory, times(1)).create(any(), eq("$old-algorithm$iv=6976$c2FsdA==$bmV3LXByaW5jaXBhbHMy"));
+    verify(pbeCipherFactory, times(1)).create(any(), eq("$old-algorithm$iv=6976$c2FsdA==$bmV3LXByaW5jaXBhbHMz"));
+
+    verify(mockPreparedStatementSelect, times(2)).executeQuery();
+    verify(mockPbeCipherToDecrypt, times(3)).decrypt();
+    verify(mockPbeCipherToEncrypt, times(3)).encrypt(any());
+    verify(mockPreparedStatementUpdate, times(3)).executeUpdate();
+  }
+
+  @Test
+  public void testExecuteWithPreviousAndFixedEncryptionConfigured() throws Exception {
+    // Simulate fixed encryption configuration
+    SecretEncryptionKey keyToBeUsed = new SecretEncryptionKey("test-key-id", "somePassword");
+    when(encryptionKeySource.getPreviousFixedEncryption()).thenReturn(
+        Optional.of(new FixedEncryption("test-key-id", "old-salt", "old-iv")));
+    when(encryptionKeySource.getFixedEncryption()).thenReturn(
+        Optional.of(new FixedEncryption("test-key-id", "test-salt", "test-iv")));
+    when(encryptionKeySource.getKey("test-key-id")).thenReturn(Optional.of(keyToBeUsed));
+
+    PbeCipher mockPbeCipherToDecrypt = mock(PbeCipher.class);
+    when(pbeCipherFactory.create(any(), any())).thenReturn(mockPbeCipherToDecrypt);
+    when(mockPbeCipherToDecrypt.decrypt()).thenReturn("decrypted".getBytes());
+
+    Object result = underTest.execute();
+
+    assertThat(result).isEqualTo(3);
+    verify(sessionSupplier, times(1)).openConnection(anyString());
+    verify(pbeCipherFactory, times(1)).create(keyToBeUsed, "test-salt", "test-iv");
+    verify(pbeCipherFactory, times(1)).create(any(),
+        eq("$old-algorithm$iv=6f6c642d6976$b2xkLXNhbHQ=$bmV3LXByaW5jaXBhbHMx"));
+    verify(pbeCipherFactory, times(1)).create(any(),
+        eq("$old-algorithm$iv=6f6c642d6976$b2xkLXNhbHQ=$bmV3LXByaW5jaXBhbHMy"));
+    verify(pbeCipherFactory, times(1)).create(any(),
+        eq("$old-algorithm$iv=6f6c642d6976$b2xkLXNhbHQ=$bmV3LXByaW5jaXBhbHMz"));
+
+    verify(mockPreparedStatementSelect, times(2)).executeQuery();
+    verify(mockPbeCipherToDecrypt, times(3)).decrypt();
+    verify(mockPbeCipherToEncrypt, times(3)).encrypt(any());
+    verify(mockPreparedStatementUpdate, times(3)).executeUpdate();
+  }
+
+  @Test
   public void testExecute_WhenSecondPrincipalsFails() throws Exception {
-    Connection mockConnection = mock(Connection.class);
-    when(sessionSupplier.openConnection("nexus")).thenReturn(mockConnection);
-
-    PreparedStatement mockPreparedStatementSelect = mock(PreparedStatement.class);
-    when(mockConnection.prepareStatement(SELECT)).thenReturn(mockPreparedStatementSelect);
-
-    ResultSet mockResultSet = mock(ResultSet.class);
-    when(mockPreparedStatementSelect.executeQuery()).thenReturn(mockResultSet);
-
-    PreparedStatement mockPreparedStatementUpdate = mock(PreparedStatement.class);
-    when(mockConnection.prepareStatement(UPDATE)).thenReturn(mockPreparedStatementUpdate);
-
-    // only one page of results
-    when(mockResultSet.isBeforeFirst()).thenReturn(true, false);
-    // 3 rows in the result set
-    when(mockResultSet.next()).thenReturn(true, true, true, false);
-    when(mockResultSet.getBytes("principals")).thenReturn("new-principals1".getBytes(), "new-principals2".getBytes(),
-        "new-principals3".getBytes());
-    when(mockResultSet.getString("domain")).thenReturn("domain1", "domain2", "domain3");
-    when(mockResultSet.getString("username")).thenReturn("user1", "user2", "user3");
-    when(mockResultSet.getString("access_key")).thenReturn("access-key-1", "access-key-2", "access-key-3");
-
-    PbeCipher mockPbeCipherToEncrypt = mock(PbeCipher.class);
-    when(pbeCipherFactory.create(any(), any(), any())).thenReturn(mockPbeCipherToEncrypt);
-    when(mockPbeCipherToEncrypt.encrypt(any()))
-        .thenReturn(EncryptedSecret.parse("$test2$kv1=v1,kv2=v2$test-salt2$dGVzdA=="));
     PbeCipher mockPbeCipherToDecrypt = mock(PbeCipher.class);
     when(pbeCipherFactory.create(any(), any())).thenReturn(mockPbeCipherToDecrypt);
 
@@ -178,14 +203,25 @@ public class ReEncryptPrincipalsTaskTest
     verify(mockPreparedStatementUpdate, times(2)).executeUpdate();
   }
 
+  private static @NotNull ResultSet getMockResultSet() throws SQLException {
+    ResultSet mockResultSet = mock(ResultSet.class);
+    // only one page of results
+    when(mockResultSet.isBeforeFirst()).thenReturn(true, false);
+    // 3 rows in the result set
+    when(mockResultSet.next()).thenReturn(true, true, true, false);
+    when(mockResultSet.getBytes("principals")).thenReturn("new-principals1".getBytes(), "new-principals2".getBytes(),
+        "new-principals3".getBytes());
+    when(mockResultSet.getString("domain")).thenReturn("domain1", "domain2", "domain3");
+    when(mockResultSet.getString("username")).thenReturn("user1", "user2", "user3");
+    when(mockResultSet.getString("access_key")).thenReturn("access-key-1", "access-key-2", "access-key-3");
+    return mockResultSet;
+  }
+
   private static TaskConfiguration setupTaskConfig() {
     TaskConfiguration taskConfiguration = new TaskConfiguration();
     taskConfiguration.setId(UUID.randomUUID().toString());
     taskConfiguration.setTypeId(ReEncryptTaskDescriptor.TYPE_ID);
-    taskConfiguration.setString("password", "old-password");
-    taskConfiguration.setString("salt", "old-salt");
-    taskConfiguration.setString("iv", "old-iv");
-    taskConfiguration.setString("algorithm", "old-algorithm");
+    taskConfiguration.setString("algorithmForDecryption", "old-algorithm");
     return taskConfiguration;
   }
 }
