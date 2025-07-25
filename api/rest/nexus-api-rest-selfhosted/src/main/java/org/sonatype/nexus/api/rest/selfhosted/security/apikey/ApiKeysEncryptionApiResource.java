@@ -13,7 +13,7 @@
 package org.sonatype.nexus.api.rest.selfhosted.security.apikey;
 
 import java.util.Map;
-import javax.validation.Valid;
+import javax.annotation.Nullable;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -52,17 +52,11 @@ public abstract class ApiKeysEncryptionApiResource
   @Path("/re-encrypt")
   @RequiresAuthentication
   @RequiresPermissions("nexus:*")
-  public Response reEncrypt(@Valid final ApiKeysReEncryptionRequestApiXO request) {
-    if (!isValidRequest(request)) {
-      throw new WebApplicationMessageException(Status.BAD_REQUEST, "Invalid request parameters", APPLICATION_JSON);
-    }
-
+  public Response reEncrypt(@Nullable final ApiKeysReEncryptionRequestApiXO request) {
+    String algorithmForDecryption = request != null ? request.getAlgorithmForDecryption() : null;
+    String notifyEmail = request != null ? request.getNotifyEmail() : null;
     try {
-      String taskId = apiKeysReEncryptService.submitReEncryption(request.getPassword(),
-          request.getSalt(),
-          request.getIv(),
-          request.getAlgorithm(),
-          request.getNotifyEmail());
+      String taskId = apiKeysReEncryptService.submitReEncryption(algorithmForDecryption, notifyEmail);
       Map<String, Object> response = ImmutableMap.of("status", Status.ACCEPTED.getStatusCode(), "message",
           "Task submitted. ID: " + taskId);
       return Response
@@ -77,13 +71,5 @@ public abstract class ApiKeysEncryptionApiResource
     catch (IllegalStateException ex) {
       throw new WebApplicationMessageException(Status.CONFLICT, ex.getMessage(), APPLICATION_JSON);
     }
-  }
-
-  private boolean isValidRequest(final ApiKeysReEncryptionRequestApiXO request) {
-    // at least one of the parameters must be present
-    return (request.getPassword() != null && !request.getPassword().isEmpty()) ||
-        (request.getSalt() != null && !request.getSalt().isEmpty()) ||
-        (request.getIv() != null && !request.getIv().isEmpty()) ||
-        (request.getAlgorithm() != null && !request.getAlgorithm().isEmpty());
   }
 }

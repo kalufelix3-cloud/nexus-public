@@ -14,6 +14,7 @@ package org.sonatype.nexus.crypto.secrets.internal;
 
 import java.util.Optional;
 
+import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.FixedEncryption;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
 
 /**
@@ -22,11 +23,26 @@ import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryp
 public interface EncryptionKeySource
 {
   /**
-   *  Retrieves the currently configured key to use for encrypting secrets
+   * Retrieves the currently configured key to use for encrypting secrets
    *
    * @return an {@link Optional<SecretEncryptionKey>} filled if there is a key being used at the moment
    */
   Optional<SecretEncryptionKey> getActiveKey();
+
+  /**
+   * Retrieves the currently configured key to use for encrypting principals
+   *
+   * @return an {@link Optional<SecretEncryptionKey>} filled if there is a key being used at the moment
+   */
+  Optional<FixedEncryption> getFixedEncryption();
+
+  /**
+   * Retrieves the previously configured fixed encryption configuration, if available.
+   *
+   * @return an {@link Optional<FixedEncryption>} containing the previous fixed encryption configuration,,
+   *         or an empty {@link Optional} if no previous configuration is available.
+   */
+  Optional<FixedEncryption> getPreviousFixedEncryption();
 
   /**
    * Retrieve an encryption key by its identifier

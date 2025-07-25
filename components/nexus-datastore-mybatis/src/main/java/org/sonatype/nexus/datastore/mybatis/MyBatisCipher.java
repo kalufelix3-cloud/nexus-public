@@ -12,13 +12,18 @@
  */
 package org.sonatype.nexus.datastore.mybatis;
 
+import java.util.Optional;
+
 import org.sonatype.nexus.crypto.LegacyCipherFactory.PbeCipher;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.crypto.internal.HashingHandlerFactoryImpl;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactoryImpl;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
+import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.FixedEncryption;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
+import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeySource;
+import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeySourceImpl;
 import org.sonatype.nexus.security.PasswordHelper;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -56,10 +61,23 @@ final class MyBatisCipher
       @Value("${nexus.mybatis.cipher.password:changeme}") final String password,
       @Value("${nexus.mybatis.cipher.salt:changeme}") final String salt,
       @Value("${nexus.mybatis.cipher.iv:0123456789ABCDEF}") final String iv,
-      final PbeCipherFactory pbeCipherFactory)
+      final PbeCipherFactory pbeCipherFactory,
+      final EncryptionKeySource encryptionKeySource)
   {
-    SecretEncryptionKey secretKey = new SecretEncryptionKey(null, password);
-    this.pbeCipher = checkNotNull(pbeCipherFactory).create(secretKey, salt, iv);
+    String saltValue = salt;
+    String ivValue = iv;
+    SecretEncryptionKey keyForEncryption = new SecretEncryptionKey(null, password);
+
+    Optional<FixedEncryption> fixedEncryptionConfiguration = encryptionKeySource.getFixedEncryption();
+    if (fixedEncryptionConfiguration.isPresent()) {
+      FixedEncryption encryptionConfig = fixedEncryptionConfiguration.get();
+      keyForEncryption = encryptionConfig.getKeyId() != null
+          ? encryptionKeySource.getKey(encryptionConfig.getKeyId()).orElseThrow()
+          : keyForEncryption;
+      saltValue = encryptionConfig.getSalt() != null ? encryptionConfig.getSalt() : saltValue;
+      ivValue = encryptionConfig.getIv() != null ? encryptionConfig.getIv() : ivValue;
+    }
+    this.pbeCipher = checkNotNull(pbeCipherFactory).create(keyForEncryption, saltValue, ivValue);
   }
 
   /**
@@ -69,7 +87,8 @@ final class MyBatisCipher
   MyBatisCipher() {
     this("changeme", "changeme", "0123456789ABCDEF",
         new PbeCipherFactoryImpl(new CryptoHelperImpl(false),
-            new HashingHandlerFactoryImpl(new CryptoHelperImpl(false)), "PBKDF2WithHmacSHA1"));
+            new HashingHandlerFactoryImpl(new CryptoHelperImpl(false)), "PBKDF2WithHmacSHA1"),
+        new EncryptionKeySourceImpl(null, null));
   }
 
   @Override

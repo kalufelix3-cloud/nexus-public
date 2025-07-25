@@ -17,12 +17,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Optional;
 
 import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory.PbeCipher;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
+import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.FixedEncryption;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
+import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeySource;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.logging.task.TaskLogType;
@@ -67,6 +70,8 @@ public class ReEncryptPrincipalsTask
 
   private final DataSessionSupplier sessionSupplier;
 
+  private final EncryptionKeySource encryptionKeySource;
+
   private final PbeCipherFactory pbeCipherFactory;
 
   private final String password;
@@ -80,6 +85,7 @@ public class ReEncryptPrincipalsTask
   @Inject
   public ReEncryptPrincipalsTask(
       final DataSessionSupplier sessionSupplier,
+      final EncryptionKeySource encryptionKeySource,
       final PbeCipherFactory pbeCipherFactory,
       @Value("${nexus.mybatis.cipher.password:changeme}") final String password,
       @Value("${nexus.mybatis.cipher.salt:changeme}") final String salt,
@@ -87,6 +93,7 @@ public class ReEncryptPrincipalsTask
       @Value(NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE) final String nexusSecretsAlgorithm)
   {
     this.sessionSupplier = checkNotNull(sessionSupplier);
+    this.encryptionKeySource = checkNotNull(encryptionKeySource);
     this.pbeCipherFactory = checkNotNull(pbeCipherFactory);
     this.password = password;
     this.salt = salt;
@@ -103,19 +110,34 @@ public class ReEncryptPrincipalsTask
   protected Object execute() throws Exception {
     long start = System.currentTimeMillis();
     log.info("Started re-encryption principals");
-    String keyPasswordOld = getValueFromTaskConfiguration("password", password);
-    String saltOld = getValueFromTaskConfiguration("salt", salt);
-    String ivOld = getValueFromTaskConfiguration("iv", iv);
-    String algorithmOld = getValueFromTaskConfiguration("algorithm", nexusSecretsAlgorithm);
+    SecretEncryptionKey keyForDecryption = new SecretEncryptionKey(null, password);
+    SecretEncryptionKey keyForEncryption = new SecretEncryptionKey(null, password);
 
-    if (!thereAreChanges(keyPasswordOld, saltOld, ivOld, algorithmOld)) {
-      log.info("Re-encryption principals is not needed, there are not changes.");
-      return 0;
+    String saltForDecryption = salt;
+    String saltForEncryption = salt;
+    String ivForDecryption = iv;
+    String ivForEncryption = iv;
+    String algorithmForDecryption = getValueFromTaskConfiguration("algorithmForDecryption", nexusSecretsAlgorithm);
+
+    Optional<FixedEncryption> previousEncryptionConfigOptional = encryptionKeySource.getPreviousFixedEncryption();
+    if (previousEncryptionConfigOptional.isPresent()) {
+      FixedEncryption config = previousEncryptionConfigOptional.get();
+      keyForDecryption =
+          config.getKeyId() != null ? encryptionKeySource.getKey(config.getKeyId()).orElseThrow() : keyForDecryption;
+      saltForDecryption = config.getSalt() != null ? config.getSalt() : saltForDecryption;
+      ivForDecryption = config.getIv() != null ? config.getIv() : ivForDecryption;
     }
 
-    SecretEncryptionKey secretKeyToDecrypt = new SecretEncryptionKey(null, keyPasswordOld);
-    PbeCipher cipherToEncrypt = pbeCipherFactory.create(new SecretEncryptionKey(null, password), salt, iv);
+    Optional<FixedEncryption> encryptionConfigOptional = encryptionKeySource.getFixedEncryption();
+    if (encryptionConfigOptional.isPresent()) {
+      FixedEncryption config = encryptionConfigOptional.get();
+      keyForEncryption =
+          config.getKeyId() != null ? encryptionKeySource.getKey(config.getKeyId()).orElseThrow() : keyForEncryption;
+      saltForEncryption = config.getSalt() != null ? config.getSalt() : saltForEncryption;
+      ivForEncryption = config.getIv() != null ? config.getIv() : ivForEncryption;
+    }
 
+    PbeCipher cipherForEncryption = pbeCipherFactory.create(keyForEncryption, saltForEncryption, ivForEncryption);
     try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS);
         Connection conn = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME);
         PreparedStatement select = conn.prepareStatement(SELECT);
@@ -137,8 +159,9 @@ public class ReEncryptPrincipalsTask
             String accessKey = results.getString("access_key");
             byte[] principals = results.getBytes("principals");
             try {
-              byte[] decrypted = decrypt(secretKeyToDecrypt, algorithmOld, saltOld, ivOld, principals);
-              byte[] encrypted = reEncrypt(cipherToEncrypt, decrypted);
+              byte[] decrypted =
+                  decrypt(keyForDecryption, algorithmForDecryption, saltForDecryption, ivForDecryption, principals);
+              byte[] encrypted = reEncrypt(cipherForEncryption, decrypted);
               updatePrincipal(update, domain, username, accessKey, encrypted);
               processedCount++;
             }
@@ -164,15 +187,15 @@ public class ReEncryptPrincipalsTask
 
   private byte[] decrypt(
       final SecretEncryptionKey secretKeyToDecrypt,
-      final String algorithmOld,
-      final String saltOld,
-      final String ivOld,
+      final String algorithm,
+      final String salt,
+      final String iv,
       final byte[] principalsBytes)
   {
-    EncryptedSecret encryptedSecret = new EncryptedSecret(algorithmOld, null,
-        toBase64(saltOld.getBytes()),
+    EncryptedSecret encryptedSecret = new EncryptedSecret(algorithm, null,
+        toBase64(salt.getBytes()),
         toBase64(principalsBytes),
-        Map.of("iv", Hex.toHexString(ivOld.getBytes())));
+        Map.of("iv", Hex.toHexString(iv.getBytes())));
     PbeCipher cipherToDecrypt = pbeCipherFactory.create(secretKeyToDecrypt, encryptedSecret.toPhcString());
     return cipherToDecrypt.decrypt();
   }
@@ -198,18 +221,6 @@ public class ReEncryptPrincipalsTask
     update.setString(3, username);
     update.setString(4, accessKey);
     update.executeUpdate();
-  }
-
-  private boolean thereAreChanges(
-      final String keyPasswordOld,
-      final String saltOld,
-      final String ivOld,
-      final String algorithmOld)
-  {
-    return !keyPasswordOld.equals(password) ||
-        !saltOld.equals(salt) ||
-        !ivOld.equals(iv) ||
-        !algorithmOld.equals(nexusSecretsAlgorithm);
   }
 
   private String getValueFromTaskConfiguration(final String configurationKey, final String defaultValue) {

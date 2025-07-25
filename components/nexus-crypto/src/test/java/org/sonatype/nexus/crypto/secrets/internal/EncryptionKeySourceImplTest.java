@@ -47,6 +47,9 @@ public class EncryptionKeySourceImplTest
 
   private static final String TEST_SECRET_KEYS_PATH = BASE_PATH + "test-secret-keys.json";
 
+  private static final String TEST_SECRET_KEYS_WITH_FIXED_ENCRYPTION_PATH =
+      BASE_PATH + "test-secret-keys-with-fixed-encryption.json";
+
   private static final String INVALID_FILE_PATH = BASE_PATH + "invalid-secret-keys.json";
 
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -101,15 +104,15 @@ public class EncryptionKeySourceImplTest
 
     EncryptionKeySource encryptionKeySource = new EncryptionKeySourceImpl(TEST_SECRET_KEYS_PATH, mapper);
 
-    //default active key (the one that comes from file) is 'my-secret'
+    // default active key (the one that comes from file) is 'my-secret'
     assertActiveKey(encryptionKeySource.getActiveKey(), "my-secret");
     verify(mapper, times(1)).readValue(any(File.class), eq(EncryptionKeyList.class));
 
-    //updating active key
+    // updating active key
     encryptionKeySource.setActiveKey("test-secret-1");
 
     assertActiveKey(encryptionKeySource.getActiveKey(), "test-secret-1");
-    //verify we didn't reload the file
+    // verify we didn't reload the file
     verify(mapper, times(1)).readValue(any(File.class), eq(EncryptionKeyList.class));
   }
 
@@ -120,21 +123,63 @@ public class EncryptionKeySourceImplTest
 
     EncryptionKeySource encryptionKeySource = new EncryptionKeySourceImpl(TEST_SECRET_KEYS_PATH, mapper);
 
-    //default active key (the one that comes from file) is 'my-secret'
+    // default active key (the one that comes from file) is 'my-secret'
     assertActiveKey(encryptionKeySource.getActiveKey(), "my-secret");
     verify(mapper, times(1)).readValue(any(File.class), eq(EncryptionKeyList.class));
 
-    //mock new call to get secrets
+    // mock new call to get secrets
     doReturn(mockEncryptionKeys("new-key-2", ImmutableList.of(new SecretEncryptionKey("new-key", "random-s3cr3t"),
         new SecretEncryptionKey("new-key-2", "random-s3cr3t-2"))))
-        .when(mapper).readValue(any(File.class), eq(EncryptionKeyList.class));
+            .when(mapper)
+            .readValue(any(File.class), eq(EncryptionKeyList.class));
 
-    //updating active key
+    // updating active key
     encryptionKeySource.setActiveKey("new-key");
     assertActiveKey(encryptionKeySource.getActiveKey(), "new-key");
 
-    //verify we reloaded the file
+    // verify we reloaded the file
     verify(mapper, times(2)).readValue(any(File.class), eq(EncryptionKeyList.class));
+  }
+
+  @Test
+  public void testGetsFixedEncryption() throws IOException {
+    ObjectMapper mapper = spy(objectMapper);
+    doCallRealMethod().when(mapper).readValue(any(File.class), eq(EncryptionKeyList.class));
+
+    EncryptionKeySource encryptionKeySource =
+        new EncryptionKeySourceImpl(TEST_SECRET_KEYS_WITH_FIXED_ENCRYPTION_PATH, mapper);
+    Optional<EncryptionKeyList.FixedEncryption> fixedEnc = encryptionKeySource.getFixedEncryption();
+    assertTrue(fixedEnc.isPresent());
+    EncryptionKeyList.FixedEncryption fe = fixedEnc.get();
+    assertThat(fe.getKeyId(), is("my-secret"));
+    assertThat(fe.getSalt(), is("changeme123456789"));
+    assertThat(fe.getIv(), is("6543210987654321"));
+  }
+
+  @Test
+  public void testGetsPreviousFixedEncryption() throws IOException {
+    ObjectMapper mapper = spy(objectMapper);
+    doCallRealMethod().when(mapper).readValue(any(File.class), eq(EncryptionKeyList.class));
+
+    EncryptionKeySource encryptionKeySource =
+        new EncryptionKeySourceImpl(TEST_SECRET_KEYS_WITH_FIXED_ENCRYPTION_PATH, mapper);
+    Optional<EncryptionKeyList.FixedEncryption> prevFixedEnc = encryptionKeySource.getPreviousFixedEncryption();
+    assertTrue(prevFixedEnc.isPresent());
+    EncryptionKeyList.FixedEncryption pfe = prevFixedEnc.get();
+    assertThat(pfe.getKeyId(), is("secret-nexus-2024"));
+    assertThat(pfe.getSalt(), is("changeme123456789"));
+    assertThat(pfe.getIv(), is("1234567890123456"));
+  }
+
+  @Test
+  public void testNoFixedEncryptionFields() throws IOException {
+    ObjectMapper mapper = spy(objectMapper);
+    doReturn(mockEncryptionKeys("my-secret", ImmutableList.of(new SecretEncryptionKey("my-secret", "key"))))
+        .when(mapper)
+        .readValue(any(File.class), eq(EncryptionKeyList.class));
+    EncryptionKeySource encryptionKeySource = new EncryptionKeySourceImpl(TEST_SECRET_KEYS_PATH, mapper);
+    assertFalse(encryptionKeySource.getFixedEncryption().isPresent());
+    assertFalse(encryptionKeySource.getPreviousFixedEncryption().isPresent());
   }
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -149,6 +194,8 @@ public class EncryptionKeySourceImplTest
     EncryptionKeyList keyList = new EncryptionKeyList();
     keyList.setActive(active);
     keyList.setKeys(keys);
+    keyList.setFixedEncryption(null);
+    keyList.setPreviousFixedEncryption(null);
 
     return keyList;
   }

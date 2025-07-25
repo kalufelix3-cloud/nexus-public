@@ -23,6 +23,10 @@ public class EncryptionKeyList
 
   private List<SecretEncryptionKey> keys;
 
+  private FixedEncryption fixedEncryption;
+
+  private FixedEncryption previousFixedEncryption;
+
   public String getActive() {
     return active;
   }
@@ -37,6 +41,22 @@ public class EncryptionKeyList
 
   public void setKeys(final List<SecretEncryptionKey> keys) {
     this.keys = keys;
+  }
+
+  public FixedEncryption getFixedEncryption() {
+    return fixedEncryption;
+  }
+
+  public void setFixedEncryption(final FixedEncryption fixedEncryption) {
+    this.fixedEncryption = fixedEncryption;
+  }
+
+  public FixedEncryption getPreviousFixedEncryption() {
+    return previousFixedEncryption;
+  }
+
+  public void setPreviousFixedEncryption(final FixedEncryption previousFixedEncryption) {
+    this.previousFixedEncryption = previousFixedEncryption;
   }
 
   public static class SecretEncryptionKey
@@ -74,6 +94,48 @@ public class EncryptionKeyList
 
     public void setKey(final String key) {
       this.key = key;
+    }
+  }
+
+  public static class FixedEncryption
+  {
+    private String keyId;
+
+    private String salt;
+
+    private String iv;
+
+    public FixedEncryption() {
+    }
+
+    public FixedEncryption(final String keyId, final String salt, final String iv) {
+      this.keyId = keyId;
+      this.salt = salt;
+      this.iv = iv;
+    }
+
+    public String getKeyId() {
+      return keyId;
+    }
+
+    public void setKeyId(final String keyId) {
+      this.keyId = keyId;
+    }
+
+    public String getSalt() {
+      return salt;
+    }
+
+    public void setSalt(final String salt) {
+      this.salt = salt;
+    }
+
+    public String getIv() {
+      return iv;
+    }
+
+    public void setIv(final String iv) {
+      this.iv = iv;
     }
   }
 }

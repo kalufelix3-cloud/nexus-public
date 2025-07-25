@@ -18,21 +18,9 @@ import io.swagger.annotations.ApiModelProperty;
 
 public class ApiKeysReEncryptionRequestApiXO
 {
-  @ApiModelProperty("Optional - The current password used to encrypt the principals")
+  @ApiModelProperty("Optional - The algorithm to be used to decrypt the principals")
   @Nullable
-  private String password;
-
-  @ApiModelProperty("Optional - The current password used to encrypt the principals")
-  @Nullable
-  private String salt;
-
-  @ApiModelProperty("Optional - The current IV used to encrypt the principals")
-  @Nullable
-  private String iv;
-
-  @ApiModelProperty("Optional - The current algorithm used to encrypt the principals")
-  @Nullable
-  private String algorithm;
+  private String algorithmForDecryption;
 
   @ApiModelProperty("Optional - Email to notify when task finishes")
   @Nullable
@@ -43,37 +31,16 @@ public class ApiKeysReEncryptionRequestApiXO
   }
 
   public ApiKeysReEncryptionRequestApiXO(
-      @Nullable final String password,
-      @Nullable final String salt,
-      @Nullable final String iv,
       @Nullable final String algorithm,
       @Nullable final String notifyEmail)
   {
-    this.password = password;
-    this.salt = salt;
-    this.iv = iv;
-    this.algorithm = algorithm;
+    this.algorithmForDecryption = algorithm;
     this.notifyEmail = notifyEmail;
   }
 
   @Nullable
-  public String getPassword() {
-    return password;
-  }
-
-  @Nullable
-  public String getSalt() {
-    return salt;
-  }
-
-  @Nullable
-  public String getIv() {
-    return iv;
-  }
-
-  @Nullable
-  public String getAlgorithm() {
-    return algorithm;
+  public String getAlgorithmForDecryption() {
+    return algorithmForDecryption;
   }
 
   @Nullable
