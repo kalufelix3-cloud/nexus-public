@@ -13,7 +13,7 @@
 
 import React from 'react';
 import { getRouter } from '../routerConfig/routerConfig';
-import { act } from 'react-dom/test-utils';
+import { act } from 'react';
 import { render } from '@testing-library/react';
 import { UIRouter, UIView } from '@uirouter/react';
 

@@ -10,17 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import {NxPageMain} from '@sonatype/react-shared-components';
+import { NxPageMain } from '@sonatype/react-shared-components';
 
-import {useSize} from '../../../hooks/useSize';
-import {useExtComponent} from './useExtComponent';
+import { useSize } from '../../../hooks/useSize';
+import { useExtComponent } from './useExtComponent';
+import { useExtJsUnsavedChangesGuard } from './useExtJsUnsavedChangesGuard';
 import MaliciousRiskOnDisk from '../riskondisk/MaliciousRiskOnDisk';
 import './ExtJsContainer.scss';
 
-export function ExtJsContainer({className, extView, extParams, showsMaliciousRiskBanner, title, icon }) {
-  const iconName = icon ?  `x-fa fa-${icon.iconName}` : undefined
+export function ExtJsContainer({ className, extView, extParams, showsMaliciousRiskBanner, title, icon }) {
+  const iconName = icon ? `x-fa fa-${icon.iconName}` : undefined;
   const extContainerRef = useRef(null);
   const wrapperRef = useRef(null);
   const size = useSize(wrapperRef);
@@ -36,13 +37,13 @@ export function ExtJsContainer({className, extView, extParams, showsMaliciousRis
     }
   }, [size.height, size.width, maliciousRiskHeight]);
 
+  useExtJsUnsavedChangesGuard(extContainerRef);
+
   return (
-      <NxPageMain ref={wrapperRef} className="nxrm-ext-js-wrapper">
-        { showsMaliciousRiskBanner
-            ? <MaliciousRiskOnDisk onSizeChanged={onMaliciousRiskSizeChanged}  /> : null
-        }
-        <div className={className} ref={extContainerRef}></div>
-      </NxPageMain>
+    <NxPageMain ref={wrapperRef} className='nxrm-ext-js-wrapper'>
+      {showsMaliciousRiskBanner ? <MaliciousRiskOnDisk onSizeChanged={onMaliciousRiskSizeChanged} /> : null}
+      <div className={className} ref={extContainerRef}></div>
+    </NxPageMain>
   );
 
   function onMaliciousRiskSizeChanged(width, height) {
@@ -52,5 +53,5 @@ export function ExtJsContainer({className, extView, extParams, showsMaliciousRis
 
 ExtJsContainer.propTypes = {
   className: PropTypes.string,
-  extView: PropTypes.string
-}
+  extView: PropTypes.string,
+};

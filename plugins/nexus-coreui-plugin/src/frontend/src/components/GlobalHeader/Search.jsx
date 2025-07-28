@@ -17,6 +17,7 @@ import { NxFilterInput } from '@sonatype/react-shared-components';
 import {ExtJS, useIsVisible} from '@sonatype/nexus-ui-plugin';
 import { useRouter } from '@uirouter/react';
 import {ROUTE_NAMES} from "../../routerConfig/routeNames/routeNames";
+import { handleExtJsUnsavedChanges } from '../widgets/ExtJsContainer/useExtJsUnsavedChangesGuard';
 
 export default function Search() {
   const [searchValue, setSearchValue] = useState("");
@@ -44,10 +45,17 @@ export default function Search() {
 
   async function onSearchKeyPress(key) {
     if (key === 'Enter') {
-      if (state.name !== 'browse.search') {
-        await router.stateService.go(ROUTE_NAMES.BROWSE.SEARCH.GENERIC, { keyword: `=keyword%3D${searchValue}` });
-      }
-      ExtJS.search(searchValue);
+      // Try to get the ExtJS Menu controller
+      const menuCtrl =
+        window.Ext && Ext.getApplication && Ext.getApplication().getController
+          ? Ext.getApplication().getController('Menu')
+          : null;
+      handleExtJsUnsavedChanges(menuCtrl, async () => {
+        if (state.name !== 'browse.search') {
+          await router.stateService.go(ROUTE_NAMES.BROWSE.SEARCH.GENERIC, { keyword: `=keyword%3D${searchValue}` });
+        }
+        ExtJS.search(searchValue);
+      });
     }
   }
 }
