@@ -20,18 +20,6 @@
 
   <display-name>Sonatype Nexus</display-name>
 
-  <filter>
-    <filter-name>nexusFilter</filter-name>
-    <filter-class>org.sonatype.nexus.bootstrap.application.DelegatingFilter</filter-class>
-  </filter>
-
-  <filter-mapping>
-    <filter-name>nexusFilter</filter-name>
-    <url-pattern>/*</url-pattern>
-    <dispatcher>REQUEST</dispatcher>
-    <dispatcher>ERROR</dispatcher>
-  </filter-mapping>
-
   <welcome-file-list>
     <welcome-file>index.html</welcome-file>
   </welcome-file-list>

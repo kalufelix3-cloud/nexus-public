@@ -42,7 +42,6 @@ import org.sonatype.nexus.common.text.Strings2;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.eclipse.jetty.ee8.servlet.ErrorPageErrorHandler;
 import org.eclipse.jetty.ee8.servlet.FilterHolder;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
@@ -59,8 +58,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import static org.eclipse.jetty.http.HttpStatus.Code.SERVICE_UNAVAILABLE;
-import static org.eclipse.jetty.http.HttpStatus.Code.UNAUTHORIZED;
 import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_SPRING_ONLY;
 
 /**
@@ -214,12 +211,13 @@ public class JettyServer
     }
   }
 
-  private void registerServlets(final ApplicationContext context, final Server server) {
+  private static void registerServlets(final ApplicationContext context, final Server server) {
     InstrumentedHandler defaultHandler = server.getBean(InstrumentedHandler.class);
     if (defaultHandler == null) {
       throw new IllegalStateException("Missing default handler");
     }
-    ServletContextHandler servletContext = new ServletContextHandler(defaultHandler, null);
+
+    ServletContextHandler servletContext = defaultHandler.getDelegate();
     context.getBeansOfType(HttpServlet.class)
         .values()
         .stream()
@@ -237,16 +235,6 @@ public class JettyServer
         .filter(EventListener.class::isInstance)
         .map(EventListener.class::cast)
         .forEach(servletContext::addEventListener);
-
-    defaultHandler.setHandler(servletContext);
-
-    setErrorPage(servletContext);
-  }
-
-  private static void setErrorPage(final ServletContextHandler servletContext) {
-    ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
-    errorHandler.addErrorPage(UNAUTHORIZED.getCode(), SERVICE_UNAVAILABLE.getCode(), ERROR_PAGE_PATH);
-    servletContext.setErrorHandler(errorHandler);
   }
 
   private static Consumer<HttpServlet> createRegistration(final ServletContextHandler servletContext) {
