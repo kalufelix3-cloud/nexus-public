@@ -58,10 +58,10 @@ public class ApplicationDirectoriesImplTest
   }
 
   @Test
-  public void ensureWorkDir_exists() {
+  public void ensureWorkDir_exists() throws IOException {
     File dir = underTest.getWorkDirectory();
     assertThat(dir, notNullValue());
-    assertThat(dir, is(workDir));
+    assertThat(dir.getCanonicalFile(), is(workDir.getCanonicalFile()));
     assertThat(dir, FileMatchers.exists());
   }
 
