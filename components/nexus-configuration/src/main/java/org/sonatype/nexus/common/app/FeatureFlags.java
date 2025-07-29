@@ -248,4 +248,6 @@ public class FeatureFlags
   public static final String FIREWALL_CONTAINER_WORK_DIRECTORY_NAMED = "${nexus.firewall.container.workdirectory:-}";
 
   public static final String FIREWALL_CONTAINER_WORK_DIRECTORY_VALUE = "${nexus.firewall.container.workdirectory:}";
+
+  public static final String EGRESS_METRICS_AGGREGATION_TASK_VISIBLE = "${nexus.egressmetrics.task.visible:false}";
 }
