@@ -10,7 +10,8 @@
   "resolutions": {
     "autolinker": "=3.16.1",
     "core-js-pure": "=3.28.0",
-    "dompurify": "=3.2.4"
+    "dompurify": "=3.2.4",
+    "@hashgraphonline/standards-sdk": "=0.0.63"
   },
   "dependencies": {
     "@react-hook/resize-observer": "^2.0.2",
