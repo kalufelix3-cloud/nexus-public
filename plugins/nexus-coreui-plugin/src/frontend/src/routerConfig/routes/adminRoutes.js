@@ -264,7 +264,7 @@ export const adminRoutes = [
 
   {
     name: ADMIN.REPOSITORY.ROUTINGRULES.EDIT,
-    url: '/routingrules/edit/{itemId:[a-zA-Z0-9]+}',
+    url: '/routingrules/edit/{itemId:.+}',
     component: RoutingRulesForm,
   },
 
