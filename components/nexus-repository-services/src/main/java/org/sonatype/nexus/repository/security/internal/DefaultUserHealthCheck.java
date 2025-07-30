@@ -12,18 +12,16 @@
  */
 package org.sonatype.nexus.repository.security.internal;
 
-import java.util.Optional;
-
+import org.sonatype.nexus.security.config.CUser;
+import org.sonatype.nexus.security.config.SecurityConfigurationManager;
 import org.sonatype.nexus.security.internal.AuthenticatingRealmImpl;
 import org.sonatype.nexus.security.realm.RealmManager;
+import org.sonatype.nexus.security.user.UserNotFoundException;
 
 import com.codahale.metrics.health.HealthCheck;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.mgt.RealmSecurityManager;
-import org.apache.shiro.realm.Realm;
+import org.apache.shiro.authc.credential.PasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -50,12 +48,23 @@ public class DefaultUserHealthCheck
 
   private final RealmManager realmManager;
 
-  private final RealmSecurityManager realmSecurityManager;
+  private final SecurityConfigurationManager securityConfigurationManager;
+
+  private final PasswordService passwordService;
+
+  private static final String ADMIN_USERNAME = "admin";
+
+  private static final String DEFAULT_ADMIN_PASSWORD = "admin123";
 
   @Inject
-  public DefaultUserHealthCheck(final RealmManager realmManager, final RealmSecurityManager realmSecurityManager) {
+  public DefaultUserHealthCheck(
+      final RealmManager realmManager,
+      final SecurityConfigurationManager securityConfigurationManager,
+      final PasswordService passwordService)
+  {
     this.realmManager = checkNotNull(realmManager);
-    this.realmSecurityManager = checkNotNull(realmSecurityManager);
+    this.securityConfigurationManager = checkNotNull(securityConfigurationManager);
+    this.passwordService = checkNotNull(passwordService);
   }
 
   @Override
@@ -64,18 +73,14 @@ public class DefaultUserHealthCheck
       return Result.healthy();
     }
 
-    Optional<Realm> realm = realmSecurityManager.getRealms()
-        .stream()
-        .filter(r -> r.getName().equals(AuthenticatingRealmImpl.NAME))
-        .findFirst();
-
     try {
-      if (realm.map(r -> r.getAuthenticationInfo(new UsernamePasswordToken("admin", "admin123"))).isPresent()) {
+      CUser adminUser = securityConfigurationManager.readUser(ADMIN_USERNAME);
+      if (passwordService.passwordsMatch(DEFAULT_ADMIN_PASSWORD, adminUser.getPassword())) {
         return Result.unhealthy(ERROR_MESSAGE);
       }
     }
-    catch (AuthenticationException e) {
-      log.trace("Unable to locate admin/admin123 user", e);
+    catch (UserNotFoundException e) {
+      log.warn("Default admin user not found", e);
     }
     return Result.healthy();
   }
