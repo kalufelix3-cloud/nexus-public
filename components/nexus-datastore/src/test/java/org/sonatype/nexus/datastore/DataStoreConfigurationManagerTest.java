@@ -15,22 +15,17 @@ package org.sonatype.nexus.datastore;
 import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import javax.annotation.Priority;
-
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.annotation.Order;
 
 import static java.util.stream.Collectors.toList;
@@ -40,11 +35,10 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 /**
@@ -54,23 +48,13 @@ public class DataStoreConfigurationManagerTest
     extends TestSupport
 {
   @Mock
-  private Map<String, DataStoreConfigurationSource> configurationSources;
-
-  private MockedStatic<QualifierUtil> mockStatic;
+  private List<DataStoreConfigurationSource> configurationSources;
 
   private DataStoreConfigurationManager underTest;
 
   @Before
   public void setUp() {
-    mockStatic = mockStatic(QualifierUtil.class);
-    List<DataStoreConfigurationSource> dataStoreConfigurationSourceList = List.of();
-    mockStatic.when(() -> QualifierUtil.buildQualifierBeanMap(any())).thenReturn(configurationSources);
-    underTest = new DataStoreConfigurationManager(dataStoreConfigurationSourceList);
-  }
-
-  @After
-  public void tearDown() {
-    mockStatic.close();
+    underTest = new DataStoreConfigurationManager(configurationSources);
   }
 
   private static DataStoreConfiguration newDataStoreConfiguration(final String name, final String source) {
@@ -78,12 +62,12 @@ public class DataStoreConfigurationManagerTest
     config.setName(name);
     config.setType("testType");
     config.setSource(source);
-    config.setAttributes(ImmutableMap.of());
+    config.setAttributes(Map.of());
     return config;
   }
 
-  @Priority(1)
-  @Order(1)
+  @Qualifier("A")
+  @Order(DataStoreConfigurationSource.ORDER_DEFAULT_SOURCE)
   private static class NumberOneConfigSource
       implements DataStoreConfigurationSource
   {
@@ -94,7 +78,7 @@ public class DataStoreConfigurationManagerTest
 
     @Override
     public Iterable<String> browseStoreNames() {
-      return ImmutableList.of(getName(), "sharedAll", "shared12", "shared13");
+      return List.of(getName(), "sharedAll", "shared12", "shared13");
     }
 
     @Override
@@ -103,8 +87,8 @@ public class DataStoreConfigurationManagerTest
     }
   }
 
-  @Priority(2)
-  @Order(2)
+  @Qualifier("B")
+  @Order(DataStoreConfigurationSource.ORDER_SYSTEM_PROPERTIES)
   private static class NumberTwoConfigSource
       implements DataStoreConfigurationSource
   {
@@ -115,7 +99,7 @@ public class DataStoreConfigurationManagerTest
 
     @Override
     public Iterable<String> browseStoreNames() {
-      return ImmutableList.of(getName(), "sharedAll", "shared12", "shared23");
+      return List.of(getName(), "sharedAll", "shared12", "shared23");
     }
 
     @Override
@@ -124,8 +108,8 @@ public class DataStoreConfigurationManagerTest
     }
   }
 
-  @Priority(3)
-  @Order(3)
+  @Qualifier("C")
+  @Order(DataStoreConfigurationSource.ORDER_ENVIRONMENT_VALUES)
   private static class NumberThreeConfigSource
       implements DataStoreConfigurationSource
   {
@@ -136,7 +120,7 @@ public class DataStoreConfigurationManagerTest
 
     @Override
     public Iterable<String> browseStoreNames() {
-      return ImmutableList.of(getName(), "sharedAll", "shared13", "shared23");
+      return List.of(getName(), "sharedAll", "shared13", "shared23");
     }
 
     @Override
@@ -151,7 +135,7 @@ public class DataStoreConfigurationManagerTest
     NumberTwoConfigSource source2 = new NumberTwoConfigSource();
     NumberThreeConfigSource source3 = new NumberThreeConfigSource();
     // Intentionally load them out of order
-    when(configurationSources.values()).thenReturn(ImmutableList.of(source1, source2, source3));
+    when(configurationSources.stream()).thenReturn(Stream.of(source1, source2, source3));
     List<DataStoreConfiguration> configs =
         StreamSupport.stream(underTest.load().spliterator(), false).collect(toList());
 
@@ -183,29 +167,29 @@ public class DataStoreConfigurationManagerTest
     DataStoreConfiguration nuget = newDataStoreConfiguration("nuget", "sourceC");
 
     when(sourceA.isEnabled()).thenReturn(true);
-    when(sourceA.browseStoreNames()).thenReturn(ImmutableList.of("config", "maven"));
+    when(sourceA.browseStoreNames()).thenReturn(List.of("config", "maven"));
     when(sourceA.load("config")).thenReturn(configA);
     when(sourceA.load("maven")).thenReturn(maven);
 
     when(sourceB.isEnabled()).thenReturn(true);
-    when(sourceB.browseStoreNames()).thenReturn(ImmutableList.of("docker", "CONFIG"));
+    when(sourceB.browseStoreNames()).thenReturn(List.of("docker", "CONFIG"));
     when(sourceB.load("CONFIG")).thenReturn(configB);
     when(sourceB.load("docker")).thenReturn(docker);
 
     when(sourceC.isEnabled()).thenReturn(false);
-    when(sourceC.browseStoreNames()).thenReturn(ImmutableList.of("nuget", "Config"));
+    when(sourceC.browseStoreNames()).thenReturn(List.of("nuget", "Config"));
     when(sourceC.load("Config")).thenReturn(configC);
     when(sourceC.load("nuget")).thenReturn(nuget);
 
     when(sourceD.isEnabled()).thenReturn(true);
-    when(sourceD.browseStoreNames()).thenReturn(ImmutableList.of("config", "pypi"));
+    when(sourceD.browseStoreNames()).thenReturn(List.of("config", "pypi"));
     when(sourceD.load("config")).thenThrow(UncheckedIOException.class);
     when(sourceD.load("pypi")).thenThrow(UncheckedIOException.class);
 
     InOrder expected = inOrder(sourceA, sourceB, sourceC, sourceD);
 
     // config from B is loaded first as C is disabled, other sources are not checked for config
-    when(configurationSources.values()).thenReturn(ImmutableList.of(sourceC, sourceB, sourceD, sourceA));
+    when(configurationSources.stream()).thenReturn(Stream.of(sourceC, sourceB, sourceD, sourceA));
     assertThat(underTest.load(), contains(docker, configB, maven));
     expected.verify(sourceB).load(matches("docker"));
     expected.verify(sourceB).load(matches("(?i)config"));
@@ -220,7 +204,7 @@ public class DataStoreConfigurationManagerTest
     // avoid loading that named config again. The missing config will be detected when something
     // attempts to use it, alerting the user so they can fix the source.
     //
-    when(configurationSources.values()).thenReturn(ImmutableList.of(sourceD, sourceC, sourceB, sourceA));
+    when(configurationSources.stream()).thenReturn(Stream.of(sourceD, sourceC, sourceB, sourceA));
     assertThat(underTest.load(), contains(docker, maven));
     expected.verify(sourceD).load(matches("(?i)config"));
     expected.verify(sourceD).load(matches("pypi"));
@@ -228,7 +212,7 @@ public class DataStoreConfigurationManagerTest
     expected.verify(sourceA).load(matches("maven"));
 
     // config from A is loaded first, other sources are not checked for config
-    when(configurationSources.values()).thenReturn(ImmutableList.of(sourceA, sourceB, sourceC, sourceD));
+    when(configurationSources.stream()).thenReturn(Stream.of(sourceA, sourceB, sourceC, sourceD));
     assertThat(underTest.load(), contains(configA, maven, docker));
     expected.verify(sourceA).load(matches("(?i)config"));
     expected.verify(sourceA).load(matches("maven"));
@@ -240,9 +224,9 @@ public class DataStoreConfigurationManagerTest
 
   @Test
   public void configSavedToOriginalSource() {
-    DataStoreConfigurationSource sourceA = mock(DataStoreConfigurationSource.class);
-    DataStoreConfigurationSource sourceB = mock(DataStoreConfigurationSource.class);
-    DataStoreConfigurationSource sourceC = mock(DataStoreConfigurationSource.class);
+    DataStoreConfigurationSource sourceA = spy(new NumberOneConfigSource());
+    DataStoreConfigurationSource sourceB = spy(new NumberTwoConfigSource());
+    DataStoreConfigurationSource sourceC = spy(new NumberThreeConfigSource());
 
     InOrder expected = inOrder(sourceA, sourceB, sourceC);
 
@@ -257,7 +241,8 @@ public class DataStoreConfigurationManagerTest
     }
 
     // source exists, but is not modifiable
-    when(configurationSources.get("B")).thenReturn(sourceB);
+    when(sourceB.getName()).thenReturn("B");
+    when(configurationSources.stream()).thenAnswer(__ -> Stream.of(sourceA, sourceB, sourceC));
     try {
       underTest.save(testConfig);
     }
@@ -275,9 +260,9 @@ public class DataStoreConfigurationManagerTest
 
   @Test
   public void configDeletedFromOriginalSource() {
-    DataStoreConfigurationSource sourceA = mock(DataStoreConfigurationSource.class);
-    DataStoreConfigurationSource sourceB = mock(DataStoreConfigurationSource.class);
-    DataStoreConfigurationSource sourceC = mock(DataStoreConfigurationSource.class);
+    DataStoreConfigurationSource sourceA = spy(new NumberOneConfigSource());
+    DataStoreConfigurationSource sourceB = spy(new NumberTwoConfigSource());
+    DataStoreConfigurationSource sourceC = spy(new NumberThreeConfigSource());
 
     InOrder expected = inOrder(sourceA, sourceB, sourceC);
 
@@ -292,7 +277,8 @@ public class DataStoreConfigurationManagerTest
     }
 
     // source exists, but is not modifiable
-    when(configurationSources.get("B")).thenReturn(sourceB);
+    when(sourceB.getName()).thenReturn("B");
+    when(configurationSources.stream()).thenAnswer(__ -> Stream.of(sourceA, sourceB, sourceC));
     try {
       underTest.delete(testConfig);
     }
