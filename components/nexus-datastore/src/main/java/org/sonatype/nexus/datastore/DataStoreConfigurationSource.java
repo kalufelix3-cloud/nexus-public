@@ -14,6 +14,9 @@ package org.sonatype.nexus.datastore;
 
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+
 /**
  * Source of {@link DataStoreConfiguration}s.
  *
@@ -63,4 +66,24 @@ public interface DataStoreConfigurationSource
   default void delete(DataStoreConfiguration configuration) {
     // no-op by default for non-modifiable sources
   }
+
+  /**
+   * Defines the {@link Order} for using environment variables as a configuration source
+   */
+  static final int ORDER_ENVIRONMENT_VALUES = Ordered.HIGHEST_PRECEDENCE;
+
+  /**
+   * Defines the {@link Order} for using system properties as a configuration source
+   */
+  static final int ORDER_SYSTEM_PROPERTIES = ORDER_ENVIRONMENT_VALUES + 10;
+
+  /**
+   * Defines the {@link Order} for using file system as a configuration source
+   */
+  static final int ORDER_FILE = ORDER_SYSTEM_PROPERTIES + 10;
+
+  /**
+   * Defines the {@link Order} for using the default source
+   */
+  static final int ORDER_DEFAULT_SOURCE = Ordered.LOWEST_PRECEDENCE;
 }
