@@ -31,7 +31,7 @@
     <sonatype-licensing.version>2.0.1</sonatype-licensing.version>
     <clm.dto.model.version>1.58.46-01</clm.dto.model.version>
     <insight-brain.version>1.193.0-01</insight-brain.version>
-    <insight-scanner.version>2.37.99-01</insight-scanner.version>
+    <insight-scanner.version>2.37.103-01</insight-scanner.version>
   </properties>
 
   <dependencyManagement>
@@ -162,7 +162,7 @@
       <dependency>
         <groupId>com.sonatype.insight.brain</groupId>
         <artifactId>nexus-iq-cli</artifactId>
-        <version>2.4.4-01</version>
+        <version>2.4.5-01</version>
         <classifier>core</classifier>
         <exclusions>
           <exclusion>
