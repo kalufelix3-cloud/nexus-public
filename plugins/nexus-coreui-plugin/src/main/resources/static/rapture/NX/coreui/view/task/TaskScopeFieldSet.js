@@ -84,7 +84,9 @@ Ext.define('NX.coreui.view.task.TaskScopeFieldSet', {
 
   importProperties: function (properties) {
     const me = this;
-    me.config.properties = properties;
+
+    // Ensure properties is initialized
+    me.config.properties = properties || {};
 
     if(!properties) {
       return;

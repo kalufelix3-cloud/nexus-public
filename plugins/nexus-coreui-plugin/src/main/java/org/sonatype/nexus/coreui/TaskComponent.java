@@ -436,16 +436,12 @@ public class TaskComponent
       Map<String, String> executePlanProperties = new HashMap<>(executePlanTaskXO.getProperties());
 
       executePlanProperties.putAll(planProperties);
-      ImmutableMap<String, String> combinedMap = ImmutableMap.copyOf(executePlanProperties);
+      ImmutableMap<String, String> combinedMap = ImmutableMap.copyOf(executePlanProperties.entrySet()
+          .stream()
+          .filter(entry -> entry.getValue() != null)
+          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
 
       executePlanTaskXO.setProperties(combinedMap);
-
-      try {
-        update(executePlanTaskXO);
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
     }
 
     return tasks;

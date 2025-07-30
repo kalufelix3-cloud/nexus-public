@@ -28,7 +28,7 @@ Ext.define('NX.coreui.store.ReconcilePlans', {
   proxy: {
     $configStrict: false,
     type: 'rest',
-    url: 'service/rest/v1/reconcile/list/',
+    url: 'service/rest/v1/plan',
     actionMethods: {
       read: 'GET'
     },
