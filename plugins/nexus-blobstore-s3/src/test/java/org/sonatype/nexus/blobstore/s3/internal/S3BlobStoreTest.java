@@ -364,18 +364,6 @@ public class S3BlobStoreTest
   }
 
   @Test
-  public void testRemovingNonEmptyBlobStoreRemovesLifecyclePolicy() throws Exception {
-    ObjectListing objectListing = mock(ObjectListing.class);
-    when(objectListing.getObjectSummaries()).thenReturn(List.of(new S3ObjectSummary()));
-    when(s3.listObjects("mybucket", "myPrefix/content/")).thenReturn(objectListing);
-    blobStore.init(config);
-    blobStore.remove();
-    verify(s3, never()).deleteObject("mybucket", "myPrefix/metadata.properties");
-    verify(bucketManager, never()).deleteStorageLocation(config);
-    verify(s3).deleteBucketLifecycleConfiguration("mybucket");
-  }
-
-  @Test
   public void testBucketNameRegexValidates() {
     assertThat("".matches(S3BlobStore.BUCKET_REGEX), is(false));
     assertThat("ab".matches(S3BlobStore.BUCKET_REGEX), is(false));

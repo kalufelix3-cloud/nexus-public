@@ -761,7 +761,6 @@ public class S3BlobStore
       }
       else {
         log.warn("Unable to delete non-empty blob store content directory in bucket {}", getConfiguredBucket());
-        s3.deleteBucketLifecycleConfiguration(getConfiguredBucket());
       }
     }
     catch (AmazonS3Exception s3Exception) {
