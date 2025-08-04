@@ -112,7 +112,6 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver.TEMPORARY_BLOB_ID_PREFIX;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
-import static org.sonatype.nexus.blobstore.api.OperationType.DOWNLOAD;
 import static org.sonatype.nexus.blobstore.api.OperationType.UPLOAD;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
@@ -182,8 +181,6 @@ public class FileBlobStore
   private Path basedir;
 
   private BlobStoreMetricsService<FileBlobStore> metricsService;
-
-  private LoadingCache<BlobId, FileBlob> liveBlobs;
 
   private final FileBlobDeletionIndex blobDeletionIndex;
 
@@ -427,7 +424,7 @@ public class FileBlobStore
     final Path temporaryBlobPath = temporaryContentPath(blobId, uuidSuffix);
     final Path temporaryAttributePath = temporaryAttributePath(blobId, uuidSuffix);
 
-    final FileBlob blob = liveBlobs.getUnchecked(blobId);
+    final BlobSupport blob = liveBlobs.getUnchecked(blobId);
 
     Lock lock = blob.lock();
     try {
@@ -516,56 +513,9 @@ public class FileBlobStore
     throw new UnsupportedOperationException("Internal move operation is not supported.");
   }
 
-  @Nullable
-  @Override
-  @Guarded(by = STARTED)
-  public Blob get(final BlobId blobId) {
-    return get(blobId, false);
-  }
-
-  @Nullable
-  @Override
-  @Guarded(by = STARTED)
-  @Timed
-  @MonitoringBlobStoreMetrics(operationType = DOWNLOAD)
-  public Blob get(final BlobId blobId, final boolean includeDeleted) {
-    checkNotNull(blobId);
-
-    final FileBlob blob = liveBlobs.getUnchecked(blobId);
-
-    if (blob.isStale()) {
-      Lock lock = blob.lock();
-      try {
-        if (blob.isStale()) {
-          FileBlobAttributes blobAttributes = getFileBlobAttributes(blobId);
-          if (blobAttributes == null) {
-            return null;
-          }
-
-          if (blobAttributes.isDeleted() && !includeDeleted) {
-            log.debug("Attempt to access soft-deleted blob {} attributes: {}", blobId, blobAttributes);
-            return null;
-          }
-
-          blob.refresh(blobAttributes.getHeaders(), blobAttributes.getMetrics());
-        }
-      }
-      catch (Exception e) {
-        throw new BlobStoreException(e, blobId);
-      }
-      finally {
-        lock.unlock();
-      }
-    }
-
-    log.debug("Accessing blob {}", blobId);
-
-    return blob;
-  }
-
   @Override
   protected boolean doDelete(final BlobId blobId, final String reason) {
-    final FileBlob blob = liveBlobs.getUnchecked(blobId);
+    final BlobSupport blob = liveBlobs.getUnchecked(blobId);
 
     Lock lock = blob.lock();
     try {
@@ -620,7 +570,7 @@ public class FileBlobStore
 
   @Override
   protected boolean doDeleteHard(final BlobId blobId) {
-    final FileBlob blob = liveBlobs.getUnchecked(blobId);
+    final BlobSupport blob = liveBlobs.getUnchecked(blobId);
     Lock lock = blob.lock();
     try {
       log.debug("Hard deleting blob {}", blobId);
@@ -974,7 +924,7 @@ public class FileBlobStore
       AtomicInteger counter = new AtomicInteger();
       blobDeletionIndex.getRecordsBefore(date).forEach(blobId -> {
         CancelableHelper.checkCancellation();
-        FileBlob blob = liveBlobs.getIfPresent(blobId);
+        BlobSupport blob = liveBlobs.getIfPresent(blobId);
         log.debug("Next available record for compaction: {}", blobId);
         if (Objects.isNull(blob) || blob.isStale()) {
           log.debug("Compacting...");
@@ -1072,7 +1022,7 @@ public class FileBlobStore
       final ProgressLogIntervalHelper progressLogger)
   {
     BlobId blobId = getBlobIdFromAttributeFilePath(new FileAttributesLocation(attributes.getPath()));
-    FileBlob blob = blobId != null ? liveBlobs.getIfPresent(blobId) : null;
+    BlobSupport blob = blobId != null ? liveBlobs.getIfPresent(blobId) : null;
     if (blob == null || blob.isStale()) {
       if (!maybeCompactBlob(inUseChecker, blobId)) {
         blobDeletionIndex.createRecord(blobId);
@@ -1139,7 +1089,7 @@ public class FileBlobStore
   }
 
   @VisibleForTesting
-  void setLiveBlobs(final LoadingCache<BlobId, FileBlob> liveBlobs) {
+  void setLiveBlobs(final LoadingCache<BlobId, BlobSupport> liveBlobs) {
     this.liveBlobs = liveBlobs;
   }
 
@@ -1314,5 +1264,11 @@ public class FileBlobStore
   protected void deleteCopiedAttributes(final BlobId blobId, final String softDeletedLocation) {
     log.trace("deleteCopiedAttributes for blobId: {}, softDeletedLocation: {}", blobId, softDeletedLocation);
     fileOperations.deleteQuietly(attributePath(createBlobIdForTimePath(blobId, softDeletedLocation)));
+  }
+
+  @Override
+  protected BlobAttributes loadBlobAttributes(BlobId blobId) throws IOException {
+    FileBlobAttributes blobAttributes = new FileBlobAttributes(attributePath(blobId));
+    return blobAttributes.load() ? blobAttributes : null;
   }
 }

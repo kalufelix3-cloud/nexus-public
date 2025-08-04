@@ -83,7 +83,6 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import org.joda.time.DateTime;
@@ -99,7 +98,6 @@ import static java.util.Optional.ofNullable;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
-import static org.sonatype.nexus.blobstore.api.OperationType.DOWNLOAD;
 import static org.sonatype.nexus.blobstore.api.OperationType.UPLOAD;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.buildException;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
@@ -178,8 +176,6 @@ public class S3BlobStore
 
   private BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
 
-  private LoadingCache<BlobId, S3Blob> liveBlobs;
-
   private AmazonS3 s3;
 
   private ExecutorService executorService;
@@ -249,7 +245,7 @@ public class S3BlobStore
     }
   }
 
-  protected Function<BlobId, S3Blob> s3BlobInitializer() {
+  protected Function<BlobId, BlobSupport> s3BlobInitializer() {
     return S3Blob::new;
   }
 
@@ -363,7 +359,7 @@ public class S3BlobStore
       }
     }
 
-    final S3Blob blob = liveBlobs.getUnchecked(blobId);
+    final BlobSupport blob = liveBlobs.getUnchecked(blobId);
 
     Lock lock = blob.lock();
     try {
@@ -440,68 +436,10 @@ public class S3BlobStore
     }
   }
 
-  @Nullable
-  @Override
-  @Guarded(by = STARTED)
-  public Blob get(final BlobId blobId) {
-    return get(blobId, false);
-  }
-
-  @Nullable
-  @Override
-  @Timed
-  @MonitoringBlobStoreMetrics(operationType = DOWNLOAD)
-  public Blob get(final BlobId blobId, final boolean includeDeleted) {
-    checkNotNull(blobId);
-
-    log.debug("Accessing blob {}", blobId);
-
-    final S3Blob blob = liveBlobs.getUnchecked(blobId);
-
-    if (blob.isStale()) {
-      return refreshBlob(blob, blobId, includeDeleted);
-    }
-    else {
-      return blob;
-    }
-  }
-
-  @Timed
-  private S3Blob refreshBlob(final S3Blob blob, final BlobId blobId, final boolean includeDeleted) {
-    Lock lock = blob.lock();
-    try {
-      if (blob.isStale()) {
-        S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath(blobId));
-        boolean loaded = blobAttributes.load();
-        if (!loaded) {
-          log.warn("Attempt to access non-existent blob {} ({})", blobId, blobAttributes);
-          return null;
-        }
-
-        if (blobAttributes.isDeleted() && !includeDeleted) {
-          log.debug("Attempt to access soft-deleted blob {} attributes: {}", blobId, blobAttributes);
-          return null;
-        }
-
-        blob.refresh(blobAttributes.getHeaders(), blobAttributes.getMetrics());
-        return blob;
-      }
-      else {
-        return blob;
-      }
-    }
-    catch (IOException e) {
-      throw new BlobStoreException(e, blobId);
-    }
-    finally {
-      lock.unlock();
-    }
-  }
-
   @Override
   @Timed
   protected boolean doDelete(final BlobId blobId, final String reason) {
-    final S3Blob blob = liveBlobs.getUnchecked(blobId);
+    final BlobSupport blob = liveBlobs.getUnchecked(blobId);
 
     Lock lock = blob.lock();
     try (final Timer.Context expireContext = expireTimer.time()) {
@@ -559,7 +497,7 @@ public class S3BlobStore
 
   @Override
   protected boolean doDeleteHard(final BlobId blobId) {
-    final S3Blob blob = liveBlobs.getUnchecked(blobId);
+    final BlobSupport blob = liveBlobs.getUnchecked(blobId);
     Lock lock = blob.lock();
     try (final Timer.Context performHardDeleteContext = hardDeleteTimer.time()) {
       log.debug("Hard deleting blob {}", blobId);
@@ -614,7 +552,7 @@ public class S3BlobStore
       deletedBlobIndex.getRecordsBefore(date).forEach(blobId -> {
         CancelableHelper.checkCancellation();
 
-        S3Blob blob = liveBlobs.getIfPresent(blobId);
+        BlobSupport blob = liveBlobs.getIfPresent(blobId);
         log.debug("Next available record for compaction: {}", blobId);
         if (Objects.isNull(blob) || blob.isStale()) {
           log.debug("Compacting...");
@@ -1047,6 +985,12 @@ public class S3BlobStore
           log.isDebugEnabled() ? e : null);
     }
     return Optional.empty();
+  }
+
+  @Override
+  protected BlobAttributes loadBlobAttributes(final BlobId blobId) throws IOException {
+    S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath(blobId));
+    return blobAttributes.load() ? blobAttributes : null;
   }
 
   private S3BlobAttributes writeBlobAttributes(
