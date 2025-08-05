@@ -26,7 +26,7 @@ import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusObserver;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType;
-import org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetImpl.Config;
+import org.sonatype.nexus.repository.httpclient.HttpClientConfig;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.http.HttpHost;
@@ -82,17 +82,18 @@ public class BlockingHttpClient
 
   private RemoteConnectionStatus status = new RemoteConnectionStatus(UNINITIALISED);
 
-  public BlockingHttpClient(final CloseableHttpClient delegate,
-                            final Config config,
-                            final RemoteConnectionStatusObserver statusObserver,
-                            final boolean repositoryOnline,
-                            final AutoBlockConfiguration autoBlockConfiguration)
+  public BlockingHttpClient(
+      final CloseableHttpClient delegate,
+      final HttpClientConfig config,
+      final RemoteConnectionStatusObserver statusObserver,
+      final boolean repositoryOnline,
+      final AutoBlockConfiguration autoBlockConfiguration)
   {
     super(delegate);
     checkNotNull(config);
     this.statusObserver = checkNotNull(statusObserver);
     this.autoBlockConfiguration = checkNotNull(autoBlockConfiguration);
-    
+
     blocked = config.blocked != null ? config.blocked : false;
     autoBlock = config.autoBlock != null ? config.autoBlock : false;
     if (repositoryOnline) {
@@ -156,17 +157,24 @@ public class BlockingHttpClient
     updateStatus(AVAILABLE);
   }
 
-  private synchronized void updateStatusToAvailableWithParams(final String reason , @Nullable final Integer statusCode, final HttpHost target) {
+  private synchronized void updateStatusToAvailableWithParams(
+      final String reason,
+      @Nullable final Integer statusCode,
+      final HttpHost target)
+  {
     if (autoBlock && blockedUntil != null) {
       blockedUntil = null;
       interruptCheckStatusThread();
       autoBlockSequence.reset();
     }
-    updateStatus(AVAILABLE, format("(Last Request %s)" , reason), statusCode, target.toURI(), false);
+    updateStatus(AVAILABLE, format("(Last Request %s)", reason), statusCode, target.toURI(), false);
   }
 
-  private synchronized void updateStatusToUnavailable(final String reason, @Nullable final Integer statusCode,
-                                                      final HttpHost target) {
+  private synchronized void updateStatusToUnavailable(
+      final String reason,
+      @Nullable final Integer statusCode,
+      final HttpHost target)
+  {
     if (autoBlock) {
       // avoid some other thread already increased the sequence
       if (blockedUntil == null || blockedUntil.isBeforeNow()) {
@@ -176,7 +184,8 @@ public class BlockingHttpClient
         // TODO maybe find different means to schedule status checking
         scheduleCheckStatus(uri, blockedUntil);
       }
-      updateStatus(AUTO_BLOCKED_UNAVAILABLE, reason, statusCode, target.toURI(), blockedUntil.isAfter(status.getBlockedUntil()));
+      updateStatus(AUTO_BLOCKED_UNAVAILABLE, reason, statusCode, target.toURI(),
+          blockedUntil.isAfter(status.getBlockedUntil()));
     }
     else {
       updateStatus(UNAVAILABLE, reason, statusCode, target.toURI(), false);
@@ -190,11 +199,12 @@ public class BlockingHttpClient
     checkStatusThread.start();
   }
 
-  private void updateStatus(final RemoteConnectionStatusType type,
-                            final String reason,
-                            @Nullable final Integer statusCode,
-                            @Nullable final String url,
-                            final boolean autoBlockTimeIncrease)
+  private void updateStatus(
+      final RemoteConnectionStatusType type,
+      final String reason,
+      @Nullable final Integer statusCode,
+      @Nullable final String url,
+      final boolean autoBlockTimeIncrease)
   {
     if (type != status.getType() || autoBlockTimeIncrease) {
       RemoteConnectionStatus oldStatus = status;

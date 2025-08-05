@@ -17,7 +17,7 @@ import java.util.Map;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration;
-import org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetImpl;
+import org.sonatype.nexus.repository.httpclient.HttpClientConfig;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
@@ -52,7 +52,7 @@ public class HttpClientConfigurationObjectMapperCustomizerTest
   @Test
   public void canSerializeAndDeserializeHttpClientConfigurationTimeouts() throws Exception {
     // Given: A configuration with a timeout set
-    HttpClientFacetImpl.Config config = new HttpClientFacetImpl.Config();
+    HttpClientConfig config = new HttpClientConfig();
     config.connection = new ConnectionConfiguration();
     config.connection.setTimeout(Time.seconds(1));
 
@@ -64,7 +64,7 @@ public class HttpClientConfigurationObjectMapperCustomizerTest
     assertEquals(1, innermap.get("timeout"));
 
     // When: We convert back to an object with ObjectMapper
-    HttpClientFacetImpl.Config marshalledConfig = objectMapper.readValue(json, HttpClientFacetImpl.Config.class);
+    HttpClientConfig marshalledConfig = objectMapper.readValue(json, HttpClientConfig.class);
 
     // Then: The time is correctly converted
     assertEquals(Time.seconds(1), marshalledConfig.connection.getTimeout());

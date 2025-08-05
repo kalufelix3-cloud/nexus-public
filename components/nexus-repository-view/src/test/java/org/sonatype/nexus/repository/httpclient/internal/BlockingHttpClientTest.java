@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.httpclient.FilteredHttpClientSupport.Filter
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusObserver;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType;
-import org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetImpl.Config;
+import org.sonatype.nexus.repository.httpclient.HttpClientConfig;
 
 import org.apache.http.HttpHost;
 import org.apache.http.StatusLine;
@@ -94,7 +94,7 @@ public class BlockingHttpClientTest
     when(autoBlockConfiguration.shouldBlock(UNRECOGNIZED_ERROR_CODE)).thenReturn(true);
 
     httpHost = HttpHost.create("localhost");
-    underTest = new BlockingHttpClient(httpClient, new Config(), statusObserver, true, autoBlockConfiguration);
+    underTest = new BlockingHttpClient(httpClient, new HttpClientConfig(), statusObserver, true, autoBlockConfiguration);
   }
 
   @After
@@ -106,7 +106,7 @@ public class BlockingHttpClientTest
 
   @Test
   public void updateStatusWhenBlocked() throws Exception {
-    Config config = new Config();
+    HttpClientConfig config = new HttpClientConfig();
     config.blocked = true;
     reset(statusObserver);
     BlockingHttpClient client = new BlockingHttpClient(httpClient, config, statusObserver, true,
@@ -123,7 +123,7 @@ public class BlockingHttpClientTest
     when(httpResponse.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(SC_BAD_GATEWAY);
 
-    Config config = new Config();
+    HttpClientConfig config = new HttpClientConfig();
     config.autoBlock = true;
 
     boolean[] statusThreadLeftInterrupted = new boolean[1];
@@ -237,7 +237,8 @@ public class BlockingHttpClientTest
 
   @Test
   public void setStatusToOfflineWhenPassed() throws Exception {
-    underTest = new BlockingHttpClient(httpClient, new Config(), statusObserver, false, autoBlockConfiguration);
+    underTest =
+        new BlockingHttpClient(httpClient, new HttpClientConfig(), statusObserver, false, autoBlockConfiguration);
     ArgumentCaptor<RemoteConnectionStatus> newStatusCaptor = ArgumentCaptor.forClass(RemoteConnectionStatus.class);
     verify(statusObserver, times(2)).onStatusChanged(any(), newStatusCaptor.capture());
     assertThat(newStatusCaptor.getAllValues().get(1).getType(), is(equalTo(OFFLINE)));
@@ -272,7 +273,7 @@ public class BlockingHttpClientTest
       underTest.filter(httpHost, filterable);
     }
     catch (IOException e) {
-      //Intentionally not logged as this exception is expected in the test and doesn't give us any more information.
+      // Intentionally not logged as this exception is expected in the test and doesn't give us any more information.
     }
   }
 }

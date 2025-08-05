@@ -27,7 +27,7 @@ import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusEvent;
-import org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetImpl.Config;
+import org.sonatype.nexus.repository.httpclient.HttpClientConfig;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -61,11 +61,11 @@ public class HttpClientFacetImplConfigTest
     UsernameAuthenticationConfiguration auth = new UsernameAuthenticationConfiguration();
     auth.setUsername("admin");
     auth.setPassword(null);
-    HttpClientFacetImpl.Config config = new HttpClientFacetImpl.Config();
+    HttpClientConfig config = new HttpClientConfig();
     config.authentication = auth;
-    Set<ConstraintViolation<Config>> violations = validator.validate(config);
+    Set<ConstraintViolation<HttpClientConfig>> violations = validator.validate(config);
     assertThat(violations.size(), equalTo(1));
-    ConstraintViolation<HttpClientFacetImpl.Config> violation = violations.iterator().next();
+    ConstraintViolation<HttpClientConfig> violation = violations.iterator().next();
     assertThat(violation.getPropertyPath().toString(), equalTo("authentication.password"));
   }
 
@@ -74,11 +74,11 @@ public class HttpClientFacetImplConfigTest
     UsernameAuthenticationConfiguration auth = new UsernameAuthenticationConfiguration();
     auth.setUsername("");
     auth.setPassword(mock(Secret.class));
-    HttpClientFacetImpl.Config config = new HttpClientFacetImpl.Config();
+    HttpClientConfig config = new HttpClientConfig();
     config.authentication = auth;
-    Set<ConstraintViolation<HttpClientFacetImpl.Config>> violations = validator.validate(config);
+    Set<ConstraintViolation<HttpClientConfig>> violations = validator.validate(config);
     assertThat(violations.size(), equalTo(1));
-    ConstraintViolation<HttpClientFacetImpl.Config> violation = violations.iterator().next();
+    ConstraintViolation<HttpClientConfig> violation = violations.iterator().next();
     assertThat(violation.getPropertyPath().toString(), equalTo("authentication.username"));
 
   }
@@ -88,9 +88,9 @@ public class HttpClientFacetImplConfigTest
     UsernameAuthenticationConfiguration auth = new UsernameAuthenticationConfiguration();
     auth.setUsername("");
     auth.setPassword(null);
-    HttpClientFacetImpl.Config config = new HttpClientFacetImpl.Config();
+    HttpClientConfig config = new HttpClientConfig();
     config.authentication = auth;
-    Set<ConstraintViolation<HttpClientFacetImpl.Config>> violations = validator.validate(config);
+    Set<ConstraintViolation<HttpClientConfig>> violations = validator.validate(config);
     assertThat(violations.size(), equalTo(2));
     assertThat(violations.stream().map(v -> v.getPropertyPath().toString()).sorted().toArray(),
         equalTo(new String[]{"authentication.password", "authentication.username"}));

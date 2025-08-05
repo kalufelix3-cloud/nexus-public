@@ -29,6 +29,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.sonatype.nexus.repository.httpclient.HttpClientConfig;
+import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -39,6 +41,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.reset;
+import static org.mockito.ArgumentMatchers.eq;
 
 public class NegativeCacheFacetImplTest
     extends TestSupport
@@ -216,6 +220,105 @@ public class NegativeCacheFacetImplTest
     verify(cache).remove(key);
     verify(cache, never()).remove(key1);
     verify(cache).remove(key2);
+  }
+
+  @Test
+  public void cacheIsRecreatedWhenUsernameAuthenticationIsUsed() throws Exception {
+    config.enabled = true;
+    underTest.attach(repository);
+    underTest.init();
+    underTest.start();
+
+    config.enabled = true;
+
+    HttpClientConfig httpClientConfig = new HttpClientConfig();
+    httpClientConfig.authentication = mock(UsernameAuthenticationConfiguration.class);
+
+    ConfigurationFacet configFacet = repository.facet(ConfigurationFacet.class);
+    when(configFacet.readSection(any(), eq("httpclient"), eq(HttpClientConfig.class)))
+        .thenReturn(httpClientConfig);
+
+    reset(cacheHelper);
+
+    underTest.stop();
+    underTest.update();
+
+    verify(cacheHelper).maybeDestroyCache(any(String.class));
+    verify(cacheHelper).maybeCreateCache(any(String.class), any(Class.class), any(Class.class), any());
+  }
+
+  @Test
+  public void cacheIsRecreatedWhenEnabledChanges() throws Exception {
+    config.enabled = false;
+
+    underTest.attach(repository);
+    underTest.init();
+    underTest.start();
+
+    verify(cacheHelper, never()).maybeCreateCache(any(), any(), any(), any());
+
+    NegativeCacheFacetImpl.Config newConfig = new NegativeCacheFacetImpl.Config();
+    newConfig.enabled = true;
+
+    HttpClientConfig httpClientConfig = new HttpClientConfig();
+    httpClientConfig.authentication = null;
+
+    ConfigurationFacet configFacet = repository.facet(ConfigurationFacet.class);
+    when(configFacet.readSection(
+        any(),
+        eq(NegativeCacheFacetImpl.CONFIG_KEY),
+        eq(NegativeCacheFacetImpl.Config.class)))
+            .thenReturn(newConfig);
+
+    when(configFacet.readSection(any(), eq("httpclient"), eq(HttpClientConfig.class)))
+        .thenReturn(httpClientConfig);
+
+    reset(cacheHelper);
+    when(cacheHelper.maybeCreateCache(any(), any(), any(), any())).thenReturn(cache);
+
+    underTest.stop();
+    underTest.update();
+
+    verify(cacheHelper).maybeDestroyCache(any(String.class));
+    verify(cacheHelper).maybeCreateCache(any(String.class), any(Class.class), any(Class.class), any());
+  }
+
+  @Test
+  public void cacheIsRecreatedWhenTimeToLiveChanges() throws Exception {
+    config.enabled = true;
+    config.timeToLive = 60;
+
+    underTest.attach(repository);
+    underTest.init();
+    underTest.start();
+
+    verify(cacheHelper).maybeCreateCache(any(), any(), any(), any());
+
+    NegativeCacheFacetImpl.Config newConfig = new NegativeCacheFacetImpl.Config();
+    newConfig.enabled = true;
+    newConfig.timeToLive = 120;
+
+    HttpClientConfig httpClientConfig = new HttpClientConfig();
+    httpClientConfig.authentication = null;
+
+    ConfigurationFacet configFacet = repository.facet(ConfigurationFacet.class);
+    when(configFacet.readSection(
+        any(),
+        eq(NegativeCacheFacetImpl.CONFIG_KEY),
+        eq(NegativeCacheFacetImpl.Config.class)))
+            .thenReturn(newConfig);
+
+    when(configFacet.readSection(any(), eq("httpclient"), eq(HttpClientConfig.class)))
+        .thenReturn(httpClientConfig);
+
+    reset(cacheHelper);
+    when(cacheHelper.maybeCreateCache(any(), any(), any(), any())).thenReturn(cache);
+
+    underTest.stop();
+    underTest.update();
+
+    verify(cacheHelper).maybeDestroyCache(any(String.class));
+    verify(cacheHelper).maybeCreateCache(any(String.class), any(Class.class), any(Class.class), any());
   }
 
   private static void mockIterable(

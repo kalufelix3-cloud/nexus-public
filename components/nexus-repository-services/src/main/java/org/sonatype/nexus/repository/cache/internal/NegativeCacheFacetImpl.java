@@ -13,33 +13,37 @@
 package org.sonatype.nexus.repository.cache.internal;
 
 import java.util.concurrent.TimeUnit;
-
+import javax.annotation.Nullable;
 import javax.cache.Cache;
 import javax.cache.Cache.Entry;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
-import jakarta.inject.Inject;
+import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
+import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.cache.NegativeCacheKey;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.httpclient.HttpClientConfig;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Status;
 
 import com.google.common.annotations.VisibleForTesting;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
+import jakarta.inject.Inject;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 
 /**
  * Default {@link NegativeCacheFacet} implementation.
@@ -60,6 +64,10 @@ public class NegativeCacheFacetImpl
   @VisibleForTesting
   static class Config
   {
+    @Valid
+    @Nullable
+    public AuthenticationConfiguration authentication;
+
     @NotNull
     public Boolean enabled = Boolean.TRUE;
 
@@ -80,6 +88,8 @@ public class NegativeCacheFacetImpl
   }
 
   private Config config;
+
+  private HttpClientConfig httpConfig;
 
   private Cache<NegativeCacheKey, Status> cache;
 
@@ -114,9 +124,11 @@ public class NegativeCacheFacetImpl
     Config previous = config;
     super.doUpdate(configuration);
 
-    // re-create cache if enabled or cache settings changed
+    // re-create cache if enabled or cache settings changed, or when the http config authentication is used
     if (config.enabled) {
-      if (!previous.enabled || !config.timeToLive.equals(previous.timeToLive)) {
+      httpConfig = facet(ConfigurationFacet.class).readSection(configuration, "httpclient", HttpClientConfig.class);
+      if (!previous.enabled || !config.timeToLive.equals(previous.timeToLive)
+          || httpConfig.authentication instanceof UsernameAuthenticationConfiguration) {
         maybeDestroyCache();
         maybeCreateCache();
       }

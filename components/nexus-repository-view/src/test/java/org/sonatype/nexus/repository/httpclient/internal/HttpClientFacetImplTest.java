@@ -30,7 +30,7 @@ import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.httpclient.AutoBlockConfiguration;
 import org.sonatype.nexus.repository.httpclient.ContentCompressionStrategy;
 import org.sonatype.nexus.repository.httpclient.NormalizationStrategy;
-import org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetImpl.Config;
+import org.sonatype.nexus.repository.httpclient.HttpClientConfig;
 
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
@@ -100,7 +100,7 @@ class HttpClientFacetImplTest
   @Mock
   HttpClientConfiguration httpClientConfiguration;
 
-  private HttpClientFacetImpl.Config config = new HttpClientFacetImpl.Config();
+  private HttpClientConfig config = new HttpClientConfig();
 
   private NtlmAuthenticationConfiguration ntlmAuthentication = new NtlmAuthenticationConfiguration();
 
@@ -119,7 +119,7 @@ class HttpClientFacetImplTest
   public void setUp() throws Exception {
     mockedStatic = mockStatic(QualifierUtil.class);
 
-    when(configurationFacet.readSection(configuration, CONFIG_KEY, Config.class)).thenReturn(config);
+    when(configurationFacet.readSection(configuration, CONFIG_KEY, HttpClientConfig.class)).thenReturn(config);
 
     when(repository.getName()).thenReturn(TEST_REPOSITORY_NAME);
     when(repository.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
@@ -183,6 +183,32 @@ class HttpClientFacetImplTest
     assertDisableCompressionPassedToCustomizer(YUM, true);
     assertDisableCompressionPassedToCustomizer("unknown", false);
     assertDisableCompressionPassedToCustomizer(NPM, false);
+  }
+
+  @Test
+  public void passwordCacheIsResetOnDoConfigure() throws Exception {
+    UsernameAuthenticationConfiguration usernameAuthentication = new UsernameAuthenticationConfiguration();
+    usernameAuthentication.setUsername(USERNAME);
+    final Secret secret = mock(Secret.class);
+    when(secret.decrypt()).thenReturn(PASSWORD.toCharArray());
+    usernameAuthentication.setPassword(secret);
+
+    config.authentication = usernameAuthentication;
+
+    HttpClientFacetImpl underTest = createFacet(DOCKER);
+    Header basicAuth1 = underTest.createBasicAuthHeader();
+    assertThat(basicAuth1.getValue(), is(equalTo(BASIC_AUTH_ENCODED)));
+
+    final Secret newSecret = mock(Secret.class);
+    when(newSecret.decrypt()).thenReturn("newpassword".toCharArray());
+    usernameAuthentication.setPassword(newSecret);
+
+    underTest.doConfigure(configuration);
+
+    String expected =
+        "Basic " + java.util.Base64.getEncoder().encodeToString((USERNAME + ":newpassword").getBytes("ISO-8859-1"));
+    Header basicAuth2 = underTest.createBasicAuthHeader();
+    assertThat(basicAuth2.getValue(), is(equalTo(expected)));
   }
 
   private void assertConfigurationPassedToBlockingClient(
