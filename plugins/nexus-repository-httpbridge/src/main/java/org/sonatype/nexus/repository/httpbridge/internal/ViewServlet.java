@@ -47,6 +47,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HttpHeaders;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.shiro.authz.AuthorizationException;
+import org.apache.shiro.web.util.WebUtils;
 import org.jboss.logging.MDC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -150,8 +151,10 @@ public class ViewServlet
     httpResponse.setHeader(HttpHeaders.X_XSS_PROTECTION, "1; mode=block");
 
     // resolve repository for request
-    RepositoryPath path = RepositoryPath.parse(httpRequest.getPathInfo());
-    log.debug("Parsed path: {}", path);
+    final String pathInfo = httpRequest.getPathInfo();
+    final String normalizedPath = WebUtils.normalize(pathInfo);
+    RepositoryPath path = RepositoryPath.parse(normalizedPath);
+    log.debug("Parsed path: {} and normalized to {}", path, normalizedPath);
 
     Repository repo = repository(path.getRepositoryName());
     if (repo == null) {
