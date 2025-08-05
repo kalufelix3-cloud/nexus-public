@@ -37,6 +37,11 @@ public class NexusRepositoryCoreApplication
     // since logback is going to start on its own, we need to tell it where to find its configuration
     System.setProperty("logging.config", "etc/logback/logback.xml");
 
+    // NEXUS-47740: Disable the Spring logging shutdown hook is disabled
+    // as it is abruptly terminating logging during shutdown
+    // and thus preventing the logs from Nexus's shutdown sequence from being added to the log file
+    System.setProperty("logging.register-shutdown-hook", "false");
+
     new SpringApplicationBuilder(NexusRepositoryCoreApplication.class)
         .bannerMode(OFF)
         .initializers(NexusRepositoryCoreApplication::initialize)
