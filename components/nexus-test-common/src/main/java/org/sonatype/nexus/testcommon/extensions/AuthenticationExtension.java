@@ -16,16 +16,18 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.apache.shiro.authz.AuthorizationException;
+import org.apache.shiro.authz.Permission;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.authz.permission.WildcardPermission;
-import org.apache.shiro.mgt.SecurityManager;
+import org.apache.shiro.mgt.DefaultSecurityManager;
+import org.apache.shiro.realm.SimpleAccountRealm;
+import org.apache.shiro.authc.SimpleAccount;
 import org.apache.shiro.session.Session;
+import org.apache.shiro.session.mgt.SimpleSession;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.support.DelegatingSubject;
 import org.apache.shiro.util.ThreadContext;
@@ -36,15 +38,10 @@ import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.Extension;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
-import org.mockito.stubbing.Answer;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
 
 /**
  * A JUnit 5 extension which helps {@link RequiresAuthentication} and {@link RequiresPermissions} annotated methods
+ * uses a real Shiro SecurityManager and SimpleAccountRealm instead of mocks.
  */
 public class AuthenticationExtension
     implements Extension, BeforeEachCallback, AfterEachCallback, BeforeAllCallback, AfterAllCallback
@@ -62,13 +59,20 @@ public class AuthenticationExtension
      * When no values are specified we treat this as all nexus permissions
      */
     String[] permissions() default {"nexus:*"};
+
+    /**
+     * Whether the user is authenticated or not
+     */
+    boolean isAuthenticated() default true;
   }
 
-  private final SecurityManager manager = mock(SecurityManager.class);
+  private DefaultSecurityManager securityManager;
+
+  private AuthenticationTestRealm realm;
 
   @Override
   public void beforeAll(final ExtensionContext context) throws Exception {
-    ThreadContext.bind(manager);
+    setupSecurityManager();
 
     context.getTestClass()
         .flatMap(clazz -> AnnotationSupport.findAnnotation(clazz, WithUser.class))
@@ -81,51 +85,81 @@ public class AuthenticationExtension
         .flatMap(clazz -> AnnotationSupport.findAnnotation(clazz, WithUser.class))
         .ifPresent(this::unsetUser);
 
-    ThreadContext.unbindSecurityManager();
+    cleanupSecurityManager();
   }
 
   @Override
   public void afterEach(final ExtensionContext context) throws Exception {
-    unsetUser(null);
+    ThreadContext.unbindSubject();
+    ThreadContext.unbindSecurityManager();
   }
 
   @Override
   public void beforeEach(final ExtensionContext context) throws Exception {
-    context.getTestClass()
-        .flatMap(clazz -> AnnotationSupport.findAnnotation(clazz, WithUser.class))
-        .ifPresent(this::withUser);
+    realm = new AuthenticationTestRealm("test-realm");
+    securityManager.setRealm(realm);
+
+    ThreadContext.bind(securityManager);
+
     context.getTestMethod()
-        .flatMap(clazz -> AnnotationSupport.findAnnotation(clazz, WithUser.class))
+        .flatMap(method -> AnnotationSupport.findAnnotation(method, WithUser.class))
+        .or(() -> context.getTestClass()
+            .flatMap(clazz -> AnnotationSupport.findAnnotation(clazz, WithUser.class)))
         .ifPresent(this::withUser);
   }
 
+  private void setupSecurityManager() {
+    securityManager = new DefaultSecurityManager();
+    realm = new AuthenticationTestRealm("test-realm");
+    securityManager.setRealm(realm);
+
+    ThreadContext.bind(securityManager);
+  }
+
+  private void cleanupSecurityManager() {
+    if (securityManager != null) {
+      ThreadContext.unbindSecurityManager();
+      ThreadContext.unbindSubject();
+      securityManager.destroy();
+      securityManager = null;
+      realm = null;
+    }
+  }
+
   private void withUser(final WithUser withUser) {
-    SimplePrincipalCollection principals = new SimplePrincipalCollection(withUser.value(), "default");
-    DelegatingSubject subject = new DelegatingSubject(principals, true, "localhost", mock(Session.class), manager);
+    String username = withUser.value();
+    boolean isAuthenticated = withUser.isAuthenticated();
+
+    if (isAuthenticated) {
+      realm.addAccount(username, "password", "user-role", withUser.permissions());
+    }
+
+    SimplePrincipalCollection principals = new SimplePrincipalCollection(username, realm.getName());
+    Session session = new SimpleSession();
+
+    DelegatingSubject subject =
+        new DelegatingSubject(principals, isAuthenticated, "localhost", session, securityManager);
     ThreadContext.bind(subject);
-
-    Set<WildcardPermission> assignedPermissions = Stream.of(withUser.permissions())
-        .map(WildcardPermission::new)
-        .collect(Collectors.toSet());
-
-    doAnswer(answer(assignedPermissions)).when(manager).checkPermission(any(), anyString());
-    doAnswer(answer(assignedPermissions)).when(manager).checkPermissions(any(), (String[]) any());
   }
 
   private void unsetUser(final WithUser withUser) {
     ThreadContext.unbindSubject();
   }
 
-  private static Answer<?> answer(final Set<WildcardPermission> assignedPermissions) {
-    return i -> {
-      for (int x = 1; x < i.getArguments().length; x++) {
-        String permName = i.getArgument(x, String.class);
-        WildcardPermission requested = new WildcardPermission(permName);
-        if (!assignedPermissions.stream().anyMatch(candidate -> candidate.implies(requested))) {
-          throw new AuthorizationException();
-        }
+  private static class AuthenticationTestRealm
+      extends SimpleAccountRealm
+  {
+    public AuthenticationTestRealm(String name) {
+      super(name);
+    }
+
+    public void addAccount(String username, String password, String roleName, String[] permissions) {
+      Set<Permission> permissionCollection = new HashSet<>();
+      for (String permission : permissions) {
+        permissionCollection.add(new WildcardPermission(permission));
       }
-      return null;
-    };
+      SimpleAccount account = new SimpleAccount(username, password, getName(), Set.of(roleName), permissionCollection);
+      add(account);
+    }
   }
 }

@@ -17,14 +17,17 @@ import java.util.HashSet;
 import java.util.List;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 import org.sonatype.nexus.security.role.Role;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 
 import static org.junit.Assert.assertEquals;
@@ -33,40 +36,24 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.mgt.SecurityManager;
-import org.apache.shiro.subject.Subject;
-import org.apache.shiro.util.ThreadContext;
-import static org.mockito.ArgumentMatchers.any;
 
-public class RoleInternalResourceTest
-    extends TestSupport
+@ExtendWith(AuthenticationExtension.class)
+@WithUser
+class RoleInternalResourceTest
+    extends Test5Support
 {
   @Mock
   private SecuritySystem securitySystem;
 
-  @Mock
-  private Subject subject;
-
-  @Mock
-  private SecurityManager securityManager;
-
   private RoleInternalResource underTest;
 
-  @Before
-  public void setup() {
+  @BeforeEach
+  void setup() {
     underTest = new RoleInternalResource(securitySystem);
-
-    when(securityManager.createSubject(any())).thenReturn(subject);
-    ThreadContext.bind(securityManager);
-    SecurityUtils.setSecurityManager(securityManager);
-
-    when(subject.isAuthenticated()).thenReturn(true);
-    when(subject.isPermitted("nexus:roles:read")).thenReturn(true);
   }
 
   @Test
-  public void testListRolesOnEmptySource() {
+  void testListRolesOnEmptySource() {
     Role r1 = createRole("role1", Arrays.asList("roleA", "roleB"), Arrays.asList("read", "write"));
     Role r2 = createRole("role2", Arrays.asList("roleC", "roleD"), Arrays.asList("read", "delete"));
     when(securitySystem.listRoles()).thenReturn(new HashSet<>(Arrays.asList(r1, r2)));
@@ -80,7 +67,7 @@ public class RoleInternalResourceTest
   }
 
   @Test
-  public void testSearchRoles() throws NoSuchAuthorizationManagerException {
+  void testSearchRoles() throws NoSuchAuthorizationManagerException {
     Role r1 = createRole("customRole1", Arrays.asList("roleA", "roleB"), Arrays.asList("read", "write"));
     Role r2 = createRole("customRole2", Arrays.asList("roleC", "roleD"), Arrays.asList("read", "delete"));
     Role r3 = createRole("customRole3", Arrays.asList("roleX", "roleY"), Arrays.asList("read", "delete"));
@@ -97,7 +84,7 @@ public class RoleInternalResourceTest
   }
 
   @Test
-  public void testExceptionThrown() throws NoSuchAuthorizationManagerException {
+  void testExceptionThrown() throws NoSuchAuthorizationManagerException {
     when(securitySystem.searchRoles(anyString(), anyString())).thenThrow(
         new NoSuchAuthorizationManagerException("bad source"));
     WebApplicationMessageException ex =

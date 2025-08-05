@@ -36,7 +36,6 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 /**
  * @since 3.17
  */
-@RequiresAuthentication
 @Produces(MediaType.APPLICATION_JSON)
 public class SecurityApiResource
     extends ComponentSupport
@@ -52,6 +51,7 @@ public class SecurityApiResource
   @Override
   @GET
   @Path("user-sources")
+  @RequiresAuthentication
   @RequiresPermissions("nexus:users:read")
   public List<ApiUserSource> getUserSources() {
     return userManagers.values()

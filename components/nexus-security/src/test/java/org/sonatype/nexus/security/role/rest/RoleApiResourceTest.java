@@ -21,7 +21,7 @@ import java.util.List;
 
 import javax.ws.rs.core.MediaType;
 
-import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.ErrorMessageUtil;
 import org.sonatype.nexus.security.SecuritySystem;
@@ -31,17 +31,14 @@ import org.sonatype.nexus.security.role.DuplicateRoleException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.role.ReadonlyRoleException;
 import org.sonatype.nexus.security.role.Role;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-
-import org.apache.shiro.mgt.SecurityManager;
-import org.apache.shiro.subject.Subject;
-import org.apache.shiro.util.ThreadContext;
-import org.apache.shiro.SecurityUtils;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
@@ -49,11 +46,14 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class RoleApiResourceTest
-    extends TestSupport
+@ExtendWith(AuthenticationExtension.class)
+@WithUser
+class RoleApiResourceTest
+    extends Test5Support
 {
   @Mock
   private SecuritySystem securitySystem;
@@ -61,34 +61,18 @@ public class RoleApiResourceTest
   @Mock
   private AuthorizationManager authorizationManager;
 
-  @Mock
-  private Subject subject;
-
-  @Mock
-  private SecurityManager securityManager;
-
   private RoleApiResource underTest;
 
-  @Before
-  public void setup() throws Exception {
-    when(securitySystem.getAuthorizationManager("default")).thenReturn(authorizationManager);
-    when(securitySystem.listSources()).thenReturn(Arrays.asList("default", "LDAP"));
+  @BeforeEach
+  void setup() throws Exception {
+    lenient().when(securitySystem.getAuthorizationManager("default")).thenReturn(authorizationManager);
+    lenient().when(securitySystem.listSources()).thenReturn(Arrays.asList("default", "LDAP"));
 
     underTest = new RoleApiResource(securitySystem);
-
-    when(securityManager.createSubject(any())).thenReturn(subject);
-    ThreadContext.bind(securityManager);
-    SecurityUtils.setSecurityManager(securityManager);
-    
-    when(subject.isAuthenticated()).thenReturn(true);
-    when(subject.isPermitted("nexus:roles:read")).thenReturn(true);
-    when(subject.isPermitted("nexus:roles:create")).thenReturn(true);
-    when(subject.isPermitted("nexus:roles:update")).thenReturn(true);
-    when(subject.isPermitted("nexus:roles:delete")).thenReturn(true);
   }
 
   @Test
-  public void testGetRoles() throws Exception {
+  void testGetRoles() throws Exception {
     Role role1 = createRole("default", "id1", "role1", "role1", Arrays.asList("role1", "role2"),
         Arrays.asList("priv1", "priv2"));
     Role role2 = createRole("default", "id2", "role2", "role2", Arrays.asList("role2", "role3"),
@@ -107,7 +91,7 @@ public class RoleApiResourceTest
   }
 
   @Test
-  public void testGetRoles_allSources() throws Exception {
+  void testGetRoles_allSources() throws Exception {
     Role role1 = createRole("default", "id1", "role1", "role1", Arrays.asList("role1", "role2"),
         Arrays.asList("priv1", "priv2"));
     Role role2 = createRole("another", "id2", "role2", "role2", Arrays.asList("role2", "role3"),
@@ -126,7 +110,7 @@ public class RoleApiResourceTest
   }
 
   @Test
-  public void testGetRoles_noRoles() throws Exception {
+   void testGetRoles_noRoles() throws Exception {
     when(securitySystem.listRoles("default")).thenReturn(new HashSet<>());
 
     List<RoleXOResponse> apiRoles = underTest.getRoles("default");
@@ -135,7 +119,7 @@ public class RoleApiResourceTest
   }
 
   @Test
-  public void testGetRole() {
+  void testGetRole() {
     Role role = createRole("default", "id1", "role1", "role1", Arrays.asList("role1", "role2"),
         Arrays.asList("priv1", "priv2"));
     when(authorizationManager.getRole("roleId")).thenReturn(role);
@@ -147,7 +131,7 @@ public class RoleApiResourceTest
   }
 
   @Test
-  public void testGetRole_notFound() {
+   void testGetRole_notFound() {
     when(authorizationManager.getRole("roleId")).thenThrow(NoSuchRoleException.class);
 
     try {
@@ -163,7 +147,7 @@ public class RoleApiResourceTest
   }
 
   @Test
-  public void testGetRole_sourceNotFound() throws Exception {
+   void testGetRole_sourceNotFound() throws Exception {
     when(securitySystem.getAuthorizationManager("bad")).thenThrow(NoSuchAuthorizationManagerException.class);
 
     try {
@@ -179,7 +163,7 @@ public class RoleApiResourceTest
   }
 
   @Test
-  public void testCreateRole() throws Exception {
+  void testCreateRole() throws Exception {
     RoleXORequest roleXo = createApiRole("roleId", "roleName", "description", Collections.singleton("childRole"),
         Collections.singleton("priv"));
 
@@ -201,7 +185,7 @@ public class RoleApiResourceTest
   }
 
   @Test
-  public void testCreateRole_alreadyExists() throws Exception {
+   void testCreateRole_alreadyExists() throws Exception {
     when(authorizationManager.addRole(any())).thenThrow(DuplicateRoleException.class);
 
     RoleXORequest roleXo = createApiRole("roleId", "roleName", "description", Collections.emptySet(),
@@ -220,14 +204,14 @@ public class RoleApiResourceTest
   }
 
   @Test
-  public void testDelete() throws Exception {
+  void testDelete() throws Exception {
     underTest.delete("roleId");
 
     verify(authorizationManager).deleteRole("roleId");
   }
 
   @Test
-  public void testDelete_notFound() throws Exception {
+  void testDelete_notFound() throws Exception {
     doThrow(NoSuchRoleException.class).when(authorizationManager).deleteRole("roleId");
 
     try {
@@ -243,7 +227,7 @@ public class RoleApiResourceTest
   }
 
   @Test
-  public void testDeleteRole_readOnly() {
+  void testDeleteRole_readOnly() {
     doThrow(ReadonlyRoleException.class).when(authorizationManager).deleteRole("roleId");
 
     try {
@@ -260,7 +244,7 @@ public class RoleApiResourceTest
   }
 
   @Test
-  public void testUpdateRole() {
+  void testUpdateRole() {
     Role role = createRole("default", "id1", "role1", "role1", Arrays.asList("role1", "role2"),
         Arrays.asList("priv1", "priv2"));
     when(authorizationManager.getRole("id1")).thenReturn(role);
@@ -277,7 +261,7 @@ public class RoleApiResourceTest
   }
 
   @Test
-  public void testUpdateRole_notFound() {
+   void testUpdateRole_notFound() {
     when(authorizationManager.getRole(any())).thenThrow(new NoSuchRoleException("id1"));
     RoleXORequest roleXo = createApiRole("id1", "role1", "role1", Arrays.asList("role1", "role2"),
         Arrays.asList("priv1", "priv2"));
@@ -295,7 +279,7 @@ public class RoleApiResourceTest
   }
 
   @Test
-  public void testUpdateRole_readOnly() {
+  void testUpdateRole_readOnly() {
     Role role = createRole("default", "id", "name", "description", Collections.singleton("role1"),
         Collections.singleton("priv1"));
 
@@ -319,7 +303,7 @@ public class RoleApiResourceTest
   }
 
   @Test
-  public void testUpdateRole_nameConflict() {
+  void testUpdateRole_nameConflict() {
     RoleXORequest roleXo = createApiRole("id", "name", "description", Collections.singleton("role1"),
         Collections.singleton("priv1"));
 
