@@ -8,10 +8,10 @@ global:
   maxConcurrentPrs: 3
   dryRun: false
   reviewers:
-  - "team-lead"
+    - "team-lead"
   labels:
-  - "dependencies"
-  - "automated"
+    - "dependencies"
+    - "automated"
   pr:
     title: "chore(deps): update {dependency} to {version}"
     description: "Updates {dependency} from {currentVersion} to {version}\n\n### Changes\n\
@@ -21,14 +21,14 @@ global:
     commitMessage: "chore(deps): update {dependency} to {version}"
     branchPrefix: "patches/"
   ignoredDependencies:
-  - "com.sonatype*"
-  - "org.sonatype*"
+    - "com.sonatype*"
+    - "org.sonatype*"
   notifications:
     slack:
       channel: "#dependency-updates"
     email:
       recipients:
-      - "team@example.com"
+        - "team@example.com"
   rollback:
     enabled: true
     maxAttempts: 3
@@ -44,6 +44,8 @@ global:
       type: "yarn"
       enabled: true
       testCommand: "yarn test"
+  preRunCommands:
+    - "mvn clean install -DskipTests=true -Dnpm.skipTests=true"
 scm:
   provider: "GITHUB"
   owner: "sonatype"
