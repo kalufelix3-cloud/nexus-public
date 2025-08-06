@@ -50,6 +50,17 @@ export function useExtJsUnsavedChangesGuard(extContainerRef) {
     let skipNextPop = false;
     let isHandlingUnsaved = false;
 
+    function goToHash(hash) {
+      window.__extjsHandledUnsaved__ = false;
+      skipNextPop = true;
+      if (hash && hash !== '#') {
+        window.location.hash = hash;
+      } else {
+        // If the hash is just '#', we don't want to change the URL
+        console.warn('Attempted to navigate to a hash-only URL, which breaks the UI');
+      }
+    }
+
     // Intercept React-side <a href="#..."> clicks outside the ExtJS container
     // If there are unsaved changes, show the ExtJS modal before allowing navigation
     const clickHandler = e => {
@@ -61,14 +72,10 @@ export function useExtJsUnsavedChangesGuard(extContainerRef) {
       const newHash = a.getAttribute('href');
       window.__extjsHandledUnsaved__ = true;
       const proceed = handleExtJsUnsavedChanges(menuCtrl, () => {
-        window.__extjsHandledUnsaved__ = false;
-        skipNextPop = true;
-        window.location.hash = newHash;
+        goToHash(newHash);
       });
       if (proceed) {
-        window.__extjsHandledUnsaved__ = false;
-        skipNextPop = true;
-        window.location.hash = newHash;
+        goToHash(newHash);
       }
     };
 

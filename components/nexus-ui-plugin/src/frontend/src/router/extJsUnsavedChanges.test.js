@@ -55,6 +55,11 @@ describe('useExtJsUnsavedChangesGuard', () => {
     });
   });
 
+  afterEach(() => {
+    // Clean up any changes to window.location
+    window.history.pushState({}, '', '/');
+  });
+
   it('should not prevent navigation if there is no unsaved dirt', () => {
     render(<TestComponent />);
     const a = document.createElement('a');
@@ -82,5 +87,18 @@ describe('useExtJsUnsavedChangesGuard', () => {
     const event = new PopStateEvent('popstate');
     window.dispatchEvent(event);
     expect(warnBeforeNavigateMock).toHaveBeenCalled();
+  });
+
+  it('should not navigate if it is a single hash click', () => {
+    hasDirtMock.mockReturnValue(true);
+    render(<TestComponent />);
+    expect(window.location.hash).toBe('');
+    const a = document.createElement('a');
+    a.setAttribute('href', '#');
+    document.body.appendChild(a);
+    userEvent.click(a);
+    expect(window.location.hash).toBe('');
+    expect(warnBeforeNavigateMock).toHaveBeenCalled();
+    document.body.removeChild(a);
   });
 });
