@@ -49,7 +49,6 @@ import com.google.common.cache.LoadingCache;
 import jakarta.inject.Inject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -430,7 +429,7 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
     matcher = DATE_BASED_PATTERN.matcher(attributeFilePath.getFullPath());
     if (matcher.find()) {
-      LocalDateTime localDateTime = LocalDateTime.parse(matcher.group(1), DATE_TIME_PATH_FORMATTER);
+      LocalDateTime localDateTime = LocalDateTime.parse(matcher.group(1).replace("\\", "/"), DATE_TIME_PATH_FORMATTER);
       OffsetDateTime blobCreatedRef = localDateTime.atOffset(ZoneOffset.UTC);
       String id = matcher.group(3);
       return new BlobId(id, blobCreatedRef, replaceBytesName(attributeFilePath));
