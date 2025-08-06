@@ -19,12 +19,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.io.File.separator;
 
 /**
  * Provides a pointer to a blob in a given store.
@@ -36,8 +34,7 @@ public class BlobRef
   /**
    * The pattern to match date based layout in a file system
    */
-  public static final DateTimeFormatter DATE_TIME_PATH_FORMATTER = DateTimeFormatter.ofPattern(
-      "yyyy" + separator + "MM" + separator + "dd" + separator + "HH" + separator + "mm");
+  public static final DateTimeFormatter DATE_TIME_PATH_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd/HH/mm");
 
   /**
    * The pattern to match date based layout in an asset reference

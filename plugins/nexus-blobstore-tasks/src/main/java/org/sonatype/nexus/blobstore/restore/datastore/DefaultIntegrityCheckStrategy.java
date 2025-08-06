@@ -12,12 +12,12 @@
  */
 package org.sonatype.nexus.blobstore.restore.datastore;
 
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -41,7 +41,6 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.time.LocalDate.now;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
@@ -274,11 +273,13 @@ public class DefaultIntegrityCheckStrategy
    * returns true if the blobs data is accessible, false otherwise
    */
   protected boolean blobDataExists(final Blob blob) {
-    try {
-      blob.getInputStream().close();
+    try (InputStream in = blob.getInputStream()) {
+      // Read from the stream to avoid a bug with Azure see NEXUS-48217
+      in.read();
       return true;
     }
     catch (Exception e) { // NOSONAR
+      log.warn("Failed to read {} cause {}", blob, e.getClass(), log.isDebugEnabled() ? e : null);
       return false;
     }
   }
