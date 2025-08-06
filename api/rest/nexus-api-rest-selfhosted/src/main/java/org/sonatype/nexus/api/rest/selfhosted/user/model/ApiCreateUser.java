@@ -11,13 +11,15 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-package org.sonatype.nexus.security.internal.rest;
+package org.sonatype.nexus.api.rest.selfhosted.user.model;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.sonatype.nexus.security.internal.rest.ApiUserStatus;
+import org.sonatype.nexus.security.internal.rest.NexusSecurityApiConstants;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
@@ -66,7 +68,7 @@ public class ApiCreateUser
     // for deserialization
   }
 
-  ApiCreateUser(
+  public ApiCreateUser(
       final String userId,
       final String firstName,
       final String lastName,
@@ -140,7 +142,7 @@ public class ApiCreateUser
     this.roles = roles;
   }
 
-  User toUser() {
+  public User toUser() {
     User user = new User();
     user.setUserId(userId);
     user.setFirstName(firstName);
@@ -150,7 +152,8 @@ public class ApiCreateUser
     user.setReadOnly(false);
     user.setVersion(1);
     user.setSource(UserManager.DEFAULT_SOURCE);
-    user.setRoles(roles.stream().map(r -> new RoleIdentifier(UserManager.DEFAULT_SOURCE, r))
+    user.setRoles(roles.stream()
+        .map(r -> new RoleIdentifier(UserManager.DEFAULT_SOURCE, r))
         .collect(Collectors.toSet()));
     return user;
   }

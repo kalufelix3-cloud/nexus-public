@@ -77,7 +77,7 @@ public class ApiUser
     // deserialization
   }
 
-  ApiUser(
+  public ApiUser(
       final String userId,
       final String firstName,
       final String lastName,
@@ -172,7 +172,7 @@ public class ApiUser
     this.roles = roles;
   }
 
-  User toUser() {
+  public User toUser() {
     User user = new User();
     user.setUserId(userId);
     user.setFirstName(firstName);

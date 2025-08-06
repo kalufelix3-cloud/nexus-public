@@ -20,7 +20,10 @@ import org.sonatype.nexus.security.user.UserStatus;
  */
 public enum ApiUserStatus
 {
-  active(UserStatus.active), locked(UserStatus.locked), disabled(UserStatus.disabled), changepassword(
+  active(UserStatus.active),
+  locked(UserStatus.locked),
+  disabled(UserStatus.disabled),
+  changepassword(
       UserStatus.changepassword); // NOSONAR
 
   private UserStatus status;
@@ -29,7 +32,7 @@ public enum ApiUserStatus
     this.status = status;
   }
 
-  UserStatus getStatus() {
+  public UserStatus getStatus() {
     return status;
   }
 

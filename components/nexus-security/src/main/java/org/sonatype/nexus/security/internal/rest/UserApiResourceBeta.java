@@ -18,7 +18,6 @@ import javax.ws.rs.Path;
 
 import org.sonatype.nexus.rest.APIConstants;
 import org.sonatype.nexus.security.SecuritySystem;
-import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 
 import io.swagger.annotations.Api;
 
@@ -41,9 +40,8 @@ public class UserApiResourceBeta
 
   @Inject
   public UserApiResourceBeta(
-      final SecuritySystem securitySystem,
-      final AdminPasswordFileManager adminPasswordFileManager)
+      final SecuritySystem securitySystem)
   {
-    super(securitySystem, adminPasswordFileManager);
+    super(securitySystem);
   }
 }

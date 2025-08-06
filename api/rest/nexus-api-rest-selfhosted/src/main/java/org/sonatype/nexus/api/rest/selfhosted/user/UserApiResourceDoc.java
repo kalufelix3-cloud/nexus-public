@@ -10,9 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.security.internal.rest;
+package org.sonatype.nexus.api.rest.selfhosted.user;
 
-import java.util.Collection;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
+import org.sonatype.nexus.api.rest.selfhosted.user.model.ApiCreateUser;
+import org.sonatype.nexus.security.internal.rest.ApiUser;
+import org.sonatype.nexus.security.internal.rest.NexusSecurityApiConstants;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -30,22 +35,28 @@ public interface UserApiResourceDoc
 {
   String USER_ID_DESCRIPTION = "The userid the request should apply to.";
 
-  String REALM_DESCRIPTION = "The realm the request should apply to.";
+  String PASSWORD_DESCRIPTION = "The new password to use.";
 
   String PASSWORD_REQUIRED = "Password was not supplied in the body of the request";
 
-  @ApiOperation("Retrieve a list of users.")
+  @ApiOperation("Create a new user in the default source.")
   @ApiResponses(value = {@ApiResponse(code = 400, message = PASSWORD_REQUIRED),
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS)})
-  Collection<ApiUser> getUsers(
-      @ApiParam("An optional term to search userids for.") String userId,
-      @ApiParam("An optional user source to restrict the search to.") String source);
+  ApiUser createUser(@ApiParam("A representation of the user to create.") @NotNull @Valid ApiCreateUser user);
 
-  @ApiOperation("Delete a user.")
-  @ApiResponses(value = {@ApiResponse(code = 400, message = NexusSecurityApiConstants.NON_LOCAL_USER_CANNOT_BE_DELETED),
+  @ApiOperation("Update an existing user.")
+  @ApiResponses(value = {@ApiResponse(code = 400, message = PASSWORD_REQUIRED),
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
       @ApiResponse(code = 404, message = NexusSecurityApiConstants.USER_OR_SOURCE_NOT_FOUND)})
-  void deleteUser(
+  void updateUser(
       @ApiParam(value = USER_ID_DESCRIPTION) String userId,
-      @ApiParam(value = REALM_DESCRIPTION) String realm);
+      @ApiParam("A representation of the user to update.") @NotNull @Valid ApiUser user);
+
+  @ApiOperation("Change a user's password.")
+  @ApiResponses(value = {@ApiResponse(code = 400, message = PASSWORD_REQUIRED),
+      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
+      @ApiResponse(code = 404, message = NexusSecurityApiConstants.USER_NOT_FOUND)})
+  void changePassword(
+      @ApiParam(value = USER_ID_DESCRIPTION) String userId,
+      @ApiParam(value = PASSWORD_DESCRIPTION) @NotNull(message = "Password must be supplied.") String password);
 }

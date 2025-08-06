@@ -11,40 +11,42 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-package org.sonatype.nexus.security.internal.rest;
+package org.sonatype.nexus.api.rest.selfhosted.user;
 
-import java.util.Collection;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
-import org.sonatype.nexus.security.internal.RealmToSource;
+import org.sonatype.nexus.security.config.AdminPasswordFileManager;
+import org.sonatype.nexus.api.rest.selfhosted.user.model.ApiCreateUser;
+import org.sonatype.nexus.security.internal.rest.ApiUser;
+import org.sonatype.nexus.security.internal.rest.ApiUserStatus;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
-import org.sonatype.nexus.security.user.UserSearchCriteria;
+import org.sonatype.nexus.validation.Validate;
 
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.inject.Inject;
+import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
@@ -61,74 +63,100 @@ public class UserApiResource
     extends ComponentSupport
     implements Resource, UserApiResourceDoc
 {
-  private static final String SAML_SOURCE = "SAML";
+  public static final String ADMIN_USER_ID = "admin";
 
   private final SecuritySystem securitySystem;
 
+  private final AdminPasswordFileManager adminPasswordFileManager;
+
   @Inject
   public UserApiResource(
-      final SecuritySystem securitySystem)
+      final SecuritySystem securitySystem,
+      final AdminPasswordFileManager adminPasswordFileManager)
   {
     this.securitySystem = checkNotNull(securitySystem);
+    this.adminPasswordFileManager = checkNotNull(adminPasswordFileManager);
   }
 
   @Override
-  @GET
+  @POST
   @RequiresAuthentication
-  @RequiresPermissions("nexus:users:read")
-  public Collection<ApiUser> getUsers(
-      @QueryParam("userId") final String userId,
-      @QueryParam("source") final String source)
-  {
-    UserSearchCriteria criteria = new UserSearchCriteria(userId, null, source);
-
-    if (!UserManager.DEFAULT_SOURCE.equals(source)) {
-      // we limit the number of users here to avoid issues with remote sources
-      criteria.setLimit(100);
+  @RequiresPermissions("nexus:users:create")
+  @Validate
+  public ApiUser createUser(final ApiCreateUser createUser) {
+    if (Strings2.isBlank(createUser.getPassword())) {
+      throw createWebException(Status.BAD_REQUEST, "A non-empty password is required.");
     }
-
-    return securitySystem.searchUsers(criteria)
-        .stream()
-        .map(this::fromUser)
-        .collect(Collectors.toList());
-  }
-
-  @Override
-  @DELETE
-  @Path("{userId}")
-  @RequiresAuthentication
-  @RequiresPermissions("nexus:users:delete")
-  public void deleteUser(
-      @PathParam("userId") final String userId,
-      @QueryParam("realm") final String realm)
-  {
-    User user = null;
     try {
-      if (realm == null) {
-        user = securitySystem.getUser(userId);
-        if (!UserManager.DEFAULT_SOURCE.equals(user.getSource()) && !SAML_SOURCE.equals(user.getSource())) {
-          throw createWebException(Status.BAD_REQUEST, "Non-local user cannot be deleted.");
-        }
-      }
-      else {
-        if (!securitySystem.isValidRealm(realm)) {
-          throw createWebException(Status.BAD_REQUEST, "Invalid or empty realm name.");
-        }
-        else {
-          user = securitySystem.getUser(userId, RealmToSource.getSource(realm));
-        }
-      }
-
-      securitySystem.deleteUser(userId, user.getSource());
+      User user = securitySystem.addUser(createUser.toUser(), createUser.getPassword());
+      return fromUser(user);
     }
     catch (NoSuchUserManagerException e) {
-      // this should never actually happen
-      String source = user.getSource() != null ? user.getSource() : "";
-      log.error("Unable to locate source: {} for userId: {}", source, userId, e);
-      throw createNoSuchUserManagerException(source);
+      log.error("Unable to locate default usermanager.", e);
+      throw createNoSuchUserManagerException(UserManager.DEFAULT_SOURCE);
+    }
+  }
+
+  @Override
+  @PUT
+  @Path("{userId}")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:users:update")
+  @Validate
+  public void updateUser(@PathParam("userId") final String userId, final ApiUser apiUser) {
+    if (!userId.equals(apiUser.getUserId())) {
+      log.debug("The path userId '{}' does not match the userId supplied in the body '{}'.", userId,
+          apiUser.getUserId());
+      throw createWebException(Status.BAD_REQUEST, "The path's userId does not match the body");
+    }
+
+    try {
+      validateRoles(apiUser.getRoles());
+
+      if (UserManager.DEFAULT_SOURCE.equals(apiUser.getSource())) {
+        securitySystem.updateUser(apiUser.toUser());
+      }
+      else {
+        // Ensure user exists
+        securitySystem.getUser(userId, apiUser.getSource());
+
+        Set<RoleIdentifier> roleIdentifiers = apiUser.getRoles()
+            .stream()
+            .map(roleId -> new RoleIdentifier(UserManager.DEFAULT_SOURCE, roleId))
+            .collect(Collectors.toSet());
+        securitySystem.setUsersRoles(userId, apiUser.getSource(), roleIdentifiers);
+      }
     }
     catch (UserNotFoundException e) {
       log.debug("Unable to locate userId: {}", userId, e);
+      throw createUnknownUserException(userId);
+    }
+    catch (NoSuchUserManagerException e) {
+      log.debug("Unable to locate source: {}", userId, apiUser.getSource(), e);
+      throw createNoSuchUserManagerException(apiUser.getSource());
+    }
+  }
+
+  @Override
+  @PUT
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:*")
+  @Path("{userId}/change-password")
+  @Consumes(MediaType.TEXT_PLAIN)
+  @Validate
+  public void changePassword(@PathParam("userId") final String userId, final String password) {
+    if (StringUtils.isBlank(password)) {
+      throw createWebException(Status.BAD_REQUEST, "Password must be supplied.");
+    }
+    try {
+      securitySystem.changePassword(userId, password);
+
+      if (ADMIN_USER_ID.equals(userId)) {
+        adminPasswordFileManager.removeFile();
+      }
+    }
+    catch (UserNotFoundException e) { // NOSONAR
+      log.debug("Request to change password for invalid user '{}'.", userId);
       throw createUnknownUserException(userId);
     }
   }

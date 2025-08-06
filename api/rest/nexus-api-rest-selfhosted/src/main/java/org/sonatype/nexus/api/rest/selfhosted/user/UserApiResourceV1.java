@@ -10,15 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.security.internal.rest;
+package org.sonatype.nexus.api.rest.selfhosted.user;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.security.config.AdminPasswordFileManager;
+import org.sonatype.nexus.security.internal.rest.SecurityApiConstants;
 
-import static org.sonatype.nexus.security.internal.rest.UserApiResourceV1.RESOURCE_URI;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,7 +27,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Singleton
-@Path(RESOURCE_URI)
+@Path(UserApiResourceV1.RESOURCE_URI)
 public class UserApiResourceV1
     extends UserApiResource
 {
@@ -34,8 +35,9 @@ public class UserApiResourceV1
 
   @Inject
   public UserApiResourceV1(
-      final SecuritySystem securitySystem)
+      final SecuritySystem securitySystem,
+      final AdminPasswordFileManager adminPasswordFileManager)
   {
-    super(securitySystem);
+    super(securitySystem, adminPasswordFileManager);
   }
 }
