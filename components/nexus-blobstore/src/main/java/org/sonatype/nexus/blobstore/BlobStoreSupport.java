@@ -24,10 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
@@ -44,14 +41,13 @@ import org.sonatype.nexus.common.text.Strings2;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
-
+import jakarta.inject.Inject;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobRef.DATE_TIME_FORMATTER;
 import static org.sonatype.nexus.blobstore.api.BlobRef.DATE_TIME_PATH_FORMATTER;
-import static org.sonatype.nexus.common.app.FeatureFlags.RECONCILE_PLAN_ENABLED_NAMED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.SHUTDOWN;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
@@ -108,13 +104,6 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   @Inject
   public void setMetricRegistry(final MetricRegistry metricRegistry) {
     this.metricRegistry = metricRegistry;
-  }
-
-  @Inject
-  public void setisReconcilePlanEnabled(
-      @Named(RECONCILE_PLAN_ENABLED_NAMED) final boolean isReconcilePlanEnabled)
-  {
-    this.isReconcilePlanEnabled = isReconcilePlanEnabled;
   }
 
   protected BlobId getBlobId(final Map<String, String> headers, @Nullable final BlobId blobId) {
@@ -326,7 +315,7 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
     matcher = DATE_BASED_PATTERN.matcher(attributeFilePath.getFullPath());
     if (matcher.find()) {
-      LocalDateTime localDateTime = LocalDateTime.parse(matcher.group(1), DATE_TIME_PATH_FORMATTER);
+      LocalDateTime localDateTime = LocalDateTime.parse(matcher.group(1).replace("\\", "/"), DATE_TIME_PATH_FORMATTER);
       OffsetDateTime blobCreatedRef = localDateTime.atOffset(ZoneOffset.UTC);
       String id = matcher.group(3);
       return new BlobId(id, blobCreatedRef, replaceBytesName(attributeFilePath));
