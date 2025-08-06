@@ -162,7 +162,7 @@
       <dependency>
         <groupId>com.sonatype.insight.brain</groupId>
         <artifactId>nexus-iq-cli</artifactId>
-        <version>2.4.5-01</version>
+        <version>2.4.6-01</version>
         <classifier>core</classifier>
         <exclusions>
           <exclusion>
