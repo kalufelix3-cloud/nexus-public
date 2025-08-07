@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-parent</artifactId>
-    <version>3.82.0-SNAPSHOT</version>
+    <version>3.82.1-SNAPSHOT</version>
   </parent>
 
   <groupId>org.sonatype.nexus.jetty</groupId>
@@ -41,26 +41,26 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-jetty</artifactId>
         <type>pom</type>
-        <version>3.82.0-SNAPSHOT</version>
+        <version>3.82.1-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus.jetty</groupId>
         <artifactId>jetty-ee8-nested</artifactId>
-        <version>3.82.0-SNAPSHOT</version>
+        <version>3.82.1-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus.jetty</groupId>
         <artifactId>jetty-security</artifactId>
-        <version>3.82.0-SNAPSHOT</version>
+        <version>3.82.1-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus.jetty</groupId>
         <artifactId>jetty-server</artifactId>
-        <version>3.82.0-SNAPSHOT</version>
+        <version>3.82.1-SNAPSHOT</version>
       </dependency>
 
     </dependencies>
