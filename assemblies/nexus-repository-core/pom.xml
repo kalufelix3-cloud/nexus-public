@@ -504,9 +504,6 @@
                 <copy todir="${project.build.directory}/assembly" overwrite="true">
                   <fileset dir="${project.basedir}/src/main/assembly/overlay"/>
                 </copy>
-                <copy todir="${project.build.directory}/sonatype-work" overwrite="true">
-                  <fileset dir="${project.basedir}/src/main/assembly/sonatype-work"/>
-                </copy>
 
                 <!-- workaround maven-assembly-plugin bug where lineEnding configuration for fileSets is ineffective -->
                 <fixcrlf srcdir="${project.build.directory}/assembly/bin" includes="*" excludes="*.bat" eol="unix"/>
