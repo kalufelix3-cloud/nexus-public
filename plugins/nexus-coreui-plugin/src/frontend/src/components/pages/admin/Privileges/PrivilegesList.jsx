@@ -34,7 +34,7 @@ import {
   SectionToolbar,
   Page
 } from '@sonatype/nexus-ui-plugin';
-import {HelpTile} from '../../../widgets';
+import {HelpTile} from '@sonatype/nexus-ui-plugin';
 
 import PrivilegesListMachine from './PrivilegesListMachine';
 import UIStrings from '../../../../constants/UIStrings';

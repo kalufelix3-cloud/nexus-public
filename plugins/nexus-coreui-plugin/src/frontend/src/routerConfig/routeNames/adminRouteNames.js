@@ -49,13 +49,6 @@ export default {
       EDIT: 'admin.repository.selectors.edit',
       CREATE: 'admin.repository.selectors.create',
     },
-    CLEANUPPOLICIES: {
-      ROOT: 'admin.repository.cleanuppolicies',
-      TITLE: 'Cleanup Policies',
-      LIST: 'admin.repository.cleanuppolicies.list',
-      CREATE: 'admin.repository.cleanuppolicies.create',
-      EDIT: 'admin.repository.cleanuppolicies.details',
-    },
     ROUTINGRULES: {
       ROOT: 'admin.repository.routingrules',
       TITLE: 'Routing Rules',

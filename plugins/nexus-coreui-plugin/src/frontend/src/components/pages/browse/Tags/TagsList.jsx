@@ -31,7 +31,7 @@ import {
   PageHeader,
   PageTitle
 } from '@sonatype/nexus-ui-plugin';
-import {HelpTile} from '../../../widgets';
+import {HelpTile} from '@sonatype/nexus-ui-plugin';
 
 import TagsListMachine from './TagsListMachine';
 import { faTags } from '@fortawesome/free-solid-svg-icons';

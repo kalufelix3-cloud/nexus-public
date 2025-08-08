@@ -30,7 +30,7 @@ import {
   PageHeader,
   PageTitle
 } from '@sonatype/nexus-ui-plugin';
-import {HelpTile} from '../../../widgets';
+import {HelpTile} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 

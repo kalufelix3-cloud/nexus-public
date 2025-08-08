@@ -14,13 +14,12 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import { Permissions } from '@sonatype/nexus-ui-plugin';
+import { UIView } from '@uirouter/react';
+import { CleanupPoliciesList, CleanupPoliciesForm, Permissions } from '@sonatype/nexus-ui-plugin';
 import IqServer from '../../components/pages/admin/IqServer/IqServer';
 import RepositoriesExt from '../../components/pages/admin/Repositories/RepositoriesExt';
 import DataStoreConfiguration from '../../components/pages/admin/DataStoreConfiguration/DataStoreConfiguration';
 import ProprietaryRepositories from '../../components/pages/admin/ProprietaryRepositories/ProprietaryRepositories';
-import CleanupPoliciesList from '../../components/pages/admin/CleanupPolicies/CleanupPoliciesList';
-import CleanupPoliciesForm from '../../components/pages/admin/CleanupPolicies/CleanupPoliciesForm';
 import EmailServer from '../../components/pages/admin/EmailServer/EmailServer';
 import SslCertificatesList from '../../components/pages/admin/SslCertificates/SslCertificatesList';
 import SslCertificatesAddForm from '../../components/pages/admin/SslCertificates/SslCertificatesAddForm';
@@ -45,14 +44,11 @@ import TasksExtJSWrapper from '../../components/pages/admin/Tasks/TasksExtJSWrap
 import Capabilities from '../../components/pages/admin/Capabilities/Capabilities';
 import BlobStoresList from '../../components/pages/admin/BlobStores/BlobStoresList';
 import BlobStoresForm from '../../components/pages/admin/BlobStores/BlobStoresForm';
-import { UIView } from '@uirouter/react';
 import LdapServersExt from '../../components/pages/admin/LdapServers/LdapServersExt';
 import AdminRepositoriesDirectoryPage from '../../components/pages/AdminRepositories/AdminRepositoriesDirectoryPage';
 import AdminSecurityDirectoryPage from '../../components/pages/AdminSecurity/AdminSecurityDirectoryPage';
-import { ROUTE_NAMES } from '../routeNames/routeNames';
 import AdminSystemDirectoryPage from '../../components/pages/AdminSystem/AdminSystemDirectoryPage';
 import AdminSupportDirectoryPage from '../../components/pages/AdminSupport/AdminSupportDirectoryPage';
-
 import SettingsPageLayout from '../../components/LeftNavigationMenu/SettingsPageLayout/SettingsPageLayout';
 import PrivilegesList from '../../components/pages/admin/Privileges/PrivilegesList';
 import PrivilegesDetails from '../../components/pages/admin/Privileges/PrivilegesDetails';
@@ -65,6 +61,7 @@ import RoutingRulesList from '../../components/pages/admin/RoutingRules/RoutingR
 import RoutingRulesGlobalPreview from '../../components/pages/admin/RoutingRules/RoutingRulesGlobalPreview.jsx';
 import LoggingConfigurationList from '../../components/pages/admin/LoggingConfiguration/LoggingConfigurationList.jsx';
 import LoggingConfigurationForm from '../../components/pages/admin/LoggingConfiguration/LoggingConfigurationForm.jsx';
+import { ROUTE_NAMES } from '../routeNames/routeNames';
 
 const ADMIN = ROUTE_NAMES.ADMIN;
 

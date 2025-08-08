@@ -14,9 +14,10 @@
 import React from 'react';
 import {NxCheckbox, NxFormGroup, NxInfoAlert, NxTextInput} from '@sonatype/react-shared-components';
 import {isReleaseType} from './CleanupPoliciesHelper';
-import {ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
+import ExtJS from '../../../interface/ExtJS';
+import FormUtils from '../../../interface/FormUtils';
 import {useActor} from '@xstate/react';
-import UIStrings from '../../../../constants/UIStrings';
+import UIStrings from '../../../constants/UIStrings';
 
 const {CLEANUP_POLICIES: LABELS} = UIStrings;
 

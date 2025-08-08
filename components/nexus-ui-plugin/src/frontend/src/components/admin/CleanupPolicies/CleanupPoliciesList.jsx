@@ -15,7 +15,7 @@ import {useMachine} from '@xstate/react';
 
 import {faBroom} from '@fortawesome/free-solid-svg-icons';
 
-import {ListMachineUtils} from '@sonatype/nexus-ui-plugin';
+import ListMachineUtils from '../../../interface/ListMachineUtils';
 
 import {
   NxButton,
@@ -27,7 +27,7 @@ import {
   NxTableRow,
 } from '@sonatype/react-shared-components';
 
-import { Page } from '@sonatype/nexus-ui-plugin';
+import { Page } from '../../layout';
 
 import {
   ContentBody,
@@ -36,24 +36,23 @@ import {
   PageTitle,
   Section,
   SectionToolbar
-} from '@sonatype/nexus-ui-plugin';
-import {HelpTile} from '../../../widgets';
+} from '../../layout';
+import HelpTile from '../../widgets/HelpTile/HelpTile';
 
 import CleanupPoliciesListMachine from './CleanupPoliciesListMachine';
 
-import UIStrings from '../../../../constants/UIStrings';
+import UIStrings from '../../../constants/UIStrings';
+import {RouteNames} from '../../../constants/RouteNames';
 
-import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
 import { useRouter } from '@uirouter/react';
 
-const ADMIN = ROUTE_NAMES.ADMIN;
-
 const {CLEANUP_POLICIES: LABELS} = UIStrings;
+const CLEANUP_POLICIES_ROUTES = RouteNames.ADMIN.REPOSITORY.CLEANUPPOLICIES;
 
 export default function CleanupPoliciesList() {
   const router = useRouter();
-  const onEdit = (itemId) => router.stateService.go(ADMIN.REPOSITORY.CLEANUPPOLICIES.EDIT, {itemId});
-  const onCreate = () => router.stateService.go(ADMIN.REPOSITORY.CLEANUPPOLICIES.CREATE);
+  const onEdit = (itemId) => router.stateService.go(CLEANUP_POLICIES_ROUTES.EDIT, {itemId});
+  const onCreate = () => router.stateService.go(CLEANUP_POLICIES_ROUTES.CREATE);
   const [current, send] = useMachine(CleanupPoliciesListMachine, {devTools: true});
   const isLoading = current.matches('loading');
   const data = current.context.data;

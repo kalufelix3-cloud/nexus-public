@@ -35,7 +35,7 @@ import {
   SectionToolbar,
   Page
 } from '@sonatype/nexus-ui-plugin';
-import {HelpTile} from '../../../widgets';
+import {HelpTile} from '@sonatype/nexus-ui-plugin';
 
 import RoutingRulesListMachine from './RoutingRulesListMachine';
 

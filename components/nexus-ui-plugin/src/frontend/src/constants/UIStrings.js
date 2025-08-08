@@ -15,6 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import HistoricalUsageStrings from "./HistoricalUsageStrings";
+import CleanupPoliciesStrings from "./admin/CleanupPoliciesStrings";
 
 /**
  * @since 3.21
@@ -106,5 +107,6 @@ export default {
     VIEW_CERTIFICATE: 'View Certificate',
     NOT_SECURE_URL: 'You cannot enable this feature because your remote storage is not using a secure URL; there is no SSL certificate available.'
   },
-  ...HistoricalUsageStrings
+  ...HistoricalUsageStrings,
+  ...CleanupPoliciesStrings
 };

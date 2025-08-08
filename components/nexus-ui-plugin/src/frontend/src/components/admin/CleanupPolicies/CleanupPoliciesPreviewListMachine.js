@@ -15,7 +15,9 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import {ListMachineUtils, ValidationUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import ListMachineUtils from '../../../interface/ListMachineUtils';
+import ValidationUtils from '../../../interface/ValidationUtils';
+import APIConstants from '../../../constants/APIConstants';
 import {actions, assign, send} from 'xstate';
 import {mergeDeepRight} from 'ramda';
 import Axios from 'axios';

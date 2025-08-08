@@ -33,7 +33,7 @@ import {
   Section,
   SectionToolbar
 } from '@sonatype/nexus-ui-plugin';
-import {HelpTile} from '../../../widgets';
+import {HelpTile} from '@sonatype/nexus-ui-plugin';
 
 import {faIdCardAlt} from '@fortawesome/free-solid-svg-icons';
 

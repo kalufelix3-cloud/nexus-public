@@ -37,7 +37,7 @@ import {
   NxInfoAlert,
 } from '@sonatype/react-shared-components';
 
-import {HelpTile} from '../../../widgets';
+import {HelpTile} from '@sonatype/nexus-ui-plugin';
 
 import RolesListMachine from './RolesListMachine';
 import UIStrings from '../../../../constants/UIStrings';

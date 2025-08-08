@@ -23,17 +23,16 @@ import {
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import {URL} from './CleanupPoliciesHelper';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
-import {UIRouter, useCurrentStateAndParams} from "@uirouter/react";
-import {getRouter} from "../../../../routerConfig/routerConfig";
-import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
+import TestUtils from '../../../interface/TestUtils';
+import ExtJS from '../../../interface/ExtJS';
+import {useCurrentStateAndParams} from "@uirouter/react";
+import {RouteNames as ROUTE_NAMES} from '../../../constants/RouteNames';
 
 import CleanupPoliciesForm from './CleanupPoliciesForm';
 
-import UIStrings from '../../../../constants/UIStrings';
+import UIStrings from '../../../constants/UIStrings';
 
-const ADMIN = ROUTE_NAMES.ADMIN;
+const {ADMIN} = ROUTE_NAMES;
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
@@ -43,22 +42,17 @@ jest.mock('axios', () => ({
   delete: jest.fn(),
 }));
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
-  ExtJS: {
-    requestConfirmation: jest.fn(),
-    urlOf: jest.fn().mockImplementation((path) => 'https://testurl' + path),
-  },
-}));
+// Use the shared ExtJS mock
+jest.mock('../../../interface/ExtJS');
 
-const stateServiceGoMock = jest.fn();
+const mockRouterGo = jest.fn();
 
 jest.mock('@uirouter/react', () => ({
   ...jest.requireActual('@uirouter/react'),
     useCurrentStateAndParams: jest.fn(),
     useRouter: () =>({
       stateService: {
-        go: stateServiceGoMock,
+        go: mockRouterGo,
       }
     })
 }));
@@ -133,6 +127,7 @@ describe('CleanupPoliciesForm', function () {
     criteriaAssetRegex: '.*',
     retain: 2,
     sortBy: 'version',
+    inUseCount: 0,
   };
 
   async function renderEditView(itemId) {
@@ -146,20 +141,24 @@ describe('CleanupPoliciesForm', function () {
   }
 
   async function renderView() {
-    const router = getRouter();
     try {
-      return render(<UIRouter router={router}>
+      return render(
         <CleanupPoliciesForm />
-      </UIRouter>);
+      );
     } finally {
-      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+      const loadingMask = selectors.queryLoadingMask();
+      if (loadingMask) {
+        await waitForElementToBeRemoved(loadingMask);
+      }
     }
   }
 
   beforeEach(() => {
-    ExtJS.state = jest.fn().mockReturnValue({
-      getValue: jest.fn(),
-    });
+    mockRouterGo.mockClear();
+
+    // Reset all mocks and configure ExtJS specific behavior
+    jest.clearAllMocks();
+
     when(ExtJS.state().getValue)
       .calledWith('datastore.isPostgresql')
       .mockReturnValue(false);
@@ -273,7 +272,7 @@ describe('CleanupPoliciesForm', function () {
   it('renders 404 page on no itemId on edit', async function () {
     await renderEditView('');
 
-    expect(stateServiceGoMock).toHaveBeenCalledWith(ROUTE_NAMES.MISSING_ROUTE);
+    expect(mockRouterGo).toHaveBeenCalledWith(ROUTE_NAMES.MISSING_ROUTE);
   });
 
   it('requires the name, format and some criteria when creating a new cleanup policy', async function () {
@@ -281,14 +280,14 @@ describe('CleanupPoliciesForm', function () {
     await renderCreateView();
 
     await TestUtils.changeField(name, EDITABLE_ITEM.name);
-    userEvent.click(selectors.querySubmitButton());
+    await act(async () => userEvent.click(selectors.querySubmitButton()));
     expect(
       selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
     ).toBeInTheDocument();
 
     await TestUtils.changeField(format, EDITABLE_ITEM.format);
 
-    userEvent.click(getCriteriaLastBlobUpdatedCheckbox());
+    await act(async () => userEvent.click(getCriteriaLastBlobUpdatedCheckbox()));
     await TestUtils.changeField(criteriaLastBlobUpdated, `${EDITABLE_ITEM.criteriaLastBlobUpdated}`);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
@@ -303,7 +302,7 @@ describe('CleanupPoliciesForm', function () {
 
     expect(screen.queryByText(LABELS.MESSAGES.NO_CRITERIA_ERROR)).not.toBeInTheDocument();
 
-    userEvent.click(saveButton());
+    await act(async () => userEvent.click(saveButton()));
 
     expect(
         selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
@@ -321,12 +320,12 @@ describe('CleanupPoliciesForm', function () {
     await TestUtils.changeField(name, EDITABLE_ITEM.name);
     await TestUtils.changeField(format, EDITABLE_ITEM.format);
 
-    userEvent.click(getCriteriaLastBlobUpdatedCheckbox());
+    await act(async () => userEvent.click(getCriteriaLastBlobUpdatedCheckbox()));
     await TestUtils.changeField(criteriaLastBlobUpdated, `${EDITABLE_ITEM.criteriaLastBlobUpdated}`);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
     await TestUtils.changeField(notes, notesTooLong);
-    userEvent.click(selectors.querySubmitButton());
+    await act(async () => userEvent.click(selectors.querySubmitButton()));
     expect(
         selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
     ).toBeInTheDocument();
@@ -342,12 +341,12 @@ describe('CleanupPoliciesForm', function () {
       '#criteria-last-blob-updated-group .nx-radio-checkbox'
     );
 
-    userEvent.click(lastBlobCheckbox);
+    await act(async () => userEvent.click(lastBlobCheckbox));
     await TestUtils.changeField(criteriaLastBlobUpdated, '4');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
     await TestUtils.changeField(criteriaLastBlobUpdated, '4.7');
-    userEvent.click(selectors.querySubmitButton());
+    await act(async () => userEvent.click(selectors.querySubmitButton()));
     expect(
       selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
     ).toBeInTheDocument();
@@ -356,9 +355,9 @@ describe('CleanupPoliciesForm', function () {
   it('fires onDone when cancelled', async function () {
     await renderEditView();
 
-    userEvent.click(selectors.cancelButton());
+    await act(async () => userEvent.click(selectors.cancelButton()));
 
-    expect(stateServiceGoMock).toHaveBeenCalledWith(ADMIN.REPOSITORY.CLEANUPPOLICIES.LIST);
+    expect(mockRouterGo).toHaveBeenCalledWith(ADMIN.REPOSITORY.CLEANUPPOLICIES.LIST);
   });
 
   it('does not allow decimal values in lastDownloaded fields', async function () {
@@ -371,12 +370,12 @@ describe('CleanupPoliciesForm', function () {
       '#criteria-last-downloaded-group .nx-radio-checkbox'
     );
 
-    userEvent.click(lastDownloadedCheckbox);
+    await act(async () => userEvent.click(lastDownloadedCheckbox));
     await TestUtils.changeField(criteriaLastDownloaded, '5');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
     await TestUtils.changeField(criteriaLastDownloaded, '5.3');
-    userEvent.click(selectors.querySubmitButton());
+    await act(async () => userEvent.click(selectors.querySubmitButton()));
     expect(
       selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
     ).toBeInTheDocument();
@@ -406,7 +405,7 @@ describe('CleanupPoliciesForm', function () {
       expect(axios.delete).toBeCalledWith(URL.singleCleanupPolicyUrl(itemId))
     );
 
-    expect(stateServiceGoMock).toHaveBeenCalledWith(ADMIN.REPOSITORY.CLEANUPPOLICIES.LIST);
+    expect(mockRouterGo).toHaveBeenCalledWith(ADMIN.REPOSITORY.CLEANUPPOLICIES.LIST);
   });
 
   it('saves', async function () {
@@ -421,7 +420,7 @@ describe('CleanupPoliciesForm', function () {
     await TestUtils.changeField(format, EDITABLE_ITEM.format);
     await TestUtils.changeField(notes, EDITABLE_ITEM.notes);
 
-    userEvent.click(getCriteriaLastBlobUpdatedCheckbox());
+    await act(async () => userEvent.click(getCriteriaLastBlobUpdatedCheckbox()));
     await TestUtils.changeField(criteriaLastBlobUpdated, `${EDITABLE_ITEM.criteriaLastBlobUpdated}`);
 
     expect(window.dirty).toEqual(['CleanupPoliciesFormMachine']);
@@ -501,7 +500,7 @@ describe('CleanupPoliciesForm', function () {
 
       await renderEditView(EDITABLE_ITEM.name);
 
-      userEvent.selectOptions(previewRepositories(), 'maven-central');
+      await act(async () => userEvent.selectOptions(previewRepositories(), 'maven-central'));
       expect(previewRepositories()).toHaveValue('maven-central');
 
       when(axios.post)
@@ -530,9 +529,12 @@ describe('CleanupPoliciesForm', function () {
           },
         });
 
-      userEvent.click(previewButton());
+      await act(async () => userEvent.click(previewButton()));
 
-      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+      const loadingMask = selectors.queryLoadingMask();
+      if (loadingMask) {
+        await waitForElementToBeRemoved(loadingMask);
+      }
 
       expect(screen.getByText('maven-aether-provider')).toBeInTheDocument();
 
@@ -582,7 +584,7 @@ describe('CleanupPoliciesForm', function () {
 
       await renderEditView(EDITABLE_ITEM.name);
 
-      userEvent.selectOptions(previewRepositories(), 'maven-central');
+      await act(async () => userEvent.selectOptions(previewRepositories(), 'maven-central'));
       expect(previewRepositories()).toHaveValue('maven-central');
 
       when(axios.post)
@@ -611,9 +613,12 @@ describe('CleanupPoliciesForm', function () {
           },
         });
 
-      userEvent.click(previewButton());
+      await act(async () => userEvent.click(previewButton()));
 
-      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+      const loadingMask = selectors.queryLoadingMask();
+      if (loadingMask) {
+        await waitForElementToBeRemoved(loadingMask);
+      }
 
       expect(screen.queryByText('maven-aether-provider')).toBeInTheDocument();
       expect(getCriteriaLastBlobUpdatedCheckbox()).toHaveClass('tm-checked');
@@ -699,23 +704,23 @@ describe('CleanupPoliciesForm', function () {
       expect(selectDropdown).toHaveValue('');
       expect(createButton).toHaveAttribute('aria-disabled', 'true');
 
-      userEvent.selectOptions(selectDropdown, 'maven-central');
+      await act(async () => userEvent.selectOptions(selectDropdown, 'maven-central'));
 
       expect(selectDropdown).toHaveValue('maven-central');
       expect(createButton).toHaveAttribute('aria-disabled', 'true');
 
-      userEvent.click(querySubmitButton());
+      await act(async () => userEvent.click(querySubmitButton()));
 
       expect(
         selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
       ).toBeInTheDocument();
 
-      userEvent.click(getCriteriaLastBlobUpdatedCheckbox());
+      await act(async () => userEvent.click(getCriteriaLastBlobUpdatedCheckbox()));
       await TestUtils.changeField(criteriaLastBlobUpdated, `${EDITABLE_ITEM.criteriaLastBlobUpdated}`);
 
       expect(createButton).toHaveAttribute('aria-disabled', 'false');
 
-      userEvent.selectOptions(selectDropdown, '');
+      await act(async () => userEvent.selectOptions(selectDropdown, ''));
 
       expect(selectDropdown).toHaveValue('');
       expect(createButton).toHaveAttribute('aria-disabled', 'true');
@@ -738,7 +743,7 @@ describe('CleanupPoliciesForm', function () {
       const selectDropdown = dryRunRepositories(),
           createButton = dryRunCreateCSVButton();
 
-      userEvent.selectOptions(selectDropdown, 'maven-central');
+      await act(async () => userEvent.selectOptions(selectDropdown, 'maven-central'));
 
       expect(selectDropdown).toHaveValue('maven-central');
       expect(createButton).toHaveAttribute('aria-disabled', 'false');
@@ -804,7 +809,7 @@ describe('CleanupPoliciesForm', function () {
         getCriteriaVersionCheckbox,
         releaseType,
         versionAlertMessage,
-        additionalCriteriaMessage, 
+        additionalCriteriaMessage,
         getCriteriaLastBlobUpdatedCheckbox,
         criteriaLastBlobUpdated
       } = selectors;
@@ -828,10 +833,10 @@ describe('CleanupPoliciesForm', function () {
       expect(versionAlertMessage()).not.toBeInTheDocument();
       expect(getCriteriaVersionCheckbox()).toBeDisabled();
 
-      userEvent.click(getCriteriaLastBlobUpdatedCheckbox());
+      await act(async () => userEvent.click(getCriteriaLastBlobUpdatedCheckbox()));
       await TestUtils.changeField(criteriaLastBlobUpdated, `${EDITABLE_ITEM.criteriaLastBlobUpdated}`);
-      
-      userEvent.click(getCriteriaVersionCheckbox());
+
+      await act(async () => userEvent.click(getCriteriaVersionCheckbox()));
       expect(criteriaVersion()).toBeVisible();
       expect(criteriaVersion()).toBeEnabled();
 
@@ -862,7 +867,7 @@ describe('CleanupPoliciesForm', function () {
 
       expect(criteriaVersion()).toBeVisible();
       expect(getCriteriaVersionCheckbox()).toBeVisible();
-      userEvent.click(getCriteriaVersionCheckbox());
+      await act(async () => userEvent.click(getCriteriaVersionCheckbox()));
 
       await TestUtils.changeField(criteriaVersion, '5');
 
@@ -876,13 +881,12 @@ describe('CleanupPoliciesForm', function () {
       await act(async () => userEvent.selectOptions(releaseType(), 'RELEASES'));
       expect(releaseType()).toHaveValue('RELEASES');
 
-      userEvent.click(getCriteriaVersionCheckbox());
+      await act(async () => userEvent.click(getCriteriaVersionCheckbox()));
 
       expect(criteriaVersion()).toHaveValue('5');
     });
 
-    it.each([DOCKER_ITEM, MAVEN_ITEM])
-    ('renders the resolved data including the retain-n configuration', async function(item) {
+    it.each([DOCKER_ITEM, MAVEN_ITEM])('renders the resolved data including the retain-n configuration', async function(item) {
       const {
         name,
         format,
@@ -913,7 +917,7 @@ describe('CleanupPoliciesForm', function () {
       );
       expect(getCriteriaAssetRegexCheckbox()).toHaveClass('tm-checked');
       expect(criteriaAssetRegex()).toHaveValue(item.criteriaAssetRegex);
-      userEvent.click(querySubmitButton());
+      await act(async () => userEvent.click(querySubmitButton()));
       expect(
           selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)
       ).toBeInTheDocument();
@@ -931,8 +935,7 @@ describe('CleanupPoliciesForm', function () {
       expect(criteriaVersion()).toHaveValue(item.retain.toString());
     })
 
-    it.each([MAVEN_ITEM, DOCKER_ITEM])
-    ('Version criteria is visible for the format', async function(item) {
+    it.each([MAVEN_ITEM, DOCKER_ITEM])('Version criteria is visible for the format', async function(item) {
       const {name, format, notes, versionAlertMessage} = selectors;
 
       await renderEditView();
@@ -949,8 +952,7 @@ describe('CleanupPoliciesForm', function () {
 
     });
 
-    it.each([MAVEN_ITEM, DOCKER_ITEM])
-    ('Version criteria should be disabled when the normalized version task is running', async (item) => {
+    it.each([MAVEN_ITEM, DOCKER_ITEM])('Version criteria should be disabled when the normalized version task is running', async (item) => {
       when(ExtJS.state().getValue)
           .calledWith(`${item.format}.normalized.version.available`)
           .mockReturnValue(false);
@@ -977,8 +979,7 @@ describe('CleanupPoliciesForm', function () {
       expect(criteriaVersion()).toBeDisabled();
     });
 
-    it.each([MAVEN_ITEM, DOCKER_ITEM])
-    ('saves the retain-n values', async function(item) {
+    it.each([MAVEN_ITEM, DOCKER_ITEM])('saves the retain-n values', async function(item) {
       const {criteriaVersion, saveButton} = selectors;
 
       await renderEditView(item.name);
@@ -993,8 +994,15 @@ describe('CleanupPoliciesForm', function () {
           expect(axios.put).toHaveBeenCalledWith(
               URL.singleCleanupPolicyUrl(item.name),
               {
-                ...item,
-                retain: '5'
+                name: item.name,
+                notes: item.notes,
+                format: item.format,
+                criteriaLastBlobUpdated: item.criteriaLastBlobUpdated,
+                criteriaLastDownloaded: item.criteriaLastDownloaded,
+                criteriaReleaseType: item.criteriaReleaseType,
+                criteriaAssetRegex: item.criteriaAssetRegex,
+                retain: '5',
+                sortBy: item.sortBy,
               }
           )
       );

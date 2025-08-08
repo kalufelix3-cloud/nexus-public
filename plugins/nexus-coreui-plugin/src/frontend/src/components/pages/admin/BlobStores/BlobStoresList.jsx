@@ -44,7 +44,7 @@ import {
   Section,
   SectionToolbar
 } from '@sonatype/nexus-ui-plugin';
-import {HelpTile} from '../../../widgets';
+import {HelpTile} from '@sonatype/nexus-ui-plugin';
 
 import BlobStoresListMachine from './BlobStoresListMachine';
 import UIStrings from '../../../../constants/UIStrings';

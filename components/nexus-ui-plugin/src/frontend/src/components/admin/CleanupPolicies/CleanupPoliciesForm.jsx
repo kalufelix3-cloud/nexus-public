@@ -13,7 +13,9 @@
 import React, {useCallback, useEffect} from 'react';
 import {useMachine} from '@xstate/react';
 
-import {CheckboxControlledWrapper, ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
+import CheckboxControlledWrapper from '../../widgets/CheckboxControlledWrapper/CheckboxControlledWrapper';
+import ExtJS from '../../../interface/ExtJS';
+import FormUtils from '../../../interface/FormUtils';
 import {
   NxButton,
   NxFontAwesomeIcon,
@@ -27,34 +29,34 @@ import {
   NxFieldset
 } from '@sonatype/react-shared-components';
 
-import { Page } from '@sonatype/nexus-ui-plugin';
+import { Page } from '../../layout';
 
 import {
   ContentBody,
   PageHeader,
   PageTitle
-} from '@sonatype/nexus-ui-plugin';
+} from '../../layout';
 
 import CleanupPoliciesFormMachine from './CleanupPoliciesFormMachine';
 import CleanupPoliciesPreview from './CleanupPoliciesPreview';
 import CleanupPoliciesDryRun from './CleanupPoliciesDryRun';
 import CleanupExclusionCriteria from './CleanupExclusionCriteria';
 
-import UIStrings from '../../../../constants/UIStrings';
+import UIStrings from '../../../constants/UIStrings';
 import {faTrash} from '@fortawesome/free-solid-svg-icons';
 
-import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
 import './CleanupPolicies.scss';
 import {isEmpty} from 'ramda';
 import {useCurrentStateAndParams, useRouter} from "@uirouter/react";
+import {RouteNames} from "../../../constants/RouteNames";
 
-const ADMIN = ROUTE_NAMES.ADMIN;
 const {CLEANUP_POLICIES: LABELS} = UIStrings;
+const CLEANUP_POLICIES_ROUTES = RouteNames.ADMIN.REPOSITORY.CLEANUPPOLICIES;
 
 export default function CleanupPoliciesForm() {
   const router = useRouter();
   const {state: routerState, params} = useCurrentStateAndParams();
-  const onDone = useCallback(() => router.stateService.go(ADMIN.REPOSITORY.CLEANUPPOLICIES.LIST));
+  const onDone = useCallback(() => router.stateService.go(CLEANUP_POLICIES_ROUTES.LIST));
   const itemId = params?.itemId;
   const [state, send, actor] = useMachine(CleanupPoliciesFormMachine, {
     context: {
@@ -73,8 +75,8 @@ export default function CleanupPoliciesForm() {
 
   useEffect(() => {
     // we should not render edit form if itemId is not provided
-    if (routerState.name === ADMIN.REPOSITORY.CLEANUPPOLICIES.EDIT && !itemId) {
-      router.stateService.go(ROUTE_NAMES.MISSING_ROUTE);
+    if (routerState.name === CLEANUP_POLICIES_ROUTES.EDIT && !itemId) {
+      router.stateService.go(RouteNames.MISSING_ROUTE);
     }
   }, [itemId]);
 

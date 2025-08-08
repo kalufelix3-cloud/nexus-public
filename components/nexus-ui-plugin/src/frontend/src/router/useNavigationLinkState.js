@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import { useIsActive, useRouter, useSref } from '@uirouter/react';
-import { useIsVisible } from '@sonatype/nexus-ui-plugin';
+import useIsVisible from './useIsVisible';
 
 /**
  * @param name - route sate name

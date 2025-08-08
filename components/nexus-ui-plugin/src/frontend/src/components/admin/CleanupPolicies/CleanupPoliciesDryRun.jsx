@@ -22,9 +22,10 @@ import {
   NxP,
   NxTooltip
 } from '@sonatype/react-shared-components';
-import {ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
+import ExtJS from '../../../interface/ExtJS';
+import FormUtils from '../../../interface/FormUtils';
 
-import UIStrings from '../../../../constants/UIStrings';
+import UIStrings from '../../../constants/UIStrings';
 import cleanupPoliciesDryRunMachine from './CleanupPoliciesDryRunMachine';
 
 const {BUTTON, REPOSITORY_DESCRIPTION, REPOSITORY_SELECT, TITLE} = UIStrings.CLEANUP_POLICIES.DRY_RUN;

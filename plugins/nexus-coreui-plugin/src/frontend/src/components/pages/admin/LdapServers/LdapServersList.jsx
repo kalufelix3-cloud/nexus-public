@@ -40,7 +40,7 @@ import {
   PageTitle,
   SectionToolbar
 } from '@sonatype/nexus-ui-plugin';
-import {HelpTile} from '../../../widgets';
+import {HelpTile} from '@sonatype/nexus-ui-plugin';
 
 import {canDelete, canUpdate, canCreate} from './LdapServersHelper';
 

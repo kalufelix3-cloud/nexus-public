@@ -15,17 +15,9 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import UIStrings from '../../../../constants/UIStrings';
+import { AdminRouteNames } from './admin/AdminRouteNames';
 
-const {CLEANUP_POLICIES: LABELS} = UIStrings;
-
-const baseUrl = 'service/rest/internal/cleanup-policies';
-const singleCleanupPolicyUrl = (name) => `${baseUrl}/${name}`;
-
-export const isReleaseType = (criteriaReleaseType) =>
-  LABELS.RELEASE_TYPE.RELEASES.id === criteriaReleaseType;
-
-export const URL = {
-  baseUrl,
-  singleCleanupPolicyUrl,
+export const RouteNames = {
+  ADMIN: {...AdminRouteNames},
+  MISSING_ROUTE: 'missing_route'
 };

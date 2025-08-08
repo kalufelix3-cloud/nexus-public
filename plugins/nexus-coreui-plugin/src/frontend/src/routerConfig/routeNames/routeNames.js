@@ -18,10 +18,12 @@
 import adminRouteNames from './adminRouteNames';
 import browseRouteNames from './browseRouteNames';
 import userRouteNames from './userRouteNames';
+import { RouteNames } from '@sonatype/nexus-ui-plugin';
+import { mergeDeepRight } from 'ramda';
 
-export const ROUTE_NAMES = {
+// In the case of a conflict, the routes defined here will override the shared route names
+export const ROUTE_NAMES = mergeDeepRight(RouteNames, {
   ADMIN: { ...adminRouteNames },
   BROWSE: { ...browseRouteNames },
   USER: { ...userRouteNames },
-  MISSING_ROUTE: 'missing_route'
-};
+});

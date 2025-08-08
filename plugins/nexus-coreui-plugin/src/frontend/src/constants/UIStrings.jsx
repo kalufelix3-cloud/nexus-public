@@ -35,7 +35,6 @@ import AccountStrings from './pages/user/AccountStrings';
 import NuGetApiKeyStrings from './pages/user/NuGetApiKeyStrings';
 import StatusStrings from './pages/admin/support/StatusStrings';
 import SupportZipStrings from './pages/admin/support/SupportZipStrings';
-import CleanupPoliciesStrings from './pages/admin/repository/CleanupPoliciesStrings';
 import IqServerStrings from './pages/admin/IqServerStrings';
 import ApiStrings from './pages/admin/system/ApiStrings';
 import ProprietaryRepositoriesStrings from './pages/admin/repository/ProprietaryRepositoriesStrings';
@@ -83,7 +82,6 @@ export default {
 
   // admin/repository
   ...BlobStoresStrings,
-  ...CleanupPoliciesStrings,
   ...ContentSelectorsStrings,
   ...DataStoreStrings,
   ...ProprietaryRepositoriesStrings,

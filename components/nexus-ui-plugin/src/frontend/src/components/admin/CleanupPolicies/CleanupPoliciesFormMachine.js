@@ -18,9 +18,10 @@ import {assign} from 'xstate';
 import Axios from 'axios';
 import {isEmpty, mergeDeepRight} from 'ramda';
 import {URL, isReleaseType} from './CleanupPoliciesHelper';
-import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
-
-import UIStrings from '../../../../constants/UIStrings';
+import ExtJS from '../../../interface/ExtJS';
+import FormUtils from '../../../interface/FormUtils';
+import ValidationUtils from '../../../interface/ValidationUtils';
+import UIStrings from '../../../constants/UIStrings';
 
 const {CLEANUP_POLICIES: LABELS} = UIStrings;
 

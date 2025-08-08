@@ -34,7 +34,7 @@ import {
   PageHeader,
   PageTitle
 } from '@sonatype/nexus-ui-plugin';
-import {HelpTile} from '../../../widgets';
+import {HelpTile} from '@sonatype/nexus-ui-plugin';
 
 import Machine from './TasksListMachine';
 import {canCreateTask} from './TasksHelper';

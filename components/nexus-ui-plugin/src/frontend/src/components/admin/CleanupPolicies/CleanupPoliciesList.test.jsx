@@ -13,31 +13,38 @@
 import React from 'react';
 import axios from 'axios';
 import {waitForElementToBeRemoved} from '@testing-library/react';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import TestUtils from '../../../interface/TestUtils';
 import {render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import CleanupPoliciesList from './CleanupPoliciesList';
 
-import {UIRouter} from "@uirouter/react";
-import {getRouter} from "../../../../routerConfig/routerConfig";
-
 jest.mock('axios', () => ({
   get: jest.fn()
 }));
 
+const mockRouterGo = jest.fn();
+
+jest.mock('@uirouter/react', () => ({
+  ...jest.requireActual('@uirouter/react'),
+  useRouter: () => ({
+    stateService: {
+      go: mockRouterGo,
+    }
+  })
+}));
+
 function renderComponent() {
-  const router = getRouter();
-  return render(
-      <UIRouter router={router}>
-        <CleanupPoliciesList />
-      </UIRouter>
-  );
+  return render(<CleanupPoliciesList />);
 }
 
 const NUM_HEADERS = 1;
 const NAME = 0;
 const FORMAT = 1;
+
+beforeEach(() => {
+  mockRouterGo.mockClear();
+});
 const NOTES = 2;
 
 const selectors = {
@@ -160,5 +167,27 @@ describe('CleanupPoliciesList', function() {
     expect(cleanupPoliciesName(0)).toHaveTextContent('cleanup');
     expect(cleanupPoliciesFormat(0)).toHaveTextContent('testformat cleanup');
     expect(cleanupPoliciesNotes(0)).toHaveTextContent('cleanup-description');
+  });
+
+  it('navigates to create route when Create button is clicked', async function() {
+    renderComponent();
+
+    await waitForElementToBeRemoved(queryLoadingMask());
+
+    const createButton = screen.getByRole('button', { name: 'Create Cleanup Policy' });
+    await userEvent.click(createButton);
+
+    expect(mockRouterGo).toHaveBeenCalledWith('admin.repository.cleanuppolicies.create');
+  });
+
+  it('navigates to edit route when row is clicked', async function() {
+    renderComponent();
+
+    await waitForElementToBeRemoved(queryLoadingMask());
+
+    const firstRow = selectors.bodyRows()[0];
+    await userEvent.click(firstRow);
+
+    expect(mockRouterGo).toHaveBeenCalledWith('admin.repository.cleanuppolicies.edit', { itemId: 'cleanup' });
   });
 });

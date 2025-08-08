@@ -14,7 +14,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import Axios from 'axios';
 import HistoricalUsage from './HistoricalUsage';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import TestUtils from '../../../../interface/TestUtils';
 import { historicalUsageColumns } from './HistoricalUsageColumns';
 
 describe('Licensing Historical Usage', () => {

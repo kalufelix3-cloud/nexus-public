@@ -38,7 +38,8 @@ export default defineConfig([
       "react/jsx-uses-react": "error",
       "react/prop-types": "off",
       "no-useless-escape": "off",
-      "no-extra-boolean-cast": "off"
+      "no-extra-boolean-cast": "off",
+      "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
     }
   }
 ]);
