@@ -55,6 +55,9 @@ public class ApplicationDirectoriesImpl
       @Value("${karaf.data}") final String workDir,
       final DirectoryHelper directoryHelper)
   {
+    // assign this first so it is available for mkdir calls
+    this.directoryHelper = directoryHelper;
+
     this.installDir = resolve(new File(installDir), false);
     LOG.debug("Install dir: {}", this.installDir);
 
@@ -68,7 +71,6 @@ public class ApplicationDirectoriesImpl
     String tmplocation = System.getProperty("java.io.tmpdir", "tmp");
     this.tempDir = resolve(new File(tmplocation), true);
     LOG.debug("Temp dir: {}", this.tempDir);
-    this.directoryHelper = directoryHelper;
   }
 
   @Override
