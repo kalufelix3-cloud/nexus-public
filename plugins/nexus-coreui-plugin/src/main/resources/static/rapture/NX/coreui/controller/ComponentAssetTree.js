@@ -487,7 +487,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
   handleVulnerabilitiesPanel: function(node, panel) {
     var me = this;
-    if ('OSS' === NX.State.getEdition() && me.getCurrentRepository().get('type') === 'proxy' &&
+    if (!NX.State.isLicenseValid() && me.getCurrentRepository().get('type') === 'proxy' &&
         NX.direct.coreui_Vulnerability) {
       var packageUrl = node.get('packageUrl');
       NX.direct.coreui_Vulnerability.read([packageUrl],
