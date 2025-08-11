@@ -107,23 +107,6 @@ public interface DatabaseMigrationStep
     }
   }
 
-  default boolean constraintExists(
-      final Connection conn,
-      final String tableName,
-      final String constraintName) throws SQLException
-  {
-    String sql = "SELECT * FROM INFORMATION_SCHEMA.constraint_column_usage " +
-        " WHERE UPPER(table_name) = ?" +
-        "   AND UPPER(constraint_name) = ?";
-    try (PreparedStatement statement = conn.prepareStatement(sql)) {
-      statement.setString(1, tableName.toUpperCase());
-      statement.setString(2, constraintName.toUpperCase());
-      try (ResultSet results = statement.executeQuery()) {
-        return results.next();
-      }
-    }
-  }
-
   default boolean indexExists(final Connection conn, final String indexName) throws SQLException {
     if (isPostgresql(conn)) {
       String currentSchema = currentSchema(conn);
