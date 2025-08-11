@@ -154,23 +154,25 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
     // Helper to update connector field states
     function updateConnectorFields(form, isPathEnabled) {
       var subdomainCheckbox = form.down('#subdomainEnabled');
+      var subdomainField = form.down('#subdomainPort');
       var httpCheckbox = form.down('#httpEnabled');
       var httpsCheckbox = form.down('#httpsEnabled');
-      var subdomainField = form.down('#subdomainPort');
       var httpPortField = form.down('#httpPort');
       var httpsPortField = form.down('#httpsPort');
       if (isPathEnabled === 'true') {
-        subdomainCheckbox.setDisabled(true);
-        subdomainCheckbox.setValue(false);
+        if (subdomainVisibility) {
+          subdomainCheckbox.setDisabled(true);
+          subdomainCheckbox.setValue(false);
+        }
         httpCheckbox.setDisabled(true);
         httpCheckbox.setValue(false);
         httpsCheckbox.setDisabled(true);
         httpsCheckbox.setValue(false);
-        if (subdomainField) subdomainField.setValue('');
-        if (httpPortField) httpPortField.setValue('');
-        if (httpsPortField) httpsPortField.setValue('');
+        subdomainField && subdomainField.setValue('');
+        httpPortField && httpPortField.setValue('');
+        httpsPortField && httpsPortField.setValue('');
       } else {
-        subdomainCheckbox.setDisabled(false);
+        subdomainVisibility && subdomainCheckbox.setDisabled(false);
         httpCheckbox.setDisabled(false);
         httpsCheckbox.setDisabled(false);
       }
