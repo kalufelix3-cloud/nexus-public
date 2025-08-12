@@ -202,6 +202,12 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
           properties[field.id] = null;
           model.set('properties', properties, { dirty: false });
         }
+        if(!properties && field.id === "name" && field.initialValue) {
+          const nameTextField = me.down('[name="name"]');
+          if(nameTextField) {
+            nameTextField.setValue(field.initialValue);
+          }
+        }
       });
 
       settingsFieldSet.importProperties(model.get('properties'), formFields);

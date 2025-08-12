@@ -610,10 +610,8 @@ Ext.define('NX.coreui.controller.Tasks', {
     const me = this,
         store = me.getStore('ReconcilePlans');
 
-    store.un('load', me.updateReconciliationPlanInformation, me);
-
     if ("blobstore.executeReconciliationPlan" === model.get('typeId')) {
-      store.on('load', me.updateReconciliationPlanInformation, me);
+      store.on('load', me.updateReconciliationPlanInformation, me, { single: true });
       store.load();
     }
   },
