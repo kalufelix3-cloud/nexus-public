@@ -23,6 +23,7 @@ import {
   NxTableHead,
   NxTableRow,
   NxTooltip,
+  NxPagination,
 } from '@sonatype/react-shared-components';
 
 import {
@@ -51,7 +52,7 @@ export default function PrivilegesList() {
   
   const [current, send] = useMachine(PrivilegesListMachine, {devTools: true});
   const isLoading = current.matches('loading');
-  const {data, error, filter: filterText} = current.context;
+  const { data, error, filter: filterText, currentPage, pageSize, totalCount } = current.context;
 
   const nameSortDir = ListMachineUtils.getSortDirection('name', current.context);
   const descriptionSortDir = ListMachineUtils.getSortDirection('description', current.context);
@@ -65,6 +66,10 @@ export default function PrivilegesList() {
 
   const filter = (value) => send({type: 'FILTER', filter: value});
   const canCreate = ExtJS.checkPermission('nexus:privileges:create');
+
+  // Pagination handlers
+  const pageCount = Math.ceil(totalCount / pageSize);
+  const changePage = page => send({ type: 'CHANGE_PAGE', page });
 
   function create() {
     if (canCreate) {
@@ -96,6 +101,7 @@ export default function PrivilegesList() {
       </PageActions>
     </PageHeader>
     <ContentBody className="nxrm-privileges-list">
+      <HelpTile header={LABELS.HELP.TITLE} body={LABELS.HELP.TEXT}/>
       <Section>
         <SectionToolbar>
           <div className="nxrm-spacer"/>
@@ -128,8 +134,12 @@ export default function PrivilegesList() {
             ))}
           </NxTableBody>
         </NxTable>
+        {pageCount > 1 && !isLoading && (
+          <div className='nxrm-pagination'>
+            <NxPagination onChange={changePage} pageCount={pageCount} currentPage={currentPage} />
+          </div>
+        )}
       </Section>
-      <HelpTile header={LABELS.HELP.TITLE} body={LABELS.HELP.TEXT}/>
     </ContentBody>
   </Page>;
 }

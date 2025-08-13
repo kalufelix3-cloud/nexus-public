@@ -168,11 +168,12 @@ export default class TestUtils {
     await waitForElementToBeRemoved(tooltip);
   }
 
-  static makeExtResult(data) {
+  static makeExtResult(data, total = 0) {
     return {
       result: {
         data,
-        success: true
+        success: true,
+        total
       }
     };
   }
