@@ -23,7 +23,8 @@ $card-width: 1016px;
     background-color: var(--nx-color-alert-error-background);
   }
 
-  .nx-icon.fa-exclamation-circle {
+  /* Hide the Alert Icon added to the upper left by RSC because we provide our own */
+  .svg-inline--fa.fa-circle-exclamation.nx-icon {
     display: none;
   }
 
