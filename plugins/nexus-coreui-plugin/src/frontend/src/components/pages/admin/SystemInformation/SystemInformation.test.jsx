@@ -31,8 +31,8 @@ const {SYSTEM_INFORMATION_HA, SYSTEM_INFORMATION} = APIConstants.REST;
 const {ACTIONS} = UIStrings.SYSTEM_INFORMATION;
 
 const NESTED_SECTION = 'h3';
-const NAME = '.nxrm-information--name';
-const VALUE = '.nxrm-information--value';
+const NAME = '.nx-list__term';
+const VALUE = '.nx-list__description';
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),

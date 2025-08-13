@@ -13,37 +13,27 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { NxDescriptionList } from '@sonatype/react-shared-components';
 
-import './Information.scss';
+export default function Information({ information }) {
+  // Insert a zero-width space (\u200B) after each period to allow word-breaking at periods.
+  const ZERO_WIDTH_SPACE = '.\u200B';
 
-/**
- * @since 3.22
- */
-export default function Information({information}) {
-  return <table className="nxrm-information">
-    <tbody>
-    {Object.entries(information).map(([name, value]) =>
-        <InformationRow key={name}>
-          <InformationName>{name}</InformationName>
-          <InformationValue>{String(value)}</InformationValue>
-        </InformationRow>
-    )}
-    </tbody>
-  </table>;
+  return (
+    <NxDescriptionList>
+      {Object.entries(information).map(([name, value]) => {
+        const breakingName = name.replace(/\./g, ZERO_WIDTH_SPACE);
+        return (
+          <NxDescriptionList.Item key={name}>
+            <NxDescriptionList.Term className="break-on-period">{breakingName}</NxDescriptionList.Term>
+            <NxDescriptionList.Description>{String(value)}</NxDescriptionList.Description>
+          </NxDescriptionList.Item>
+        );
+      })}
+    </NxDescriptionList>
+  );
 }
 
 Information.propTypes = {
   information: PropTypes.object.isRequired
-}
-
-function InformationRow({children}) {
-  return <tr className="nxrm-information--row">{children}</tr>;
-}
-
-function InformationName({children}) {
-  return <td className="nxrm-information--name">{children}</td>;
-}
-
-function InformationValue({children}) {
-  return <td className="nxrm-information--value">{children}</td>;
-}
+};
