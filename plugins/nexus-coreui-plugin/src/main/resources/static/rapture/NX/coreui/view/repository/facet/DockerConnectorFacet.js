@@ -112,8 +112,15 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
                 var value = group.getValue()['attributes.docker.pathEnabled'];
                 // Ensure value is explicitly 'true' or 'false'; default to 'true' otherwise
                 if (!['true', 'false'].includes(value)) {
-                  group.setValue({ 'attributes.docker.pathEnabled': 'true' });
-                  value = 'true';
+                  // if not explicit, then look at existing config and make it explicit
+                  var subdomainCheckboxField = form && form.down('[name=dockercheckboxsubdomain]');
+                  var httpPortCheckboxField = form && form.down('[name=dockercheckboxhttp]');
+                  var httpsPortCheckboxField = form && form.down('[name=dockercheckboxhttps]');
+                  value = ((subdomainCheckboxField && subdomainCheckboxField.getValue()) ||
+                      (httpPortCheckboxField && httpPortCheckboxField.getValue()) ||
+                      (httpsPortCheckboxField && httpsPortCheckboxField.getValue())) ? 'false' : 'true';
+
+                  group.setValue({ 'attributes.docker.pathEnabled': value });
                   // Reset the original value of the radiogroup to ensure that the newly set default value
                   // is treated as the initial state. This helps maintain consistency in form validation
                   // and dirty state tracking.
