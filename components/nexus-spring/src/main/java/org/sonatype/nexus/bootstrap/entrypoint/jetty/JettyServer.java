@@ -12,18 +12,6 @@
  */
 package org.sonatype.nexus.bootstrap.entrypoint.jetty;
 
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.EventListener;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import javax.servlet.ServletContextListener;
@@ -38,10 +26,22 @@ import org.sonatype.nexus.bootstrap.jetty.ConnectorConfiguration;
 import org.sonatype.nexus.bootstrap.jetty.ConnectorManager;
 import org.sonatype.nexus.bootstrap.jetty.InstrumentedHandler;
 import org.sonatype.nexus.common.QualifierUtil;
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.text.Strings2;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.EventListener;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 import org.eclipse.jetty.ee8.servlet.FilterHolder;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
@@ -197,7 +197,7 @@ public class JettyServer
 
     registerServlets(applicationContext, server);
 
-    thread = new JettyMainThread(components, shutdownDelegate);
+    thread = new JettyMainThread(components, shutdownDelegate, applicationContext);
     thread.startComponents(waitForServer);
   }
 
@@ -342,15 +342,19 @@ public class JettyServer
 
     private final ShutdownDelegate shutdownDelegate;
 
+    private final ApplicationContext applicationContext;
+
     private volatile Exception exception;
 
     public JettyMainThread(
         final List<LifeCycle> components,
-        final ShutdownDelegate shutdownDelegate)
+        final ShutdownDelegate shutdownDelegate,
+        final ApplicationContext applicationContext)
     {
       super("jetty-main-" + INSTANCE_COUNTER.getAndIncrement());
       this.components = components;
       this.shutdownDelegate = shutdownDelegate;
+      this.applicationContext = applicationContext;
       this.started = new CountDownLatch(1);
       this.stopped = new CountDownLatch(1);
     }
@@ -427,17 +431,22 @@ public class JettyServer
       stopped.await();
     }
 
-    private static void logStartupBanner(final Server server) {
-      Object banner = null;
+    private void logStartupBanner(final Server server) {
+      String banner = "Nexus Repository Manager - Unknown Version and Edition";
 
-      ContextHandler context = JettyServer.getContextHandler(server);
-      if (context != null) {
-        banner = context.getAttribute("nexus-banner");
+      try {
+        ApplicationVersion applicationVersion = applicationContext.getBean(ApplicationVersion.class);
+        banner = String.format("Sonatype Nexus %s %s",
+            applicationVersion.getEdition(),
+            applicationVersion.getVersion());
+      }
+      catch (Exception e) {
+        LOG.error("ApplicationVersion not available for banner", e);
       }
 
       StringBuilder buf = new StringBuilder();
       buf.append("\n-------------------------------------------------\n\n");
-      buf.append("Started ").append(banner instanceof String ? banner : "Nexus Repository Manager");
+      buf.append("Started ").append(banner);
       buf.append("\n\n-------------------------------------------------");
       LOG.info(buf.toString());
     }

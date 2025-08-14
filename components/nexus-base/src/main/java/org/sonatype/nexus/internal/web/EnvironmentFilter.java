@@ -12,11 +12,8 @@
  */
 package org.sonatype.nexus.internal.web;
 
-import java.io.IOException;
-
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -32,6 +29,7 @@ import org.sonatype.nexus.security.UserIdMdcHelper;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import java.io.IOException;
 import org.eclipse.sisu.Hidden;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
@@ -62,8 +60,6 @@ public class EnvironmentFilter
 
   static final String STS_VALUE = "max-age=31536000; includeSubDomains;";
 
-  private final String serverBanner;
-
   private final String serverHeader;
 
   private final BaseUrlManager baseUrlManager;
@@ -79,21 +75,12 @@ public class EnvironmentFilter
     // cache "Server" header value
     checkNotNull(applicationVersion);
 
-    this.serverBanner = String.format("Sonatype Nexus %s %s",
-        applicationVersion.getEdition(),
-        applicationVersion.getVersion());
-
     this.serverHeader = String.format("Nexus/%s (%s)",
         applicationVersion.getVersion(),
         applicationVersion.getEdition());
 
     this.baseUrlManager = checkNotNull(baseUrlManager);
     this.contextPath = resolveContextPath(contextPath);
-  }
-
-  @Override
-  public void init(final FilterConfig filterConfig) throws ServletException {
-    filterConfig.getServletContext().setAttribute("nexus-banner", serverBanner);
   }
 
   @Override
