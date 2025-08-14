@@ -30,6 +30,7 @@ import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
@@ -39,7 +40,7 @@ import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusDirecto
 import static org.sonatype.nexus.common.app.FeatureFlags.*;
 
 @ExtendWith({SystemStubsExtension.class})
-public class NexusPropertiesVerifierTest
+class NexusPropertiesVerifierTest
     extends Test5Support
 {
   private static final String NEXUS_ANALYTICS = "nexus.analytics.enabled";
@@ -59,7 +60,7 @@ public class NexusPropertiesVerifierTest
   private EnvironmentVariables environmentVariables;
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     // Treat the nexusProperties like a simple map
     lenient().doAnswer(invocation -> properties.get(invocation.getArgument(0)))
         .when(nexusProperties)
@@ -70,24 +71,24 @@ public class NexusPropertiesVerifierTest
   }
 
   @AfterEach
-  public void tearDown() {
+  void tearDown() {
     properties.clear();
   }
 
   @Test
-  public void verifiesMissingRequiredProperties() {
+  void verifiesMissingRequiredProperties() {
     assertThrows(IllegalStateException.class, () -> nexusPropertiesVerifier.verify(nexusProperties));
   }
 
   @Test
-  public void testVerifyRequiresProperties() {
+  void testVerifyRequiresProperties() {
     mockRequiredProperties();
 
     nexusPropertiesVerifier.verify(nexusProperties);
   }
 
   @Test
-  public void testVerifyEnsuresAnalyticsEnabledForCommunityEdition() {
+  void testVerifyEnsuresAnalyticsEnabledForCommunityEdition() {
     mockRequiredProperties();
     nexusProperties.put(NexusEditionSelector.PROPERTY_KEY, NexusPropertiesVerifier.COMMUNITY);
     nexusProperties.put(NEXUS_ANALYTICS, FALSE);
@@ -98,7 +99,21 @@ public class NexusPropertiesVerifierTest
   }
 
   @Test
-  public void testVerifyLeavesAnalyticsDisabledForProEdition() {
+  void testVerifyEnsureHACDisabled() {
+    mockRequiredProperties();
+
+    // missing HA-C property does not throw exception
+    assertDoesNotThrow(() -> nexusPropertiesVerifier.verify(nexusProperties));
+
+    nexusProperties.put("nexus.clustered", "false");
+    assertDoesNotThrow(() -> nexusPropertiesVerifier.verify(nexusProperties));
+
+    nexusProperties.put("nexus.clustered", "true");
+    assertThrows(IllegalStateException.class, () -> nexusPropertiesVerifier.verify(nexusProperties));
+  }
+
+  @Test
+  void testVerifyLeavesAnalyticsDisabledForProEdition() {
     mockRequiredProperties();
     nexusProperties.put(NexusEditionSelector.PROPERTY_KEY, "PRO");
     nexusProperties.put(NEXUS_ANALYTICS, FALSE);
@@ -109,7 +124,7 @@ public class NexusPropertiesVerifierTest
   }
 
   @Test
-  public void testSelectDatastoreFeature_WhenClusteredEnabledOnEnvironment_SetsRelatedFeatures() {
+  void testSelectDatastoreFeature_WhenClusteredEnabledOnEnvironment_SetsRelatedFeatures() {
     mockRequiredProperties();
 
     environmentVariables.set("DATASTORE_CLUSTERED_ENABLED", "true");
@@ -130,7 +145,7 @@ public class NexusPropertiesVerifierTest
   }
 
   @Test
-  public void testSelectDatastoreFeature_WhenClusteredDisabledOnEnvironment_SetsRelatedFeatures() {
+  void testSelectDatastoreFeature_WhenClusteredDisabledOnEnvironment_SetsRelatedFeatures() {
     mockRequiredProperties();
     environmentVariables.set("DATASTORE_CLUSTERED_ENABLED", FALSE);
 
@@ -151,7 +166,7 @@ public class NexusPropertiesVerifierTest
   }
 
   @Test
-  public void testSelectDatastoreFeature_WhenTableSearchEnabled_DisablesElasticSearch() {
+  void testSelectDatastoreFeature_WhenTableSearchEnabled_DisablesElasticSearch() {
     mockRequiredProperties();
 
     nexusProperties.put(DATASTORE_TABLE_SEARCH, TRUE);
@@ -162,7 +177,7 @@ public class NexusPropertiesVerifierTest
   }
 
   @Test
-  public void testSelectDatastoreFeature_WhenElasticSearchEnabled_DisablesTableSearch() {
+  void testSelectDatastoreFeature_WhenElasticSearchEnabled_DisablesTableSearch() {
     mockRequiredProperties();
     nexusProperties.put(ELASTIC_SEARCH_ENABLED, TRUE);
 
@@ -172,7 +187,7 @@ public class NexusPropertiesVerifierTest
   }
 
   @Test
-  public void testSelectDatastoreFeature_CommunityEdition_EnforcesAnalyticsEnabled() {
+  void testSelectDatastoreFeature_CommunityEdition_EnforcesAnalyticsEnabled() {
     mockRequiredProperties();
     nexusProperties.put(NexusEditionSelector.PROPERTY_KEY, NexusPropertiesVerifier.COMMUNITY);
     nexusProperties.put(NEXUS_ANALYTICS, FALSE);
@@ -183,7 +198,7 @@ public class NexusPropertiesVerifierTest
   }
 
   @Test
-  public void testSelectDatastoreFeature_AlwaysSetsDbFeatureAndDefaults() {
+  void testSelectDatastoreFeature_AlwaysSetsDbFeatureAndDefaults() {
     mockRequiredProperties();
 
     when(nexusProperties.get(CHANGE_REPO_BLOBSTORE_TASK_ENABLED, "true")).thenReturn(TRUE);

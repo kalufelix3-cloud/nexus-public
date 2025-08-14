@@ -144,7 +144,7 @@ public class NexusPropertiesVerifier
   }
 
   private static void ensureHACIsDisabled(final NexusProperties nexusProperties) {
-    if (!isNullOrEmpty(nexusProperties.getProperty("nexus.clustered"))) {
+    if (parseBoolean(nexusProperties.getProperty("nexus.clustered"))) {
       throw new IllegalStateException(
           "High Availability Clustering (HA-C) is a legacy feature and is no longer supported");
     }
