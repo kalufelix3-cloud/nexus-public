@@ -176,6 +176,7 @@ Ext.define('NX.coreui.controller.Capabilities', {
         me.showSettings(model);
         me.showStatus(model);
         me.showAbout(capabilityTypeModel);
+        me.updateDeleteButton(model);
       }
       else {
         capabilityTypeStore.on('load', function() {
@@ -644,6 +645,22 @@ Ext.define('NX.coreui.controller.Capabilities', {
   onNavigate: function() {
     if (NX.Bookmarks.getBookmark().getToken().includes('system/capabilities')) {
       this.reselect();
+    }
+  },
+
+  /**
+   * @private
+   * Updates delete button visibility based on capability system status.
+   * @param {NX.coreui.model.Capability} model capability model
+   */
+  updateDeleteButton: function(model) {
+    var deleteButton = this.getFeature().down('button[action=delete]');
+    if (deleteButton) {
+      if (model.get('isSystem')) {
+        deleteButton.hide();
+      } else {
+        deleteButton.show();
+      }
     }
   }
 

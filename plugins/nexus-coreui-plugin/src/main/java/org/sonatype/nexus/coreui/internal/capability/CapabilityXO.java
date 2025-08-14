@@ -57,6 +57,8 @@ public class CapabilityXO
 
   private String deleteWarningMessage;
 
+  private Boolean isSystem = false;
+
   public String getId() {
     return id;
   }
@@ -175,6 +177,14 @@ public class CapabilityXO
 
   public void setDeleteWarningMessage(final String deleteWarningMessage) {
     this.deleteWarningMessage = deleteWarningMessage;
+  }
+
+  public Boolean isSystem() {
+    return isSystem;
+  }
+
+  public void setSystem(final Boolean isSystem) {
+    this.isSystem = isSystem;
   }
 
   @Override

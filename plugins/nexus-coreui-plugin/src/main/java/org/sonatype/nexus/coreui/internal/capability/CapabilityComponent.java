@@ -32,7 +32,10 @@ import org.sonatype.nexus.capability.CapabilityDescriptorRegistry;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.CapabilityReferenceFilter;
 import org.sonatype.nexus.capability.CapabilityRegistry;
+import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.capability.Tag;
+import org.sonatype.nexus.internal.scheduling.SchedulerCapabilityDescriptor;
+import org.sonatype.nexus.repository.capability.StorageSettingsCapabilityDescriptor;
 import org.sonatype.nexus.capability.Taggable;
 import org.sonatype.nexus.coreui.FormFieldXO;
 import org.sonatype.nexus.extdirect.DirectComponent;
@@ -79,6 +82,10 @@ public class CapabilityComponent
   private final CapabilityDescriptorRegistry capabilityDescriptorRegistry;
 
   private final CapabilityRegistry capabilityRegistry;
+
+  private static final Set<String> SYSTEM_CAPABILITY_TYPES = Set.of(
+      SchedulerCapabilityDescriptor.TYPE_ID,
+      StorageSettingsCapabilityDescriptor.TYPE_ID);
 
   @Inject
   public CapabilityComponent(
@@ -186,6 +193,11 @@ public class CapabilityComponent
   @RequiresPermissions("nexus:capabilities:delete")
   @Validate
   public void remove(final @NotEmpty String id) {
+    CapabilityReference reference = capabilityRegistry.get(capabilityIdentity(id));
+    if (reference != null && isDefaultCapability(reference)) {
+      throw new IllegalArgumentException("Cannot delete system capability: " +
+          reference.context().descriptor().name());
+    }
     capabilityRegistry.remove(capabilityIdentity(id));
   }
 
@@ -244,6 +256,7 @@ public class CapabilityComponent
     capabilityXO.setProperties(filterProperties(reference.context().properties(), capability));
     capabilityXO.setDisableWarningMessage(descriptor.getDisableWarningMessage());
     capabilityXO.setDeleteWarningMessage(descriptor.getDeleteWarningMessage());
+    capabilityXO.setSystem(isDefaultCapability(reference));
 
     if (capabilityXO.getEnabled() && capabilityXO.getError()) {
       capabilityXO.setState("error");
@@ -323,5 +336,10 @@ public class CapabilityComponent
 
   private boolean nonNullKeyAndValue(final Entry<?, ?> entry) {
     return entry != null && entry.getKey() != null && entry.getValue() != null;
+  }
+
+  private boolean isDefaultCapability(CapabilityReference reference) {
+    CapabilityType type = reference.context().descriptor().type();
+    return SYSTEM_CAPABILITY_TYPES.contains(type.toString());
   }
 }
