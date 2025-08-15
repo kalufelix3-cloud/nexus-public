@@ -29,7 +29,7 @@
 
   <properties>
     <apache-shiro.version>1.13.0</apache-shiro.version>
-    <bouncycastle.version>1.80</bouncycastle.version>
+    <bouncycastle.version>1.81</bouncycastle.version>
     <bcpkix.fips.version>2.1.9</bcpkix.fips.version>
     <bcpg.fips.version>2.1.11</bcpg.fips.version>
     <bcutil.fips.version>2.1.4</bcutil.fips.version>
