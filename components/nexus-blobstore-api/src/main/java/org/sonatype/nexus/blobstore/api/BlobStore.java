@@ -22,7 +22,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
@@ -124,8 +123,8 @@ public interface BlobStore
   String EXTERNAL_LAST_MODIFIED_HEADER = "External.last-modified";
 
   /**
-   * Prefix for the old layout (volume/chapter) in folder structures.
-   * Used as a filter in certain blob store implementations.
+   * Prefix for the old layout (volume/chapter) in folder structures. Used as a filter in certain blob store
+   * implementations.
    *
    * @since 3.79
    */
@@ -249,8 +248,8 @@ public interface BlobStore
   boolean bytesExists(BlobId blobId);
 
   /**
-   * Removes a blob from the blob store. This may not immediately delete the blob from the underlying storage
-   * mechanism, but will make it immediately unavailable to future calls to {@link BlobStore#get(BlobId)}.
+   * Removes a blob from the blob store. This may not immediately delete the blob from the underlying storage mechanism,
+   * but will make it immediately unavailable to future calls to {@link BlobStore#get(BlobId)}.
    *
    * @return {@code true} if the blob has been deleted, {@code false} if no blob was found by that ID.
    */
@@ -471,4 +470,13 @@ public interface BlobStore
   default Optional<ExternalMetadata> getExternalMetadata(final BlobId blobId) {
     return Optional.empty();
   }
+
+  /**
+   * Get {@link BlobAttributes} for the {@link BlobId} provided. This version can throw exceptions to handle error cases
+   * explicitly.
+   *
+   * @throws BlobStoreException if the attributes cannot be retrieved
+   */
+  @Nullable
+  BlobAttributes getBlobAttributesWithException(BlobId blobId) throws BlobStoreException;
 }

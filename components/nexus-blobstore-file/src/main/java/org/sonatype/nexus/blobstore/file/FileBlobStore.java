@@ -166,6 +166,9 @@ public class FileBlobStore
 
   private static final String NATIVE_CONTENT_TMP_PATH = CONTENT_TMP_PATH.replace('/', File.separatorChar);
 
+  public static final String ATTRIBUTES_FOR_BLOB_ID_EXCEPTION =
+      "Unable to load BlobAttributes for blob id: {}, path: {}, exception: {} - {}";
+
   private Path contentDir;
 
   private Path reconciliationLogDir;
@@ -834,11 +837,17 @@ public class FileBlobStore
   @Override
   public boolean bytesExists(final BlobId blobId) {
     checkNotNull(blobId);
-    if (!fileOperations.exists(contentPath(blobId))) {
-      log.debug("Blob {} content (.bytes) was not found during existence check", blobId);
-      return false;
+    try {
+      if (!fileOperations.exists(contentPath(blobId))) {
+        log.debug("Blob {} content (.bytes) was not found during existence check", blobId);
+        return false;
+      }
+      return true;
     }
-    return true;
+    catch (Exception e) {
+      log.debug("Unable to check existence of {}", contentPath(blobId));
+      throw e;
+    }
   }
 
   private boolean delete(final Path path) throws IOException {
@@ -1236,18 +1245,9 @@ public class FileBlobStore
   public BlobAttributes getBlobAttributes(final BlobId blobId) {
     Path blobPath = attributePath(blobId);
     try {
-      FileBlobAttributes blobAttributes = new FileBlobAttributes(blobPath);
-      if (!blobAttributes.load()) {
-        log.warn("Attempt to access non-existent blob attributes file {} for blob {}", attributePath(blobId), blobId);
-        return null;
-      }
-      else {
-        return blobAttributes;
-      }
+      return getBlobAttributesWithException(blobId);
     }
-    catch (Exception e) {
-      log.error("Unable to load BlobAttributes for blob id: {}, path: {}, exception: {}",
-          blobId, blobPath, e.getMessage(), log.isDebugEnabled() ? e : null);
+    catch (BlobStoreException e) {
       return null;
     }
   }
@@ -1311,5 +1311,26 @@ public class FileBlobStore
   protected void deleteCopiedAttributes(final BlobId blobId, final String softDeletedLocation) {
     log.trace("deleteCopiedAttributes for blobId: {}, softDeletedLocation: {}", blobId, softDeletedLocation);
     fileOperations.deleteQuietly(attributePath(createBlobIdForTimePath(blobId, softDeletedLocation)));
+  }
+
+  @Nullable
+  @Override
+  public BlobAttributes getBlobAttributesWithException(final BlobId blobId) throws BlobStoreException {
+    Path blobPath = attributePath(blobId);
+    try {
+      FileBlobAttributes blobAttributes = new FileBlobAttributes(blobPath);
+      if (!blobAttributes.load()) {
+        log.warn("Attempt to access non-existent blob attributes file {} for blob {}", attributePath(blobId), blobId);
+        return null;
+      }
+      else {
+        return blobAttributes;
+      }
+    }
+    catch (Exception e) {
+      log.error(ATTRIBUTES_FOR_BLOB_ID_EXCEPTION,
+          blobId, blobPath, e.getMessage(), log.isDebugEnabled() ? e : null);
+      throw new BlobStoreException(e, blobId);
+    }
   }
 }
