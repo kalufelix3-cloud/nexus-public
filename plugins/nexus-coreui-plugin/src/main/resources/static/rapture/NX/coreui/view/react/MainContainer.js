@@ -44,7 +44,7 @@ Ext.define('NX.coreui.view.react.MainContainer', {
   },
 
   destroyReactView: function() {
-    if (this.reactView) {
+    if (this.reactView && this.getEl() && this.getEl().dom) {
       ReactDOM.unmountComponentAtNode(this.getEl().dom);
     }
   },
