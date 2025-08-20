@@ -592,4 +592,16 @@ public class BlobStoreGroup
   {
     Blob create(BlobStore blobStore);
   }
+
+  @Nullable
+  @Override
+  public BlobAttributes getBlobAttributesWithException(final BlobId blobId) throws BlobStoreException {
+    try {
+      return getBlobAttributes(blobId);
+    }
+    catch (Exception e) {
+      log.error("Error occurred getting attributes for group blobstore", e);
+      throw new BlobStoreException(e, blobId);
+    }
+  }
 }

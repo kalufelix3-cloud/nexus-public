@@ -29,7 +29,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -907,11 +906,9 @@ public class S3BlobStore
   @Timed
   public BlobAttributes getBlobAttributes(final BlobId blobId) {
     try {
-      S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath(blobId));
-      return blobAttributes.load() ? blobAttributes : null;
+      return getBlobAttributesWithException(blobId);
     }
     catch (Exception e) {
-      log.error("Unable to load S3BlobAttributes for blob id: {}", blobId, e);
       return null;
     }
   }
@@ -995,7 +992,7 @@ public class S3BlobStore
     }
     catch (Exception e) {
       log.debug("Unable to check existence of {}", contentPath(blobId));
-      return false;
+      throw e;
     }
   }
 
@@ -1052,6 +1049,20 @@ public class S3BlobStore
           log.isDebugEnabled() ? e : null);
     }
     return Optional.empty();
+  }
+
+  @Nullable
+  @Override
+  @Timed
+  public BlobAttributes getBlobAttributesWithException(final BlobId blobId) throws BlobStoreException {
+    try {
+      S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath(blobId));
+      return blobAttributes.load() ? blobAttributes : null;
+    }
+    catch (Exception e) {
+      log.error("Unable to load S3BlobAttributes for blob id: {}", blobId, e);
+      throw new BlobStoreException(e, blobId);
+    }
   }
 
   private S3BlobAttributes writeBlobAttributes(

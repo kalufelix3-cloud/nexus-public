@@ -32,7 +32,6 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
@@ -56,10 +55,10 @@ import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.ArgumentMatchers.startsWith;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -128,7 +127,7 @@ public class DefaultIntegrityCheckStrategyTest
         .thenReturn(new ContinuationArrayList<>());
 
     // stub attribute load to fail
-    when(blobStore.getBlobAttributes(blobId)).thenReturn(null);
+    when(blobStore.getBlobAttributesWithException(blobId)).thenReturn(null);
 
     defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, SINCE_NO_DAYS, checkFailedHandler);
 
@@ -147,7 +146,7 @@ public class DefaultIntegrityCheckStrategyTest
         .thenReturn(new ContinuationArrayList<>());
 
     BlobAttributes blobAttributes = getMockBlobAttributes(of("name"), TEST_HASH1, true);
-    when(blobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
+    when(blobStore.getBlobAttributesWithException(blobId)).thenReturn(blobAttributes);
 
     defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, SINCE_NO_DAYS, checkFailedHandler);
 
@@ -205,7 +204,7 @@ public class DefaultIntegrityCheckStrategyTest
     runTest("name", empty(), "name", TEST_HASH1, () -> false);
 
     verify(logger, never()).error(eq(NAME_MISMATCH), nullable(String.class), nullable(String.class));
-    verify(logger).error(eq(ERROR_PROCESSING_ASSET_WITH_EX), any(), eq(ASSET_SHA1_MISSING), any());
+    verify(logger).error(eq(ERROR_CHECKING_SHA_1_CHECKSUM_FOR), anyString());
     verify(checkFailedHandler).accept(any());
   }
 
@@ -223,7 +222,8 @@ public class DefaultIntegrityCheckStrategyTest
     runTest(null, TEST_HASH1, "name", TEST_HASH1, () -> false);
 
     verify(logger, never()).error(eq(NAME_MISMATCH), nullable(String.class), nullable(String.class));
-    verify(logger).error(eq(ERROR_PROCESSING_ASSET_WITH_EX), any(), eq(ASSET_NAME_MISSING), any());
+    verify(logger).error(eq(BLOB_NAME_MISSING));
+    verify(logger).error(eq(ASSET_INTEGRITY_CHECK_FAILED), nullable(String.class));
     verify(checkFailedHandler).accept(any());
   }
 
@@ -232,7 +232,8 @@ public class DefaultIntegrityCheckStrategyTest
     runTest("name", TEST_HASH1, null, TEST_HASH1, () -> false);
 
     verify(logger, never()).error(eq(NAME_MISMATCH), nullable(String.class), nullable(String.class));
-    verify(logger).error(eq(ERROR_PROCESSING_ASSET_WITH_EX), any(), eq(BLOB_NAME_MISSING), any());
+    verify(logger).error(eq(BLOB_NAME_MISSING));
+    verify(logger).error(eq(ASSET_INTEGRITY_CHECK_FAILED), anyString());
     verify(checkFailedHandler).accept(any());
   }
 
@@ -241,7 +242,7 @@ public class DefaultIntegrityCheckStrategyTest
     runTest("name", TEST_HASH1, "name", empty(), () -> false);
 
     verify(logger, never()).error(eq(NAME_MISMATCH), nullable(String.class), nullable(String.class));
-    verify(logger).error(eq(ERROR_PROCESSING_ASSET_WITH_EX), any(), eq(BLOB_METRICS_MISSING_SHA1), any());
+    verify(logger).error(eq(ERROR_CHECKING_SHA_1_CHECKSUM_FOR), anyString());
     verify(checkFailedHandler).accept(any());
   }
 
@@ -266,11 +267,62 @@ public class DefaultIntegrityCheckStrategyTest
 
   @Test
   public void testCheck_MissingBlobData() throws IOException {
-    doThrow(new BlobStoreException("bse", new BlobId("blob"))).when(blobData).close();
-    runTest("name", TEST_HASH1, "name", TEST_HASH1, () -> false);
+    BlobId blobId = mock(BlobId.class);
+    AssetBlob assetBlob = mockBlob(blobId, TEST_HASH1);
+    FluentAsset mockAsset = getMockAsset("name", of(assetBlob));
+    Continuation<FluentAsset> assetContinuation = buildContinuation(mockAsset);
+    BlobAttributes blobAttributes = getMockBlobAttributes(of("name"), TEST_HASH1, false);
+
+    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(assetContinuation)
+        .thenReturn(new ContinuationArrayList<>());
+    when(blobStore.getBlobAttributesWithException(blobId)).thenReturn(blobAttributes);
+    when(blobStore.bytesExists(blobId)).thenReturn(false); // Mock missing blob data
+
+    defaultIntegrityCheckStrategy.check(repository, blobStore, () -> false, SINCE_NO_DAYS, checkFailedHandler);
 
     verify(logger).error(eq(BLOB_DATA_MISSING_FOR_ASSET), nullable(String.class));
     verify(checkFailedHandler).accept(any());
+  }
+
+  @Test
+  public void testCheck_BlobExistenceCheckException() throws IOException {
+    BlobId blobId = mock(BlobId.class);
+    AssetBlob assetBlob = mockBlob(blobId, TEST_HASH1);
+    FluentAsset mockAsset = getMockAsset("name", of(assetBlob));
+    Continuation<FluentAsset> assetContinuation = buildContinuation(mockAsset);
+    BlobAttributes blobAttributes = getMockBlobAttributes(of("name"), TEST_HASH1, false);
+
+    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(assetContinuation)
+        .thenReturn(new ContinuationArrayList<>());
+    when(blobStore.getBlobAttributesWithException(blobId)).thenReturn(blobAttributes);
+    when(blobStore.bytesExists(blobId)).thenThrow(new RuntimeException("Connection failed"));
+
+    defaultIntegrityCheckStrategy.check(repository, blobStore, () -> false, SINCE_NO_DAYS, checkFailedHandler);
+
+    verify(logger).error(eq("Failed to check blob existence for {} cause {} - {}"), any(BlobId.class),
+        eq("RuntimeException"),
+        nullable(Throwable.class));
+  }
+
+  @Test
+  public void testCheck_InfrastructureIssueException() throws IOException {
+    BlobId blobId = mock(BlobId.class);
+    AssetBlob assetBlob = mockBlob(blobId, TEST_HASH1);
+    FluentAsset mockAsset = getMockAsset("name", of(assetBlob));
+    Continuation<FluentAsset> assetContinuation = buildContinuation(mockAsset);
+    BlobAttributes blobAttributes = getMockBlobAttributes(of("name"), TEST_HASH1, false);
+
+    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(assetContinuation)
+        .thenReturn(new ContinuationArrayList<>());
+    when(blobStore.getBlobAttributesWithException(blobId)).thenReturn(blobAttributes);
+    when(blobStore.bytesExists(blobId))
+        .thenThrow(new RuntimeException(new java.net.ConnectException("Connection timeout")));
+
+    defaultIntegrityCheckStrategy.check(repository, blobStore, () -> false, SINCE_NO_DAYS, checkFailedHandler);
+
+    verify(logger).error(eq("Failed to check blob existence for {} cause {} - {}"), any(BlobId.class),
+        eq("RuntimeException"),
+        nullable(Throwable.class));
   }
 
   @Test
@@ -298,7 +350,7 @@ public class DefaultIntegrityCheckStrategyTest
         .thenReturn(new ContinuationArrayList<>());
 
     // stub attribute load to fail
-    when(blobStore.getBlobAttributes(blobId)).thenReturn(null);
+    when(blobStore.getBlobAttributesWithException(blobId)).thenReturn(null);
 
     defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, 1, checkFailedHandler);
 
@@ -324,7 +376,7 @@ public class DefaultIntegrityCheckStrategyTest
         .thenReturn(new ContinuationArrayList<>());
 
     // stub attribute load to fail
-    when(blobStore.getBlobAttributes(blobId)).thenReturn(null);
+    when(blobStore.getBlobAttributesWithException(blobId)).thenReturn(null);
 
     defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, 2, checkFailedHandler);
 
@@ -348,7 +400,8 @@ public class DefaultIntegrityCheckStrategyTest
 
     when(assets.browse(anyInt(), nullable(String.class))).thenReturn(assetContinuation)
         .thenReturn(new ContinuationArrayList<>());
-    when(blobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
+    when(blobStore.getBlobAttributesWithException(blobId)).thenReturn(blobAttributes);
+    when(blobStore.bytesExists(blobId)).thenReturn(true);
 
     defaultIntegrityCheckStrategy.check(repository, blobStore, cancel, SINCE_NO_DAYS, checkFailedHandler);
 

@@ -12,10 +12,18 @@
  */
 package org.sonatype.nexus.blobstore.restore.datastore;
 
-import java.io.InputStream;
+import java.io.InterruptedIOException;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.ProtocolException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.nio.channels.ClosedChannelException;
 import java.time.LocalDate;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
@@ -41,6 +49,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.time.LocalDate.now;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
@@ -77,6 +86,8 @@ public class DefaultIntegrityCheckStrategy
 
   static final String ERROR_ACCESSING_BLOB = "Error accessing blob for asset '{}'";
 
+  static final String ERROR_ACCESSING_BLOB_ATTRIBUTES = "Error accessing blob attributes for asset '{}' {} - {}";
+
   static final String ASSET_NAME_MISSING = "Asset is missing name";
 
   static final String ERROR_PROCESSING_ASSET = "Error processing asset '{}'";
@@ -88,6 +99,8 @@ public class DefaultIntegrityCheckStrategy
   static final String BLOB_METRICS_MISSING_SHA1 = "Blob metrics are missing SHA1 hash code";
 
   static final String ASSET_INTEGRITY_CHECK_FAILED = "Asset integrity check failed for {}";
+
+  public static final String ERROR_CHECKING_SHA_1_CHECKSUM_FOR = "Error checking sha1 checksum for '{}'";
 
   private final int browseBatchSize;
 
@@ -161,27 +174,16 @@ public class DefaultIntegrityCheckStrategy
           .map(AssetBlob::blobRef)
           .map(BlobRef::getBlobId);
 
-      if (!blobId.isPresent()) {
+      if (blobId.isEmpty()) {
         log.error(ERROR_ACCESSING_BLOB, asset.path());
         return true;
       }
-
-      BlobAttributes blobAttributes = blobStore.getBlobAttributes(blobId.get());
-
-      if (blobAttributes == null) {
-        log.error(BLOB_PROPERTIES_MISSING_FOR_ASSET, asset.path());
+      else if (!blobAttributesExists(asset, blobStore, blobId.get())) {
+        // If blob attributes exist but integrity check fails, we log and return true
         return true;
       }
-      else if (blobAttributes.isDeleted()) {
-        log.warn(BLOB_PROPERTIES_MARKED_AS_DELETED, asset.path());
-        return true;
-      }
-      else if (!blobDataExists(blobStore.get(blobId.get()))) {
+      else if (!blobDataExists(blobStore, blobId.get())) {
         log.error(BLOB_DATA_MISSING_FOR_ASSET, asset.path());
-        return true;
-      }
-      else if (!checkAssetIntegrity(blobAttributes, asset)) {
-        log.error(ASSET_INTEGRITY_CHECK_FAILED, asset.path());
         return true;
       }
       else {
@@ -216,12 +218,22 @@ public class DefaultIntegrityCheckStrategy
    * returns true if the checksum matches, false otherwise
    */
   private boolean checkSha1(final BlobAttributes blobAttributes, final Asset asset) {
-    String assetSha1 = getAssetSha1(asset);
-    String blobSha1 = getBlobSha1(blobAttributes);
+    try {
+      String assetSha1 = getAssetSha1(asset);
+      String blobSha1 = getBlobSha1(blobAttributes);
 
-    if (!Objects.equals(assetSha1, blobSha1)) {
-      log.error(SHA1_MISMATCH, asset.path(), assetSha1, blobSha1);
+      if (!Objects.equals(assetSha1, blobSha1)) {
+        log.error(SHA1_MISMATCH, asset.path(), assetSha1, blobSha1);
+        return false;
+      }
+    }
+    catch (IllegalArgumentException e) {
+      log.error(ERROR_CHECKING_SHA_1_CHECKSUM_FOR, asset.path());
       return false;
+    }
+    catch (Exception e) {
+      log.error(ERROR_PROCESSING_ASSET_WITH_EX, asset.path(), e.getMessage(), log.isDebugEnabled() ? e : null);
+      return true;
     }
 
     return true;
@@ -251,19 +263,29 @@ public class DefaultIntegrityCheckStrategy
    * returns true if the name matches, false otherwise
    */
   private boolean checkName(final BlobAttributes blobAttributes, final Asset asset) {
-    String blobName = getBlobName(blobAttributes, asset);
-    String assetName = getAssetName(asset);
+    try {
+      String blobName = getBlobName(blobAttributes, asset);
+      String assetName = getAssetName(asset);
 
-    checkArgument(blobName != null, BLOB_NAME_MISSING);
-    checkArgument(assetName != null, ASSET_NAME_MISSING);
+      checkArgument(blobName != null, BLOB_NAME_MISSING);
+      checkArgument(assetName != null, ASSET_NAME_MISSING);
 
-    if (assetName.startsWith("/") && !blobName.startsWith("/")) {
-      assetName = assetName.substring(1);
+      if (assetName.startsWith("/") && !blobName.startsWith("/")) {
+        assetName = assetName.substring(1);
+      }
+
+      if (!StringUtils.equals(assetName, blobName)) {
+        log.error(NAME_MISMATCH, blobName, assetName);
+        return false;
+      }
     }
-
-    if (!StringUtils.equals(assetName, blobName)) {
-      log.error(NAME_MISMATCH, blobName, assetName);
+    catch (IllegalArgumentException e) {
+      log.error(BLOB_NAME_MISSING);
       return false;
+    }
+    catch (Exception e) {
+      log.error("Error checking blob name for asset '{}'", asset.path(), e);
+      return true;
     }
 
     return true;
@@ -272,16 +294,99 @@ public class DefaultIntegrityCheckStrategy
   /**
    * returns true if the blobs data is accessible, false otherwise
    */
-  protected boolean blobDataExists(final Blob blob) {
-    try (InputStream in = blob.getInputStream()) {
-      // Read from the stream to avoid a bug with Azure see NEXUS-48217
-      in.read();
+  protected boolean blobDataExists(final BlobStore blobStore, final BlobId blobId) {
+    try {
+      return blobStore.bytesExists(blobId);
+    }
+    catch (Exception e) {
+      // Distinguish between infrastructure issues and legitimate blob non-existence
+      if (isInfrastructureException(e)) {
+        log.error("Infrastructure failure while checking blob existence for {}: {} - {}",
+            blobId, e.getClass().getSimpleName(), e.getMessage());
+        return true; // Treat as blob exists
+      }
+      else {
+        log.error("Failed to check blob existence for {} cause {} - {}", blobId, e.getClass().getSimpleName(),
+            log.isDebugEnabled() ? e : null);
+        return true;
+      }
+    }
+  }
+
+  /**
+   * returns true if the blobs data is accessible, false otherwise
+   */
+  protected boolean blobAttributesExists(final Asset asset, final BlobStore blobStore, final BlobId blobId) {
+    try {
+      BlobAttributes blobAttributes = blobStore.getBlobAttributesWithException(blobId);
+
+      if (blobAttributes == null) {
+        log.error(BLOB_PROPERTIES_MISSING_FOR_ASSET, asset.path());
+        return false;
+      }
+      else if (blobAttributes.isDeleted()) {
+        log.warn(BLOB_PROPERTIES_MARKED_AS_DELETED, asset.path());
+        return false;
+      }
+      else if (!checkAssetIntegrity(blobAttributes, asset)) {
+        log.error(ASSET_INTEGRITY_CHECK_FAILED, asset.path());
+        return false;
+      }
+    }
+    catch (Exception e) {
+      log.warn(ERROR_ACCESSING_BLOB_ATTRIBUTES, asset.path(), e.getMessage(), log.isDebugEnabled() ? e : null);
+      // Distinguish between infrastructure issues and legitimate blob non-existence
+      if (isInfrastructureException(e)) {
+        log.error("Infrastructure failure while checking attributes existence for {}: {} - {}",
+            blobId, e.getClass().getSimpleName(), e.getMessage());
+        return true; // Treat as blob exists
+      }
+      else {
+        log.error("Failed to check attributes existence for {} cause {} - {}", blobId, e.getClass().getSimpleName(),
+            log.isDebugEnabled() ? e : null);
+        return true;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Determines if an exception indicates an infrastructure/connectivity issue rather than a legitimate "blob doesn't
+   * exist" scenario
+   */
+  private boolean isInfrastructureException(Exception e) {
+    String className = e.getClass().getName();
+
+    // Network connectivity issues
+    if (e instanceof ConnectException ||
+        e instanceof SocketTimeoutException ||
+        e instanceof UnknownHostException ||
+        e instanceof NoRouteToHostException) {
       return true;
     }
-    catch (Exception e) { // NOSONAR
-      log.warn("Failed to read {} cause {}", blob, e.getClass(), log.isDebugEnabled() ? e : null);
-      return false;
+
+    // AWS S3 specific infrastructure issues
+    if (className.contains("AmazonS3Exception") || className.contains("SdkClientException")) {
+      return true;
     }
+
+    // Azure specific infrastructure issues
+    if (className.contains("StorageException") && className.contains("azure")) {
+      return true;
+    }
+
+    // Google Cloud specific infrastructure issues
+    if (className.contains("StorageException") && className.contains("google")) {
+      return true;
+    }
+
+    // Generic timeout and I/O issues - specific subtypes only
+    return e instanceof TimeoutException ||
+        e instanceof SocketException ||
+        e instanceof InterruptedIOException ||
+        e instanceof ClosedChannelException ||
+        e instanceof ProtocolException;
   }
 
   /**
