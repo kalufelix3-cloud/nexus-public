@@ -23,7 +23,7 @@ import {
   NxDropdown
 } from '@sonatype/react-shared-components';
 import { ExtJS, useIsVisible } from '@sonatype/nexus-ui-plugin';
-import { faSignInAlt, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { useRouter, useSref } from '@uirouter/react';
 import useHasUser from '../../hooks/useHasUser';
 import { ROUTE_NAMES } from '../../routerConfig/routeNames/routeNames';
@@ -42,7 +42,7 @@ export default function LoginAndUserButton() {
         variant="icon-only" onClick={onSignInClick}
         data-analytics-id="nxrm-global-header-login"
     >
-      <NxFontAwesomeIcon icon={faSignInAlt} />
+      <NxFontAwesomeIcon icon={faUser} />
     </NxButton>
   }
 

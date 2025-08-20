@@ -61,7 +61,7 @@ export default {
     FORM: {
       CREATE_TITLE: 'Create Role',
       EDIT_TILE: (name) => `Edit ${name}`,
-      EDIT_DESCRIPTION: 'Nexus Role',
+      EDIT_DESCRIPTION: 'Edit role configuration',
       DEFAULT_ROLE_WARNING: 'This is a default role and cannot be modified.',
       SECTIONS: {
         TYPE: 'Role Type',
