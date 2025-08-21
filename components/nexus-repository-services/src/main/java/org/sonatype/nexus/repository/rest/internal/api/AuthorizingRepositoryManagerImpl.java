@@ -38,8 +38,8 @@ import org.sonatype.nexus.scheduling.TaskScheduler;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
 import static org.sonatype.nexus.security.BreadActions.ADD;
-import static org.sonatype.nexus.security.BreadActions.EDIT;
 import static org.sonatype.nexus.security.BreadActions.DELETE;
+import static org.sonatype.nexus.security.BreadActions.EDIT;
 import static org.sonatype.nexus.security.BreadActions.READ;
 import org.springframework.stereotype.Component;
 
@@ -97,15 +97,14 @@ public class AuthorizingRepositoryManagerImpl
   public boolean delete(@Nonnull final String name) throws Exception {
     Repository repository = repositoryManager.get(name);
     if (repository != null) {
-      if (repositoryPermissionChecker.userHasRepositoryAdminPermission(repository, DELETE)) {
-        try {
-          repositoryManager.delete(repository.getName());
-        }
-        catch (ValidationException e) {
-          return false;
-        }
-        return true;
+      repositoryPermissionChecker.ensureUserCanAdmin(DELETE, repository);
+      try {
+        repositoryManager.delete(repository.getName());
       }
+      catch (ValidationException e) {
+        return false;
+      }
+      return true;
     }
     return false;
   }

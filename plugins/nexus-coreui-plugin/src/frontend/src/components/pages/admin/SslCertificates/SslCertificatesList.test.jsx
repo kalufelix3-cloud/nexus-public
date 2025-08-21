@@ -76,8 +76,7 @@ describe('SslCertificatesList', function() {
     });
   });
 
-  // skip test until flakiness can get resolved https://sonatype.atlassian.net/browse/NEXUS-48536
-  it.skip('renders the resolved empty data', async function() {
+  it('renders the resolved empty data', async function() {
     when(Axios.get).calledWith(sslCertificatesUrl).mockResolvedValue({
       data: []
     });

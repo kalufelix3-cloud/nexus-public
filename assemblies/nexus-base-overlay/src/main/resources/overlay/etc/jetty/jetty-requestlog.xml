@@ -7,7 +7,7 @@
       <Arg>
         <New class="org.eclipse.jetty.server.Slf4jRequestLogWriter"/>
       </Arg>
-      <Arg>%{client}a - %{nexus.user.id}attr [%{responseTimestamp}attr] "%r" %s %{Content-Length}i %O %{ms}T "%{User-Agent}i" [%{threadName}attr]</Arg>
+      <Arg>%{client}a - %{nexus.user.id}attr %{dd/MMM/yyyy:HH:mm:ss Z|<Call class="org.sonatype.nexus.jetty.log.NexusRepositoryRequestLog" name="getDefaultTimeZoneId"/>}t "%r" %s %{Content-Length}i %O %{ms}T "%{User-Agent}i" [%{threadName}attr]</Arg>
     </New>
   </Set>
 

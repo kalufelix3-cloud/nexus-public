@@ -52,14 +52,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_CLASS;
 
-@DirtiesContext(classMode = AFTER_CLASS)
 @SpringBootTest
 @ContextConfiguration(classes = TestSecurityConfigurationMocks.class)
 @ComponentScan(basePackages = "org.sonatype.nexus",

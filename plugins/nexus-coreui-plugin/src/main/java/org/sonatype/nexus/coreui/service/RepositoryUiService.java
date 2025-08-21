@@ -32,7 +32,6 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
 
-import org.apache.shiro.authz.AuthorizationException;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
@@ -286,7 +285,8 @@ public class RepositoryUiService
   @RequiresAuthentication
   @Validate(groups = {Update.class, Default.class})
   public RepositoryXO update(final @NotNull @Valid RepositoryXO repositoryXO) throws Exception {
-    Repository repository = safelyGetRepository(repositoryXO.getName(), BreadActions.EDIT);
+    Repository repository = repositoryManager.get(repositoryXO.getName());
+    securityHelper.ensurePermitted(adminPermission(repository, BreadActions.EDIT));
 
     // Replace stored password
     Optional.of(repositoryXO)
@@ -326,7 +326,8 @@ public class RepositoryUiService
   @RequiresAuthentication
   @Validate
   public void remove(final @NotEmpty String name) throws Exception {
-    safelyGetRepository(name, BreadActions.DELETE);
+    Repository repository = repositoryManager.get(name);
+    securityHelper.ensurePermitted(adminPermission(repository, BreadActions.DELETE));
     repositoryManager.delete(name);
   }
 
@@ -372,22 +373,6 @@ public class RepositoryUiService
     xo.setUrl(getUrl(input.getName()));
 
     return xo;
-  }
-
-  private Repository safelyGetRepository(final String name, final String action) {
-    final Repository repository = repositoryManager.get(name);
-    if (repository == null) {
-      throw new BadRequestException("User is not authorized to " + action + " " + name +
-          " or repository does not exist.");
-    }
-    try {
-      securityHelper.ensurePermitted(adminPermission(repository, action));
-    }
-    catch (AuthorizationException e) {
-      throw new BadRequestException("User is not authorized to " + action + " " + name +
-          " or repository does not exist.");
-    }
-    return repository;
   }
 
   private RepositoryXO asRepository(final Configuration input) {

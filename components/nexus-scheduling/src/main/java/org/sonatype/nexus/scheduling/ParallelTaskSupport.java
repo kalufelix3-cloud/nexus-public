@@ -12,14 +12,10 @@
  */
 package org.sonatype.nexus.scheduling;
 
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
@@ -59,32 +55,32 @@ public abstract class ParallelTaskSupport
   }
 
   @Override
-  protected final Object execute() throws ExecutionException {
+  protected final Object execute() {
     String name = getClass().getSimpleName();
     ThreadPoolExecutor executor = new ThreadPoolExecutor(0, concurrencyLimit, 500L, TimeUnit.MILLISECONDS,
         new LinkedBlockingQueue<>(queueCapacity), new NexusThreadFactory(name, name), new CallerRunsPolicy());
 
     try (ProgressLogIntervalHelper progress = new ProgressLogIntervalHelper(log, 60)) {
-      List<Future<Object>> futures = jobStream(progress).map(runnable -> {
+      jobStream(progress).forEach(runnable -> {
         // check cancellation before scheduling job so the primary thread throws an exception and stops queuing jobs
         CancelableHelper.checkCancellation();
-        return executor.submit(runnable, new Object());
-      })
-          .toList();
+        executor.submit(runnable);
+      });
 
-      for (Future<Object> future : futures) {
-        Object result = null;
-        while (result == null) {
-          try {
-            result = future.get(500L, TimeUnit.MILLISECONDS);
-          }
-          catch (TimeoutException e) {
-            log.trace("Timeout occurred", e);
-          }
-          CancelableHelper.checkCancellation();
+      while (!executor.isShutdown() && (executor.getActiveCount() > 0 || !executor.getQueue().isEmpty())) {
+        Runnable runnable = executor.getQueue().poll();
+        if (runnable != null) {
+          runnable.run();
         }
+        else {
+          Thread.sleep(500L);
+        }
+        CancelableHelper.checkCancellation();
       }
       return result();
+    }
+    catch (RuntimeException e) {
+      throw e;
     }
     catch (InterruptedException e) {
       Thread.currentThread().interrupt();
