@@ -25,7 +25,6 @@ import java.util.function.Consumer;
 
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.packageurl.PackageUrl;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -44,7 +43,6 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
-import org.sonatype.nexus.repository.ossindex.PackageUrlService;
 
 import com.google.common.base.Stopwatch;
 import org.springframework.beans.factory.annotation.Value;
@@ -81,8 +79,6 @@ public class BrowseFacetImpl
 
   private final Map<String, BrowseNodeGenerator> browseNodeGeneratorsByFormat;
 
-  private final PackageUrlService packageUrlService;
-
   private final int pageSize;
 
   private String format;
@@ -95,14 +91,12 @@ public class BrowseFacetImpl
   public BrowseFacetImpl(
       final List<FormatStoreManager> formatStoreManagersByFormatList,
       final List<BrowseNodeGenerator> browseNodeGeneratorsByFormatList,
-      final PackageUrlService packageUrlService,
       @Value("${nexus.browse.rebuild.pageSize:1000}") final int pageSize)
   {
     this.formatStoreManagersByFormat =
         QualifierUtil.buildQualifierBeanMap(checkNotNull(formatStoreManagersByFormatList));
     this.browseNodeGeneratorsByFormat =
         QualifierUtil.buildQualifierBeanMap(checkNotNull(browseNodeGeneratorsByFormatList));
-    this.packageUrlService = checkNotNull(packageUrlService);
     this.pageSize = max(pageSize, 1);
   }
 
@@ -298,7 +292,6 @@ public class BrowseFacetImpl
       if (!componentPaths.isEmpty()) {
         browseNodeManager.createBrowseNodes(componentPaths, node -> {
           node.setComponent(component);
-          findPackageUrl(component).map(PackageUrl::toString).ifPresent(node::setPackageUrl);
         });
       }
     }
@@ -312,19 +305,9 @@ public class BrowseFacetImpl
     if (!assetPaths.isEmpty()) {
       browseNodeManager.createBrowseNodes(assetPaths, node -> {
         node.setAsset(asset);
-        asset.component().ifPresent(component -> {
-          node.setComponent(component);
-          findPackageUrl(component).map(PackageUrl::toString).ifPresent(node::setPackageUrl);
-        });
+        asset.component().ifPresent(node::setComponent);
       });
     }
-  }
-
-  /**
-   * Finds the optional {@link PackageUrl} coordinates for the given component.
-   */
-  private Optional<PackageUrl> findPackageUrl(final Component component) {
-    return packageUrlService.getPackageUrl(format, component.namespace(), component.name(), component.version());
   }
 
   /**

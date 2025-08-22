@@ -30,7 +30,6 @@ import org.sonatype.nexus.repository.content.browse.store.BrowseNodeStore;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
-import org.sonatype.nexus.repository.ossindex.PackageUrlService;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -66,9 +65,6 @@ public class BrowseFacetImplTest
   @Mock
   private Repository repository;
 
-  @Mock
-  private PackageUrlService packageUrlService;
-
   @Mock(answer = Answers.RETURNS_MOCKS)
   private ContentFacetSupport contentFacet;
 
@@ -87,7 +83,6 @@ public class BrowseFacetImplTest
 
     underTest = new BrowseFacetImpl(
         List.of(), List.of(),
-        packageUrlService,
         1000);
     underTest.installDependencies(mock(EventManager.class));
 
