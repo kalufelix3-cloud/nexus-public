@@ -30,6 +30,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.repository.BadRequestException;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
@@ -118,6 +119,9 @@ public class LoggingConfigurationResource
       else {
         logManager.setLoggerLevel(name, request.getLevel());
       }
+    }
+    catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage());
     }
     finally {
       lock.writeLock().unlock();

@@ -49,6 +49,7 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.internal.log.overrides.datastore.LoggerOverridesEvent;
 import org.sonatype.nexus.internal.log.overrides.datastore.LoggerOverridesEvent.Action;
 import org.sonatype.nexus.logging.task.TaskLogHome;
+import org.sonatype.nexus.validation.constraint.LoggerNameValidator;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
@@ -319,6 +320,14 @@ public class LogbackLogManager
   @Override
   @Guarded(by = STARTED)
   public void setLoggerLevel(final String name, @Nullable final LoggerLevel level) {
+    try {
+      LoggerNameValidator.validate(name);
+    }
+    catch (IllegalArgumentException e) {
+      log.debug("Invalid logger name rejected: {}", name);
+      throw e;
+    }
+
     if (level == null) {
       unsetLoggerLevel(name);
       return;

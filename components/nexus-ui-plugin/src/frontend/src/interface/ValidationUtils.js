@@ -30,6 +30,8 @@ const RFC_1123_HOST_REGEX = new RegExp(
     "[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9]))(:([0-9]+))?$"
 );
 
+const LOGGER_NAME_REGEX = /[<>&'"\/\n\r\t]/;
+
 /**
  * @since 3.31
  */
@@ -293,5 +295,23 @@ export default class ValidationUtils {
     if (password !== passwordConfirmation) {
       return UIStrings.ERROR.PASSWORD_NO_MATCH_ERROR;
     }
+  }
+
+  static isValidLoggerName(name) {
+        if (ValidationUtils.isBlank(name)) return false;
+
+        return !LOGGER_NAME_REGEX.test(name);
+  }
+
+  static validateLoggerName(value) {
+      if (ValidationUtils.isBlank(value)) {
+          return UIStrings.ERROR.FIELD_REQUIRED;
+      }
+
+      if (!ValidationUtils.isValidLoggerName(value)) {
+          return UIStrings.LOGGING.MESSAGES.INVALID_LOGGER_NAME;
+      }
+
+      return null;
   }
 }

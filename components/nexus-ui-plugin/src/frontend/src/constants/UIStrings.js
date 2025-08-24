@@ -107,6 +107,13 @@ export default {
     VIEW_CERTIFICATE: 'View Certificate',
     NOT_SECURE_URL: 'You cannot enable this feature because your remote storage is not using a secure URL; there is no SSL certificate available.'
   },
+
+  LOGGING: {
+    MESSAGES: {
+        INVALID_LOGGER_NAME: 'Logger name cannot include <, >, &, \', ", /, newline, or tab characters'
+    }
+  },
+
   ...HistoricalUsageStrings,
   ...CleanupPoliciesStrings
 };

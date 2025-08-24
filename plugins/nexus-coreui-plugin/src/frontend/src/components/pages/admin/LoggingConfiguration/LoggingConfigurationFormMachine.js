@@ -91,7 +91,7 @@ export default FormUtils.buildFormMachine({
 
     validate: assign({
       validationErrors: ({data}) => ({
-        name: ValidationUtils.isBlank(data.name) ? UIStrings.ERROR.FIELD_REQUIRED : null
+        name: ValidationUtils.validateLoggerName(data.name)
       })
     })
   },
