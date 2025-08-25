@@ -25,8 +25,15 @@ import useIsVisible from './useIsVisible';
 export function useNavigationLinkState(name, selectedState, params) {
   const router = useRouter();
   const state = router.stateRegistry.get(name);
+
+  // If the route doesn't exist, hide the menu item and log an error
+  if (!state) {
+    console.error(`LeftNavigationMenuItem -> route "${name}" does not exist. Menu item will be hidden.`);
+    return { isVisible: false, href: null, isSelected: false, icon: null };
+  }
+
   const data = state?.data || {};
-  const { text, icon, visibilityRequirements } = data;
+  const { icon, visibilityRequirements } = data;
 
   const isSelected = useIsActive(selectedState || name);
 
@@ -34,5 +41,5 @@ export function useNavigationLinkState(name, selectedState, params) {
 
   const isVisible = useIsVisible(visibilityRequirements);
 
-  return { isVisible, href, isSelected, text, icon };
+  return { isVisible, href, isSelected, icon };
 }
