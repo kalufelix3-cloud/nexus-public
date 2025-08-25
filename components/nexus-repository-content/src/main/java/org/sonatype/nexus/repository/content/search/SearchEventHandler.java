@@ -206,13 +206,22 @@ public abstract class SearchEventHandler
    * Request purge search indexes based on component id
    *
    * @param format The repository format
-   * @param componentId The component id
    * @param repository The repository
+   * @param componentId The component ids to purge search entries for
    */
-  public void requestPurge(final String format, final int componentId, final Repository repository) {
-    if (processEvents && componentId > 0) {
-      markComponentAsPending(requestKey(format, componentId), repoTag(PURGE, repository));
-      maybeTriggerAsyncPurge();
+  private void requestPurge(final String format, final Repository repository, final int... componentIds) {
+    if (processEvents) {
+      String repoTag = repoTag(PURGE, repository);
+      boolean markedPending = false;
+      for (int componentId : componentIds) {
+        if (componentId > 0) {
+          markedPending = true;
+          markComponentAsPending(requestKey(format, componentId), repoTag);
+        }
+      }
+      if (markedPending) {
+        maybeTriggerAsyncPurge();
+      }
     }
   }
 
@@ -307,13 +316,8 @@ public abstract class SearchEventHandler
     }
 
     String format = repository.get().getFormat().getValue();
-    String repoTag = repoTag(PURGE, repository.get());
 
-    for (int componentId : event.getComponentIds()) {
-      markComponentAsPending(requestKey(format, componentId), repoTag);
-    }
-
-    maybeTriggerAsyncPurge();
+    requestPurge(format, repository.get(), event.getComponentIds());
   }
 
   // no need to watch for AssetPurgeEvent because that's only sent when purging assets without components
@@ -341,7 +345,7 @@ public abstract class SearchEventHandler
 
     log.trace("Requesting purge for component {} in repository {} with format {}", componentId,
         repository.get().getName(), format);
-    requestPurge(format, componentId, repository.get());
+    requestPurge(format, repository.get(), componentId);
   }
 
   private void requestIndex(final AssetEvent event) {

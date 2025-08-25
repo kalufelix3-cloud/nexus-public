@@ -13,13 +13,14 @@
 package org.sonatype.nexus.elasticsearch.internal.repository;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
-
-import jakarta.inject.Inject;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.Continuation;
@@ -38,8 +39,12 @@ import org.sonatype.nexus.repository.content.search.elasticsearch.SearchDocument
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
+import jakarta.inject.Inject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -51,9 +56,6 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toExternal
 import static org.sonatype.nexus.repository.search.index.SearchConstants.FORMAT;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 /**
  * The {@link SearchFacet} implementation for the Elastic Search.
@@ -94,7 +96,7 @@ public class SearchFacetImpl
   }
 
   @Override
-  protected void doInit(Configuration configuration) throws Exception {
+  protected void doInit(final Configuration configuration) throws Exception {
     String format = getRepository().getFormat().getValue();
 
     searchDocumentProducer = lookupSearchDocumentProducer(format);
@@ -118,10 +120,18 @@ public class SearchFacetImpl
   public void index(final Collection<EntityId> componentIds) {
     FluentComponents lookup = facet(ContentFacet.class).components();
 
+    Set<EntityId> missingComponentIds = new HashSet<>();
+
     Stream<FluentComponent> components = componentIds.stream()
-        .map(lookup::find)
-        .filter(Optional::isPresent)
-        .map(Optional::get);
+        .map(componentId -> {
+          Optional<FluentComponent> component = lookup.find(componentId);
+          if (!component.isPresent()) {
+            missingComponentIds.add(componentId);
+            return null;
+          }
+          return component.get();
+        })
+        .filter(Objects::nonNull);
 
     Repository repository = getRepository();
     if (bulkProcessing) {
@@ -129,6 +139,10 @@ public class SearchFacetImpl
     }
     else {
       components.forEach(c -> elasticSearchIndexService.put(repository, identifier(c), document(c)));
+    }
+
+    if (!missingComponentIds.isEmpty()) {
+      purge(missingComponentIds);
     }
   }
 
