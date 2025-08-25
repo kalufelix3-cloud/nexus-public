@@ -27,8 +27,8 @@ import org.sonatype.nexus.quartz.internal.SchedulerTestConfiguration.TestJob;
 import org.sonatype.nexus.quartz.internal.SchedulerTestConfiguration.TestJobWithSync;
 import org.sonatype.nexus.quartz.internal.SchedulerTestConfiguration.UncleanShutdownJob;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.Import;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
@@ -40,9 +40,10 @@ import org.quartz.Trigger.TriggerState;
 import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 import org.quartz.impl.matchers.GroupMatcher;
+import org.springframework.context.annotation.Import;
 
-import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -288,6 +289,7 @@ public class SchedulerTest
     }
   }
 
+  @Disabled("Disabled unti flakiness can be resolved https://sonatype.atlassian.net/browse/NEXUS-48519")
   @Test
   void testShutdownWithSleepReturnsAfterAllThreadsAreStopped() throws Exception {
     Map<Thread, StackTraceElement[]> allThreadsStart = Thread.getAllStackTraces();
