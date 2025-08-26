@@ -13,17 +13,13 @@
 package org.sonatype.nexus.repository.upload;
 
 import jakarta.inject.Inject;
-
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
  * @since 3.7
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class UploadConfiguration
 {
   /**

@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.apt.api;
 
-import jakarta.inject.Inject;
-
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
@@ -24,9 +22,8 @@ import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 
+import jakarta.inject.Inject;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -36,7 +33,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Qualifier(AptFormat.NAME)
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class AptApiRepositoryAdapter
     extends SimpleApiRepositoryAdapter
 {

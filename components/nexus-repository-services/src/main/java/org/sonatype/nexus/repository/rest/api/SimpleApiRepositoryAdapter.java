@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.rest.api;
 import java.util.Collection;
 import java.util.Collections;
 
-import jakarta.inject.Inject;
-
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.db.DatabaseCheck;
@@ -47,11 +45,10 @@ import org.sonatype.nexus.repository.types.ProxyType;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.reflect.TypeToken;
-import org.springframework.beans.factory.annotation.Value;
+import jakarta.inject.Inject;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -66,7 +63,6 @@ import static org.sonatype.nexus.repository.config.ConfigurationConstants.PROPRI
 @Primary
 @Component
 @Qualifier("default")
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SimpleApiRepositoryAdapter
     implements ApiRepositoryAdapter
 {
@@ -265,5 +261,4 @@ public class SimpleApiRepositoryAdapter
   protected static Integer toInt(final Number num, final Integer defaultValue) {
     return num == null ? defaultValue : num.intValue();
   }
-
 }

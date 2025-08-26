@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.api;
 
-import jakarta.inject.Inject;
-
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -26,10 +24,10 @@ import org.sonatype.nexus.repository.rest.api.model.HttpClientAttributes;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+
+import jakarta.inject.Inject;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
 /**
  * Adapter to expose maven specific repository configuration for the repositories REST API.
@@ -38,7 +36,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(Maven2Format.NAME)
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class MavenApiRepositoryAdapter
     extends SimpleApiRepositoryAdapter
 {
