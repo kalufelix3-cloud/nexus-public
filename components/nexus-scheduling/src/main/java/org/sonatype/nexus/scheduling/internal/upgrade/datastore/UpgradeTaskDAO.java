@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.scheduling.internal.upgrade.datastore;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 import org.sonatype.nexus.datastore.api.DataAccess;
@@ -22,7 +23,7 @@ import org.apache.ibatis.annotations.Param;
  * Data access for a queue of tasks triggered by migration steps which Nexus needs to complete.
  */
 public interface UpgradeTaskDAO
-  extends DataAccess
+    extends DataAccess
 {
   int deleteByTaskId(String taskId);
 
@@ -60,4 +61,6 @@ public interface UpgradeTaskDAO
    * Find the next upgrade task as ordered
    */
   Optional<UpgradeTaskData> next();
+
+  Iterable<UpgradeTaskData> browseBefore(@Param("before") OffsetDateTime before);
 }

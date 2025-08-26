@@ -12,18 +12,19 @@
  */
 package org.sonatype.nexus.scheduling.internal.upgrade.datastore;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.transaction.Transactional;
-import org.springframework.stereotype.Component;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
 @Component
 @Qualifier("mybatis")
@@ -74,5 +75,14 @@ public class UpgradeTaskStore
   @Transactional
   public Optional<UpgradeTaskData> next() {
     return dao().next();
+  }
+
+  /**
+   * @param before the date tasks should have been created before
+   * @return tasks scheduled by upgrades before the specified time
+   */
+  @Transactional
+  public Iterable<UpgradeTaskData> browse(final OffsetDateTime before) {
+    return dao().browseBefore(before);
   }
 }

@@ -40,6 +40,13 @@
      ORDER BY id ASC;
   </select>
 
+  <select id="browseBefore" resultMap="upgradeTaskResult">
+    SELECT *
+      FROM upgrade_tasks
+     WHERE created &lt; #{before}
+     ORDER BY id ASC;
+  </select>
+
   <insert id="create" parameterType="UpgradeTaskData">
     INSERT INTO upgrade_tasks (task_id, configuration)
     VALUES (#{taskId}, #{configuration});
