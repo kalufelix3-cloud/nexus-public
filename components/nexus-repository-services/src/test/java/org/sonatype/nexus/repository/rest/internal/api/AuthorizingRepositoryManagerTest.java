@@ -85,10 +85,13 @@ public class AuthorizingRepositoryManagerTest
 
   @Test
   public void deleteShouldDeleteRepositoryIfExists() throws Exception {
+    when(repositoryPermissionChecker.userHasRepositoryAdminPermission(eq(repository), eq("delete")))
+        .thenReturn(true);
+
     authorizingRepositoryManager.delete("repository");
 
     verify(repositoryManager).get(eq("repository"));
-    verify(repositoryPermissionChecker).ensureUserCanAdmin(eq("delete"), eq(repository));
+    verify(repositoryPermissionChecker).userHasRepositoryAdminPermission(eq(repository), eq("delete"));
     verify(repositoryManager).delete(eq("repository"));
     verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker);
   }
@@ -102,13 +105,11 @@ public class AuthorizingRepositoryManagerTest
   }
 
   @Test
-  public void deleteShouldThrowExceptionIfInsufficientPermissions() throws Exception {
-    doThrow(new AuthorizationException("User is not permitted."))
-        .when(repositoryPermissionChecker)
-        .ensureUserCanAdmin(any(), any());
-    expectedException.expect(AuthorizationException.class);
-
+  public void deleteShouldDoNothingIfInsufficientPermissions() throws Exception {
     authorizingRepositoryManager.delete("repository");
+
+    verify(repositoryManager).get(eq("repository"));
+    verify(repositoryPermissionChecker).userHasRepositoryAdminPermission(eq(repository), eq("delete"));
   }
 
   @Test
