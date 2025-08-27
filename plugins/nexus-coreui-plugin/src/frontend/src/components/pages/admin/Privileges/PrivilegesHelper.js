@@ -14,13 +14,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {clone, filter, find, findIndex, indexBy, insert, keys, prop, propEq} from 'ramda';
+import {clone, filter, find, indexBy, keys, prop, propEq} from 'ramda';
 import {APIConstants} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
-const {PRIVILEGES: {FORM: LABELS}} = UIStrings;
-const {REST: {PUBLIC: {PRIVILEGES: privilegesUrl}}, EXT: {REPOSITORY: REPO_API}} = APIConstants;
+const {
+  PRIVILEGES: { FORM: LABELS },
+} = UIStrings;
+const {
+  REST: {
+    PUBLIC: { PRIVILEGES: privilegesUrl },
+  },
+} = APIConstants;
 
 export const TYPES = {
   SCRIPT: 'script',
@@ -29,12 +35,6 @@ export const TYPES = {
   REPOSITORY_VIEW: 'repository-view',
   APPLICATION: 'application',
   WILDCARD: 'wildcard',
-};
-
-const FORMAT_FIELD_CONFIG = {
-  id: 'format',
-  label: LABELS.FORMAT.LABEL,
-  helpText: LABELS.FORMAT.SUB_LABEL,
 };
 
 export const FIELDS = {
@@ -127,21 +127,6 @@ const renameScriptId = types => {
   field.id = FIELDS.SCRIPT_NAME.NAME;
 };
 
-const addFormatFieldForRepoSelectorType = types => {
-  const type = types[TYPES.REPOSITORY_CONTENT_SELECTOR];
-  if (!type) return;
-
-  const formatField = {
-    ...APIConstants.EXT.DEFAULT_FIELD_CONFIG,
-    ...FORMAT_FIELD_CONFIG
-  };
-  let index = findIndex(propEq('id', FIELDS.CONTENT_SELECTOR.NAME))(type.formFields);
-  type.formFields = insert(++index, formatField, type.formFields);
-
-  const repoField = find(propEq('id', FIELDS.REPOSITORY.NAME))(type.formFields);
-  repoField.storeApi = `${REPO_API.ACTION}.${REPO_API.METHODS.READ_WITH_FOR_ALL}`;
-};
-
 const renamePatternHelpText = types => {
   const type = types[TYPES.WILDCARD];
   if (!type) return;
@@ -152,10 +137,8 @@ const renamePatternHelpText = types => {
 export const modifyFormFields = typesArr => {
   const types = indexBy(prop('id'), typesArr || []);
   renameScriptId(types);
-  addFormatFieldForRepoSelectorType(types);
+  // Removed addFormatFieldForRepoSelectorType since backend doesn't provide format field for repository-content-selector
   renamePatternHelpText(types);
 
   return types;
-}
-
-
+};

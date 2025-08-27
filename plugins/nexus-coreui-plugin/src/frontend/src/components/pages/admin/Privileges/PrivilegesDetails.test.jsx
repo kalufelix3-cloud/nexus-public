@@ -54,7 +54,6 @@ const testScriptActions = 'run,add';
 const testContentSelectorActions = 'browse,read';
 const testContentSelector = 'Test_Selector_1';
 const testRepository = 'TestRepository';
-const testFormat = 'TestFormat';
 
 const SCRIPT_PRIVILEGE = {
   type: TYPE_IDS.SCRIPT,
@@ -69,7 +68,7 @@ const REPO_SELECTOR_PRIVILEGE = {
   name: testName,
   description: testDescription,
   contentSelector: testContentSelector,
-  format: testFormat,
+  format: '*',
   repository: testRepository,
   actions: testContentSelectorActions.split(','),
 };
@@ -83,7 +82,6 @@ const selectors = {
   scriptName: () => screen.queryByLabelText(FIELDS.SCRIPT_NAME.LABEL),
   actions: () => screen.queryByLabelText(FIELDS.ACTIONS.LABEL),
   contentSelector: () => screen.queryByLabelText(FIELDS.CONTENT_SELECTOR.LABEL),
-  format: () => screen.queryByLabelText(FIELDS.FORMAT.LABEL),
   repository: () => screen.queryByLabelText(FIELDS.REPOSITORY.LABEL),
   getActionsGroup: () => screen.queryByRole('group', {name: FIELDS.ACTIONS.LABEL}),
   getActionCheckbox: (c, n) => within(c).getByRole('checkbox', {name: n}),
@@ -94,7 +92,6 @@ const selectors = {
     scriptName: () => screen.getByText(FIELDS.SCRIPT_NAME.LABEL).nextSibling,
     actions: () => screen.getByText(FIELDS.ACTIONS.LABEL).nextSibling,
     contentSelector: () => screen.getByText(FIELDS.CONTENT_SELECTOR.LABEL).nextSibling,
-    format: () => screen.getByText(FIELDS.FORMAT.LABEL).nextSibling,
     repository: () => screen.getByText(FIELDS.REPOSITORY.LABEL).nextSibling,
   },
   cancelButton: () => screen.queryByRole('button', {name: SETTINGS.CANCEL_BUTTON_LABEL}),
@@ -261,9 +258,9 @@ describe('PrivilegesDetails', function() {
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
   });
 
-  it('renders validation messages for the Repository Content Selector privilege', async function() {
-    const {type, name, description, contentSelector, getActionsGroup, repository, querySubmitButton,
-      queryFormError, format} = selectors;
+  it('renders validation messages for the Repository Content Selector privilege', async function () {
+    const { type, name, description, contentSelector, getActionsGroup, repository, querySubmitButton, queryFormError } =
+      selectors;
 
     when(Axios.post).calledWith(EXT_URL, expect.objectContaining({action: 'coreui_Selector'}))
         .mockResolvedValue({data: TestUtils.makeExtResult(clone(SELECTORS))});
@@ -280,7 +277,6 @@ describe('PrivilegesDetails', function() {
     expect(name()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     expect(description()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     expect(contentSelector()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
-    expect(format()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     expect(repository()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     expect(getActionsGroup()).not.toHaveAccessibleDescription(NO_ACTION_ERROR);
 
@@ -288,7 +284,6 @@ describe('PrivilegesDetails', function() {
     expect(queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
     expect(name()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     expect(contentSelector()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
-    expect(format()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     expect(repository()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     expect(getActionsGroup()).toHaveAccessibleDescription(NO_ACTION_ERROR);
   });
@@ -304,10 +299,9 @@ describe('PrivilegesDetails', function() {
       repository,
       querySubmitButton,
       querySavingMask,
-      format
     } = selectors;
 
-    when(Axios.post).calledWith(EXT_URL, expect.objectContaining({method: 'readReferencesAddingEntryForAll'}))
+    when(Axios.post).calledWith(EXT_URL, expect.objectContaining({method: 'readReferencesAddingEntriesForAllFormats'}))
         .mockResolvedValue({data: TestUtils.makeExtResult(clone(REPOSITORIES))});
     when(Axios.post).calledWith(EXT_URL, expect.objectContaining({action: 'coreui_Selector'}))
         .mockResolvedValue({data: TestUtils.makeExtResult(clone(SELECTORS))});
@@ -320,7 +314,6 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(name, testName);
     await TestUtils.changeField(description, testDescription);
     userEvent.selectOptions(contentSelector(), testContentSelector);
-    await TestUtils.changeField(format, testFormat);
 
     await TestUtils.changeField(repository, 'm');
     await waitFor(() => expect(screen.getByText(testRepository)).toBeInTheDocument());
@@ -420,7 +413,7 @@ describe('PrivilegesDetails', function() {
     };
 
     it('renders Script privilege in Read Only Mode', async () => {
-      const {cancelButton, readOnly: {scriptName, actions}} = selectors;
+      const {readOnly: {scriptName, actions}} = selectors;
       const warning = () => screen.getByText(LABELS.DEFAULT_PRIVILEGE_WARNING);
 
       when(Axios.get).calledWith(singlePrivilegeUrl(testName)).mockResolvedValue({
@@ -437,7 +430,9 @@ describe('PrivilegesDetails', function() {
     });
 
     it('renders Repository Content Selector privilege in Read Only Mode', async () => {
-      const {cancelButton, readOnly: {actions, contentSelector, format, repository}} = selectors;
+      const {
+        readOnly: { actions, contentSelector, repository },
+      } = selectors;
 
       const warning = () => screen.getByText(LABELS.DEFAULT_PRIVILEGE_WARNING);
 
@@ -451,7 +446,6 @@ describe('PrivilegesDetails', function() {
       shouldSeeDetailsInReadOnlyMode(TYPES_MAP[TYPE_IDS.REPOSITORY_CONTENT_SELECTOR].name);
 
       expect(contentSelector()).toHaveTextContent(testContentSelector);
-      expect(format()).toHaveTextContent(testFormat);
       expect(repository()).toHaveTextContent(testRepository);
       expect(actions()).toHaveTextContent("Browse, Read");
     });

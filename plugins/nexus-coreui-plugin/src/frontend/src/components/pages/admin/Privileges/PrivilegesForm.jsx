@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, { useEffect } from 'react';
 import {useActor} from '@xstate/react';
 
 import {
@@ -34,6 +34,7 @@ import {
 import {faTrash} from '@fortawesome/free-solid-svg-icons';
 
 import UIStrings from '../../../../constants/UIStrings';
+import { TYPES as TYPE_IDS } from './PrivilegesHelper';
 
 const {PRIVILEGES: {FORM: LABELS}} = UIStrings;
 
@@ -54,13 +55,30 @@ export default function PrivilegesForm({itemId, service, onDone}) {
   const isTypeSelected = Boolean(type);
   const fields = types[type]?.formFields || [];
 
+  // Filter out format field for repository content selector type and always set format to "*"
+  const filteredFields =
+    type === TYPE_IDS.REPOSITORY_CONTENT_SELECTOR ? fields.filter(field => field.id !== 'format') : fields;
+
   const cancel = () => onDone();
 
   const confirmDelete = () => send({type: 'CONFIRM_DELETE'});
 
-  const setType = privilegeType => send({type: 'SET_TYPE', privilegeType});
+  const setType = privilegeType => {
+    // When setting type to repository content selector, ensure format is set to "*"
+    if (privilegeType === TYPE_IDS.REPOSITORY_CONTENT_SELECTOR) {
+      send({ type: 'UPDATE', data: { format: '*' } });
+    }
+    send({ type: 'SET_TYPE', privilegeType });
+  };
 
   const onChangeField = (name, value) => send({type: 'UPDATE', data: {[name]: value}});
+
+  // Ensure format is always set to "*" for repository content selector type
+  useEffect(() => {
+    if (type === TYPE_IDS.REPOSITORY_CONTENT_SELECTOR && current.context.data.format !== '*') {
+      send({ type: 'UPDATE', data: { format: '*' } });
+    }
+  }, [type, current.context.data.format, send]);
 
   return <NxStatefulForm
       {...FormUtils.formProps(current, send)}
@@ -102,7 +120,7 @@ export default function PrivilegesForm({itemId, service, onDone}) {
       </NxFormGroup>
 
       {type && <>
-        {FormFieldsFactory.getFields(fields)?.map(({Field, props}) => (
+        {FormFieldsFactory.getFields(filteredFields)?.map(({Field, props}) => (
           props.id === 'actions' ?
             <NxFieldset
                 key={props.id}
