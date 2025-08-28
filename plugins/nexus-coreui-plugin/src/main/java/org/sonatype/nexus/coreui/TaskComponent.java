@@ -50,6 +50,7 @@ import org.sonatype.nexus.scheduling.TaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskState;
+import org.sonatype.nexus.scheduling.TaskUtils;
 import org.sonatype.nexus.scheduling.schedule.Cron;
 import org.sonatype.nexus.scheduling.schedule.Daily;
 import org.sonatype.nexus.scheduling.schedule.Hourly;
@@ -122,15 +123,19 @@ public class TaskComponent
 
   private final boolean allowCreation;
 
+  private final TaskUtils taskUtils;
+
   @Inject
   public TaskComponent(
       final TaskScheduler taskScheduler,
       final Provider<Validator> validatorProvider,
-      @Value("${nexus.scripts.allowCreation:false}") final boolean allowCreation)
+      @Value("${nexus.scripts.allowCreation:false}") final boolean allowCreation,
+      TaskUtils taskUtils)
   {
     this.taskScheduler = checkNotNull(taskScheduler);
     this.validatorProvider = checkNotNull(validatorProvider);
     this.allowCreation = allowCreation;
+    this.taskUtils = taskUtils;
   }
 
   @Nullable
@@ -186,6 +191,11 @@ public class TaskComponent
 
     final TaskConfiguration taskConfiguration = taskScheduler.createTaskConfigurationInstance(taskXO.getTypeId());
     checkState(taskConfiguration.isExposed(), "This task is not allowed to be created");
+
+    String taskName = taskXO.getName();
+    String taskType = taskXO.getTypeId();
+    Map<String, String> taskProperties = taskXO.getProperties();
+    taskUtils.validateTaskCreationForUI(taskName, taskType, taskProperties, schedule);
 
     taskXO.getProperties().forEach(taskConfiguration::setString);
     taskConfiguration.setAlertEmail(taskXO.getAlertEmail());

@@ -25,9 +25,11 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskState;
+import org.sonatype.nexus.scheduling.TaskUtils;
 import org.sonatype.nexus.scheduling.schedule.Manual;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 import org.sonatype.nexus.scheduling.schedule.Weekly;
+import org.sonatype.nexus.scheduling.spi.TaskResultStateStore;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
@@ -43,6 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -68,9 +71,18 @@ class TaskComponentTest
 
   private TaskComponent component;
 
+  @Mock
+  private TaskScheduler taskScheduler;
+
+  private TaskUtils taskUtils;
+
   @BeforeEach
   void setup() {
-    component = new TaskComponent(scheduler, validatorProvider, false);
+    Provider<TaskScheduler> mockSchedulerProvider = () -> taskScheduler;
+    TaskResultStateStore mockResultStore = mock(TaskResultStateStore.class);
+    lenient().when(mockResultStore.isSupported()).thenReturn(false);
+    taskUtils = new TaskUtils(mockSchedulerProvider, mockResultStore);
+    component = new TaskComponent(scheduler, validatorProvider, false, taskUtils);
   }
 
   @Test
@@ -115,7 +127,7 @@ class TaskComponentTest
     TaskXO taskXO = new TaskXO();
     taskXO.setProperties(Map.of("source", "println 'hello world'"));
 
-    component = new TaskComponent(scheduler, validatorProvider, true);
+    component = new TaskComponent(scheduler, validatorProvider, true, taskUtils);
     component.validateScriptUpdate(taskInfo, taskXO);
   }
 
