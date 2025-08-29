@@ -218,7 +218,7 @@ function UsageCenterHeader() {
           <NxTile.HeaderSubtitle>
             <div className="usage-text">
               {MENU.SUB_TEXT}{' '}
-              <NxTextLink className="usage-center-learn-more" target='_blank' href={reviewUsageLink}>Learn more about the usage center</NxTextLink>.
+              <NxTextLink className="usage-center-learn-more" external href={reviewUsageLink}>Learn more about the usage center</NxTextLink>.
             </div>
             <span className="subtitle">{MENU.SUB_TITLE}</span>
           </NxTile.HeaderSubtitle>
