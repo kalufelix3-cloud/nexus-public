@@ -13,6 +13,13 @@
 package org.sonatype.nexus.jetty.log;
 
 import java.net.SocketAddress;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
+import java.util.TimeZone;
 
 import org.sonatype.goodies.testsupport.Test5Support;
 
@@ -26,6 +33,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -35,7 +43,11 @@ public class NexusRepositoryRequestLogTest
     extends Test5Support
 {
   private static final String EXPECTED_FORMAT =
-      "%{client}a - %{nexus.user.id}attr %{dd/MMM/yyyy:HH:mm:ss Z|GMT}t \"%r\" %s %{Content-Length}i %O %T %{User-Agent}i [%{threadName}attr]";
+      "%{client}a - %{nexus.user.id}attr [%{responseTimestamp}attr] \"%r\" %s %{Content-Length}i %O %T %{User-Agent}i [%{threadName}attr]";
+
+  public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(
+      "dd/MMM/yyyy:HH:mm:ss Z")
+      .withZone(TimeZone.getDefault().toZoneId());
 
   @Mock
   private Request request;
@@ -66,5 +78,28 @@ public class NexusRepositoryRequestLogTest
     requestLog.log(request, response);
 
     verify(request).setAttribute(eq("threadName"), eq(Thread.currentThread().getName()));
+  }
+
+  @Test
+  public void testLogWithResponseTime() {
+    Clock clock = Clock.fixed(Instant.now(), TimeZone.getDefault().toZoneId());
+    NexusRepositoryRequestLog requestLog = new NexusRepositoryRequestLog(
+        writer, EXPECTED_FORMAT, clock::millis);
+
+    requestLog.log(request, response);
+
+    verify(request).setAttribute(eq("responseTimestamp"),
+        argThat(value -> {
+          var truncated = truncateInstant(value, ChronoUnit.SECONDS);
+          var now = Instant.now(clock).truncatedTo(ChronoUnit.SECONDS);
+
+          return truncated.equals(now);
+        }));
+  }
+
+  private Instant truncateInstant(final Object value, TemporalUnit unit) {
+    return ZonedDateTime.parse(value.toString(), DATE_FORMATTER)
+        .truncatedTo(unit)
+        .toInstant();
   }
 }

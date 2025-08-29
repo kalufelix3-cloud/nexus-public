@@ -12,23 +12,38 @@
  */
 package org.sonatype.nexus.jetty.log;
 
+import java.util.Locale;
 import java.util.TimeZone;
+import java.util.function.LongSupplier;
 
 import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.DateCache;
 
 public class NexusRepositoryRequestLog
     extends CustomRequestLog
 {
+  private static final DateCache DATE_CACHE = new DateCache("dd/MMM/yyyy:HH:mm:ss Z",
+      Locale.getDefault(),
+      TimeZone.getDefault());
+
+  private final LongSupplier timeSupplier;
+
   public NexusRepositoryRequestLog(RequestLog.Writer writer, String formatString) {
+    this(writer, formatString, System::currentTimeMillis);
+  }
+
+  public NexusRepositoryRequestLog(RequestLog.Writer writer, String formatString, LongSupplier timeMillisSupplier) {
     super(writer, formatString);
+    this.timeSupplier = timeMillisSupplier;
   }
 
   @Override
   public void log(Request request, Response response) {
     request.setAttribute("threadName", Thread.currentThread().getName());
+    request.setAttribute("responseTimestamp", DATE_CACHE.format(timeSupplier.getAsLong()));
     super.log(request, response);
   }
 
