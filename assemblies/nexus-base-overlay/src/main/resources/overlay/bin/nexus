@@ -43,7 +43,7 @@ realpath() {
 
 # Interpolate variables in INSTALL4J_ADD_VM_PARAMS if it exists
 if [ -n "${INSTALL4J_ADD_VM_PARAMS}" ]; then
-    INSTALL4J_ADD_VM_PARAMS=$(eval echo "${INSTALL4J_ADD_VM_PARAMS}")
+    INSTALL4J_ADD_VM_PARAMS=$(eval echo "\"${INSTALL4J_ADD_VM_PARAMS}\"")
 fi
 
 REALNAME=`realpath "$0"`
