@@ -12,13 +12,11 @@
  */
 package org.sonatype.nexus.httpclient.internal;
 
-import jakarta.inject.Inject;
-
 import org.sonatype.nexus.httpclient.HttpClientManager;
 
+import jakarta.inject.Inject;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.eclipse.sisu.Typed;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.stereotype.Component;
 
@@ -30,7 +28,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 @Component
-@Typed({HttpClient.class, CloseableHttpClient.class})
 public class HttpClientProvider
     implements FactoryBean<CloseableHttpClient>
 {

@@ -17,9 +17,8 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.annotation.CachedGauge;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.env.PropertyResolver;
@@ -29,7 +28,7 @@ import static com.codahale.metrics.MetricRegistry.name;
 import static java.lang.Boolean.parseBoolean;
 
 /**
- * Provides annotation support for {@code CachedGauges} which were missing from the metrics guice package
+ * {@link BeanPostProcessor} which provides annotation support for registering {@code CachedGauges}
  *
  * @since 3.26
  */
@@ -47,8 +46,6 @@ public class CachedGaugeProcessor
 
   private static final String GAUGE_DISABLE_SUFFIX = ".disable";
 
-  private final Logger log = LoggerFactory.getLogger(getClass().getName());
-
   private final PropertyResolver nexusProperties;
 
   @Lazy
@@ -58,7 +55,12 @@ public class CachedGaugeProcessor
   }
 
   @Override
-  protected void registerMetric(Object bean, Method method, CachedGauge gauge, String metricName) {
+  protected void registerMetric(
+      final Object bean,
+      final Method method,
+      final CachedGauge gauge,
+      final String metricName)
+  {
     if (parseBoolean(nexusProperties.getProperty(metricName + GAUGE_DISABLE_SUFFIX))) {
       log.info("Removed Analytics for {} as directed in nexus.properties", metricName);
       return;
@@ -72,12 +74,12 @@ public class CachedGaugeProcessor
   }
 
   @Override
-  protected CachedGauge getAnnotation(Method method) {
+  protected CachedGauge getAnnotation(final Method method) {
     return AnnotationUtils.getAnnotation(method, CachedGauge.class);
   }
 
   @Override
-  protected String metricName(Method method, CachedGauge gauge) {
+  protected String metricName(final Method method, final CachedGauge gauge) {
     if (gauge.absolute()) {
       return gauge.name();
     }

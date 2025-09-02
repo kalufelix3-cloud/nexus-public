@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.annotation.Priority;
-import jakarta.inject.Inject;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.db.DatabaseCheck;
@@ -32,8 +31,7 @@ import org.sonatype.nexus.scheduling.TaskInfo;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
-import org.eclipse.sisu.BeanEntry;
-import org.eclipse.sisu.inject.BeanLocator;
+import jakarta.inject.Inject;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.ApplicationContext;
@@ -49,9 +47,9 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 /**
  * Default {@link TaskFactory} implementation.
  * <p>
- * Resolves {@link TaskDescriptor} components via {@link BeanLocator} singleton components.
+ * Resolves {@link TaskDescriptor} components via {@link ApplicationContext} singleton components.
  * <p>
- * Resolves {@link Task} components via {@link BeanLocator} lookup by {@link TaskDescriptor#getType()}.
+ * Resolves {@link Task} components via {@link ApplicationContext} lookup by {@link TaskDescriptor#getType()}.
  *
  * @since 3.0
  */
@@ -110,8 +108,8 @@ public class TaskFactoryImpl
   }
 
   /**
-   * Registers a Task implementation: based on passed in descriptor the task's {@link BeanEntry} is looked up too,
-   * validated and cached, keyed by {@link TaskDescriptor#getId()}.
+   * Registers a Task implementation: based on passed in descriptor the task's {@link ApplicationContext} is looked up
+   * too, validated and cached, keyed by {@link TaskDescriptor#getId()}.
    */
   @VisibleForTesting
   void addDescriptor(final TaskDescriptor descriptor) {
@@ -158,7 +156,7 @@ public class TaskFactoryImpl
   }
 
   /**
-   * Creates a new instance of Task having provided type-id, by using {@link BeanEntry#getProvider()}, hence new
+   * Creates a new instance of Task having provided type-id, by using {@link ObjectProvider#getIfUnique()}, hence new
    * instance is created every time (tasks are enforced to not be singletons, see
    * {@link #addDescriptor(TaskDescriptor)}.
    */

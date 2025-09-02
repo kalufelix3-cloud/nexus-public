@@ -16,14 +16,13 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
 
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.content.store.ContentStoreSupport;
 import org.sonatype.nexus.transaction.Transactional;
 
-import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 
 /**
  * Browse node store.
@@ -36,8 +35,8 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
   @Inject
   public BrowseNodeStore(
       final DataSessionSupplier sessionSupplier,
-      @Assisted final String contentStoreName,
-      @Assisted final Class<T> daoClass)
+      final String contentStoreName,
+      final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
   }

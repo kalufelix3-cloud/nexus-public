@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.content.store.example;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -21,7 +20,7 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.transaction.Transactional;
 
-import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 
 /**
  * Enhanced test asset store.
@@ -32,7 +31,7 @@ public class TestAssetStore
   @Inject
   public TestAssetStore(
       final DataSessionSupplier sessionSupplier,
-      @Assisted final String storeName)
+      final String storeName)
   {
     super(sessionSupplier, false, storeName, TestAssetDAO.class);
   }

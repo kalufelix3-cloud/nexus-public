@@ -25,7 +25,6 @@ import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.rapture.internal.state.StateComponent;
 import org.sonatype.nexus.ui.UiPluginDescriptorSupport;
 
-import com.google.inject.util.Providers;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -50,7 +49,6 @@ public class RaptureWebResourceBundleTest
   @Mock
   private TemplateHelper templateHelper;
 
-
   private RaptureWebResourceBundle underTest;
 
   @Before
@@ -60,7 +58,7 @@ public class RaptureWebResourceBundleTest
     when(httpServletRequest.getParameter("debug")).thenReturn("false");
 
     underTest =
-        new RaptureWebResourceBundle(applicationVersion, Providers.of(httpServletRequest), Providers.of(stateComponent),
+        new RaptureWebResourceBundle(applicationVersion, () -> httpServletRequest, () -> stateComponent,
             templateHelper, asList(new UiPluginDescriptorImpl()),
             asList(new ExtJsUiPluginDescriptorImpl("test-1"), new ExtJsUiPluginDescriptorImpl("test-2")), null, false);
   }

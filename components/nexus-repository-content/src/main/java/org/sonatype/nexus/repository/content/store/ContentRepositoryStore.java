@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
 
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -32,7 +31,7 @@ import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryP
 import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
 import org.sonatype.nexus.transaction.Transactional;
 
-import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
@@ -51,8 +50,8 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
   public ContentRepositoryStore(
       final DataSessionSupplier sessionSupplier,
       final ContentFacetFinder contentFacetFinder,
-      @Assisted final String contentStoreName,
-      @Assisted final Class<T> daoClass)
+      final String contentStoreName,
+      final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
     this.contentFacetFinder = checkNotNull(contentFacetFinder);

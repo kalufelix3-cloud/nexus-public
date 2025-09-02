@@ -12,10 +12,10 @@
  */
 package org.sonatype.nexus.internal.log;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.log.LogConfigurationCustomizer;
 import org.sonatype.nexus.common.log.LoggerLevel;
+
+import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,9 +35,6 @@ public class LogConfigurationCustomizerImpl
 
     configuration.setLoggerLevel("org.eclipse.jetty", LoggerLevel.INFO);
     configuration.setLoggerLevel("eu.medsea.mimeutil.MimeUtil2", LoggerLevel.INFO);
-
-    // NEXUS-5456: limit noisy guice timing logger
-    configuration.setLoggerLevel("com.google.inject.internal.util.Stopwatch", LoggerLevel.INFO);
 
     // NEXUS-5835: limit noisy jmx connections to Nexus when root.level is DEBUG
     configuration.setLoggerLevel("javax.management", LoggerLevel.INFO);

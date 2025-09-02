@@ -12,21 +12,18 @@
  */
 package org.sonatype.nexus.security;
 
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import javax.servlet.Filter;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.annotation.WebFilter;
 
 import org.sonatype.goodies.common.Loggers;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.text.Strings2;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.shiro.web.filter.mgt.DefaultFilterChainManager;
 import org.apache.shiro.web.filter.mgt.FilterChainManager;
 import org.slf4j.Logger;
@@ -53,11 +50,7 @@ class DynamicFilterChainManager
   private volatile boolean refreshChains;
 
   @Inject
-  public DynamicFilterChainManager(
-      // @Qualifier("SHIRO") final ServletContext servletContext,
-      final List<FilterChain> filterChains)
-  {
-    // super(new DelegatingFilterConfig("SHIRO", checkNotNull(servletContext)));
+  public DynamicFilterChainManager(final List<FilterChain> filterChains) {
     this.filterChains = checkNotNull(filterChains);
   }
 
@@ -102,6 +95,7 @@ class DynamicFilterChainManager
           getChainNames().clear(); // completely replace old chains with latest list
 
           filterChains.stream()
+              // Simple heuristic, longer URL patterns are more selective so we prioritize them
               .sorted((f1, f2) -> f2.getPathPattern().length() - f1.getPathPattern().length())
               .forEach(filterChain -> {
                 try {
@@ -115,42 +109,6 @@ class DynamicFilterChainManager
           refreshChains = false;
         }
       }
-    }
-  }
-
-  /**
-   * Simple {@link FilterConfig} that delegates to the surrounding {@link ServletContext}.
-   */
-  private static class DelegatingFilterConfig
-      implements FilterConfig
-  {
-    private final String filterName;
-
-    private final ServletContext servletContext;
-
-    DelegatingFilterConfig(final String filterName, final ServletContext servletContext) {
-      this.filterName = filterName;
-      this.servletContext = servletContext;
-    }
-
-    @Override
-    public String getFilterName() {
-      return filterName;
-    }
-
-    @Override
-    public ServletContext getServletContext() {
-      return servletContext;
-    }
-
-    @Override
-    public String getInitParameter(final String name) {
-      return servletContext.getInitParameter(name);
-    }
-
-    @Override
-    public Enumeration<String> getInitParameterNames() {
-      return servletContext.getInitParameterNames();
     }
   }
 }

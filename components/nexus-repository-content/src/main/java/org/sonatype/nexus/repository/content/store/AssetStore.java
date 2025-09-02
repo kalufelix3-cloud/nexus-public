@@ -24,7 +24,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.entity.Continuation;
@@ -46,7 +45,7 @@ import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
 import org.sonatype.nexus.transaction.Transactional;
 
-import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import org.apache.shiro.util.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -71,8 +70,8 @@ public class AssetStore<T extends AssetDAO>
   public AssetStore(
       final DataSessionSupplier sessionSupplier,
       @Value(DATASTORE_CLUSTERED_ENABLED_NAMED_VALUE) final boolean clustered,
-      @Assisted final String contentStoreName,
-      @Assisted final Class<T> daoClass)
+      final String contentStoreName,
+      final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
     this.clustered = clustered;
@@ -197,8 +196,8 @@ public class AssetStore<T extends AssetDAO>
       final int repositoryId,
       @Nullable final OffsetDateTime addedToRepository,
       final List<String> regexList,
-      @Nullable String filter,
-      @Nullable Map<String, Object> filterParams,
+      @Nullable final String filter,
+      @Nullable final Map<String, Object> filterParams,
       final int batchSize)
   {
     // We consider dates the same if they are at the same millisecond. Normalization of the date plus using a >= query

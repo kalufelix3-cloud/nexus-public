@@ -19,7 +19,6 @@ import org.sonatype.nexus.scheduling.spi.TaskResultState;
 import org.sonatype.nexus.scheduling.spi.TaskResultStateStore;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.util.Providers;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -63,7 +62,7 @@ public class TaskUtilsTest
     when(taskConfiguration.getString("key")).thenReturn("value");
     when(taskResultStateStore.isSupported()).thenReturn(false);
 
-    underTest = new TaskUtils(Providers.of(taskScheduler), taskResultStateStore);
+    underTest = new TaskUtils(() -> taskScheduler, taskResultStateStore);
   }
 
   @Test
@@ -117,11 +116,11 @@ public class TaskUtilsTest
 
   @Test(expected = IllegalStateException.class)
   public void testCheckForConflictingTasks_shouldCheckDatabaseForTaskState() {
-    TaskResultState taskResultState =  mock(TaskResultState.class);
+    TaskResultState taskResultState = mock(TaskResultState.class);
     when(taskResultStateStore.getState(taskInfo)).thenReturn(Optional.of(taskResultState));
     when(taskResultState.getState()).thenReturn(RUNNING);
 
-    underTest = new TaskUtils(Providers.of(taskScheduler), taskResultStateStore);
+    underTest = new TaskUtils(() -> taskScheduler, taskResultStateStore);
 
     underTest.checkForConflictingTasks("taskId2", "taskName2", asList("taskTypeId"),
         ImmutableMap.of("key", asList("value")));

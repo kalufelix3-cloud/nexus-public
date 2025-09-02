@@ -13,10 +13,10 @@
 package org.sonatype.nexus.quartz.internal;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
+import jakarta.inject.Singleton;
 import org.quartz.Job;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
@@ -29,7 +29,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 /**
- * Sisu-aware {@link JobFactory}.
+ * Spring-aware {@link JobFactory}.
  *
  * @since 3.0
  */

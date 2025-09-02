@@ -21,7 +21,7 @@ import jakarta.inject.Singleton;
 import org.sonatype.nexus.ui.UiPluginDescriptor;
 import org.sonatype.nexus.ui.UiUtil;
 
-import org.eclipse.sisu.Priority;
+import jakarta.annotation.Priority;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;

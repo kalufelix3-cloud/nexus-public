@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.ExternalMetadata;
@@ -29,7 +28,7 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.AssetReconcileData;
 import org.sonatype.nexus.transaction.Transactional;
 
-import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -43,8 +42,8 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   @Inject
   public AssetBlobStore(
       final DataSessionSupplier sessionSupplier,
-      @Assisted final String contentStoreName,
-      @Assisted final Class<T> daoClass)
+      final String contentStoreName,
+      final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
   }
@@ -93,8 +92,8 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   @Transactional
   public Continuation<AssetReconcileData> browseAssetBlobsWithinDuration(
       final int limit,
-      OffsetDateTime start,
-      OffsetDateTime end,
+      final OffsetDateTime start,
+      final OffsetDateTime end,
       @Nullable final String continuationToken)
   {
     return dao().browseAssetBlobsWithinDuration(limit, start, end, continuationToken);
@@ -104,7 +103,7 @@ public class AssetBlobStore<T extends AssetBlobDAO>
    * Return count of asset blobs matched with provided date range
    */
   @Transactional
-  public int countAssetBlobsWithinDuration(OffsetDateTime start, OffsetDateTime end) {
+  public int countAssetBlobsWithinDuration(final OffsetDateTime start, final OffsetDateTime end) {
     return dao().countAssetBlobsWithinDuration(start, end);
   }
 
@@ -235,7 +234,7 @@ public class AssetBlobStore<T extends AssetBlobDAO>
    * @return {code true} if asset blobs were updated
    */
   @Transactional
-  public boolean updateBlobRefs(@Param("assetBlobs") Collection<AssetBlob> assetBlobs) {
+  public boolean updateBlobRefs(@Param("assetBlobs") final Collection<AssetBlob> assetBlobs) {
     return dao().updateBlobRefs(assetBlobs);
   }
 
@@ -246,7 +245,7 @@ public class AssetBlobStore<T extends AssetBlobDAO>
    * @return {code true} if asset blob was updated
    */
   @Transactional
-  public boolean updateBlobRef(@Param("assetBlobData") AssetBlob assetBlob) {
+  public boolean updateBlobRef(@Param("assetBlobData") final AssetBlob assetBlob) {
     return dao().updateBlobRef(assetBlob);
   }
 

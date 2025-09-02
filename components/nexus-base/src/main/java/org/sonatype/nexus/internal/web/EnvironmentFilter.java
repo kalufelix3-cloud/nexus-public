@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.internal.web;
 
+import java.io.IOException;
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -29,8 +31,6 @@ import org.sonatype.nexus.security.UserIdMdcHelper;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import java.io.IOException;
-import org.eclipse.sisu.Hidden;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -49,7 +49,6 @@ import static com.google.common.net.HttpHeaders.X_CONTENT_TYPE_OPTIONS;
 @Order(WebFilterPriority.WEB)
 @WebFilter("/*")
 @Component
-@Hidden // hide from DynamicFilterChainManager because we statically install it in WebModule
 @Singleton
 public class EnvironmentFilter
     extends ComponentSupport

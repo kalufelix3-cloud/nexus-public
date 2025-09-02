@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.internal.capability;
 
-import jakarta.inject.Inject;
-
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.capability.CapabilityContextAware;
 import org.sonatype.nexus.capability.CapabilityRegistry;
@@ -24,7 +22,7 @@ import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -54,7 +52,7 @@ public class ValidityConditionHandler
       final EventManager eventManager,
       final CapabilityRegistry capabilityRegistry,
       final Conditions conditions,
-      @Assisted final DefaultCapabilityReference reference)
+      final DefaultCapabilityReference reference)
   {
     this.eventManager = checkNotNull(eventManager);
     this.capabilityRegistry = checkNotNull(capabilityRegistry);

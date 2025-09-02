@@ -13,7 +13,6 @@
 package org.sonatype.nexus.content.maven.store;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -21,7 +20,7 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.transaction.Transactional;
 
-import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import org.springframework.beans.factory.annotation.Value;
 
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED_VALUE;
@@ -33,7 +32,7 @@ public class Maven2AssetStore
   public Maven2AssetStore(
       final DataSessionSupplier sessionSupplier,
       @Value(DATASTORE_CLUSTERED_ENABLED_NAMED_VALUE) final boolean clustered,
-      @Assisted final String storeName)
+      final String storeName)
   {
     super(sessionSupplier, clustered, storeName, Maven2AssetDAO.class);
   }

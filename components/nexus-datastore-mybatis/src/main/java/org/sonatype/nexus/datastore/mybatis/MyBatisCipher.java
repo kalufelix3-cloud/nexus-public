@@ -29,8 +29,6 @@ import org.sonatype.nexus.security.PasswordHelper;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.eclipse.sisu.Hidden;
-import org.eclipse.sisu.Typed;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -49,8 +47,6 @@ import static org.sonatype.nexus.crypto.internal.EncryptionHelper.fromBase64;
 @Component
 @Qualifier("mybatis")
 @Singleton
-@Typed(PbeCipher.class)
-@Hidden // don't publish this to other modules
 final class MyBatisCipher
     implements PbeCipher
 {

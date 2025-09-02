@@ -15,13 +15,13 @@ package org.sonatype.nexus.internal.script;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -53,7 +53,7 @@ public class ScriptEngineManagerProvider
 
   @Override
   public ScriptEngineManager getObject() {
-    // limit detection of engines to the runtime's default engines, other engines should register via guice
+    // limit detection of engines to the runtime's default engines, other engines should register via Spring
     ScriptEngineManager engineManager = new ScriptEngineManager(ClassLoader.getSystemClassLoader());
 
     List<ScriptEngineFactory> available = new ArrayList<>();

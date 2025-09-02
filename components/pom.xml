@@ -55,8 +55,6 @@
     <module>nexus-logging</module>
     <module>nexus-scheduling</module>
     <module>nexus-formfields</module>
-    <!-- THIS MODULE SHOULD BE REMOVED WHEN SPRING MIGRATION COMPLETE -->
-    <module>nexus-guice-servlet</module>
     <module>nexus-mime</module>
     <module>nexus-repository-core-edition</module>
     <module>nexus-plugin-api</module>

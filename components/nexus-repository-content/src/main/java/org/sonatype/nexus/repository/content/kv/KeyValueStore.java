@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
@@ -24,7 +23,7 @@ import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.store.ContentStoreSupport;
 import org.sonatype.nexus.transaction.Transactional;
 
-import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import org.apache.ibatis.annotations.Param;
 
 public class KeyValueStore<T extends KeyValueDAO>
@@ -36,8 +35,8 @@ public class KeyValueStore<T extends KeyValueDAO>
   @Inject
   public KeyValueStore(
       final DataSessionSupplier sessionSupplier,
-      @Assisted final String contentStoreName,
-      @Assisted final Class<T> daoClass)
+      final String contentStoreName,
+      final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
   }

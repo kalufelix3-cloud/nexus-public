@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.bootstrap.entrypoint.event;
 
-import jakarta.inject.Inject;
-
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
@@ -22,10 +20,10 @@ import org.sonatype.nexus.jmx.reflect.ManagedObject;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-import org.eclipse.sisu.EagerSingleton;
+import jakarta.inject.Inject;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.springframework.stereotype.Component;
 
 /**
  * A simple "debug" helper component, that dumps out events to log.
@@ -41,7 +39,6 @@ import org.springframework.stereotype.Component;
  * @since 2.1
  */
 @Component
-@EagerSingleton
 @ManagedObject
 public class DebugEventInspector
     extends ComponentSupport
@@ -65,7 +62,7 @@ public class DebugEventInspector
   }
 
   @ManagedAttribute
-  public void setEnabled(boolean enabled) {
+  public void setEnabled(final boolean enabled) {
     try {
       if (enabled && !this.enabled) {
         eventManager.register(this);

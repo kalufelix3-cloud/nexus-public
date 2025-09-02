@@ -543,14 +543,8 @@
       </plugin>
     </plugins>
   </build>
-  <profiles>
-    <profile>
-      <id>spring-only</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-    </profile>
 
+  <profiles>
     <profile>
       <id>run</id>
       <build>

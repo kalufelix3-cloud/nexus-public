@@ -19,8 +19,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
+
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
@@ -42,7 +42,7 @@ import org.sonatype.nexus.repository.RepositoryStoppedEvent;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.config.Configuration;
 
-import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.manager.internal.RepositoryImpl.State.DELETED;
@@ -77,11 +77,7 @@ public class RepositoryImpl
   private String name;
 
   @Inject
-  public RepositoryImpl(
-      final EventManager eventManager,
-      @Assisted final Type type,
-      @Assisted final Format format)
-  {
+  public RepositoryImpl(final EventManager eventManager, final Type type, final Format format) {
     this.eventManager = checkNotNull(eventManager);
     this.type = checkNotNull(type);
     this.format = checkNotNull(format);
@@ -248,6 +244,7 @@ public class RepositoryImpl
     eventManager.post(new RepositoryStartedEvent(this));
   }
 
+  @Override
   public Lock getWriteLock() {
     return states.getWriteLock();
   }
@@ -257,6 +254,7 @@ public class RepositoryImpl
    *
    * Repository must have been previously started. Repository is stopped before applying {@link #update}.
    */
+  @Override
   public void stopSafe() throws Exception {
     MultipleFailures failures = new MultipleFailures();
     Lock repositoryLock = getWriteLock();

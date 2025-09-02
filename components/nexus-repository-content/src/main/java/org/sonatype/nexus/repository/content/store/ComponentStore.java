@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.event.Event;
@@ -44,7 +43,7 @@ import org.sonatype.nexus.repository.content.event.component.RepositoryDeletedCo
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.transaction.Transactional;
 
-import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -69,8 +68,8 @@ public class ComponentStore<T extends ComponentDAO>
   public ComponentStore(
       final DataSessionSupplier sessionSupplier,
       @Value(DATASTORE_CLUSTERED_ENABLED_NAMED_VALUE) final boolean clustered,
-      @Assisted final String contentStoreName,
-      @Assisted final Class<T> daoClass)
+      final String contentStoreName,
+      final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
     this.clustered = clustered;
@@ -281,9 +280,9 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public Continuation<ComponentSetData> browseSets(
-      @Param("repositoryId") int repositoryId,
-      @Param("limit") int limit,
-      @Nullable @Param("continuationToken") String continuationToken)
+      @Param("repositoryId") final int repositoryId,
+      @Param("limit") final int limit,
+      @Nullable @Param("continuationToken") final String continuationToken)
   {
     return dao().browseSets(repositoryId, limit, continuationToken);
   }

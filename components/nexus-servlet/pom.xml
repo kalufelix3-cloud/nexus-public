@@ -37,11 +37,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-guice-servlet</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>eu.bitwalker</groupId>
       <artifactId>UserAgentUtils</artifactId>
     </dependency>

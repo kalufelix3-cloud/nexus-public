@@ -12,12 +12,11 @@
  */
 package org.sonatype.nexus.repository.maven.internal.filter;
 
-import jakarta.inject.Inject;
-
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 
-import com.google.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.maven.index.reader.Record;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Value;

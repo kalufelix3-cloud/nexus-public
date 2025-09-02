@@ -12,14 +12,13 @@
  */
 package org.sonatype.nexus.internal.metrics;
 
-import jakarta.inject.Inject;
-
 import org.sonatype.nexus.common.MediatorSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.systemchecks.ConditionallyAppliedHealthCheck;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
+import jakarta.inject.Inject;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -27,7 +26,7 @@ import org.springframework.stereotype.Component;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Manages {@link HealthCheck} registrations via Sisu component mediation.
+ * Manages {@link HealthCheck} registrations via Spring ContextRefreshedEvent.
  *
  * @since 2.8
  */

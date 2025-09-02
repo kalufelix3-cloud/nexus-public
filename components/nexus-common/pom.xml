@@ -155,11 +155,6 @@
     </dependency>
 
     <dependency>
-      <groupId>com.google.inject.extensions</groupId>
-      <artifactId>guice-assistedinject</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>org.sonatype.nexus.buildsupport</groupId>
       <artifactId>nexus-feature-flags</artifactId>
     </dependency>

@@ -12,17 +12,16 @@
  */
 package org.sonatype.nexus.swagger.internal;
 
-import jakarta.inject.Inject;
-
 import org.sonatype.nexus.common.MediatorSupport;
 import org.sonatype.nexus.rest.Resource;
+
+import jakarta.inject.Inject;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
-
 import org.springframework.stereotype.Component;
 
 /**
- * Mediator between Sisu-managed JAX-RS resources and Swagger.
+ * Mediator between Spring managed JAX-RS resources and Swagger.
  *
  * @since 3.3
  */

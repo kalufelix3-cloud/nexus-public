@@ -219,7 +219,7 @@ public class ManagedObjectRegistrar
     // attach manged target
     builder.target(() -> managedObject);
 
-    // allow custom description, or expose what sisu tells us
+    // allow custom description, or expose what Spring tells us
     String description = Strings.emptyToNull(descriptor.description());
     builder.description(description);
 

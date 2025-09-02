@@ -12,18 +12,16 @@
  */
 package org.sonatype.nexus.repository.apt.datastore.data;
 
-import jakarta.inject.Inject;
-
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.kv.KeyValueStore;
 
-import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 
 public class AptKeyValueStore
     extends KeyValueStore<AptKeyValueDAO>
 {
   @Inject
-  public AptKeyValueStore(final DataSessionSupplier sessionSupplier, @Assisted final String contentStoreName) {
+  public AptKeyValueStore(final DataSessionSupplier sessionSupplier, final String contentStoreName) {
     super(sessionSupplier, contentStoreName, AptKeyValueDAO.class);
   }
 }
