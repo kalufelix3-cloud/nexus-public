@@ -22,9 +22,12 @@ import jakarta.inject.Singleton;
 
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
+import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
+import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
@@ -57,9 +60,12 @@ public class AssetAuditor
 
   private final boolean attributeChangesDetailEnabled;
 
+  private final DefaultBlobIdLocationResolver defaultBlobIdLocationResolver;
+
   @Inject
   public AssetAuditor(
-      @Value(ASSET_AUDITOR_ATTRIBUTE_CHANGES_ENABLED_VALUE) final boolean attributeChangesDetailEnabled)
+      @Value(ASSET_AUDITOR_ATTRIBUTE_CHANGES_ENABLED_VALUE) final boolean attributeChangesDetailEnabled,
+      final DefaultBlobIdLocationResolver defaultBlobIdLocationResolver)
   {
     registerType(AssetCreatedEvent.class, CREATED_TYPE);
 
@@ -74,6 +80,7 @@ public class AssetAuditor
     registerType(AssetUploadedEvent.class, UPDATED_TYPE + "-uploaded");
 
     this.attributeChangesDetailEnabled = attributeChangesDetailEnabled;
+    this.defaultBlobIdLocationResolver = defaultBlobIdLocationResolver;
 
   }
 
@@ -82,7 +89,6 @@ public class AssetAuditor
   public void on(final AssetPurgedEvent event) {
     if (isRecording()) {
       String repositoryName = event.getRepository().map(Repository::getName).orElse("Unknown");
-
       AuditData data = new AuditData();
       data.setDomain(DOMAIN);
       data.setType(type(event.getClass()));
@@ -107,10 +113,23 @@ public class AssetAuditor
       data.setType(type(event.getClass()));
       data.setContext(asset.path());
 
+      String blobStorePath = "unknown";
+      String blobStoreName = "unknown";
+
+      if (asset.blob().isPresent()) {
+        AssetBlob blob = asset.blob().get();
+
+        BlobId blobId = blob.blobRef().getBlobId();
+        blobStoreName = blob.blobRef().getStore();
+
+        blobStorePath = defaultBlobIdLocationResolver.getLocation(blobId);
+      }
+
       Map<String, Object> attributes = data.getAttributes();
       attributes.put("repository.name", event.getRepository().map(Repository::getName).orElse("Unknown"));
       attributes.put("path", asset.path());
       attributes.put("kind", asset.kind());
+      attributes.put("blob.path", blobStoreName + "/content/" + blobStorePath);
 
       if (event instanceof AssetAttributesEvent && attributeChangesDetailEnabled) {
         AssetAttributesEvent attributesEvent = (AssetAttributesEvent) event;

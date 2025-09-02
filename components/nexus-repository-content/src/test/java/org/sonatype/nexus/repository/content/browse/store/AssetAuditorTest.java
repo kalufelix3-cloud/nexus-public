@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.audit.AuditRecorder;
+import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
@@ -33,19 +34,21 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class AssetAuditorTest extends TestSupport {
+public class AssetAuditorTest
+    extends TestSupport
+{
   AssetAuditor assetAuditor;
 
   @Test
   public void testAuditChangesDetailEnabled() {
-    assetAuditor = Mockito.spy(new AssetAuditor(true));
+    assetAuditor = Mockito.spy(new AssetAuditor(true, new DefaultBlobIdLocationResolver()));
 
     AssetData assetData = new AssetData();
     assetData.setRepositoryId(1);
 
     Repository repository = mock(Repository.class);
 
-    AssetAttributesEvent assetAttributesEvent =  mock(AssetAttributesEvent.class);
+    AssetAttributesEvent assetAttributesEvent = mock(AssetAttributesEvent.class);
     when(assetAttributesEvent.getAsset()).thenReturn(assetData);
     when(assetAttributesEvent.getRepository()).thenReturn(Optional.of(repository));
 
@@ -64,14 +67,14 @@ public class AssetAuditorTest extends TestSupport {
 
   @Test
   public void testAuditChangesDetailDisabled() {
-    assetAuditor = Mockito.spy(new AssetAuditor(false));
+    assetAuditor = Mockito.spy(new AssetAuditor(false, new DefaultBlobIdLocationResolver()));
 
     AssetData assetData = new AssetData();
     assetData.setRepositoryId(1);
 
     Repository repository = mock(Repository.class);
 
-    AssetAttributesEvent assetAttributesEvent =  mock(AssetAttributesEvent.class);
+    AssetAttributesEvent assetAttributesEvent = mock(AssetAttributesEvent.class);
     when(assetAttributesEvent.getAsset()).thenReturn(assetData);
     when(assetAttributesEvent.getRepository()).thenReturn(Optional.of(repository));
 
