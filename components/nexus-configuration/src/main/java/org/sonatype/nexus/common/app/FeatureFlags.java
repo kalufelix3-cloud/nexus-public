@@ -199,10 +199,6 @@ public class FeatureFlags
 
   public static final String MALWARE_RISK_ENABLED_NAMED_VALUE = "${nexus.malware.risk.enabled:true}";
 
-  public static final String MALWARE_RISK_ON_DISK_ENABLED = "nexus.malware.risk.on.disk.enabled";
-
-  public static final String MALWARE_RISK_ON_DISK_ENABLED_NAMED_VALUE = "${nexus.malware.risk.on.disk.enabled:true}";
-
   public static final String MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED =
       "nexus.malware.risk.on.disk.nonadmin.override.enabled";
 
