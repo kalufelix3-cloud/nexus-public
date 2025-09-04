@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -19,7 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
-
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
@@ -40,6 +41,9 @@ import org.sonatype.nexus.repository.content.event.component.ComponentPrePurgeEv
 import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentsPurgedAuditEvent;
 import org.sonatype.nexus.repository.content.event.component.RepositoryDeletedComponentEvent;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.transaction.Transactional;
 
@@ -63,6 +67,8 @@ public class ComponentStore<T extends ComponentDAO>
   private static final int BATCH_SIZE = SystemPropertiesHelper.getInteger("nexus.component.purge.size", 100);
 
   private final boolean clustered;
+
+  private static final int ASSET_BROWSE_LIMIT = 1000;
 
   @Inject
   public ComponentStore(
@@ -525,6 +531,8 @@ public class ComponentStore<T extends ComponentDAO>
       return purged; // nothing to purge
     }
 
+    List<FluentAsset> assets = fetchAssetsFromComponents(components);
+
     if ("H2".equals(thisSession().sqlDialect())) {
       // workaround lack of primitive array support in H2 (should be fixed in H2 1.4.201?)
       purged += dao().purgeSelectedComponents(stream(componentIds).boxed().toArray(Integer[]::new));
@@ -538,10 +546,55 @@ public class ComponentStore<T extends ComponentDAO>
 
     preCommitEvent(() -> new ComponentPrePurgeEvent(repositoryId, componentIds));
     Supplier<Event> eventSupplier = components.<Supplier<Event>>map(
-        fluentComponents -> () -> new ComponentPurgedEvent(repositoryId, componentIds, fluentComponents))
+        fluentComponents -> () -> new ComponentPurgedEvent(repositoryId, componentIds, assets))
         .orElseGet(() -> () -> new ComponentPurgedEvent(repositoryId, componentIds));
     postCommitEvent(eventSupplier);
 
     return purged;
+  }
+
+  private List<FluentAsset> fetchAssetsFromComponents(final Optional<List<FluentComponent>> components) {
+    if (components.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<FluentComponent> componentList = components.get();
+    if (componentList.isEmpty() || componentList.get(0) == null || componentList.get(0).repository() == null) {
+      return Collections.emptyList();
+    }
+
+    ContentFacetSupport contentFacet = (ContentFacetSupport) componentList.get(0)
+        .repository()
+        .facet(ContentFacet.class);
+
+    List<Integer> componentIds = componentList.stream()
+        .map(InternalIds::internalComponentId)
+        .toList();
+
+    String componentIdsStr = componentIds.stream()
+        .map(String::valueOf)
+        .collect(Collectors.joining(", "));
+
+    List<FluentAsset> allAssets = new ArrayList<>();
+    String continuationToken = null;
+
+    do {
+      Continuation<FluentAsset> assetPage = contentFacet.assets()
+          .byFilter("component_id IN (" + componentIdsStr + ")", // Dynamically constructed IN clause
+              Map.of())
+          .browse(ASSET_BROWSE_LIMIT, continuationToken);
+
+      // Get the next continuation token BEFORE consuming the results
+      try {
+        continuationToken = assetPage.nextContinuationToken();
+      }
+      catch (IllegalStateException e) {
+        continuationToken = null;
+      }
+      allAssets.addAll(assetPage);
+    }
+    while (continuationToken != null);
+
+    return allAssets;
   }
 }

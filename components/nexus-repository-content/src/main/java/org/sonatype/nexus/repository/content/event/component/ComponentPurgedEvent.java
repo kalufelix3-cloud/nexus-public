@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.sonatype.nexus.repository.content.Component;
-import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -31,30 +31,30 @@ public class ComponentPurgedEvent
 {
   private final int[] componentIds;
 
-  private final List<FluentComponent> components;
+  private final List<FluentAsset> assets;
 
   public ComponentPurgedEvent(final int contentRepositoryId, final int[] componentIds) { // NOSONAR
     super(contentRepositoryId);
     this.componentIds = checkNotNull(componentIds);
-    this.components = null;
+    this.assets = null;
   }
 
   public ComponentPurgedEvent(
       final int contentRepositoryId,
       final int[] componentIds,
-      final List<FluentComponent> components)
+      final List<FluentAsset> assets)
   {
     super(contentRepositoryId);
     this.componentIds = checkNotNull(componentIds);
-    this.components = checkNotNull(components);
+    this.assets = checkNotNull(assets);
   }
 
   public int[] getComponentIds() {
     return componentIds; // NOSONAR
   }
 
-  public List<FluentComponent> getComponents() {
-    return components;
+  public List<FluentAsset> getAssets() {
+    return assets;
   }
 
   @Override
