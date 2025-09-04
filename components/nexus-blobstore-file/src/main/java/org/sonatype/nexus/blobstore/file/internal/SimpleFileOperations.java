@@ -46,6 +46,8 @@ public class SimpleFileOperations
     extends ComponentSupport
     implements FileOperations
 {
+  public static final int MAX_RETRIES = 3;
+
   @Override
   public StreamMetrics create(final Path path, final InputStream data) throws IOException {
     checkNotNull(path);
@@ -60,12 +62,37 @@ public class SimpleFileOperations
 
     final MetricsInputStream input = new MetricsInputStream(data);
     try (data) {
-      try (final OutputStream output = Files.newOutputStream(path, StandardOpenOption.CREATE_NEW)) {
+      try (final OutputStream output = create(path)) {
         ByteStreams.copy(input, output);
       }
     }
 
     return input.getMetrics();
+  }
+
+  /**
+   * Creates a new file at the specified path, ensuring that the parent directory exists. Only throws an exception if
+   * creation fails after a second attempt.
+   */
+  public OutputStream create(final Path path) throws IOException {
+    IOException lastException = null;
+
+    for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        Path parent = path.getParent();
+        if (parent != null) {
+          DirectoryHelper.mkdir(parent);
+        }
+        return Files.newOutputStream(path, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+      }
+      catch (IOException e) {
+        // Retry once on transient parent deletion or existence race
+        lastException = e;
+      }
+    }
+
+    // Both attempts failed, rethrow the last exception
+    throw lastException;
   }
 
   @Override

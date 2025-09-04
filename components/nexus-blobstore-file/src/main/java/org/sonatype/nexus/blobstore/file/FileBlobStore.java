@@ -411,6 +411,15 @@ public class FileBlobStore
     throw new BlobStoreException("Cannot find free BlobId", null);
   }
 
+  /**
+   * Creates a new blob, or re-uses an existing one if the {@code reusedBlobId} is not null.
+   *
+   * @param headers the headers for the blob
+   * @param ingester the ingester to use for writing the blob content
+   * @param reusedBlobId the blob id to re-use, or null to create a new one
+   * @return the created or re-used blob
+   * @throws BlobStoreException if an error occurs during blob creation
+   */
   private Blob tryCreate(
       final Map<String, String> headers,
       final BlobIngester ingester,
