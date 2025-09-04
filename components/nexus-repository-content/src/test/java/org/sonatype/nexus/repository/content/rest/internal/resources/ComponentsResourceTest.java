@@ -26,7 +26,6 @@ import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.repository.types.HostedType;
-import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.UploadResponse;
 
@@ -68,9 +67,6 @@ public class ComponentsResourceTest
   private UploadManager uploadManager;
 
   @Mock
-  private UploadConfiguration uploadConfiguration;
-
-  @Mock
   private ComponentXOFactory componentXOFactory;
 
   @Mock
@@ -83,10 +79,8 @@ public class ComponentsResourceTest
   public void setUp() throws Exception {
     configureMockedRepository(testRepo, testRepoName, "http://localhost:8081/repository/test-repo");
 
-    when(uploadConfiguration.isEnabled()).thenReturn(true);
-
     underTest = new ComponentsResource(repositoryManagerRESTAdapter, maintenanceService, uploadManager,
-        uploadConfiguration, componentXOFactory, contentAuthHelper, ImmutableSet.of(componentsResourceExtension), null);
+        componentXOFactory, contentAuthHelper, ImmutableSet.of(componentsResourceExtension), null);
   }
 
   @SuppressWarnings("java:S2699")

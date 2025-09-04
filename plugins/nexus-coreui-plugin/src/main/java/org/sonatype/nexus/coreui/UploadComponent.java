@@ -12,15 +12,12 @@
  */
 package org.sonatype.nexus.coreui;
 
-import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import org.sonatype.nexus.coreui.internal.UploadService;
 import org.sonatype.nexus.extdirect.DirectComponent;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
-import org.sonatype.nexus.rapture.StateContributor;
-import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
@@ -29,7 +26,6 @@ import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -43,16 +39,12 @@ import org.springframework.stereotype.Component;
 @DirectAction(action = "coreui_Upload")
 public class UploadComponent
     extends DirectComponentSupport
-    implements StateContributor
 {
   private final UploadService uploadService;
 
-  private final UploadConfiguration configuration;
-
   @Inject
-  public UploadComponent(final UploadService uploadService, final UploadConfiguration configuration) {
+  public UploadComponent(final UploadService uploadService) {
     this.uploadService = checkNotNull(uploadService);
-    this.configuration = checkNotNull(configuration);
   }
 
   @DirectMethod
@@ -63,11 +55,5 @@ public class UploadComponent
         .stream()
         .filter(UploadDefinition::isUiUpload)
         .collect(Collectors.toList()); // NOSONAR
-  }
-
-  @Override
-  @Nullable
-  public Map<String, Object> getState() {
-    return Map.of("upload", configuration.isEnabled());
   }
 }

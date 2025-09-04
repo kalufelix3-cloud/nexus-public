@@ -32,7 +32,6 @@ import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.repository.types.HostedType;
-import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadManager;
 
 import com.google.common.collect.ImmutableSet;
@@ -87,11 +86,9 @@ public class ComponentsResourceSupportTest
 
   @Mock
   private MaintenanceService maintenanceService;
-  @Mock
-  private UploadManager uploadManager;
 
   @Mock
-  private UploadConfiguration uploadConfiguration;
+  private UploadManager uploadManager;
 
   @Mock
   private ComponentXOFactory componentXOFactory;
@@ -117,7 +114,7 @@ public class ComponentsResourceSupportTest
     mockFluentComponents();
 
     underTest = new ComponentsResource(repositoryManagerRESTAdapter, maintenanceService, uploadManager,
-        uploadConfiguration, componentXOFactory, contentAuthHelper, ImmutableSet.of(componentsResourceExtension), null);
+        componentXOFactory, contentAuthHelper, ImmutableSet.of(componentsResourceExtension), null);
   }
 
   @Test
@@ -151,7 +148,8 @@ public class ComponentsResourceSupportTest
 
     when(componentContinuation.isEmpty()).thenReturn(false).thenReturn(true);
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, A_FORMAT, REPOSITORY_NAME))
-        .thenReturn(false).thenReturn(false, false, false, true);
+        .thenReturn(false)
+        .thenReturn(false, false, false, true);
 
     List<FluentComponent> components = underTest.browse(repository, null);
 

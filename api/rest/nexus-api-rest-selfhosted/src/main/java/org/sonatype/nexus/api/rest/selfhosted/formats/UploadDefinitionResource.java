@@ -25,7 +25,6 @@ import javax.ws.rs.Produces;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.api.rest.selfhosted.formats.model.UploadDefinitionXO;
 import org.sonatype.nexus.repository.rest.api.UploadFieldDefinitionXO;
-import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.rest.Resource;
@@ -53,23 +52,15 @@ public class UploadDefinitionResource
 
   private final UploadManager uploadManager;
 
-  private final UploadConfiguration uploadConfiguration;
-
   @Inject
-  public UploadDefinitionResource(final UploadManager uploadManager, final UploadConfiguration uploadConfiguration) {
+  public UploadDefinitionResource(final UploadManager uploadManager) {
     this.uploadManager = checkNotNull(uploadManager);
-    this.uploadConfiguration = checkNotNull(uploadConfiguration);
   }
 
   @Path("upload-specs")
   @GET
   public List<UploadDefinitionXO> get() {
     log.debug("Get upload definitions for all formats.");
-
-    if (!uploadConfiguration.isEnabled()) {
-      log.debug("Upload is disabled.");
-      throw new NotFoundException();
-    }
 
     return uploadManager.getAvailableDefinitions().stream().map(this::from).collect(toList());
   }
@@ -78,11 +69,6 @@ public class UploadDefinitionResource
   @GET
   public UploadDefinitionXO get(@PathParam("format") final String format) {
     log.debug("Get upload definition for format '{}'.", format);
-
-    if (!uploadConfiguration.isEnabled()) {
-      log.debug("Upload is disabled.");
-      throw new NotFoundException();
-    }
 
     UploadDefinition uploadDefinition = uploadManager.getByFormat(format);
 

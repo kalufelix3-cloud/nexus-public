@@ -23,14 +23,11 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.coreui.internal.UploadService;
-import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.validation.Validate;
 
@@ -58,18 +55,14 @@ public class UploadResource
 
   private UploadService uploadService;
 
-  private UploadConfiguration configuration;
-
   private ObjectMapper objectMapper;
 
   @Inject
   public UploadResource(
       final UploadService uploadService,
-      final UploadConfiguration configuration,
       final ObjectMapper objectMapper)
   {
     this.uploadService = uploadService;
-    this.configuration = configuration;
     this.objectMapper = objectMapper;
   }
 
@@ -86,9 +79,6 @@ public class UploadResource
       @Context final HttpServletRequest request) throws IOException
   {
     try {
-      if (!configuration.isEnabled()) {
-        throw new WebApplicationException(Response.Status.NOT_FOUND);
-      }
       Packet responseJson = new Packet(uploadService.upload(repositoryName, request));
       return objectMapper.writeValueAsString(responseJson);
     }

@@ -51,7 +51,6 @@ import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
-import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
@@ -65,7 +64,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.repository.content.rest.AssetXOBuilder.fromAsset;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
-import static org.sonatype.nexus.repository.http.HttpStatus.NOT_FOUND;
 import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO.fromString;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
@@ -91,8 +89,6 @@ public class ComponentsResource
 
   private final UploadManager uploadManager;
 
-  private final UploadConfiguration uploadConfiguration;
-
   private final ComponentXOFactory componentXOFactory;
 
   private final Map<String, AssetXODescriptor> assetDescriptors;
@@ -104,7 +100,6 @@ public class ComponentsResource
       final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
       final MaintenanceService maintenanceService,
       final UploadManager uploadManager,
-      final UploadConfiguration uploadConfiguration,
       final ComponentXOFactory componentXOFactory,
       final ContentAuthHelper contentAuthHelper,
       final Set<ComponentsResourceExtension> componentsResourceExtensions,
@@ -114,7 +109,6 @@ public class ComponentsResource
     this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
     this.maintenanceService = checkNotNull(maintenanceService);
     this.uploadManager = checkNotNull(uploadManager);
-    this.uploadConfiguration = checkNotNull(uploadConfiguration);
     this.componentXOFactory = checkNotNull(componentXOFactory);
     this.componentsResourceExtensions = checkNotNull(componentsResourceExtensions);
     this.assetDescriptors = QualifierUtil.buildQualifierBeanMap(assetDescriptorsList);
@@ -184,9 +178,6 @@ public class ComponentsResource
       @QueryParam("repository") final String repositoryId,
       @Context final HttpServletRequest request) throws IOException
   {
-    if (!uploadConfiguration.isEnabled()) {
-      throw new WebApplicationException(NOT_FOUND);
-    }
     if (request.getContentType() == null || !request.getContentType().startsWith("multipart/")) {
       throw new WebApplicationMessageException(Status.BAD_REQUEST, "\"Expected multipart Content-Type\"",
           MediaType.APPLICATION_JSON);
