@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen, waitForElementToBeRemoved} from '@testing-library/react';
+import {render, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import {sort, prop, descend, ascend} from 'ramda';
 import userEvent from '@testing-library/user-event';
 import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
@@ -76,15 +76,14 @@ describe('SslCertificatesList', function() {
     });
   });
 
-  // skip test until flakiness can get resolved https://sonatype.atlassian.net/browse/NEXUS-48536
-  it.skip('renders the resolved empty data', async function() {
+  it('renders the resolved empty data', async function() {
     when(Axios.get).calledWith(sslCertificatesUrl).mockResolvedValue({
       data: []
     });
     await renderAndWaitForLoad();
 
     expect(selectors.createButton()).not.toHaveClass('disabled');
-    expect(selectors.emptyMessage()).toBeInTheDocument();
+    await waitFor(() => expect(selectors.emptyMessage()).toBeInTheDocument());
   });
 
   it('renders the resolved data', async function() {
