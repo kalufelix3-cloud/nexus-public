@@ -20,8 +20,6 @@ import java.util.concurrent.ExecutionException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import org.sonatype.nexus.mime.MimeRule;
 import org.sonatype.nexus.mime.MimeRulesSource;
@@ -33,10 +31,13 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypes;
 import org.springframework.context.annotation.Primary;
@@ -94,7 +95,7 @@ public class DefaultMimeSupport
             }
             // ask Tika too
             final Metadata metadata = new Metadata();
-            metadata.set(Metadata.RESOURCE_NAME_KEY, "dummy." + key);
+            metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "dummy." + key);
             MediaType mediaType = detector.detect(null, metadata);
             // unravel to least specific
             unravel(detected, mediaType);
@@ -141,7 +142,7 @@ public class DefaultMimeSupport
     List<String> detected = Lists.newArrayList();
     Metadata metadata = new Metadata();
     if (fileName != null) {
-      metadata.set(Metadata.RESOURCE_NAME_KEY, fileName);
+      metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, fileName);
     }
 
     MediaType mediaType;
