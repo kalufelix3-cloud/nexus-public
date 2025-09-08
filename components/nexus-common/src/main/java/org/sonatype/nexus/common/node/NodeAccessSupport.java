@@ -39,35 +39,55 @@ public abstract class NodeAccessSupport
   }
 
   private String compute() {
-    Optional<String> hostname = Optional.empty();
+    Optional<String> hostname = environmentVariable()
+        .or(this::cli)
+        .or(this::inetAddress)
+        .map(String::trim);
+
+    if (!hostname.isPresent()) {
+      log.warn("Failed to determine hostname, using nodeId instead.");
+      return getId();
+    }
+
+    return hostname.get();
+  }
+
+  /*
+   * Uses the HOSTNAME envvar which is the norm for Docker and Kubernetes
+   */
+  private static Optional<String> environmentVariable() {
+    return Optional.ofNullable(System.getenv("HOSTNAME"));
+  }
+
+  /*
+   * Uses the hostname CLI tool if available
+   */
+  private Optional<String> cli() {
     try {
       Process process = Runtime.getRuntime().exec("hostname");
       process.waitFor(5, TimeUnit.SECONDS);
       if (process.exitValue() == 0) {
         try (InputStream in = process.getInputStream()) {
-          hostname = Optional.ofNullable(IOUtils.toString(in, StandardCharsets.UTF_8));
+          return Optional.ofNullable(IOUtils.toString(in, StandardCharsets.UTF_8));
         }
       }
     }
     catch (Exception e) { // NOSONAR
       log.debug("Failed retrieve hostname from external process", e);
     }
+    return Optional.empty();
+  }
 
-    if (hostname.isPresent()) {
-      return hostname.get();
-    }
-
+  /*
+   * Uses the InetAddress
+   */
+  private Optional<String> inetAddress() {
     try {
-      hostname = Optional.ofNullable(InetAddress.getLocalHost().getHostName());
+      return Optional.ofNullable(InetAddress.getLocalHost().getHostName());
     }
     catch (Exception e) { // NOSONAR
       log.debug("Failed to retrieve hostname from InetAddress", e);
     }
-
-    log.error("Failed to determine hostname, using nodeId instead.");
-
-    return hostname
-        .map(String::trim)
-        .orElse(getId());
+    return Optional.empty();
   }
 }
