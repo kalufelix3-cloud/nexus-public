@@ -501,7 +501,7 @@ public class DefaultCapabilityRegistry
       final CapabilityDescriptor descriptor = capabilityDescriptorRegistry.get(capabilityType(item.getType()));
 
       if (descriptor == null) {
-        log.warn(
+        log.info(
             "Capabilities persistent storage contains a capability of unknown type {} with"
                 + " id {}. This capability will not be loaded",
             item.getType(), id);
