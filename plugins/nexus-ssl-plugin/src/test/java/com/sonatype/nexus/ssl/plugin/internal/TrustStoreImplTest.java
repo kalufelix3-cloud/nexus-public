@@ -33,7 +33,6 @@ import org.sonatype.nexus.ssl.KeyNotFoundException;
 import org.sonatype.nexus.ssl.KeyStoreManager;
 import org.sonatype.nexus.ssl.KeystoreException;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -94,19 +93,13 @@ public class TrustStoreImplTest
 
   private final CryptoHelper cryptoHelper = new CryptoHelperImpl(false);
 
-  private TrustStoreImpl underTest;
-
-  @Before
-  public void setup() throws Exception {
-    underTest =
-        new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
-            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
-  }
-
   @Test
   public void testImportTrustCertificateWhenMigrationIsCompleted() throws Exception {
     when(globalKeyValueStore.getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)).thenReturn(Optional.of(true));
-    underTest.start();
+    TrustStoreImpl underTest =
+        new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
+            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
+
     Certificate certificate = CertificateUtil.decodePEMFormattedCertificate(CERT_IN_PEM);
 
     Certificate certificateResponse = underTest.importTrustCertificate(certificate, SHA_CERT_FINGERPRINT);
@@ -124,7 +117,10 @@ public class TrustStoreImplTest
   @Test
   public void testImportTrustCertificateWhenMigrationIsNotExecuted() throws Exception {
     when(globalKeyValueStore.getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)).thenReturn(Optional.empty());
-    underTest.start();
+    TrustStoreImpl underTest =
+        new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
+            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
+
     Certificate certificate = CertificateUtil.decodePEMFormattedCertificate(CERT_IN_PEM);
 
     Certificate certificateResponse = underTest.importTrustCertificate(certificate, SHA_CERT_FINGERPRINT);
@@ -142,7 +138,9 @@ public class TrustStoreImplTest
   @Test
   public void testImportTrustCertificateWhenCertificateCannotBeLoadedIntoTheKeystore() throws Exception {
     when(globalKeyValueStore.getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)).thenReturn(Optional.of(true));
-    underTest.start();
+    TrustStoreImpl underTest =
+        new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
+            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
     Certificate certificate = CertificateUtil.decodePEMFormattedCertificate(CERT_IN_PEM);
     doThrow(new KeystoreException("The certificate cannot be loaded into the keystore")).when(trustedKeyStoreManager)
         .validateCertificateIntoKeyStore(any(), any());
@@ -158,7 +156,9 @@ public class TrustStoreImplTest
   @Test
   public void testImportTrustCertificateWhenTheCertificateIsInPem() throws Exception {
     when(globalKeyValueStore.getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)).thenReturn(Optional.of(true));
-    underTest.start();
+    TrustStoreImpl underTest =
+        new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
+            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
     Certificate certificateResponse = underTest.importTrustCertificate(CERT_IN_PEM, SHA_CERT_FINGERPRINT);
     assertThat(CertificateUtil.decodePEMFormattedCertificate(CERT_IN_PEM), equalTo(certificateResponse));
     verify(freezeService).checkWritable(any());
@@ -170,7 +170,10 @@ public class TrustStoreImplTest
   @Test
   public void testGetTrustedCertificateWhenMigrationIsCompleted() throws Exception {
     when(globalKeyValueStore.getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)).thenReturn(Optional.of(true));
-    underTest.start();
+    TrustStoreImpl underTest =
+        new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
+            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
+
     TrustedSSLCertificate trustedSSLCertificate = mock(TrustedSSLCertificate.class);
     when(trustedSSLCertificate.getAlias()).thenReturn(SHA_CERT_FINGERPRINT);
     when(trustedSSLCertificate.getPem()).thenReturn(CERT_IN_PEM);
@@ -189,7 +192,10 @@ public class TrustStoreImplTest
   @Test
   public void testGetTrustedCertificateWhenMigrationIsNotExecuted() throws Exception {
     when(globalKeyValueStore.getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)).thenReturn(Optional.empty());
-    underTest.start();
+    TrustStoreImpl underTest =
+        new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
+            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
+
     Certificate certificate = CertificateUtil.decodePEMFormattedCertificate(CERT_IN_PEM);
     when(keyStoreManager.getTrustedCertificate(SHA_CERT_FINGERPRINT)).thenReturn(certificate);
 
@@ -205,8 +211,9 @@ public class TrustStoreImplTest
   @Test
   public void testGetTrustedCertificateWhenAliasIsNull() throws Exception {
     when(globalKeyValueStore.getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)).thenReturn(Optional.of(true));
-    underTest.start();
-
+    TrustStoreImpl underTest =
+        new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
+            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
     assertThrows(NullPointerException.class, () -> underTest.getTrustedCertificate(null));
 
     verify(trustedSSLCertificateStore, never()).find(any());
@@ -215,7 +222,9 @@ public class TrustStoreImplTest
   @Test
   public void testGetTrustedCertificateWhenTheAliasDoesNotExist() throws Exception {
     when(globalKeyValueStore.getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)).thenReturn(Optional.of(true));
-    underTest.start();
+    TrustStoreImpl underTest =
+        new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
+            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
     when(trustedSSLCertificateStore.find(SHA_CERT_FINGERPRINT)).thenReturn(Optional.empty());
 
     assertThrows(KeyNotFoundException.class, () ->
@@ -227,7 +236,10 @@ public class TrustStoreImplTest
   @Test
   public void testGetTrustedCertificatesWhenMigrationIsCompleted() throws Exception {
     when(globalKeyValueStore.getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)).thenReturn(Optional.of(true));
-    underTest.start();
+    TrustStoreImpl underTest =
+        new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
+            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
+
     TrustedSSLCertificate trustedSSLCertificate = mock(TrustedSSLCertificate.class);
     when(trustedSSLCertificate.getAlias()).thenReturn(SHA_CERT_FINGERPRINT);
     when(trustedSSLCertificate.getPem()).thenReturn(CERT_IN_PEM);
@@ -239,18 +251,21 @@ public class TrustStoreImplTest
     assertThat(CertificateUtil.decodePEMFormattedCertificate(CERT_IN_PEM), equalTo(certificates.iterator().next()));
     verify(globalKeyValueStore).getBoolean(any());
     verify(trustedSSLCertificateStore).findAll();
-    verify(keyStoreManager,never()).getTrustedCertificates();
+    verify(keyStoreManager, never()).getTrustedCertificates();
     verify(databaseCheck, never()).isAtLeast(any());
   }
 
   @Test
   public void testGetTrustedCertificatesWhenMigrationIsNotExecuted() throws Exception {
     when(globalKeyValueStore.getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)).thenReturn(Optional.empty());
-    underTest.start();
+    TrustStoreImpl trustStore =
+        new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
+            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
+
     Certificate certificate = CertificateUtil.decodePEMFormattedCertificate(CERT_IN_PEM);
     when(keyStoreManager.getTrustedCertificates()).thenReturn(List.of(certificate));
 
-    Collection<Certificate> certificates = underTest.getTrustedCertificates();
+    Collection<Certificate> certificates = trustStore.getTrustedCertificates();
 
     assertThat(certificates.size(), equalTo(1));
     assertThat(CertificateUtil.decodePEMFormattedCertificate(CERT_IN_PEM), equalTo(certificates.iterator().next()));
@@ -263,7 +278,10 @@ public class TrustStoreImplTest
   @Test
   public void testRemoveTrustCertificateWhenMigrationIsCompleted() throws Exception {
     when(globalKeyValueStore.getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)).thenReturn(Optional.of(true));
-    underTest.start();
+    TrustStoreImpl underTest =
+        new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
+            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
+
     TrustedSSLCertificate trustedSSLCertificate = mock(TrustedSSLCertificate.class);
     when(trustedSSLCertificate.getAlias()).thenReturn(SHA_CERT_FINGERPRINT);
     when(trustedSSLCertificate.getPem()).thenReturn(CERT_IN_PEM);
@@ -284,7 +302,9 @@ public class TrustStoreImplTest
   @Test
   public void testRemoveTrustCertificateWhenMigrationIsNotExecuted() throws Exception {
     when(globalKeyValueStore.getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)).thenReturn(Optional.empty());
-    underTest.start();
+    TrustStoreImpl underTest =
+        new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
+            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
     Certificate certificate = CertificateUtil.decodePEMFormattedCertificate(CERT_IN_PEM);
     when(keyStoreManager.getTrustedCertificate(SHA_CERT_FINGERPRINT)).thenReturn(certificate);
 
@@ -302,7 +322,9 @@ public class TrustStoreImplTest
   @Test
   public void testRemoveTrustCertificateWhenTheAliasDoesNotExist() throws Exception {
     when(globalKeyValueStore.getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)).thenReturn(Optional.of(true));
-    underTest.start();
+    TrustStoreImpl underTest =
+        new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
+            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
     when(trustedSSLCertificateStore.find(SHA_CERT_FINGERPRINT)).thenReturn(Optional.empty());
 
     assertThrows(KeyNotFoundException.class, () ->
@@ -316,7 +338,9 @@ public class TrustStoreImplTest
   @Test
   public void testGetSSLContextWhenMigrationIsCompleted() throws Exception {
     when(globalKeyValueStore.getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)).thenReturn(Optional.of(true));
-    underTest.start();
+    TrustStoreImpl underTest =
+        new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
+            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
 
     SSLContext sslContext = underTest.getSSLContext();
 
@@ -330,7 +354,9 @@ public class TrustStoreImplTest
   @Test
   public void testGetSSLContextWhenMigrationIsNotExecuted() throws Exception {
     when(globalKeyValueStore.getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)).thenReturn(Optional.empty());
-    underTest.start();
+    TrustStoreImpl underTest =
+        new TrustStoreImpl(eventManager, freezeService, keyStoreManager, trustedSSLCertificateStore,
+            trustedKeyStoreManager, databaseCheck, globalKeyValueStore, cryptoHelper);
 
     SSLContext sslContext = underTest.getSSLContext();
 
