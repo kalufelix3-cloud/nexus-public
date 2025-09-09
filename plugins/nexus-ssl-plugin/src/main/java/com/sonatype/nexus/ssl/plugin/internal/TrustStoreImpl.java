@@ -39,13 +39,11 @@ import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedKeyStoreManager;
 import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedSSLCertificate;
 import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedSSLCertificateDataEvent;
 import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedSSLCertificateStore;
-
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.FreezeService;
-import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.distributed.event.service.api.EventType;
 import org.sonatype.nexus.distributed.event.service.api.common.CertificateDistributedEvent;
@@ -68,7 +66,6 @@ import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.stream;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.ssl.CertificateUtil.calculateSha1;
 import static org.sonatype.nexus.ssl.CertificateUtil.decodePEMFormattedCertificate;
 
@@ -78,11 +75,10 @@ import static org.sonatype.nexus.ssl.CertificateUtil.decodePEMFormattedCertifica
  * @since ssl 1.0
  */
 @Lazy
-@ManagedLifecycle(phase = TASKS)
 @Component
 @Singleton
 public class TrustStoreImpl
-    extends StateGuardLifecycleSupport
+    extends ComponentSupport
     implements EventAware, TrustStore
 {
   public static final String TRUSTED_CERTIFICATES_MIGRATION_COMPLETE = "trusted.certificates.migration.complete";
@@ -107,8 +103,6 @@ public class TrustStoreImpl
 
   private final DatabaseCheck databaseCheck;
 
-  private final GlobalKeyValueStore globalKeyValueStore;
-
   private volatile boolean secretMigrationComplete = false;
 
   private volatile boolean onVersion = false;
@@ -132,15 +126,10 @@ public class TrustStoreImpl
     this.trustedSSLCertificateStore = checkNotNull(trustedSSLCertificateStore);
     this.trustedKeyStoreManager = checkNotNull(trustedKeyStoreManager);
     this.databaseCheck = checkNotNull(databaseCheck);
-    this.globalKeyValueStore = checkNotNull(globalKeyValueStore);
     checkNotNull(cryptoHelper);
     this.keyManagers = getSystemKeyManagers(cryptoHelper);
     this.trustManagers = getTrustManagers(cryptoHelper);
-  }
-
-  @Override
-  protected void doStart() {
-    secretMigrationComplete = globalKeyValueStore
+    this.secretMigrationComplete = globalKeyValueStore
         .getBoolean(TRUSTED_CERTIFICATES_MIGRATION_COMPLETE)
         .orElse(false);
   }
