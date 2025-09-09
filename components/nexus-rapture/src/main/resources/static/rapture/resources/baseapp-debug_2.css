@@ -11953,6 +11953,10 @@
     display: none;
 }
 
+.x-form-readonly .x-form-cb-label .nx-boxlabel {
+    display: block;
+}
+
 .nx-combo-disabled input {
     color: #444;
     opacity: 1;

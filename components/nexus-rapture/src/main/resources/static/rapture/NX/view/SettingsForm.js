@@ -217,7 +217,18 @@ Ext.define('NX.view.SettingsForm', {
     }
 
     itemsToDisable = me.getChildItemsToDisable().filter(function(item){
-      return item.xtype !== 'nx-coreui-formfield-settingsfieldset';
+      return [
+        'button',
+        'textfield',
+        'checkbox',
+        'combo',
+        'textarea',
+        'numberfield',
+        'datefield',
+        'radio',
+        'displayfield',
+        'filefield',
+      ].includes(item.xtype);
     });
 
     me.setItemsEditable(editable, itemsToDisable);
