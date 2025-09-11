@@ -96,7 +96,7 @@ public class JwtFilter
   }
 
   private boolean isExemptRequest(final HttpServletRequest request) {
-    String requestPath = request.getServletPath();
+    String requestPath = request.getRequestURI();
     return jwtExemptPaths.stream()
         .map(JwtRefreshExemption::getPath)
         .anyMatch(requestPath::contains);
