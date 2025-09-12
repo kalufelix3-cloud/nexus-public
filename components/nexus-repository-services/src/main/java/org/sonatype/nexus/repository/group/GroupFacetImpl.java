@@ -23,8 +23,6 @@ import javax.validation.ConstraintViolation;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
-import org.sonatype.nexus.common.event.EventHelper;
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheSyncTokenEvent;
 import org.sonatype.nexus.repository.FacetSupport;
@@ -36,7 +34,6 @@ import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.manager.internal.RepositoryAttributeService;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
@@ -45,7 +42,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.collect.Iterables;
 import com.google.common.eventbus.Subscribe;
 import jakarta.inject.Inject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Primary;
@@ -82,10 +78,6 @@ public class GroupFacetImpl
   public static final String CONFIG_KEY = "group";
 
   private final RepositoryCacheInvalidationService repositoryCacheInvalidationService;
-
-  private EventManager eventManager;
-
-  private RepositoryAttributeService repositoryAttributeService;
 
   public static class Config
   {
@@ -177,7 +169,7 @@ public class GroupFacetImpl
     config = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, Config.class);
 
     String storedToken =
-        repositoryAttributeService.getRepositoryAttribute(getRepository(), CACHE_CONTROLLER_TOKEN, null);
+        repositoryAttributeService().getRepositoryAttribute(getRepository(), CACHE_CONTROLLER_TOKEN, null);
 
     cacheController = new CacheController(-1, storedToken);
 
@@ -193,7 +185,7 @@ public class GroupFacetImpl
     // check whether any members or their ordering have changed
     if (!Iterables.elementsEqual(config.memberNames, previousMemberNames)) {
       cacheController.invalidateCache();
-      postEvent(getRepository(), cacheController.current().getCacheToken());
+      postCacheTokenEvent(getRepository(), cacheController.current().getCacheToken());
     }
   }
 
@@ -304,28 +296,10 @@ public class GroupFacetImpl
     attributesMap.set(CacheInfo.class, cacheController.current());
   }
 
-  void postEvent(final Repository repository, final String cacheToken) {
-    if (!EventHelper.isReplicating()) {
-      // Store cache token as repository attribute if the attribute storage service is available
-      repositoryAttributeService.setRepositoryAttribute(repository, CACHE_CONTROLLER_TOKEN, cacheToken);
-      eventManager.post(new RepositoryCacheSyncTokenEvent(repository.getName(), cacheToken));
-    }
-  }
-
   @Subscribe
   public void on(final RepositoryCacheSyncTokenEvent event) {
     if (!event.isLocal() && getRepository().getName().equals(event.getRepositoryName())) {
       cacheController.setCache(event.getToken());
     }
-  }
-
-  @Autowired
-  public void setEventManager(final EventManager eventManager) {
-    this.eventManager = eventManager;
-  }
-
-  @Autowired
-  public void setRepositoryAttributeService(final RepositoryAttributeService repositoryAttributeService) {
-    this.repositoryAttributeService = repositoryAttributeService;
   }
 }

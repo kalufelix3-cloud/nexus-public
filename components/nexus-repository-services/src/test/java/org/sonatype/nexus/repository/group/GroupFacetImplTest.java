@@ -31,7 +31,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.group.GroupFacetImpl.Config;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.manager.internal.RepositoryAttributeService;
+import org.sonatype.nexus.repository.manager.RepositoryAttributeService;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.Content;
@@ -78,9 +78,6 @@ public class GroupFacetImplTest
 
   @Mock
   private RepositoryCacheInvalidationService repositoryCacheInvalidationService;
-
-  @Mock
-  private EventManager eventManager;
 
   @Mock
   private RepositoryAttributeService repositoryAttributeService;
@@ -218,20 +215,6 @@ public class GroupFacetImplTest
 
     assertNotNull(underTest.cacheController);
     verify(repositoryAttributeService).getRepositoryAttribute(repository, "cacheToken", null);
-  }
-
-  @Test
-  public void testPostEvent_storesTokenAndPostsEvent() throws Exception {
-    String cacheToken = "test-cache-token";
-
-    underTest.setEventManager(eventManager);
-    underTest.setRepositoryAttributeService(repositoryAttributeService);
-
-    // Directly call the package-private method
-    underTest.postEvent(repository, cacheToken);
-
-    verify(repositoryAttributeService).setRepositoryAttribute(repository, "cacheToken", cacheToken);
-    verify(eventManager).post(org.mockito.ArgumentMatchers.any(RepositoryCacheSyncTokenEvent.class));
   }
 
   @Test

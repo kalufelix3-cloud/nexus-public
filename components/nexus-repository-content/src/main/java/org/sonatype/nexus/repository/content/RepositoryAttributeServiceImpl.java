@@ -17,7 +17,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
-import org.sonatype.nexus.repository.manager.internal.RepositoryAttributeService;
+import org.sonatype.nexus.repository.manager.RepositoryAttributeService;
 
 import org.springframework.stereotype.Component;
 

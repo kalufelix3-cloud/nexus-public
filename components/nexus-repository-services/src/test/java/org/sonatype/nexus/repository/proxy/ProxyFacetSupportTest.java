@@ -34,6 +34,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
+import org.sonatype.nexus.repository.manager.RepositoryAttributeService;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
@@ -165,6 +166,9 @@ public class ProxyFacetSupportTest
 
   @Mock
   private Format format;
+
+  @Mock
+  private RepositoryAttributeService repositoryAttributeService;
 
   private final ArgumentCaptor<ProxyThrottledRequestEvent> captor =
       ArgumentCaptor.forClass(ProxyThrottledRequestEvent.class);
@@ -429,6 +433,7 @@ public class ProxyFacetSupportTest
       when(configuration.attributes("proxy")).thenReturn(new NestedAttributesMap(
           "proxy",
           singletonMap("remoteUrl", "http://example.com")));
+      underTest.setRepositoryAttributeService(repositoryAttributeService);
       underTest.doConfigure(configuration);
       underTest.doStart();
 

@@ -81,6 +81,8 @@ public class AptProxyFacet
       // Whenever we fetch a new release file, make sure we get the signature
       // and package files that go along with it.
       cacheControllerHolder.getMetadataCacheController().invalidateCache();
+      postCacheTokenEvent(getRepository(),
+          cacheControllerHolder.getMetadataCacheController().current().getCacheToken());
     }
     return facet(AptContentFacet.class).put(assetPath(context), content).markAsCached(content).download();
   }

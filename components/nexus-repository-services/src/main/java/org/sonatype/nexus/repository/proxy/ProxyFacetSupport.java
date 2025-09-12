@@ -27,15 +27,14 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.io.Cooperation;
+import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheSyncTokenEvent;
 import org.sonatype.nexus.repository.BadRequestException;
 import org.sonatype.nexus.repository.ETagHeaderUtils;
 import org.sonatype.nexus.repository.FacetSupport;
@@ -61,8 +60,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
+import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Closeables;
 import com.google.common.net.HttpHeaders;
+import jakarta.inject.Inject;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -250,9 +251,12 @@ public abstract class ProxyFacetSupport
   protected void doConfigure(final Configuration configuration) throws Exception {
     config = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, ProxyConfig.class);
 
+    String storedToken =
+        repositoryAttributeService().getRepositoryAttribute(getRepository(), CACHE_TOKEN_ATTRIBUTE, null);
+
     cacheControllerHolder = new CacheControllerHolder(
         new CacheController((int) config.getContentMaxAge().getSeconds(), null),
-        new CacheController((int) config.getMetadataMaxAge().getSeconds(), null));
+        new CacheController((int) config.getMetadataMaxAge().getSeconds(), storedToken));
 
     // normalize URL path to contain trailing slash
     config.remoteUrl = normalizeURLPath(config.remoteUrl);
@@ -497,6 +501,9 @@ public abstract class ProxyFacetSupport
   public void invalidateProxyCaches() {
     log.info("Invalidating proxy caches of {}", getRepository().getName());
     cacheControllerHolder.invalidateCaches();
+
+    // Post event to synchronize cache token across nodes
+    postCacheTokenEvent(getRepository(), cacheControllerHolder.getContentCacheController().current().getCacheToken());
   }
 
   private Content maybeGetCachedContent(final Context context) throws IOException {
@@ -776,6 +783,13 @@ public abstract class ProxyFacetSupport
   @VisibleForTesting
   Map<String, Integer> getThreadCooperationPerRequest() {
     return proxyCooperation.getThreadCountPerKey();
+  }
+
+  @Subscribe
+  public void on(final RepositoryCacheSyncTokenEvent event) {
+    if (!event.isLocal() && getRepository().getName().equals(event.getRepositoryName())) {
+      cacheControllerHolder.getMetadataCacheController().setCache(event.getToken());
+    }
   }
 
   /**

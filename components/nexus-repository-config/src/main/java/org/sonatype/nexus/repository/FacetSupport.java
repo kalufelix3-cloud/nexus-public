@@ -15,16 +15,21 @@ package org.sonatype.nexus.repository;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuard;
 import org.sonatype.nexus.common.stateguard.StateGuardAware;
 import org.sonatype.nexus.common.stateguard.Transitions;
+import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheSyncTokenEvent;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.manager.RepositoryAttributeService;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.FacetSupport.State.ATTACHED;
@@ -45,15 +50,28 @@ public abstract class FacetSupport
     extends ComponentSupport
     implements Facet, StateGuardAware
 {
+  protected static final String CACHE_TOKEN_ATTRIBUTE = "cacheToken";
+
   private EventManager eventManager;
+
+  protected RepositoryAttributeService repositoryAttributeService;
 
   @Inject
   public void installDependencies(final EventManager eventManager) {
     this.eventManager = checkNotNull(eventManager);
   }
 
+  @Autowired
+  public void setRepositoryAttributeService(@Nullable final RepositoryAttributeService repositoryAttributeService) {
+    this.repositoryAttributeService = repositoryAttributeService;
+  }
+
   protected EventManager getEventManager() {
     return checkNotNull(eventManager);
+  }
+
+  protected RepositoryAttributeService repositoryAttributeService() {
+    return repositoryAttributeService;
   }
 
   private Repository repository;
@@ -242,5 +260,22 @@ public abstract class FacetSupport
   @Deprecated
   protected EventBus getEventBus() {
     return eventManager;
+  }
+
+  /**
+   * Posts a cache synchronization event to coordinate cache tokens across cluster nodes.
+   *
+   * @param repository the repository for which to sync the cache token
+   * @param cacheToken the cache token to synchronize
+   */
+  public void postCacheTokenEvent(final Repository repository, final String cacheToken) {
+    checkNotNull(repository);
+    if (!EventHelper.isReplicating()) {
+      // Store cache token as repository attribute if the attribute storage service is available
+      if (repositoryAttributeService() != null) {
+        repositoryAttributeService().setRepositoryAttribute(repository, CACHE_TOKEN_ATTRIBUTE, cacheToken);
+      }
+      eventManager.post(new RepositoryCacheSyncTokenEvent(repository.getName(), cacheToken));
+    }
   }
 }
