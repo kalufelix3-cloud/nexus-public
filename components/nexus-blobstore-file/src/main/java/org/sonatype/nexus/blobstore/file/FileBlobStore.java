@@ -48,7 +48,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
 
 import org.sonatype.nexus.blobstore.BlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
@@ -91,12 +90,17 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
+import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.AgeFileFilter;
 import org.apache.commons.lang.time.DateUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -119,10 +123,6 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STOPPED;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * A {@link BlobStore} that stores its content on the file system.
@@ -518,6 +518,11 @@ public class FileBlobStore
   @Override
   public boolean isInternalMoveSupported(final BlobStore destBlobStore) {
     return false;
+  }
+
+  @Override
+  public boolean isOwner(final Blob blob) {
+    return blob instanceof FileBlob fileBlob && fileBlob.owner() == this;
   }
 
   @Override
@@ -1099,6 +1104,10 @@ public class FileBlobStore
         throw new BlobStoreException(e, getId());
       }
     }
+
+    private FileBlobStore owner() {
+      return FileBlobStore.this;
+    }
   }
 
   private interface BlobIngester
@@ -1275,7 +1284,7 @@ public class FileBlobStore
   }
 
   @Override
-  protected BlobAttributes loadBlobAttributes(BlobId blobId) throws IOException {
+  protected BlobAttributes loadBlobAttributes(final BlobId blobId) throws IOException {
     FileBlobAttributes blobAttributes = new FileBlobAttributes(attributePath(blobId));
     return blobAttributes.load() ? blobAttributes : null;
   }

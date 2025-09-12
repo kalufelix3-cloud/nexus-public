@@ -35,6 +35,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlobIndex;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
+import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.S3Blob;
 import org.sonatype.nexus.blobstore.s3.internal.datastore.DatastoreS3BlobStoreMetricsService;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.time.DateHelper;
@@ -128,15 +129,12 @@ public class S3BlobStoreTest
     Region region = mock(Region.class);
     when(region.getName()).thenReturn("us-east-1");
     regionsMockedStatic.when(Regions::getCurrentRegion).thenReturn(region);
-    blobStore = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(), uploader, copier, false,
-        storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker);
+    blobStore = createBlobStore();
 
     config = new MockBlobStoreConfiguration();
     attributesContents =
         "#Thu Jun 01 23:10:55 UTC 2017\n@BlobStore.created-by=admin\nsize=11\n@Bucket.repo-name=test\ncreationTime=1496358655289\n@BlobStore.content-type=text/plain\n@BlobStore.blob-name=test\nsha1=eb4c2a5a1c04ca2d504c5e57e1f88cef08c75707";
     when(amazonS3Factory.create(any())).thenReturn(s3);
-    ReflectionTestUtils.setField(blobStore, "maxRetries", 1);
-    ReflectionTestUtils.setField(blobStore, "retryDelayMs", 500L);
     config
         .setAttributes(new HashMap<>(Map.of("s3", new HashMap<>(Map.of("bucket", "mybucket", "prefix", "myPrefix")))));
   }
@@ -470,7 +468,7 @@ public class S3BlobStoreTest
     headers.remove(TEMPORARY_BLOB_HEADER);
     headers.putAll(
         Map.of(BLOB_NAME_HEADER, "file.txt", CONTENT_TYPE_HEADER, "text/plain", REPO_NAME_HEADER, "a repository"));
-    blob = blobStore.makeBlobPermanent(blob.getId(), headers);
+    blob = blobStore.makeBlobPermanent(blob, headers);
 
     ArgumentCaptor<ObjectMetadata> metadataCaptor = ArgumentCaptor.forClass(ObjectMetadata.class);
     verify(s3, times(3)).putObject(eq("mybucket"), anyString(), any(), metadataCaptor.capture());
@@ -491,7 +489,7 @@ public class S3BlobStoreTest
             TEMPORARY_BLOB_HEADER, "");
     Blob blob = blobStore.create(new ByteArrayInputStream("hello world".getBytes()), headers);
 
-    assertThrows(IllegalArgumentException.class, () -> blobStore.makeBlobPermanent(blob.getId(), headers)); // NOSONAR
+    assertThrows(IllegalArgumentException.class, () -> blobStore.makeBlobPermanent(blob, headers)); // NOSONAR
   }
 
   @Test
@@ -510,9 +508,11 @@ public class S3BlobStoreTest
     headers.put(REPO_NAME_HEADER, "test-repo");
 
     ObjectMetadata metadata = mock(ObjectMetadata.class);
-    Blob blob = mock(Blob.class);
+    S3Blob blob = mock(S3Blob.class);
+    when(blob.getId()).thenReturn(blobId);
     Date lastModified = new Date();
 
+    doReturn(true).when(spy).isOwner(any());
     doReturn(blob).when(spy).get(blobId);
     doReturn(blob).when(spy).get(blobId, false);
     doReturn(blob).when(spy).writeBlobProperties(blobId, headers);
@@ -521,7 +521,7 @@ public class S3BlobStoreTest
     when(metadata.getETag()).thenReturn("test-etag");
     when(metadata.getLastModified()).thenReturn(lastModified);
 
-    Blob result = spy.makeBlobPermanent(blobId, headers);
+    Blob result = spy.makeBlobPermanent(blob, headers);
 
     verify(spy).getExternalMetadata(blobId);
     assertThat(result, is(blob));
@@ -546,21 +546,42 @@ public class S3BlobStoreTest
     headers.put(BLOB_NAME_HEADER, "test.parquet");
     headers.put(REPO_NAME_HEADER, "huggingface");
 
-    Blob blob = mock(Blob.class);
+    S3Blob blob = mock(S3Blob.class);
+    when(blob.getId()).thenReturn(blobId);
 
     doReturn(blob).when(spy).get(blobId);
     doReturn(blob).when(spy).get(blobId, false);
     doReturn(blob).when(spy).writeBlobProperties(blobId, headers);
+    doReturn(true).when(spy).isOwner(blob);
     when(blob.getHeaders()).thenReturn(Map.of(TEMPORARY_BLOB_HEADER, "true"));
     when(s3.getObjectMetadata(any(), any())).thenThrow(new SdkClientException("unable to get metadata"));
 
-    Blob result = spy.makeBlobPermanent(blobId, headers);
+    Blob result = spy.makeBlobPermanent(blob, headers);
 
     verify(spy).getExternalMetadata(blobId);
     assertThat(result, is(blob));
     assertThat(headers.size(), is(3));
     assertThat(headers, not(hasKey(EXTERNAL_ETAG_HEADER)));
     assertThat(headers, not(hasKey(EXTERNAL_LAST_MODIFIED_HEADER)));
+  }
+
+  @Test
+  public void testIsOwner() throws Exception {
+    blobStore.init(config);
+    blobStore.start();
+
+    assertThat("Unknown blob should return null", blobStore.isOwner(mock(Blob.class)), is(false));
+
+    S3BlobStore otherStore = createBlobStore();
+    otherStore.init(config.copy("some-other-blobstore"));
+    otherStore.start();
+    Blob blob = otherStore.create(new ByteArrayInputStream(new byte[0]),
+        Map.of(BLOB_NAME_HEADER, "foo", CREATED_BY_HEADER, "jsmith"));
+    assertThat("Blob owned by different instance should return false", blobStore.isOwner(blob), is(false));
+
+    blob = blobStore.create(new ByteArrayInputStream(new byte[0]),
+        Map.of(BLOB_NAME_HEADER, "foo", CREATED_BY_HEADER, "jsmith"));
+    assertThat(blobStore.isOwner(blob), is(true));
   }
 
   @Test
@@ -579,7 +600,7 @@ public class S3BlobStoreTest
     when(deleteObjectsResult.getDeletedObjects()).thenReturn(List.of(new DeletedObject(), new DeletedObject()));
     when(s3.deleteObjects(any(DeleteObjectsRequest.class))).thenReturn(deleteObjectsResult);
 
-    boolean deleted = blobStore.deleteIfTemp(blob.getId());
+    boolean deleted = blobStore.deleteIfTemp(blob);
     assertThat(deleted, is(true));
 
     mockPropertiesException();
@@ -600,18 +621,27 @@ public class S3BlobStoreTest
 
     assertThat(blob, is(notNullValue()));
 
-    boolean deleted = blobStore.deleteIfTemp(blob.getId());
-    assertThat(deleted, is(false));
+    boolean deleted = blobStore.deleteIfTemp(blob);
+    assertThat(deleted, is(true));
     Blob retrievedBlob = blobStore.get(blob.getId());
     assertThat(retrievedBlob, is(notNullValue()));
     verify(s3, never()).deleteObjects(any());
   }
 
-  private String propertiesLocation(final BlobId blobId) {
+  private S3BlobStore createBlobStore() {
+    S3BlobStore blobstore = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(), uploader, copier,
+        false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker);
+
+    ReflectionTestUtils.setField(blobstore, "maxRetries", 1);
+    ReflectionTestUtils.setField(blobstore, "retryDelayMs", 500L);
+    return blobstore;
+  }
+
+  private static String propertiesLocation(final BlobId blobId) {
     return "content/" + new VolumeChapterLocationStrategy().location(blobId) + ".properties";
   }
 
-  private String bytesLocation(final BlobId blobId) {
+  private static String bytesLocation(final BlobId blobId) {
     return "content/" + new VolumeChapterLocationStrategy().location(blobId) + ".bytes";
   }
 
@@ -621,7 +651,7 @@ public class S3BlobStoreTest
     return tempBlobMetaData;
   }
 
-  private S3Object mockS3Object(final String content) {
+  private static S3Object mockS3Object(final String content) {
     S3Object s3Object = mock(S3Object.class);
     S3ObjectInputStream inputStream = new S3ObjectInputStream(new ByteArrayInputStream(content.getBytes()), null);
     when(s3Object.getObjectContent()).thenReturn(inputStream);

@@ -29,8 +29,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
 
 import org.sonatype.nexus.blobstore.BlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.BlobSupport;
@@ -84,8 +84,13 @@ import com.google.common.base.Function;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
+import jakarta.inject.Inject;
 import org.joda.time.DateTime;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -104,10 +109,6 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.SHUTDOWN;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STOPPED;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * A {@link BlobStore} that stores its content on AWS S3.
@@ -725,6 +726,11 @@ public class S3BlobStore
       S3Object object = s3.getObject(getConfiguredBucket(), contentPath(getId()));
       return performanceLogger.maybeWrapForPerformanceLogging(object.getObjectContent());
     }
+
+    @VisibleForTesting
+    S3BlobStore owner() {
+      return S3BlobStore.this;
+    }
   }
 
   private interface BlobIngester
@@ -982,6 +988,11 @@ public class S3BlobStore
           log.isDebugEnabled() ? e : null);
     }
     return Optional.empty();
+  }
+
+  @Override
+  public boolean isOwner(final Blob blob) {
+    return blob instanceof S3Blob s3blob && s3blob.owner() == this;
   }
 
   @Override

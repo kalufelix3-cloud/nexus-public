@@ -170,7 +170,7 @@ public class FluentAssetBuilderImpl
     return assetData;
   }
 
-  private Asset updateAsset(Asset asset) {
+  private Asset updateAsset(final Asset asset) {
     updateAssetBlob(asset);
     updateAssetAttributes(asset);
     return asset;
@@ -184,7 +184,7 @@ public class FluentAssetBuilderImpl
     return asset;
   }
 
-  private Asset updateAssetAttributes(Asset asset) {
+  private Asset updateAssetAttributes(final Asset asset) {
     if (attributes != null && !attributes.isEmpty()) {
       AttributeChangeSet changeSet = new AttributeChangeSet();
       attributes.forEach((key, value) -> changeSet.attributes(AttributeOperation.OVERLAY, key, value));
@@ -194,7 +194,7 @@ public class FluentAssetBuilderImpl
     return asset;
   }
 
-  private void postTransaction(Asset asset) {
+  private void postTransaction(final Asset asset) {
     if (attributes != null && !attributes.isEmpty()) {
       asset.blob()
           .ifPresent(blob -> facet
@@ -220,7 +220,7 @@ public class FluentAssetBuilderImpl
     headers.put(CREATED_BY_IP_HEADER, tempHeaders.get(CREATED_BY_IP_HEADER));
     headers.put(CONTENT_TYPE_HEADER, facet.checkContentType(assetData, blob));
 
-    Blob permanentBlob = facet.stores().blobStoreProvider.get().makeBlobPermanent(blob.getId(), headers);
+    Blob permanentBlob = facet.stores().blobStoreProvider.get().makeBlobPermanent(blob, headers);
     NestedAttributesMap componentAttributes = assetData.component().map(Component::attributes).orElse(null);
     Map<String, String> checksums = assetData.blob().map(AssetBlob::checksums).orElse(null);
     facet.blobMetadataStorage()

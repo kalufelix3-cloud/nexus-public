@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
@@ -203,6 +204,11 @@ public interface BlobStore
   boolean isInternalMoveSupported(BlobStore destBlobStore);
 
   /**
+   * @return {@code true} if the provided blob is owned by this instance.
+   */
+  boolean isOwner(Blob blob);
+
+  /**
    * Moves a blob from one blob store to another. The blob must be in this blob store.
    *
    * @since 3.8
@@ -214,8 +220,8 @@ public interface BlobStore
    *
    * @since 3.37
    */
-  default Blob makeBlobPermanent(final BlobId blobId, final Map<String, String> headers) {
-    return copy(blobId, headers); // default to copy for non-cloud blob stores
+  default Blob makeBlobPermanent(final Blob blob, final Map<String, String> headers) {
+    return copy(blob.getId(), headers); // default to copy for non-cloud blob stores
   }
 
   /**
@@ -438,10 +444,11 @@ public interface BlobStore
    * Deletes the blob if it is indeed a Temporary blob Note: This method should only called with a BlobId known to have
    * been created as a TempBlob, implementations may perform no checks if they provide no special handling.
    *
+   * @returns {@code true} if the blob was owned by this instance, {@code false} otherwise
    * @since 3.37
    */
-  default boolean deleteIfTemp(final BlobId blobId) {
-    return deleteHard(blobId);
+  default boolean deleteIfTemp(final Blob blob) {
+    return deleteHard(blob.getId());
   }
 
   default void validateCanCreateAndUpdate() throws Exception {

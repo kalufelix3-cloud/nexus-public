@@ -44,11 +44,13 @@ public abstract class CloudBlobStoreSupport<T extends AttributesLocation>
   }
 
   @Override
-  public final Blob makeBlobPermanent(final BlobId blobId, final Map<String, String> headers) {
+  public final Blob makeBlobPermanent(final Blob blob, final Map<String, String> headers) {
     if (headers.containsKey(TEMPORARY_BLOB_HEADER)) {
       throw new IllegalArgumentException(
           String.format("Permanent blob headers must not contain entry with '%s' key.", TEMPORARY_BLOB_HEADER));
     }
+
+    BlobId blobId = blob.getId();
 
     return Optional.ofNullable(get(blobId))
         .map(Blob::getHeaders)
@@ -58,7 +60,7 @@ public abstract class CloudBlobStoreSupport<T extends AttributesLocation>
           return writeBlobProperties(blobId, headers);
         })
         // We were given a blob that was already made permanent, so we need to copy it instead.
-        .orElseGet(() -> super.makeBlobPermanent(blobId, headers));
+        .orElseGet(() -> super.makeBlobPermanent(blob, headers));
   }
 
   /**
@@ -75,14 +77,16 @@ public abstract class CloudBlobStoreSupport<T extends AttributesLocation>
   }
 
   @Override
-  public boolean deleteIfTemp(final BlobId blobId) {
-    Blob blob = getBlobFromCache(blobId);
-    if (blob != null) {
+  public boolean deleteIfTemp(final Blob blob) {
+    if (isOwner(blob)) {
       Map<String, String> headers = blob.getHeaders();
       if (headers == null || headers.containsKey(TEMPORARY_BLOB_HEADER)) {
-        return deleteHard(blobId);
+        return deleteHard(blob.getId());
       }
-      log.debug("Not deleting. Blob with id: {} is permanent.", blobId.asUniqueString());
+      log.atDebug()
+          .addArgument(() -> blob.getId().asUniqueString())
+          .log("Not deleting. Blob with id: {} is permanent.");
+      return true;
     }
     return false;
   }

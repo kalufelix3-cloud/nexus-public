@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.file;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemException;
@@ -34,6 +35,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.BlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
+import org.sonatype.nexus.blobstore.StreamMetrics;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -608,6 +610,27 @@ public class FileBlobStoreTest
     verify(newBlobAttributes).store();
   }
 
+  @Test
+  public void testIsOwner() throws Exception {
+    assertThat(underTest.isOwner(mock(Blob.class)), is(false));
+
+    StreamMetrics metrics = new StreamMetrics(1, "abcd");
+    when(fileOperations.create(any(), any())).thenReturn(metrics);
+
+    BlobStoreConfiguration configuration = new MockBlobStoreConfiguration();
+    Map<String, Object> file = new HashMap<>();
+    file.put("path", temporaryFolder.newFolder().getAbsolutePath());
+    configuration.setAttributes(Map.of("file", file));
+
+    Blob blob = createBlobStore(configuration).create(new ByteArrayInputStream(new byte[0]),
+        Map.of(BLOB_NAME_HEADER, "foo", CREATED_BY_HEADER, "jsmith"));
+    assertThat("Blob owned by different instance should return false", underTest.isOwner(blob), is(false));
+
+    blob = underTest.create(new ByteArrayInputStream(new byte[0]),
+        Map.of(BLOB_NAME_HEADER, "foo", CREATED_BY_HEADER, "jsmith"));
+    assertThat(underTest.isOwner(blob), is(true));
+  }
+
   private TestFileBlobStore createFixture() {
     BlobStoreConfiguration configuration = new MockBlobStoreConfiguration();
 
@@ -632,6 +655,17 @@ public class FileBlobStoreTest
     verify(attributes).setDeletedReason("test-reason");
     verify(attributes).store();
     verify(fileBlobDeletionIndex).createRecord(blobId);
+  }
+
+  private FileBlobStore createBlobStore(final BlobStoreConfiguration configuration) throws Exception {
+    FileBlobStore blobstore = new FileBlobStore(util.createTempDir().toPath(), blobIdLocationResolver, fileOperations,
+        metrics, configuration, appDirs, nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker,
+        fileBlobDeletionIndex);
+    blobstore.init(configuration);
+    blobstore.setLiveBlobs(loadingCache);
+    blobstore.start();
+
+    return blobstore;
   }
 
   // test class to provide isReconcilePlanEnabled() method

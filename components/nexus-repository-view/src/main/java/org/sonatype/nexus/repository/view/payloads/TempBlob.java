@@ -50,10 +50,11 @@ public class TempBlob
 
   protected boolean deleted = false;
 
-  public TempBlob(final Blob blob,
-                  final Map<HashAlgorithm, HashCode> hashes,
-                  final boolean hashesVerified,
-                  final BlobStore blobStore)
+  public TempBlob(
+      final Blob blob,
+      final Map<HashAlgorithm, HashCode> hashes,
+      final boolean hashesVerified,
+      final BlobStore blobStore)
   {
     this.blob = checkNotNull(blob);
     this.hashes = checkNotNull(hashes);
@@ -96,7 +97,7 @@ public class TempBlob
       return;
     }
     try {
-      blobStore.deleteIfTemp(blob.getId());
+      blobStore.deleteIfTemp(blob);
       deleted = true;
     }
     catch (BlobStoreException e) {

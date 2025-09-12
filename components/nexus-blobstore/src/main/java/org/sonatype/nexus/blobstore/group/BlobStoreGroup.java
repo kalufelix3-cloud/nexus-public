@@ -30,8 +30,6 @@ import javax.cache.Cache;
 import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.blobstore.MemoryBlobSession;
@@ -65,7 +63,13 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.hash.HashCode;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.synchronizedList;
@@ -79,10 +83,6 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.SHUTDOWN;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STOPPED;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * A {@link BlobStore} consisting of other blob stores.
@@ -248,8 +248,23 @@ public class BlobStoreGroup
   }
 
   @Override
-  public boolean isInternalMoveSupported(BlobStore destBlobStore) {
+  public boolean isInternalMoveSupported(final BlobStore destBlobStore) {
     return false;
+  }
+
+  @Guarded(by = STARTED)
+  @Override
+  public Blob makeBlobPermanent(final Blob blob, final Map<String, String> headers) {
+    return locate(blob)
+        .orElseThrow(() -> new BlobStoreException("Blob is not owned by a group member", blob.getId()))
+        .makeBlobPermanent(blob, headers);
+  }
+
+  @Guarded(by = STARTED)
+  public boolean deleteIfTemp(final Blob blob) {
+    return members.get()
+        .stream()
+        .anyMatch(blobstore -> blobstore.deleteIfTemp(blob));
   }
 
   @Override
@@ -560,6 +575,14 @@ public class BlobStoreGroup
     return Optional.ofNullable(blobStore);
   }
 
+  @VisibleForTesting
+  Optional<BlobStore> locate(final Blob blob) {
+    return members.get()
+        .stream()
+        .filter(candidate -> candidate.isOwner(blob))
+        .findAny();
+  }
+
   private BlobStore search(final BlobId blobId) {
     log.trace("Searching for {} in {}", blobId, members);
     return members.get()
@@ -609,5 +632,12 @@ public class BlobStoreGroup
       log.error("Error occurred getting attributes for group blobstore", e);
       throw new BlobStoreException(e, blobId);
     }
+  }
+
+  @Override
+  public boolean isOwner(Blob blob) {
+    return members.get()
+        .stream()
+        .anyMatch(member -> member.isOwner(blob));
   }
 }
