@@ -42,7 +42,8 @@ public class DataStoreConfigurationDefaultSource
 {
   static final String DEFAULT = "default";
 
-  private static final String JDBC_TEMPLATE_URL = "jdbc:h2:file:${karaf.data}/db/" + DEFAULT_DATASTORE_NAME;
+  private static final String JDBC_TEMPLATE_URL =
+      "jdbc:h2:file:${karaf.data}/db/" + DEFAULT_DATASTORE_NAME + ";DB_CLOSE_ON_EXIT=FALSE";
 
   private static final String JDBC = "jdbc";
 

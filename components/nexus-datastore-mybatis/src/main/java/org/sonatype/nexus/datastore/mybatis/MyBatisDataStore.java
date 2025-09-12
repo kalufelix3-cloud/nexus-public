@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -322,11 +323,48 @@ public class MyBatisDataStore
     previousConfig = ofNullable(mybatisConfig);
     mybatisConfig = null;
     try {
+      // Execute H2 SHUTDOWN if this is an H2 database
+      if (isH2Database()) {
+        log.info("Shutting down H2 database");
+        executeH2Shutdown();
+      }
       dataSource.close();
     }
     finally {
       dataSource = null;
     }
+  }
+
+  boolean isH2Database() {
+    String jdbcUrl = configuration.getAttributes().get("jdbcUrl");
+    return jdbcUrl != null && jdbcUrl.toLowerCase().contains("jdbc:h2:");
+  }
+
+  private void executeH2Shutdown() {
+    if (dataSource.isClosed()) {
+      log.debug("Data source is already closed, skipping H2 SHUTDOWN command");
+      return;
+    }
+
+    try (Connection connection = dataSource.getConnection();
+        Statement statement = connection.createStatement()) {
+      statement.execute("SHUTDOWN");
+      log.info("Executed H2 SHUTDOWN command");
+    }
+    catch (SQLException e) {
+      if (isDatabaseAlreadyClosed(e)) {
+        log.debug("H2 database was already closed during shutdown");
+      }
+      else {
+        log.warn("Failed to execute H2 SHUTDOWN command", e);
+      }
+    }
+  }
+
+  private boolean isDatabaseAlreadyClosed(final SQLException e) {
+    return e.getMessage() != null &&
+        e.getMessage().contains("Database is already closed") &&
+        e.getErrorCode() == 90121;
   }
 
   @Override

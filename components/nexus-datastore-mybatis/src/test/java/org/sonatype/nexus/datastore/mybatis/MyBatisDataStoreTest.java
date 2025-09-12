@@ -30,6 +30,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.springframework.context.ApplicationContext;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -92,4 +94,31 @@ class MyBatisDataStoreTest
     assertDoesNotThrow(underTest::start, "Restart should not fail");
   }
 
+  @Test
+  void testH2DatabaseDetection() {
+    // Test H2 database detection
+    DataStoreConfiguration h2Config = new DataStoreConfiguration();
+    h2Config.setName("test-h2");
+    h2Config.setAttributes(Map.of("jdbcUrl", "jdbc:h2:file:/tmp/test"));
+
+    MyBatisDataStore h2Store = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
+        List.of(declaredAccessType), List.of(), true);
+    h2Store.setConfiguration(h2Config);
+
+    assertThat(h2Store.isH2Database(), is(true));
+  }
+
+  @Test
+  void testNonH2DatabaseSkipsShutdown() throws Exception {
+    // Test non-H2 database
+    DataStoreConfiguration postgresConfig = new DataStoreConfiguration();
+    postgresConfig.setName("test-postgres");
+    postgresConfig.setAttributes(Map.of("jdbcUrl", "jdbc:postgresql://localhost/test"));
+
+    MyBatisDataStore postgresStore = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
+        List.of(declaredAccessType), List.of(), true);
+    postgresStore.setConfiguration(postgresConfig);
+
+    assertThat(postgresStore.isH2Database(), is(false));
+  }
 }
