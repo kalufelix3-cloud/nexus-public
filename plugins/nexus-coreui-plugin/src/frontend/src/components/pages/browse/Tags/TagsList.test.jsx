@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen, waitForElementToBeRemoved, within} from '@testing-library/react';
+import {render, screen, waitForElementToBeRemoved, within, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axios from 'axios';
 import {sort, prop, descend, ascend} from 'ramda';
@@ -34,6 +34,10 @@ describe('TagsList', function() {
     }
   ],
   emptyTag = [];
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
   const FIELDS = {
     ID: 'id',
@@ -62,7 +66,9 @@ describe('TagsList', function() {
 
   it('renders the resolved empty text', async function() {
     await renderView(emptyTag);
-    expect(selectors.getEmptyMessage()).toBeInTheDocument();
+    await waitFor(() => {
+      expect(selectors.getEmptyMessage()).toBeInTheDocument();
+    });
   });
 
   it('renders the error message', async function() {
