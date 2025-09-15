@@ -35,7 +35,7 @@
     <bcutil.fips.version>2.1.4</bcutil.fips.version>
     <bc.fips.version>2.1.1</bc.fips.version>
     <java-jwt.version>3.16.0</java-jwt.version>
-    <nimbusds.jwt.version>10.0.2</nimbusds.jwt.version>
+    <nimbusds.jwt.version>10.2</nimbusds.jwt.version>
     <nimbusds.oauth2.version>11.23.1</nimbusds.oauth2.version>
   </properties>
 

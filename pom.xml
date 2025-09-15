@@ -559,7 +559,6 @@
         <version>3.85.0-SNAPSHOT</version>
         <type>zip</type>
       </dependency>
-
     </dependencies>
   </dependencyManagement>
 
