@@ -50,7 +50,9 @@ public class TaskLogHome
     if (!(appender instanceof SiftingAppender) && !(appender instanceof RollingFileAppender)) {
       // We are forgiving if the task log appender does not exist. It could be that a user had a customized logback.xml
       // as of 3.4.1 when task logging was introduced. We don't want to block application start in this scenario.
-      log.warn("Could not find a Logback SiftingAppender or RollingFileAppender named 'tasklogfile' in the " +
+      // This does not always mean there is a problem. Not using SiftingAppender or RollingFileAppender may be
+      // appropriate for some environments.
+      log.info("Could not find a Logback SiftingAppender or RollingFileAppender named 'tasklogfile' in the " +
           "logback configuration. Please check that the 'tasklogfile' appender exists in logback.xml");
       return null;
     }
