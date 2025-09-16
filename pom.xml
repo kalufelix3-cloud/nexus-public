@@ -69,7 +69,7 @@
     <spring.version>6.2.10</spring.version>
 
     <!-- Define the node and yarn versions used by the frontend-maven-plugin -->
-    <node.version>v18.17.1</node.version>
+    <node.version>v22.19.0</node.version>
     <yarn.version>v1.22.19</yarn.version>
     <npm.install>install --immutable</npm.install>
     <npm.skipTests>false</npm.skipTests>
