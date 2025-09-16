@@ -160,17 +160,11 @@ Ext.define('NX.coreui.controller.SslTrustStore', {
 
     useTrustStoreCheckbox = useTrustStoreField.down('checkbox');
     useTrustStoreButton = useTrustStoreField.down('button');
-    useTrustStoreField.mon(
-        NX.Conditions.and(
-            NX.Conditions.isPermitted('nexus:ssl-truststore:create'),
-            NX.Conditions.isPermitted('nexus:ssl-truststore:update')
-        ),
-        {
-          satisfied: useTrustStoreCheckbox.enable,
-          unsatisfied: useTrustStoreCheckbox.disable,
-          scope: useTrustStoreCheckbox
-        }
-    );
+    
+    // Checkbox is always enabled. Permission checks were intentionally removed to align with REST API behavior.
+    // The REST API does not require special permissions to toggle this option, so the UI was updated for consistency.
+    useTrustStoreCheckbox.enable();
+    
     useTrustStoreField.mon(
         NX.Conditions.isPermitted('nexus:ssl-truststore:read'),
         {

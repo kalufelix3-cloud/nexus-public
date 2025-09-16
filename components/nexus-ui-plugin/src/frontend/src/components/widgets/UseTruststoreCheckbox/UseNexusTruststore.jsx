@@ -37,21 +37,16 @@ const {
 
 export default function UseNexusTruststore({remoteUrl, ...checkboxProps}) {
   const [showModal, setShowModal] = useState(false);
-  const canCreate = ExtJS.checkPermission(Permissions.SSL_TRUSTSTORE.CREATE);
-  const canUpdate = ExtJS.checkPermission(Permissions.SSL_TRUSTSTORE.UPDATE);
   const canRead = ExtJS.checkPermission(Permissions.SSL_TRUSTSTORE.READ);
-  const canMarkAsChecked = canCreate && canUpdate;
   const hasSecureRemoteUrl = ValidationUtils.isSecureUrl(remoteUrl);
-  const disabledCheckbox = !canMarkAsChecked || !hasSecureRemoteUrl;
+  const disabledCheckbox = !hasSecureRemoteUrl;
   const disabledViewCertificate = !canRead || !hasSecureRemoteUrl;
   const viewCertificateClasses = classNames({
     disabled: disabledViewCertificate,
   });
   let message;
 
-  if (!canMarkAsChecked) {
-    message = UIStrings.PERMISSION_ERROR;
-  } else if (!hasSecureRemoteUrl) {
+  if (!hasSecureRemoteUrl) {
     message = NOT_SECURE_URL;
   }
 
