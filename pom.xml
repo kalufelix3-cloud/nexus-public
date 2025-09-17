@@ -1831,6 +1831,10 @@
           <name>m2e.version</name>
         </property>
       </activation>
+      <properties>
+        <maven.build.cache.enabled>false</maven.build.cache.enabled>
+        <maven.project.sourceRoots.warningsDisabled>true</maven.project.sourceRoots.warningsDisabled>
+      </properties>
       <build>
         <pluginManagement>
           <plugins>
