@@ -167,7 +167,7 @@ export default function S3BlobStoreSettings({service}) {
         </div>
     }
 
-    <NxStatefulAccordion defaultOpen={hasAuthenticationSettings}>
+    <NxStatefulAccordion defaultOpen={true}>
       <NxAccordion.Header>
         <h2 className="nx-accordion__header-title">{FIELDS.S3BlobStore_Authentication_Title}</h2>
       </NxAccordion.Header>

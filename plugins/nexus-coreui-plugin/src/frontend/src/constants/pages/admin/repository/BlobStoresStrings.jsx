@@ -206,7 +206,7 @@ export default {
     S3BlobStore_Presigned_HelpText: 'Allow Nexus Repository to redirect users to download binaries from S3',
     S3BlobStore_Prefix_FieldLabel: 'Prefix',
     S3BlobStore_Prefix_HelpText: 'S3 Path prefix',
-    S3BlobStore_Authentication_Title: 'Authentication (Optional)',
+    S3BlobStore_Authentication_Title: 'Authentication',
     S3BlobStore_Authentication_AccessKeyId: 'Access Key ID',
     S3BlobStore_Authentication_SecretAccessKey: 'Secret Access Key',
     S3BlobStore_Authentication_AssumeRoleArn: 'Assume Role ARN (Optional)',
