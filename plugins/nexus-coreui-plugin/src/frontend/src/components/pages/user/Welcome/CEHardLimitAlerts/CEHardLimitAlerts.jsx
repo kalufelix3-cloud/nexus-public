@@ -59,7 +59,7 @@ export default function CEHardLimitAlerts() {
   function PurchaseOrUploadHeaderLinks() {
     return(
       <>
-        <NxTextLink target="_blank" className="usage-view-pricing-link" href={useViewPurchaseALicenseUrl()}>Purchase a license to remove limits</NxTextLink>, or if you have already purchased a license{' '}
+        <NxTextLink external className="usage-view-pricing-link" href={useViewPurchaseALicenseUrl()}>Purchase a license to remove limits</NxTextLink>, or if you have already purchased a license{' '}
         <NxTextLink className="ce-upload-license" href="#admin/system/licensing">upload it here</NxTextLink>.
         <NxButtonBar>
           <a
