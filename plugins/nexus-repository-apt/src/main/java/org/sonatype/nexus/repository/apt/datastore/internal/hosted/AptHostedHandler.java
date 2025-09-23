@@ -37,8 +37,6 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.apache.commons.lang3.StringUtils;
 
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.INRELEASE;
-import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE;
-import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE_GPG;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 import static org.sonatype.nexus.repository.http.HttpMethods.POST;
@@ -116,8 +114,7 @@ public class AptHostedHandler
   }
 
   private boolean isMetadataRebuildRequired(final String path, final AptContentFacet contentFacet) {
-    if (StringUtils.startsWith(path, "dists")
-        && StringUtils.endsWithAny(path, INRELEASE, RELEASE, RELEASE_GPG, "/Packages")) {
+    if (StringUtils.startsWith(path, "dists")) {
       String inReleasePath = "dists/" + contentFacet.getDistribution() + "/" + INRELEASE;
       return !contentFacet.get(inReleasePath).isPresent();
     }
