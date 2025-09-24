@@ -724,24 +724,34 @@ Ext.define('NX.coreui.controller.Repositories', {
   },
 
   checkFirewallCapabilitiesStatus: function(repositoryName, callback) {
-    NX.direct.firewall_RepositoryStatus.readCapabilitiesStatus(repositoryName, function (response) {
-      if (Ext.isObject(response) && response.success && response.data != null) {
-        callback(response.data === true);
-      } else {
-        callback(false);
-      }
-    });
+    if (NX.direct.firewall_RepositoryStatus && NX.direct.firewall_RepositoryStatus.readCapabilitiesStatus) {
+      NX.direct.firewall_RepositoryStatus.readCapabilitiesStatus(repositoryName, function (response) {
+        if (Ext.isObject(response) && response.success && response.data != null) {
+          callback(response.data === true);
+        } else {
+          callback(false);
+        }
+      });
+    } else {
+      // Firewall component not available, assume capabilities not enabled
+      callback(false);
+    }
   },
 
   checkFirewallCapabilitiesStatusForPypi: function(repositoryName, callback) {
-    NX.direct.firewall_RepositoryStatus.readCapabilitiesStatus(repositoryName, function (response) {
-      if (Ext.isObject(response) && response.success && response.data != null) {
-        callback(response.data === true);
-      }
-      else {
-        callback(false);
-      }
-    });
+    if (NX.direct.firewall_RepositoryStatus && NX.direct.firewall_RepositoryStatus.readCapabilitiesStatus) {
+      NX.direct.firewall_RepositoryStatus.readCapabilitiesStatus(repositoryName, function (response) {
+        if (Ext.isObject(response) && response.success && response.data != null) {
+          callback(response.data === true);
+        }
+        else {
+          callback(false);
+        }
+      });
+    } else {
+      // Firewall component not available, assume capabilities not enabled
+      callback(false);
+    }
   },
 
   onNugetProxyVersionChange: function(element, newValue) {
