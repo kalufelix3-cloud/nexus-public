@@ -14,32 +14,36 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {createRouter} from '@sonatype/nexus-ui-plugin';
-import {ROUTE_NAMES} from './routeNames/routeNames';
-import {browseRoutes} from './routes/browseRoutes';
-import {adminRoutes} from './routes/adminRoutes';
-import {userRoutes} from './routes/userRoutes';
-import {getLoginRoutes} from './routes/loginRoutes';
-import {MissingRoutePage} from '../components/pages/MissingRoutePage/MissingRoutePage';
+import { ROUTE_NAMES } from '../routeNames/routeNames';
+import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import CoreUILoginPageWrapper from '../../components/login/CoreUILoginPageWrapper';
 
-export function getRouter() {
-  const initialRoute = ROUTE_NAMES.BROWSE.WELCOME.ROOT;
+const LOGIN = ROUTE_NAMES.LOGIN;
 
-  const menuRoutes = [
-    ...browseRoutes,
-    ...adminRoutes,
-    ...userRoutes,
-    ...getLoginRoutes(),
-  ];
+/**
+ * Login routes configuration.
+ * Routes are only registered if the React login feature flag is enabled.
+ */
+export function getLoginRoutes() {
+  // Check if ExtJS is available (not available in test environment)
+  if (!ExtJS?.state) {
+    return [];
+  }
+  
+  const isReactLoginEnabled = ExtJS.state().getValue('nexus.login.react.enabled', false);
+  
+  if (!isReactLoginEnabled) {
+    return [];
+  }
 
-  const missingRoute = {
-    name: ROUTE_NAMES.MISSING_ROUTE,
-    url: '404',
-    component: MissingRoutePage,
-    data: {
-      visibilityRequirements: {}
+  return [
+    {
+      name: LOGIN,
+      url: 'login',
+      component: CoreUILoginPageWrapper,
+      data: {
+        visibilityRequirements: {}
+      }
     }
-  };
-
-  return createRouter({initialRoute, menuRoutes, missingRoute});
+  ];
 }

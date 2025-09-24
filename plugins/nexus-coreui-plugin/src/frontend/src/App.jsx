@@ -12,10 +12,11 @@
  */
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { UIRouter, UIView } from '@uirouter/react';
+import { UIRouter, UIView, useRouter } from '@uirouter/react';
 import { ExtJS, UnsavedChangesModal } from '@sonatype/nexus-ui-plugin';
 
 import { getRouter } from './routerConfig/routerConfig';
+import { ROUTE_NAMES } from './routerConfig/routeNames/routeNames';
 import LeftNavigationMenu from './components/LeftNavigationMenu/LeftNavigationMenu';
 import GlobalHeader from './components/GlobalHeader/GlobalHeader';
 
@@ -29,6 +30,10 @@ export function App() {
   useRedirectOnLogout();
   usePreventPushStateOnHash();
 
+  const router = useRouter();
+  const currentStateName = router.stateService.current.name;
+  const isLoginRoute = currentStateName === ROUTE_NAMES.LOGIN;
+
   const branding = ExtJS.state().getValue('branding');
 
   const headerEnabled = branding?.headerEnabled;
@@ -36,6 +41,18 @@ export function App() {
   const footerEnabled = branding?.footerEnabled;
   const footerHtml = branding?.footerHtml;
 
+  // Render minimal layout for login route
+  if (isLoginRoute) {
+    return (
+      <>
+        <SystemNotices />
+        <UnsavedChangesModal/>
+        <UIView />
+      </>
+    );
+  }
+
+  // Render standard layout for all other routes
   return (
     <>
       <SystemNotices />

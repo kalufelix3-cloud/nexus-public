@@ -16,6 +16,7 @@
  */
 import HistoricalUsageStrings from "./HistoricalUsageStrings";
 import CleanupPoliciesStrings from "./admin/CleanupPoliciesStrings";
+import LoginPageStrings from "./LoginPageStrings";
 
 /**
  * @since 3.21
@@ -115,5 +116,6 @@ export default {
   },
 
   ...HistoricalUsageStrings,
-  ...CleanupPoliciesStrings
+  ...CleanupPoliciesStrings,
+  ...LoginPageStrings
 };

@@ -26,4 +26,5 @@ export const ROUTE_NAMES = mergeDeepRight(RouteNames, {
   ADMIN: { ...adminRouteNames },
   BROWSE: { ...browseRouteNames },
   USER: { ...userRouteNames },
+  LOGIN: 'login'
 });
