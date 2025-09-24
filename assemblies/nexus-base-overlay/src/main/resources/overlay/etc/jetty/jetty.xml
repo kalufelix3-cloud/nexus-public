@@ -31,7 +31,7 @@
     <Set name="maxErrorDispatches" property="jetty.httpConfig.maxErrorDispatches"/>
     <Set name="persistentConnectionsEnabled" property="jetty.httpConfig.persistentConnectionsEnabled"/>
     <Set name="httpCompliance"><Call class="org.eclipse.jetty.http.HttpCompliance" name="from"><Arg><Property name="jetty.httpConfig.compliance" deprecated="jetty.http.compliance" default="RFC7230"/></Arg></Call></Set>
-    <Set name="uriCompliance"><Call class="org.eclipse.jetty.http.UriCompliance" name="from"><Arg><Property name="jetty.httpConfig.uriCompliance" default="RFC3986_UNAMBIGUOUS"/></Arg></Call></Set>
+    <Set name="uriCompliance"><Call class="org.eclipse.jetty.http.UriCompliance" name="from"><Arg><Property name="jetty.httpConfig.uriCompliance" default="DEFAULT"/></Arg></Call></Set>
     <Set name="requestCookieCompliance"><Call class="org.eclipse.jetty.http.CookieCompliance" name="from"><Arg><Property name="jetty.httpConfig.requestCookieCompliance" default="RFC6265"/></Arg></Call></Set>
     <Set name="responseCookieCompliance"><Call class="org.eclipse.jetty.http.CookieCompliance" name="from"><Arg><Property name="jetty.httpConfig.responseCookieCompliance" default="RFC6265"/></Arg></Call></Set>
     <Set name="relativeRedirectAllowed"><Property name="jetty.httpConfig.relativeRedirectAllowed" default="false"/></Set>
@@ -49,6 +49,13 @@
      See https://jetty.org/docs/jetty/12/programming-guide/server/compliance.html#uri for uri compliance info
      See [UriCompliance](https://javadoc.jetty.org/jetty-12/org/eclipse/jetty/http/UriCompliance.html) class
      -->
+    <Set name="uriCompliance">
+      <Call class="org.eclipse.jetty.http.UriCompliance" name="from">
+        <Arg>
+          <Property name="jetty.httpConfig.uriCompliance" default="LEGACY"/>
+        </Arg>
+      </Call>
+    </Set>
     <!-- ForwardedRequestCustomizer must always be the first customizer -->
     <Call name="addCustomizer">
       <Arg>
