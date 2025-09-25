@@ -30,6 +30,7 @@ import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.privilege.ApplicationPermission;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
+import org.sonatype.nexus.selector.SelectorEvaluationException;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.Permission;
@@ -147,6 +148,14 @@ public class RepositoryPermissionCheckerTest
     when(selectorManager.browseActive(Arrays.asList(REPOSITORY_NAME_1, REPOSITORY_NAME_2),
         Collections.singletonList(REPOSITORY_FORMAT))).thenReturn(asList(selector));
 
+    when(selectorManager.browseActive(Collections.singletonList(REPOSITORY_NAME),
+        Collections.singletonList(REPOSITORY_FORMAT))).thenReturn(asList(selector));
+    try {
+      when(selectorManager.evaluate(any(), any())).thenReturn(true);
+    }
+    catch (SelectorEvaluationException e) {
+      // This won't be reached, just to satisfy compiler
+    }
     when(securityHelper.isPermitted(same(subject), any(), any(), any()))
         .thenReturn(new boolean[]{true, false, false});
     when(securityHelper.subject()).thenReturn(subject);

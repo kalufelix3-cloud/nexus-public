@@ -34,6 +34,10 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
+import org.sonatype.nexus.selector.ConstantVariableResolver;
+import org.sonatype.nexus.selector.SelectorEvaluationException;
+import org.sonatype.nexus.selector.VariableSource;
+import org.sonatype.nexus.selector.VariableSourceBuilder;
 
 import com.google.common.collect.Iterables;
 import org.apache.shiro.authz.AuthorizationException;
@@ -326,12 +330,37 @@ public class RepositoryPermissionChecker
   }
 
   private boolean userHasAnyContentSelectorAccessTo(final Repository repository, final String... actions) {
-    Subject subject = securityHelper.subject(); // Getting the subject a single time improves performance
-    return selectorManager.browse()
+    Subject subject = securityHelper.subject();
+    List<String> repositoryNames = singletonList(repository.getName());
+    List<String> formats = singletonList(repository.getFormat().getValue());
+
+    return selectorManager.browseActive(repositoryNames, formats)
         .stream()
-        .anyMatch(selector -> securityHelper.anyPermitted(subject,
-            Arrays.stream(actions)
-                .map(action -> new RepositoryContentSelectorPermission(selector, repository, singletonList(action)))
-                .toArray(Permission[]::new)));
+        .anyMatch(selector -> {
+          boolean hasPrivilege = securityHelper.anyPermitted(subject,
+              Arrays.stream(actions)
+                  .map(action -> new RepositoryContentSelectorPermission(selector, repository, singletonList(action)))
+                  .toArray(Permission[]::new));
+
+          boolean selectorMatches = evaluateSelectorExpression(selector, repository);
+
+          return hasPrivilege && selectorMatches;
+        });
+  }
+
+  private boolean evaluateSelectorExpression(final SelectorConfiguration selector, final Repository repository) {
+    try {
+      VariableSourceBuilder builder = new VariableSourceBuilder();
+      builder.addResolver(new ConstantVariableResolver(repository.getFormat().getValue(), "format"));
+      builder.addResolver(new ConstantVariableResolver(repository.getName(), "repository"));
+
+      VariableSource variableSource = builder.build();
+
+      return selectorManager.evaluate(selector, variableSource);
+    }
+    catch (SelectorEvaluationException e) {
+      log.warn("Failed to evaluate selector '{}' for repository '{}'", selector.getName(), repository.getName(), e);
+      return false;
+    }
   }
 }
