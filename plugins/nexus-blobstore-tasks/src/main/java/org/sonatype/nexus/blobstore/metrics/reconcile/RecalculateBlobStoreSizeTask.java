@@ -63,7 +63,6 @@ public class RecalculateBlobStoreSizeTask
   @Override
   protected void execute(final BlobStore blobStore) {
     DateTime currentDate = DateTime.now();
-    boolean includeSoftDeleted = !blobStore.getBlobStoreConfiguration().getType().equals(S3_TYPE);
 
     BlobStoreMetricsService metricsService = blobStore.getMetricsService();
     metricsService.clearCountMetrics();
@@ -76,7 +75,7 @@ public class RecalculateBlobStoreSizeTask
           .map(blobStore::getBlobAttributes)
           .filter(Objects::nonNull)
           .filter(attributes -> isCreatedBefore(attributes, currentDate))
-          .filter(attributes -> includeSoftDeleted || !attributes.isDeleted())
+          .filter(attributes -> !attributes.isDeleted())
           .map(attributes -> attributes.getMetrics().getContentSize())
           .forEach(blobSize -> {
             totalSize.addAndGet(blobSize);
