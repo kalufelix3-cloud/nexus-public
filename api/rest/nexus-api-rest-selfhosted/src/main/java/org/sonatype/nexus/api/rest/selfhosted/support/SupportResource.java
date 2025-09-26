@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.support;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -38,10 +36,14 @@ import io.swagger.annotations.ApiOperation;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
+import static org.sonatype.nexus.common.supportzip.SupportZipConstants.REST_SUPPORT_RESOURCE_URI;
 import static org.sonatype.nexus.repository.http.HttpStatus.FORBIDDEN;
 import static org.sonatype.nexus.repository.http.HttpStatus.OK;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -50,17 +52,18 @@ import org.springframework.stereotype.Component;
  * @since 3.13
  */
 @Component
-@Singleton
-@Path(SupportResource.RESOURCE_URI)
+@Path(REST_SUPPORT_RESOURCE_URI)
 @Api("Support")
 public class SupportResource
     extends ComponentSupport
     implements Resource
 {
-  public static final String RESOURCE_URI = "/v1/support";
+  private final SupportZipGenerator supportZipGenerator;
 
-  @Inject
-  private SupportZipGenerator supportZipGenerator;
+  @Autowired
+  public SupportResource(final SupportZipGenerator supportZipGenerator) {
+    this.supportZipGenerator = checkNotNull(supportZipGenerator);
+  }
 
   @RequiresAuthentication
   @RequiresPermissions("nexus:atlas:create")

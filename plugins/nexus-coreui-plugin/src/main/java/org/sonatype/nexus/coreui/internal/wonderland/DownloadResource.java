@@ -23,6 +23,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.supportzip.SupportZipConstants;
 import org.sonatype.nexus.common.wonderland.AuthTicketService;
 import org.sonatype.nexus.common.wonderland.DownloadService;
 import org.sonatype.nexus.common.wonderland.DownloadService.Download;
@@ -46,12 +47,11 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Singleton
-@Path(DownloadResource.RESOURCE_URI)
+@Path(SupportZipConstants.WONDERLAND_DOWNLOAD_RESOURCE_URI)
 public class DownloadResource
     extends ComponentSupport
     implements Resource
 {
-  public static final String RESOURCE_URI = "/wonderland/download";
 
   private final DownloadService downloadService;
 
