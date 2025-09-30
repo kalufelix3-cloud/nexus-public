@@ -153,6 +153,30 @@ public class DatastoreCselToSqlTest
     assertThat(builder.getQueryParameters().get("param_0"), is("^/woof|/woof/foo"));
   }
 
+  @Test
+  public void publicDocumentationExampleTest() {
+    // Test the public documentation example: progressive Maven path access
+    // format == "maven2" and (path == "/" or path == "/org/" or path == "/org/apache/" or path =^
+    // "/org/apache/commons/")
+    builder.propertyAlias("format", "format_field");
+    builder.propertyAlias("path", "path_field");
+
+    final ASTJexlScript script = jexlEngine.parseExpression(
+        "format == \"maven2\" and (path == \"/\" or path == \"/org/\" or path == \"/org/apache/\" or path =^ \"/org/apache/commons/\")");
+
+    script.childrenAccept(underTest, builder);
+
+    assertThat(builder.getQueryString(), is(
+        "format_field = :param_0 and (path_field = :param_1 or path_field = :param_2 or path_field = :param_3 or path_field like :param_4)"));
+
+    assertThat(builder.getQueryParameters().size(), is(5));
+    assertThat(builder.getQueryParameters().get("param_0"), is("maven2"));
+    assertThat(builder.getQueryParameters().get("param_1"), is("/"));
+    assertThat(builder.getQueryParameters().get("param_2"), is("/org/"));
+    assertThat(builder.getQueryParameters().get("param_3"), is("/org/apache/"));
+    assertThat(builder.getQueryParameters().get("param_4"), is("/org/apache/commons/%"));
+  }
+
   private void reset() {
     builder.clearQueryString();
     builder.getQueryParameters().clear();

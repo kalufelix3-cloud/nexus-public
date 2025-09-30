@@ -188,9 +188,14 @@ public class BrowseNodeQueryServiceImpl
       // additional filtering that we couldn't do in SQL
       String repositoryName = repository.getName();
       String format = repository.getFormat().getValue();
-      nodes = nodes.stream()
-          .filter(node -> contentAuthHelper.checkPathPermissionsJexlOnly(node.getPath(), format, repositoryName))
-          .collect(toList());
+
+      // PRIVILEGE HIERARCHY: If user has full browse permission, skip content selector filtering
+      // Full repository permissions take precedence over content selector restrictions
+      if (!hasBrowsePermission(repositoryName, format)) {
+        nodes = nodes.stream()
+            .filter(node -> contentAuthHelper.checkPathPermissionsJexlOnly(node.getPath(), format, repositoryName))
+            .collect(toList());
+      }
     }
 
     return nodes;
