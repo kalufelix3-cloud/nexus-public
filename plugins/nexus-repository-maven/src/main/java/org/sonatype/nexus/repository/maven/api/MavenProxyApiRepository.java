@@ -25,7 +25,6 @@ import org.sonatype.nexus.repository.rest.api.model.SimpleApiProxyRepository;
 import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -35,7 +34,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *
  * @since 3.20
  */
-@JsonIgnoreProperties(value = {"format", "type", "url"}, allowGetters = true)
 public class MavenProxyApiRepository
     extends SimpleApiProxyRepository
 {
@@ -56,8 +54,8 @@ public class MavenProxyApiRepository
       @JsonProperty("httpClient") final HttpClientAttributesWithPreemptiveAuth httpClient,
       @JsonProperty("routingRuleName") final String routingRuleName,
       @JsonProperty("maven") final MavenAttributes maven,
-      @JsonProperty("replication") @JsonInclude(value = Include.NON_EMPTY, content = Include.NON_NULL)
-      final ReplicationAttributes replication)
+      @JsonProperty("replication") @JsonInclude(value = Include.NON_EMPTY,
+          content = Include.NON_NULL) final ReplicationAttributes replication)
 
   {
     super(name, Maven2Format.NAME, url, online, storage, cleanup, proxy, negativeCache, httpClient, routingRuleName,

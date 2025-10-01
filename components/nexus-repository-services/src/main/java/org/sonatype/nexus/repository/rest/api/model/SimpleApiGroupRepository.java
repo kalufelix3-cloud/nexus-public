@@ -17,7 +17,6 @@ import javax.validation.constraints.NotNull;
 import org.sonatype.nexus.repository.types.GroupType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 
@@ -26,7 +25,6 @@ import io.swagger.annotations.ApiModelProperty;
  *
  * @since 3.20
  */
-@JsonIgnoreProperties(value = {"format", "type", "url"}, allowGetters = true)
 public class SimpleApiGroupRepository
     extends AbstractApiRepository
 {

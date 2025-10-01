@@ -17,7 +17,6 @@ import javax.validation.constraints.NotNull;
 import org.sonatype.nexus.repository.types.ProxyType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -28,7 +27,6 @@ import io.swagger.annotations.ApiModelProperty;
  *
  * @since 3.20
  */
-@JsonIgnoreProperties(value = {"format", "type", "url"}, allowGetters = true)
 public class SimpleApiProxyRepository
     extends AbstractApiRepository
 {
@@ -63,8 +61,8 @@ public class SimpleApiProxyRepository
       @JsonProperty("negativeCache") final NegativeCacheAttributes negativeCache,
       @JsonProperty("httpClient") final HttpClientAttributes httpClient,
       @JsonProperty("routingRuleName") final String routingRuleName,
-      @JsonProperty("replication") @JsonInclude(value= Include.NON_EMPTY, content=Include.NON_NULL)
-      final ReplicationAttributes replication)
+      @JsonProperty("replication") @JsonInclude(value = Include.NON_EMPTY,
+          content = Include.NON_NULL) final ReplicationAttributes replication)
   {
     super(name, format, ProxyType.NAME, url, online);
     this.storage = storage;
@@ -74,7 +72,7 @@ public class SimpleApiProxyRepository
     this.httpClient = httpClient;
     this.routingRuleName = routingRuleName;
     this.replication = replication;
- }
+  }
 
   public StorageAttributes getStorage() {
     return storage;
@@ -100,5 +98,7 @@ public class SimpleApiProxyRepository
     return routingRuleName;
   }
 
-  public ReplicationAttributes getReplication() { return replication; }
+  public ReplicationAttributes getReplication() {
+    return replication;
+  }
 }

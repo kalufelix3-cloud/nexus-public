@@ -64,6 +64,9 @@ public class SwaggerModel
     // filter banned types from model, such as Groovy's MetaClass
     ModelConverters.getInstance().addConverter(new ModelFilter());
 
+    // fix missing fields and incorrect examples in repository API models
+    ModelConverters.getInstance().addConverter(new RepositoryApiModelConverter());
+
     this.reader = new Reader(createSwagger());
   }
 

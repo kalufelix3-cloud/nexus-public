@@ -22,7 +22,6 @@ import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiHostedRepository;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -30,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *
  * @since 3.20
  */
-@JsonIgnoreProperties(value = {"format", "type", "url"}, allowGetters = true)
 public class MavenHostedApiRepository
     extends SimpleApiHostedRepository
 {

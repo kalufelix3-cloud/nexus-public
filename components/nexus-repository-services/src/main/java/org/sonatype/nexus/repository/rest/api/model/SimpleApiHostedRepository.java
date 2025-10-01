@@ -17,7 +17,6 @@ import javax.validation.constraints.NotNull;
 import org.sonatype.nexus.repository.types.HostedType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -25,7 +24,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *
  * @since 3.20
  */
-@JsonIgnoreProperties(value = {"format", "type", "url"}, allowGetters = true)
 public class SimpleApiHostedRepository
     extends AbstractApiRepository
 {

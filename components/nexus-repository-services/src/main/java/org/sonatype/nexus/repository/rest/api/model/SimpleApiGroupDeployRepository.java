@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -20,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *
  * @since 3.28
  */
-@JsonIgnoreProperties(value = {"format", "type", "url"}, allowGetters = true)
 public class SimpleApiGroupDeployRepository
     extends SimpleApiGroupRepository
 {
