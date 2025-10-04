@@ -146,6 +146,7 @@ public abstract class MavenRecipeSupport
         .handler(securityHandler)
         .handler(routingHandler)
         .handler(exceptionHandler)
+        .handler(handlerContributor)
         .handler(conditionalRequestHandler);
   }
 
