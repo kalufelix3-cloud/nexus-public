@@ -63,6 +63,7 @@ import AdminSecurityDirectoryStrings from './pages/admin/repository/AdminSecurit
 import AdminSystemDirectoryStrings from './pages/admin/system/AdminSystemDirectoryStrings';
 import AdminSupportDirectoryStrings from './pages/admin/system/AdminSupportDirectoryStrings';
 import AdminDirectoryStrings from './pages/admin/system/AdminDirectoryStrings';
+import OAuth2Strings from "./pages/admin/security/OAuth2Strings";
 
 export default {
   ...UIStrings,
@@ -94,6 +95,7 @@ export default {
   ...AnonymousAccessStrings,
   ...AtlassianCrowdStrings,
   ...LdapStrings,
+  ...OAuth2Strings,
   ...PrivilegesStrings,
   ...RealmsStrings,
   ...RolesStrings,

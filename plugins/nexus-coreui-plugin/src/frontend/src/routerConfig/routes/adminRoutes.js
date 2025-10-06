@@ -30,6 +30,7 @@ import Realms from '../../components/pages/admin/Realms/Realms';
 import UserTokens from '../../components/pages/admin/UserTokens/UserTokens';
 import CrowdSettings from '../../components/pages/admin/CrowdSettings/CrowdSettings';
 import SamlConfiguration from '../../components/pages/admin/SamlConfiguration/SamlConfiguration';
+import OAuth2Configuration from "../../components/pages/admin/OAuth2Configuration/OAuth2Configuration";
 import SupportRequest from '../../components/pages/admin/SupportRequest/SupportRequest';
 import SystemInformation from '../../components/pages/admin/SystemInformation/SystemInformation';
 import MetricHealth from '../../components/pages/admin/MetricHealth/MetricHealth';
@@ -503,6 +504,26 @@ export const adminRoutes = [
         editions: ['PRO'],
       },
       title: ADMIN.SECURITY.SAML.TITLE,
+    },
+  },
+
+  {
+    name: ADMIN.SECURITY.OAUTH2.ROOT,
+    url: '/oauth2',
+    component: OAuth2Configuration,
+    data: {
+      visibilityRequirements: {
+        bundle: 'nexus-oauth2-plugin',
+        permissions: ['nexus:*'],
+        editions: ['PRO'],
+        statesEnabled: [
+          {
+            key: 'oauth2Available',
+            defaultValue: false
+          }
+        ]
+      },
+      title: ADMIN.SECURITY.OAUTH2.TITLE,
     },
   },
 

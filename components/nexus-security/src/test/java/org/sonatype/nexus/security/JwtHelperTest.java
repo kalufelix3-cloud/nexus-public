@@ -27,6 +27,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.inject.Provider;
+import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.junit.Before;
@@ -36,7 +37,10 @@ import org.mockito.Mock;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.security.JwtHelper.ID_TOKEN;
 import static org.sonatype.nexus.security.JwtHelper.ISSUER;
 import static org.sonatype.nexus.security.JwtHelper.REALM;
 import static org.sonatype.nexus.security.JwtHelper.USER;
@@ -45,6 +49,9 @@ import static org.sonatype.nexus.security.JwtHelper.USER_SESSION_ID;
 public class JwtHelperTest
     extends TestSupport
 {
+  private static final String VALID_JWT_TOKEN =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30";
+
   @Mock
   private Subject subject;
 
@@ -72,6 +79,21 @@ public class JwtHelperTest
 
   @Test
   public void testCreateJwtCookie() {
+    Session session = mock(Session.class);
+    doReturn(session).when(subject).getSession();
+    Cookie jwtCookie = underTest.createJwtCookie(subject, false);
+    assertNotNull(jwtCookie);
+    String jwt = jwtCookie.getValue();
+
+    assertJwt(jwt);
+    assertCookie(jwtCookie);
+  }
+
+  @Test
+  public void testCreateJwtCookie_withIdToken() {
+    Session session = mock(Session.class);
+    doReturn(session).when(subject).getSession();
+    doReturn(VALID_JWT_TOKEN).when(session).getAttribute(ID_TOKEN);
     Cookie jwtCookie = underTest.createJwtCookie(subject, false);
     assertNotNull(jwtCookie);
     String jwt = jwtCookie.getValue();
@@ -82,6 +104,8 @@ public class JwtHelperTest
 
   @Test
   public void testCreateJwtCookie_withSecure() {
+    Session session = mock(Session.class);
+    doReturn(session).when(subject).getSession();
     Cookie jwtCookie = underTest.createJwtCookie(subject, true);
     assertNotNull(jwtCookie);
     String jwt = jwtCookie.getValue();
@@ -210,6 +234,22 @@ public class JwtHelperTest
     assertNotNull(userId.asString());
     assertEquals(ISSUER, issuer.asString());
     assertEquals("NexusAuthorizingRealm", realm.asString());
+  }
+
+  private void assertJwtWithIdToken(final String jwt) {
+    DecodedJWT decode = decodeJwt(jwt);
+
+    Claim user = decode.getClaim(USER);
+    Claim userId = decode.getClaim(USER_SESSION_ID);
+    Claim issuer = decode.getClaim("iss");
+    Claim realm = decode.getClaim(REALM);
+    Claim idToken = decode.getClaim(ID_TOKEN);
+
+    assertEquals("admin", user.asString());
+    assertNotNull(userId.asString());
+    assertEquals(ISSUER, issuer.asString());
+    assertEquals("NexusAuthorizingRealm", realm.asString());
+    assertEquals(VALID_JWT_TOKEN, idToken.asString());
   }
 
   private DecodedJWT decodeJwt(final String jwt) {

@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import com.auth0.jwt.JWTCreator;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import javax.servlet.http.Cookie;
@@ -34,6 +35,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.common.eventbus.Subscribe;
 import jakarta.inject.Provider;
+import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -69,6 +71,8 @@ public class JwtHelper
 
   public static final String USER_SESSION_ID = "userSessionId";
 
+  public static final String ID_TOKEN = "id_token";
+
   private final int expirySeconds;
 
   private final String contextPath;
@@ -100,7 +104,7 @@ public class JwtHelper
   @Override
   protected void doStart() throws Exception {
     SecretStore store = secretStoreProvider.get();
-    if (!store.getSecret().isPresent()) {
+    if (store.getSecret().isEmpty()) {
       // the new secret will be generated as UUID only if it is not presented yet.
       store.generateNewSecret();
     }
@@ -126,8 +130,17 @@ public class JwtHelper
 
     String username = subject.getPrincipal().toString();
     Optional<String> realm = subject.getPrincipals().getRealmNames().stream().findFirst();
+    Optional<String> idToken = Optional.of(subject.getSession())
+        .map(session -> session.getAttribute(ID_TOKEN))
+        .map(Object::toString);
+    String userSessionId = Optional.of(subject.getSession())
+        .map(Session::getId)
+        .map(Object::toString)
+        .orElseGet(() -> UUID.randomUUID().toString());
 
-    return createJwtCookie(username, realm.orElse(null), secureRequest);
+    String token = createToken(username, realm.orElse(null), idToken.orElse(null), userSessionId);
+
+    return createCookie(token, secureRequest);
   }
 
   /**
@@ -140,11 +153,13 @@ public class JwtHelper
     checkNotNull(jwt);
 
     DecodedJWT decoded = verifyJwt(jwt);
-
-    return createJwtCookie(decoded.getClaim(USER).asString(),
+    String newJwt = createToken(
+        decoded.getClaim(USER).asString(),
         decoded.getClaim(REALM).asString(),
-        decoded.getClaim(USER_SESSION_ID).asString(),
-        secureRequest);
+        decoded.getClaim(ID_TOKEN).asString(),
+        decoded.getClaim(USER_SESSION_ID).asString());
+
+    return createCookie(newJwt, secureRequest);
   }
 
   /**
@@ -172,32 +187,29 @@ public class JwtHelper
     verifier = new JwtVerifier(loadSecret());
   }
 
-  private Cookie createJwtCookie(final String user, final String realm, final boolean secureRequest) {
-    String userSessionId = UUID.randomUUID().toString();
-    return createJwtCookie(user, realm, userSessionId, secureRequest);
-  }
-
-  private Cookie createJwtCookie(
+  private String createToken(
       final String user,
       final String realm,
-      final String userSessionId,
-      final boolean secureRequest)
+      final String idToken,
+      final String userSessionId)
   {
-    String jwt = createToken(user, realm, userSessionId);
-    return createCookie(jwt, secureRequest);
-  }
-
-  private String createToken(final String user, final String realm, final String userSessionId) {
     Date issuedAt = new Date();
     Date expiresAt = getExpiresAt(issuedAt);
-    return JWT.create()
+    JWTCreator.Builder jwtBuilder = JWT.create()
         .withIssuer(ISSUER)
         .withClaim(USER, user)
-        .withClaim(REALM, realm)
         .withClaim(USER_SESSION_ID, userSessionId)
         .withIssuedAt(issuedAt)
-        .withExpiresAt(expiresAt)
-        .sign(verifier.getAlgorithm());
+        .withExpiresAt(expiresAt);
+
+    if (realm != null) {
+      jwtBuilder.withClaim(REALM, realm);
+    }
+
+    if (idToken != null) {
+      jwtBuilder.withClaim(ID_TOKEN, idToken);
+    }
+    return jwtBuilder.sign(verifier.getAlgorithm());
   }
 
   private Cookie createCookie(final String jwt, final boolean secureRequest) {

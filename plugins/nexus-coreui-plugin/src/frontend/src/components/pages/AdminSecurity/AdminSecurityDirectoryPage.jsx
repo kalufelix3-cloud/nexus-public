@@ -83,6 +83,13 @@ export default function AdminSecurityDirectoryPage() {
           />
 
           <DirectoryList.DirectoryListItem
+              data-analytics-id="nxrm-admin-security-directory-oauth2-config-lnk"
+              text={UIStrings.OAUTH2_CONFIGURATION.MENU.text}
+              description={UIStrings.OAUTH2_CONFIGURATION.MENU.description}
+              routeName={ADMIN.SECURITY.OAUTH2.ROOT}
+          />
+
+          <DirectoryList.DirectoryListItem
               data-analytics-id="nxrm-admin-security-directory-ssl-certs-lnk"
               text={UIStrings.SSL_CERTIFICATES.MENU.text}
               description={UIStrings.SSL_CERTIFICATES.MENU.description}

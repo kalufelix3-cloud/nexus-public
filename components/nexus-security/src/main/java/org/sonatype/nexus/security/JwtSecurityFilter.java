@@ -43,6 +43,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.stream;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
+import static org.sonatype.nexus.security.JwtHelper.ID_TOKEN;
 import static org.sonatype.nexus.security.JwtHelper.JWT_COOKIE_NAME;
 import static org.sonatype.nexus.security.JwtHelper.REALM;
 import static org.sonatype.nexus.security.JwtHelper.USER;
@@ -102,6 +103,7 @@ public class JwtSecurityFilter
 
           Claim user = decodedJwt.getClaim(USER);
           Claim realm = decodedJwt.getClaim(REALM);
+          Claim idToken = decodedJwt.getClaim(ID_TOKEN);
 
           PrincipalCollection principals = new SimplePrincipalCollection(
               user.asString(),
@@ -109,6 +111,9 @@ public class JwtSecurityFilter
 
           session.setTimeout(TimeUnit.SECONDS.toMillis(jwtHelper.getExpirySeconds()));
           session.setAttribute(JWT_COOKIE_NAME, jwt);
+          if (!idToken.isNull()) {
+            session.setAttribute(ID_TOKEN, idToken.asString());
+          }
 
           return new WebDelegatingSubject(
               principals,

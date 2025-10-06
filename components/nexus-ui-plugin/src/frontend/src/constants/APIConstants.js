@@ -235,6 +235,9 @@ export default {
       get SAML() {
         return `${this.BASE_URL}saml`;
       },
+      get OAUTH2() {
+        return `${this.BASE_URL}oauth2`;
+      },
       get PRIVILEGES_TYPES() {
         return `${this.BASE_URL}privileges/types`;
       }

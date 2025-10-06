@@ -99,6 +99,10 @@ export default {
       ROOT: 'admin.security.saml',
       TITLE: 'SAML',
     },
+    OAUTH2: {
+      ROOT: 'admin.security.oauth2',
+      TITLE: 'OAuth 2.0',
+    },
     SSLCERTIFICATES: {
       ROOT: 'admin.security.sslcertificates',
       TITLE: 'SSL Certificates',
