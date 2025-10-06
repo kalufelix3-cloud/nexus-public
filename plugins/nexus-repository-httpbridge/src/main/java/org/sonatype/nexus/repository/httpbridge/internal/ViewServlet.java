@@ -148,7 +148,7 @@ public class ViewServlet
       final HttpServletRequest httpRequest,
       final HttpServletResponse httpResponse) throws Exception
   {
-    httpResponse.setHeader(HttpHeaders.X_XSS_PROTECTION, "1; mode=block");
+    httpResponse.setHeader(HttpHeaders.X_XSS_PROTECTION, "0");
 
     // resolve repository for request
     final String pathInfo = httpRequest.getPathInfo();

@@ -130,7 +130,7 @@ public class WebResourceServlet
 
     // NEXUS-6569 Add X-Frame-Options header
     response.setHeader(X_FRAME_OPTIONS, xframeOptions.getValueForPath(request.getPathInfo()));
-    response.setHeader(X_XSS_PROTECTION, "1; mode=block");
+    response.setHeader(X_XSS_PROTECTION, "0");
 
     // support resources which need to be prepared before serving
     if (resource instanceof Prepareable) {

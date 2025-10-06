@@ -176,10 +176,10 @@ public class ViewServletTest
   }
 
   @Test
-  public void responseHasXssProtection() throws Exception {
+  public void responseHasXssProtectionDisabled() throws Exception {
     underTest.service(httpServletRequest, servletResponse);
 
-    verify(servletResponse).setHeader(HttpHeaders.X_XSS_PROTECTION, "1; mode=block");
+    verify(servletResponse).setHeader(HttpHeaders.X_XSS_PROTECTION, "0");
   }
 
   private void facetThrowsException(final boolean facetThrowsException) throws Exception {
