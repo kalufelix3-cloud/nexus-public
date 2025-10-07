@@ -19,11 +19,14 @@ import CEHardLimitAlert from './CELimits/CEHardLimitAlert';
 
 import './SystemNotices.scss';
 import UpgradeAlert from './UpgradeAlert/UpgradeAlert';
+import LicenseExpiryAlert from './LicenseExpiryAlert/LicenseExpiryAlert';
 
 export default function SystemNotices () {
   return <NxSystemNotice.Container className="nxrm-system-notices">
     <CEHardLimitAlert />
 
     <UpgradeAlert />
+
+    <LicenseExpiryAlert />
   </NxSystemNotice.Container>
 }
