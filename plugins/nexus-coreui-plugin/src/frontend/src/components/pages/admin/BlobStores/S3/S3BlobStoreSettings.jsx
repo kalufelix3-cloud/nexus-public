@@ -167,36 +167,34 @@ export default function S3BlobStoreSettings({service}) {
         </div>
     }
 
-    <NxStatefulAccordion defaultOpen={hasAuthenticationSettings}>
-      <NxAccordion.Header>
-        <h2 className="nx-accordion__header-title">{FIELDS.S3BlobStore_Authentication_Title}</h2>
-      </NxAccordion.Header>
-      <NxFormGroup label={FIELDS.S3BlobStore_Authentication_AccessKeyId} isRequired>
-        <NxTextInput className="nx-text-input--long"
-                   {...FormUtils.fieldProps(securityField('accessKeyId'), current)}
-                   onChange={FormUtils.handleUpdate(securityField('accessKeyId'), send)}/>
-      </NxFormGroup>
-      <NxFormGroup label={FIELDS.S3BlobStore_Authentication_SecretAccessKey} isRequired>
-        <NxTextInput className="nx-text-input--long"
-                   type="password"
-                   autoComplete="new-password"
-                   {...FormUtils.fieldProps(securityField('secretAccessKey'), current)}
-                   onChange={FormUtils.handleUpdate(securityField('secretAccessKey'), send)}/>
-      </NxFormGroup>
-      <NxFormGroup
-          label={FIELDS.S3BlobStore_Authentication_AssumeRoleArn}
-      >
-        <NxTextInput className="nx-text-input--long"
-                   {...FormUtils.fieldProps(securityField('role'), current)}
-                   onChange={FormUtils.handleUpdate(securityField('role'), send)}/>
-      </NxFormGroup>
-      <NxFormGroup label={FIELDS.S3BlobStore_Authentication_SessionToken}>
-        <NxTextInput className="nx-text-input--long"
-                     type="password"
-                   {...FormUtils.fieldProps(securityField('sessionToken'), current)}
-                   onChange={FormUtils.handleUpdate(securityField('sessionToken'), send)}/>
-      </NxFormGroup>
-    </NxStatefulAccordion>
+      <NxFieldset>
+          <h3>{FIELDS.S3BlobStore_Authentication_Title}</h3>
+          <NxFormGroup label={FIELDS.S3BlobStore_Authentication_AccessKeyId}>
+              <NxTextInput className="nx-text-input--long"
+                           {...FormUtils.fieldProps(securityField('accessKeyId'), current)}
+                           onChange={FormUtils.handleUpdate(securityField('accessKeyId'), send)}/>
+          </NxFormGroup>
+          <NxFormGroup label={FIELDS.S3BlobStore_Authentication_SecretAccessKey}>
+              <NxTextInput className="nx-text-input--long"
+                           type="password"
+                           autoComplete="new-password"
+                           {...FormUtils.fieldProps(securityField('secretAccessKey'), current)}
+                           onChange={FormUtils.handleUpdate(securityField('secretAccessKey'), send)}/>
+          </NxFormGroup>
+          <NxFormGroup
+              label={FIELDS.S3BlobStore_Authentication_AssumeRoleArn}
+          >
+              <NxTextInput className="nx-text-input--long"
+                           {...FormUtils.fieldProps(securityField('role'), current)}
+                           onChange={FormUtils.handleUpdate(securityField('role'), send)}/>
+          </NxFormGroup>
+          <NxFormGroup label={FIELDS.S3BlobStore_Authentication_SessionToken}>
+              <NxTextInput className="nx-text-input--long"
+                           type="password"
+                           {...FormUtils.fieldProps(securityField('sessionToken'), current)}
+                           onChange={FormUtils.handleUpdate(securityField('sessionToken'), send)}/>
+          </NxFormGroup>
+      </NxFieldset>
     <NxStatefulAccordion defaultOpen={hasEncryptionSettings}>
       <NxAccordion.Header>
         <h2 className="nx-accordion__header-title">{FIELDS.S3BlobStore_EncryptionSettings_Title}</h2>

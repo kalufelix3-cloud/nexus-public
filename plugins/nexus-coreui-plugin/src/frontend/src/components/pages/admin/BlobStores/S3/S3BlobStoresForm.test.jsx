@@ -78,8 +78,8 @@ const selectors = {
   // S3 Fields
   queryPreSigned: () => screen.queryByLabelText(S3_STRINGS.S3BlobStore_Presigned_HelpText),
   queryRegion: () => screen.queryByTestId('s3-primary-region'),
-  queryAssumeRole: () => screen.queryByLabelText('Assume Role ARN (Optional)'),
-  querySessionToken: () => screen.queryByLabelText('Session Token (Optional)'),
+  queryAssumeRole: () => screen.queryByLabelText('Assume Role ARN'),
+  querySessionToken: () => screen.queryByLabelText('Session Token'),
   queryEncryptionType: () => screen.queryByLabelText('Encryption Type'),
   queryKmsKeyId: () => screen.queryByLabelText('KMS Key ID (Optional)'),
   querySignatureVersion: () => screen.queryByLabelText('Signature Version'),
