@@ -57,6 +57,7 @@ import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
 import static org.sonatype.nexus.repository.view.Content.CONTENT;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
+import static org.sonatype.nexus.repository.view.Content.CONTENT_PCCS_HASH;
 
 /**
  * {@link FluentAsset} implementation.
@@ -212,6 +213,8 @@ public class FluentAssetImpl
       contentAttributes.set(CONTENT_LAST_MODIFIED, new DateTime(lastModified));
       contentAttributes.set(CONTENT_ETAG, Optional.ofNullable(contentHeaders.get(CONTENT_ETAG))
           .orElseGet(blob.getMetrics()::getSha1Hash));
+      Optional.ofNullable(contentHeaders.get(CONTENT_PCCS_HASH, String.class))
+          .ifPresent(contentPCCSHash -> contentAttributes.set(CONTENT_PCCS_HASH, contentPCCSHash));
     }
     else {
       // otherwise use the blob to supply details for external caching
@@ -324,6 +327,9 @@ public class FluentAssetImpl
     }
     if (contentAttributes.contains(CONTENT_ETAG)) {
       headerBuilder.put(CONTENT_ETAG, contentAttributes.get(CONTENT_ETAG, String.class));
+    }
+    if (contentAttributes.contains(CONTENT_PCCS_HASH)) {
+      headerBuilder.put(CONTENT_PCCS_HASH, contentAttributes.get(CONTENT_PCCS_HASH, String.class));
     }
     Map<String, String> contentHeaders = headerBuilder.build();
     if (!contentHeaders.isEmpty()) {

@@ -17,6 +17,7 @@ import jakarta.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.ETagHeaderUtils;
+import org.sonatype.nexus.repository.http.NxrmHttpHeaders;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
@@ -46,8 +47,7 @@ public class ContentHeadersHandler
     final Response response = context.proceed();
     Payload payload = response.getPayload();
 
-    if (response.getStatus().isSuccessful() && payload instanceof Content) {
-      final Content content = (Content) payload;
+    if (response.getStatus().isSuccessful() && payload instanceof Content content) {
       final DateTime lastModified = content.getAttributes().get(Content.CONTENT_LAST_MODIFIED, DateTime.class);
       if (lastModified != null) {
         response.getHeaders().replace(HttpHeaders.LAST_MODIFIED, formatDateTime(lastModified));
@@ -55,6 +55,10 @@ public class ContentHeadersHandler
       final String etag = content.getAttributes().get(Content.CONTENT_ETAG, String.class);
       if (etag != null) {
         response.getHeaders().replace(HttpHeaders.ETAG, ETagHeaderUtils.quote(etag));
+      }
+      final String PCCSHash = content.getAttributes().get(Content.CONTENT_PCCS_HASH, String.class);
+      if (PCCSHash != null) {
+        response.getHeaders().replace(NxrmHttpHeaders.PCCS_HASH, PCCSHash);
       }
     }
     return response;
