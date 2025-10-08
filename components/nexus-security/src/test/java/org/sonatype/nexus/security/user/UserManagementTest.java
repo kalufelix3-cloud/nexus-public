@@ -40,7 +40,7 @@ class UserManagementTest
   {
     @Bean
     UserManager userManager() {
-      return new MockUserManager();
+      return new MockUserManager(new NoOpEventManager());
     }
   }
 

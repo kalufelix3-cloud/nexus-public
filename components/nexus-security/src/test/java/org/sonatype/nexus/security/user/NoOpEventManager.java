@@ -15,42 +15,30 @@ package org.sonatype.nexus.security.user;
 import org.sonatype.nexus.common.event.EventManager;
 
 /**
- * Read-only {@link UserManager}, which just throws exceptions for all the write methods.
- *
- * Any call to theses methods should be guarded by {@code #supportsWrite}.
+ * No-Op {@link EventManager} for use in tests.
  */
-public abstract class AbstractReadOnlyUserManager
-    extends AbstractUserManager
+public class NoOpEventManager
+    implements EventManager
 {
-  public AbstractReadOnlyUserManager(EventManager eventManager) {
-    super(eventManager);
+  @Override
+  public void register(final Object handler) {
   }
 
-  /**
-   * @return Always {@code false}
-   */
   @Override
-  public boolean supportsWrite() {
+  public void unregister(final Object handler) {
+  }
+
+  @Override
+  public void post(final Object event) {
+  }
+
+  @Override
+  public boolean isCalmPeriod() {
+    return true;
+  }
+
+  @Override
+  public boolean isAffinityEnabled() {
     return false;
-  }
-
-  @Override
-  public User doAddUser(final User user, final String password) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void changePassword(final String userId, final String newPassword) throws UserNotFoundException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public User doDeleteUser(final String userId) throws UserNotFoundException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public User doUpdateUser(final User user) throws UserNotFoundException {
-    throw new UnsupportedOperationException();
   }
 }

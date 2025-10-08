@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 
@@ -32,6 +33,57 @@ public abstract class AbstractUserManager
     extends ComponentSupport
     implements UserManager
 {
+  protected final EventManager eventManager;
+
+  public AbstractUserManager(final EventManager eventManager) {
+    this.eventManager = eventManager;
+  }
+
+  /**
+   * Delegates to {@link #doAddUser(User, String)} and then posts a {@link UserCreatedEvent}.
+   * 
+   * @param user the user to add
+   * @param password the user's password
+   * @return the added user
+   */
+  @Override
+  public final User addUser(final User user, final String password) {
+    User result = doAddUser(user, password);
+    eventManager.post(new UserCreatedEvent(result));
+    return result;
+  }
+
+  public abstract User doAddUser(final User user, final String password);
+
+  /**
+   * Delegates to {@link #doUpdateUser(User)} and then posts a {@link UserUpdatedEvent}.
+   * 
+   * @param user the user to update
+   * @return the updated user
+   * @throws UserNotFoundException if the user does not exist
+   */
+  @Override
+  public final User updateUser(final User user) throws UserNotFoundException {
+    User result = doUpdateUser(user);
+    eventManager.post(new UserUpdatedEvent(user));
+    return result;
+  }
+
+  public abstract User doUpdateUser(final User user) throws UserNotFoundException;
+
+  /**
+   *
+   * @param userId
+   * @throws UserNotFoundException
+   */
+  @Override
+  public final void deleteUser(final String userId) throws UserNotFoundException {
+    User result = doDeleteUser(userId);
+    eventManager.post(new UserDeletedEvent(result));
+  }
+
+  public abstract User doDeleteUser(final String userId) throws UserNotFoundException;
+
   protected Set<User> filterListInMemeory(final Set<User> users, final UserSearchCriteria criteria) {
     HashSet<User> result = new HashSet<>();
 
@@ -56,10 +108,11 @@ public abstract class AbstractUserManager
     return matchesCriteria(user.getUserId(), user.getSource(), userRoles, criteria);
   }
 
-  protected boolean matchesCriteria(final String userId,
-                                    final String userSource,
-                                    final Collection<String> usersRoles,
-                                    final UserSearchCriteria criteria)
+  protected boolean matchesCriteria(
+      final String userId,
+      final String userSource,
+      final Collection<String> usersRoles,
+      final UserSearchCriteria criteria)
   {
     if (!Strings2.isBlank(criteria.getUserId())
         && !userId.toLowerCase().startsWith(criteria.getUserId().toLowerCase())) {

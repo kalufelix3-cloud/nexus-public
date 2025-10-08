@@ -26,6 +26,7 @@ import org.sonatype.nexus.security.realm.MockRealm;
 import org.sonatype.nexus.security.realm.RealmManager;
 import org.sonatype.nexus.security.role.ExternalRoleMappedTest.ExternalRoleMappedTestConfiguration;
 import org.sonatype.nexus.security.user.MockUserManager;
+import org.sonatype.nexus.security.user.NoOpEventManager;
 import org.sonatype.nexus.security.user.UserManager;
 
 import com.google.common.collect.ImmutableList;
@@ -49,7 +50,7 @@ public class ExternalRoleMappedTest
   {
     @Bean
     public UserManager userManager() {
-      return new MockUserManager();
+      return new MockUserManager(new NoOpEventManager());
     }
 
     @Primary

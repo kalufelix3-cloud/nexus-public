@@ -25,6 +25,7 @@ public class MockUserManagerA
     extends MockUserManagerSupport
 {
   public MockUserManagerA() {
+    super(new NoOpEventManager());
     User a = new User();
     a.setName("Joe Coder");
     a.setEmailAddress("jcoder@sonatype.org");

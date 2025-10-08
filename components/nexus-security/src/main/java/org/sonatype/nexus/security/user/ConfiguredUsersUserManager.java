@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.sonatype.nexus.common.Description;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.config.CUserRoleMapping;
@@ -52,9 +53,11 @@ public class ConfiguredUsersUserManager
 
   @Inject
   public ConfiguredUsersUserManager(
+      final EventManager eventManager,
       @Lazy final SecuritySystem securitySystem,
       @Lazy final SecurityConfigurationManager configuration)
   {
+    super(eventManager);
     this.securitySystem = checkNotNull(securitySystem);
     this.configuration = checkNotNull(configuration);
   }

@@ -15,6 +15,7 @@ package org.sonatype.nexus.security.user;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.role.ExternalRoleMappedTest;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 
@@ -28,6 +29,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 public class MockUserManager
     extends AbstractReadOnlyUserManager
 {
+  public MockUserManager(final EventManager eventManager) {
+    super(eventManager);
+  }
+
   @Override
   public String getSource() {
     return "Mock";

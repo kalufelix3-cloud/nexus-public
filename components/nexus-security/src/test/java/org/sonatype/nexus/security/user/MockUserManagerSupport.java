@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.security.user;
 
+import org.sonatype.nexus.common.event.EventManager;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -21,16 +23,20 @@ public abstract class MockUserManagerSupport
 {
   private Set<User> users = new HashSet<User>();
 
+  public MockUserManagerSupport(final EventManager eventManager) {
+    super(eventManager);
+  }
+
   public boolean supportsWrite() {
     return true;
   }
 
-  public User addUser(User user, String password) {
+  public User doAddUser(User user, String password) {
     this.getUsers().add(user);
     return user;
   }
 
-  public User updateUser(User user) throws UserNotFoundException {
+  public User doUpdateUser(User user) throws UserNotFoundException {
     User existingUser = this.getUser(user.getUserId());
 
     if (existingUser == null) {
@@ -40,7 +46,7 @@ public abstract class MockUserManagerSupport
     return user;
   }
 
-  public void deleteUser(String userId) throws UserNotFoundException {
+  public User doDeleteUser(String userId) throws UserNotFoundException {
     User existingUser = this.getUser(userId);
 
     if (existingUser == null) {
@@ -48,6 +54,7 @@ public abstract class MockUserManagerSupport
     }
 
     this.getUsers().remove(existingUser);
+    return existingUser;
   }
 
   public User getUser(String userId) {
