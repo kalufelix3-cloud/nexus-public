@@ -29,70 +29,123 @@
       .nx-tile-header__title {
         font-size: 22px;
         font-weight: 600;
+        margin-bottom: 4px;
       }
       .nx-tile-header__subtitle {
         font-size: 16px;
         font-weight: 400;
       }
     }
-    .login-form {
-      .nx-form-group {
-        display: flex;
-        flex-direction: column;
-        margin: 0;
-      }
+    .login-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
 
-      .nx-footer {
-        display: none;
-      }
-
-      .login-form__hidden-submit {
-        display: none;
-      }
-      .nx-form-group label {
-        font-size: 16px;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-      }
-
-      .username-field {
-        margin-bottom: 1.5rem;
-      }
-
-      .nx-form-group:not(.username-field) {
-        margin-bottom: 1.5rem;
-      }
-
-      .nx-alert {
-        margin: 1rem 0;
-      }
-
-      .login-button {
+      .sso-login-button {
         width: 100%;
-        margin: 0; 
+        max-width: 336px;
         min-height: 48px;
         font-weight: 600;
       }
-      .server-error-container {
+
+      .login-divider {
         display: flex;
         align-items: center;
-        justify-content: flex-start;
+        gap: 1rem;
+        color: var(--nx-color-text-subtle);
+        font-size: 14px;
+        text-transform: none;
         width: 100%;
-        margin: 0.5rem 0 1rem;
+        max-width: 336px;
+
+        &::before,
+        &::after {
+          content: "";
+          flex: 1;
+          height: 1px;
+          background: var(--nx-color-border);
+        }
+
+        span {
+          flex-shrink: 0;
+        }
       }
 
-      .server-error-message {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        color: var(--nx-color-validation-invalid);
-        font-size: 14px;
-        line-height: 1.4;
+      .login-form {
+        width: 100%;
+        max-width: 336px;
 
-        svg {
-          flex-shrink: 0;
-          width: 16px;
-          height: 16px;
+        .nx-fieldset {
+          width: 100%;
+        }
+
+        .nx-form-group {
+          display: flex;
+          flex-direction: column;
+          margin: 0;
+          width: 100%;
+
+          .nx-text-input,
+          .nx-password-input {
+            width: 100%;
+            box-sizing: border-box;
+          }
+
+          .nx-text-input input,
+          .nx-password-input input {
+            width: 100%;
+            box-sizing: border-box;
+          }
+        }
+        .nx-form-group label {
+          font-size: 16px;
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+        }
+
+        .username-field {
+          margin-bottom: 1rem;
+        }
+
+        .nx-form-group:not(.username-field) {
+          margin-bottom: 1rem;
+        }
+
+        .nx-alert {
+          margin: 1rem 0;
+        }
+
+        .login-button {
+          width: 100%;
+          margin: 0;
+          min-height: 48px;
+          font-weight: 600;
+        }
+        .server-error-container {
+          min-height: 24px;
+          display: flex;
+          align-items: flex-start;
+          margin: 0;
+        }
+
+        .server-error-message {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: var(--nx-color-validation-invalid);
+          font-size: 14px;
+          line-height: 1.4;
+
+          svg {
+            flex-shrink: 0;
+            width: 16px;
+            height: 16px;
+          }
+        }
+
+        .nx-footer {
+          display: none;
         }
       }
     }

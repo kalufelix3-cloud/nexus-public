@@ -13,11 +13,13 @@
 
 import React from 'react';
 import { NxTile } from '@sonatype/react-shared-components';
+import { ExtJS } from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../constants/UIStrings';
 import LoginLayout from '../../layout/LoginLayout';
 import LoginForm from './LoginForm';
+import SsoLoginButton from './SsoLoginButton';
 
-const { LOGIN_TITLE, LOGIN_SUBTITLE } = UIStrings;
+const { LOGIN_TITLE, LOGIN_SUBTITLE, SSO_DIVIDER_LABEL } = UIStrings;
 
 import './LoginPage.scss';
 
@@ -27,6 +29,13 @@ import './LoginPage.scss';
  * @param {Object} logoConfig - Logo configuration passed to LoginLayout
  */
 export default function LoginPage({ logoConfig }) {
+  const samlEnabled = ExtJS.useState(() => ExtJS.state().getValue('samlEnabled', false));
+  const oauth2Enabled = ExtJS.useState(() => ExtJS.state().getValue('oauth2Enabled', false));
+  const isCloudEnvironment = ExtJS.useState(() => ExtJS.state().getValue('isCloud', false));
+  const isSsoEnabled = samlEnabled || oauth2Enabled;
+  
+  const showLocalLogin = !isCloudEnvironment;
+
   const handleLoginSuccess = ({ username }) => {
     console.log(`User ${username} authenticated successfully`);
     // TODO: Additional success handling can be added here
@@ -48,7 +57,19 @@ export default function LoginPage({ logoConfig }) {
           </NxTile.Header>
           <NxTile.Content>
             <div className="login-content">
-              <LoginForm onSuccess={handleLoginSuccess} onError={handleLoginError} primaryButton={true} />
+              {isSsoEnabled && (
+                <>
+                  <SsoLoginButton />
+                  {showLocalLogin && (
+                    <div className="login-divider" aria-hidden="true">
+                      <span>{SSO_DIVIDER_LABEL}</span>
+                    </div>
+                  )}
+                </>
+              )}
+              {showLocalLogin && (
+                <LoginForm onSuccess={handleLoginSuccess} onError={handleLoginError} primaryButton={!isSsoEnabled} />
+              )}
             </div>
           </NxTile.Content>
         </NxTile>

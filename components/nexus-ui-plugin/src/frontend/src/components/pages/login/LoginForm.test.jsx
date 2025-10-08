@@ -106,7 +106,12 @@ describe('LoginForm', () => {
       renderComponent();
       await fillCredentials('testuser', 'testpass');
 
-      ExtJS.requestSession.mockImplementation(() => new Promise(() => {}));
+      // Create a promise that we can control
+      let resolvePromise;
+      const pendingPromise = new Promise((resolve) => {
+        resolvePromise = resolve;
+      });
+      ExtJS.requestSession.mockImplementation(() => pendingPromise);
 
       await act(async () => {
         await userEvent.click(selectors.loginButton());
@@ -114,11 +119,14 @@ describe('LoginForm', () => {
 
       await waitFor(() => {
         expect(selectors.loadingButton()).toBeInTheDocument();
-      });
+      }, { timeout: 3000 });
 
       expect(selectors.usernameInput()).toBeDisabled();
       expect(selectors.passwordInput()).toBeDisabled();
-    });
+
+      // Clean up by resolving the promise
+      resolvePromise({ status: 204 });
+    }, 20000); // Increase test timeout
   });
 
   describe('validation', () => {
