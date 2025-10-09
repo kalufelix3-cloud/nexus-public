@@ -94,7 +94,7 @@ describe('SsoLoginButton', () => {
       const button = screen.getByRole('button');
 
       expect(button).toHaveAttribute('type', 'button');
-      expect(button).toHaveAttribute('data-analytics-id', 'sso-login-button');
+      expect(button).toHaveAttribute('data-analytics-id', 'nxrm-login-sso');
       expect(button).toHaveClass('sso-login-button');
     });
 
@@ -254,7 +254,7 @@ describe('SsoLoginButton', () => {
       render(<SsoLoginButton />);
       const button = screen.getByRole('button');
 
-      expect(button).toHaveAttribute('data-analytics-id', 'sso-login-button');
+      expect(button).toHaveAttribute('data-analytics-id', 'nxrm-login-sso');
     });
   });
 });

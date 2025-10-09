@@ -37,6 +37,20 @@ jest.mock('./SsoLoginButton', () => {
   };
 });
 
+jest.mock('./AnonymousAccessButton', () => {
+  return function AnonymousAccessButton({ onClick }) {
+    return <button data-testid="continue-without-login-button" onClick={onClick}>Continue without login</button>;
+  };
+});
+
+jest.mock('@uirouter/react', () => ({
+  useRouter: () => ({
+    stateService: {
+      go: jest.fn()
+    }
+  })
+}));
+
 jest.mock('@sonatype/nexus-ui-plugin');
 
 describe('LoginPage', () => {
@@ -53,11 +67,12 @@ describe('LoginPage', () => {
     jest.clearAllMocks();
   });
 
-  function setupStates(samlEnabled = false, oauth2Enabled = false, isCloud = false) {
+  function setupStates(samlEnabled = false, oauth2Enabled = false, isCloud = false, anonymousUsername = null) {
     mockUseState
-      .mockReturnValueOnce(samlEnabled)   // samlEnabled
-      .mockReturnValueOnce(oauth2Enabled) // oauth2Enabled
-      .mockReturnValueOnce(isCloud);      // isCloudEnvironment
+      .mockReturnValueOnce(samlEnabled)        // samlEnabled
+      .mockReturnValueOnce(oauth2Enabled)      // oauth2Enabled
+      .mockReturnValueOnce(isCloud)            // isCloudEnvironment
+      .mockReturnValueOnce(anonymousUsername); // anonymousUsername
   }
 
   describe('self-hosted environment', () => {
@@ -174,21 +189,67 @@ describe('LoginPage', () => {
     });
   });
 
+  describe('anonymous access', () => {
+    it('does not render anonymous access button when anonymous username is not configured', () => {
+      setupStates(false, false, false, null);
+
+      render(<LoginPage logoConfig={mockLogoConfig} />);
+
+      expect(screen.getByTestId('login-form')).toBeInTheDocument();
+      expect(screen.queryByTestId('continue-without-login-button')).not.toBeInTheDocument();
+    });
+
+    it('renders anonymous access button when anonymous username is configured', () => {
+      setupStates(false, false, false, 'anonymous');
+
+      render(<LoginPage logoConfig={mockLogoConfig} />);
+
+      expect(screen.getByTestId('login-form')).toBeInTheDocument();
+      expect(screen.getByTestId('continue-without-login-button')).toBeInTheDocument();
+    });
+
+    it('renders anonymous access button with SSO enabled', () => {
+      setupStates(true, false, false, 'anonymous');
+
+      render(<LoginPage logoConfig={mockLogoConfig} />);
+
+      expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
+      expect(screen.getByTestId('login-form')).toBeInTheDocument();
+      expect(screen.getByTestId('continue-without-login-button')).toBeInTheDocument();
+    });
+
+    it('does not render anonymous access button when anonymous username is empty string', () => {
+      setupStates(false, false, false, '');
+
+      render(<LoginPage logoConfig={mockLogoConfig} />);
+
+      expect(screen.queryByTestId('continue-without-login-button')).not.toBeInTheDocument();
+    });
+
+    it('does not render anonymous access button when anonymous username is undefined', () => {
+      setupStates(false, false, false, undefined);
+
+      render(<LoginPage logoConfig={mockLogoConfig} />);
+
+      expect(screen.queryByTestId('continue-without-login-button')).not.toBeInTheDocument();
+    });
+  });
+
   describe('edge cases', () => {
     it('handles undefined ExtJS state gracefully', () => {
       mockUseState.mockReturnValue(undefined);
-      
+
       render(<LoginPage logoConfig={mockLogoConfig} />);
-      
+
       // Should default to self-hosted behavior
       expect(screen.getByTestId('login-form')).toBeInTheDocument();
     });
 
     it('handles missing logoConfig gracefully', () => {
-      setupStates(false, false, false);
-      
+      setupStates(false, false, false, null);
+
       render(<LoginPage />);
-      
+
       expect(screen.getByTestId('login-tile')).toBeInTheDocument();
     });
   });

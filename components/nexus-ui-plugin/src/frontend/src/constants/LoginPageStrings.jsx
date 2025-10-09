@@ -21,6 +21,7 @@ export default {
   PASSWORD_LABEL: 'Password',
   LOGIN_BUTTON: 'Log in',
   LOGIN_BUTTON_LOADING: 'Signing in...',
+  CONTINUE_WITHOUT_LOGIN: 'Continue without login',
   ERRORS: {
     WRONG_CREDENTIALS: 'Wrong username or password',
     CONNECTION_FAILED: 'Connection failed. Please check your network connection.',

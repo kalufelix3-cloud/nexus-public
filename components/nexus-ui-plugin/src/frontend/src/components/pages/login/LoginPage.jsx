@@ -14,10 +14,12 @@
 import React from 'react';
 import { NxTile } from '@sonatype/react-shared-components';
 import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import { useRouter } from '@uirouter/react';
 import UIStrings from '../../../constants/UIStrings';
 import LoginLayout from '../../layout/LoginLayout';
 import LoginForm from './LoginForm';
 import SsoLoginButton from './SsoLoginButton';
+import AnonymousAccessButton from './AnonymousAccessButton';
 
 const { LOGIN_TITLE, LOGIN_SUBTITLE, SSO_DIVIDER_LABEL } = UIStrings;
 
@@ -29,22 +31,28 @@ import './LoginPage.scss';
  * @param {Object} logoConfig - Logo configuration passed to LoginLayout
  */
 export default function LoginPage({ logoConfig }) {
+  const router = useRouter();
   const samlEnabled = ExtJS.useState(() => ExtJS.state().getValue('samlEnabled', false));
   const oauth2Enabled = ExtJS.useState(() => ExtJS.state().getValue('oauth2Enabled', false));
   const isCloudEnvironment = ExtJS.useState(() => ExtJS.state().getValue('isCloud', false));
+  const anonymousUsername = ExtJS.useState(() => ExtJS.state().getValue('anonymousUsername'));
   const isSsoEnabled = samlEnabled || oauth2Enabled;
-  
+  const isAnonymousAccessEnabled = !!anonymousUsername;
+
   const showLocalLogin = !isCloudEnvironment;
 
   const handleLoginSuccess = ({ username }) => {
     console.log(`User ${username} authenticated successfully`);
-    // TODO: Additional success handling can be added here
-    // For example: redirect to dashboard, show success message, etc.
+    // TODO: Add redirect logic after login
   };
 
   const handleLoginError = (error) => {
     console.error('Login failed:', error);
-    // TODO: Additional error handling can be added here
+  };
+
+  const handleContinueWithoutLogin = () => {
+    // TODO: Add redirection logic after continuing without login
+    router.stateService.go('browse.welcome');
   };
 
   return (
@@ -69,6 +77,9 @@ export default function LoginPage({ logoConfig }) {
               )}
               {showLocalLogin && (
                 <LoginForm onSuccess={handleLoginSuccess} onError={handleLoginError} primaryButton={!isSsoEnabled} />
+              )}
+              {isAnonymousAccessEnabled && (
+                <AnonymousAccessButton onClick={handleContinueWithoutLogin} />
               )}
             </div>
           </NxTile.Content>

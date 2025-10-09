@@ -71,8 +71,8 @@ export default function SsoLoginButton() {
       variant="primary"
       onClick={handleSsoLogin}
       disabled={isRedirecting}
-      data-analytics-id="sso-login-button"
       className="sso-login-button"
+      data-analytics-id="nxrm-login-sso"
     >
       {isRedirecting ? (
         <NxLoadingSpinner>

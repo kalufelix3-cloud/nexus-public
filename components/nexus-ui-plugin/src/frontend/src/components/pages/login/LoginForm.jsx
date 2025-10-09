@@ -134,7 +134,7 @@ export default function LoginForm({ primaryButton, onSuccess, onError }) {
           variant={primaryButton ? 'primary' : null}
           className="login-button"
           disabled={isLoading}
-          data-analytics-id="login-submit-button"
+          data-analytics-id="nxrm-login-local"
           data-testid="login-primary-button"
         >
           {isLoading ? <NxLoadingSpinner>{LOGIN_BUTTON_LOADING}</NxLoadingSpinner> : LOGIN_BUTTON}

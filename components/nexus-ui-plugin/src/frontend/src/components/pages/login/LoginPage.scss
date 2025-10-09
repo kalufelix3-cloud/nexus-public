@@ -40,7 +40,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 1.5rem;
+      gap: 0;
 
       .sso-login-button {
         width: 100%;
@@ -58,6 +58,7 @@
         text-transform: none;
         width: 100%;
         max-width: 336px;
+        margin-top: 24px;
 
         &::before,
         &::after {
@@ -75,6 +76,7 @@
       .login-form {
         width: 100%;
         max-width: 336px;
+        margin-top: 24px;
 
         .nx-fieldset {
           width: 100%;

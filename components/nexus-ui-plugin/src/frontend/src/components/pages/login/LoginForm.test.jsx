@@ -95,7 +95,7 @@ describe('LoginForm', () => {
 
       const usernameInput = document.querySelector('[data-analytics-id="login-username-input"]');
       const passwordInput = document.querySelector('[data-analytics-id="login-password-input"]');
-      const submitButton = document.querySelector('[data-analytics-id="login-submit-button"]');
+      const submitButton = document.querySelector('[data-analytics-id="nxrm-login-local"]');
 
       expect(usernameInput).toBeInTheDocument();
       expect(passwordInput).toBeInTheDocument();
