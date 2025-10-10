@@ -25,6 +25,7 @@ const {REALMS: {MESSAGES}} = UIStrings;
 
 const NX_AUTHENTICATING_REALM = 'NexusAuthenticatingRealm';
 const NX_AUTHORIZING_REALM = 'NexusAuthorizingRealm';
+const SSO_REALMS = [UIStrings.REALMS.SSO_REALMS.SAML, UIStrings.REALMS.SSO_REALMS.OAUTH2];
 
 export default FormUtils.buildFormMachine({
   id: 'RealmsMachine',
@@ -62,6 +63,12 @@ export default FormUtils.buildFormMachine({
     validate: assign({
       validationErrors: ({data}) => ({
         active: data.active.length ? null : MESSAGES.NO_REALMS_CONFIGURED,
+        multipleSsoEnabled: SSO_REALMS.filter(realm => data.active.includes(realm)).length > 1
+            ? MESSAGES.MULTIPLE_SSO_ENABLED + SSO_REALMS
+              .filter(realm => data.active.includes(realm))
+              .map(realmId => data.available.find(r => r.id === realmId)?.name || realmId)
+              .join(', ')
+            : null
       }),
     }),
     setData: assign((_, event) => {

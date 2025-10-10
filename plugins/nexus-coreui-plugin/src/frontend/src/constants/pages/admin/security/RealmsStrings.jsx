@@ -29,7 +29,8 @@ export default {
       EMPTY_LIST: 'There are no configured realms for which you have view permissions.',
     },
     MESSAGES: {
-      NO_REALMS_CONFIGURED: 'At least one realm must be selected and should include a user that is able to update the list of realms'
+      NO_REALMS_CONFIGURED: 'At least one realm must be selected and should include a user that is able to update the list of realms',
+      MULTIPLE_SSO_ENABLED: 'Invalid configuration. Only one SSO realm can be enabled at a time: '
     },
     LOCAL_REALM_REMOVAL_MODAL: {
       HEADER: 'Confirm Removal of Local Realms',
@@ -52,6 +53,10 @@ export default {
         VALIDATION_ERROR: 'Invalid acknowledgement',
         get SUBLABEL () {return `Type "${this.STRING}" in order to proceed with this action`}
       }
+    },
+    SSO_REALMS: {
+      OAUTH2: 'OAuth2Realm',
+      SAML: 'SamlRealm'
     }
   }
 }

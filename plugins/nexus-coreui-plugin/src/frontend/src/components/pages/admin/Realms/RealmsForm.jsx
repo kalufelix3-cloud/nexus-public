@@ -49,7 +49,7 @@ export default function RealmsForm() {
   return (
     <NxStatefulForm
         {...FormUtils.formProps(state, send)}
-        validationErrors={validationErrors?.active || FormUtils.saveTooltip({isPristine, isInvalid})}
+        validationErrors={validationErrors?.active || validationErrors?.multipleSsoEnabled || FormUtils.saveTooltip({isPristine, isInvalid})}
         additionalFooterBtns={
           <NxTooltip title={FormUtils.discardTooltip({isPristine})}>
             <NxButton

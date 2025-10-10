@@ -377,6 +377,86 @@ describe('Realms', () => {
     });
   });
 
+  it('prevents saving when multiple SSO realms are enabled', async () => {
+    const {
+      querySubmitButton,
+      queryFormError
+    } = selectors;
+
+    const samlRealm = {
+      id: 'SamlRealm',
+      name: 'SAML Realm',
+    };
+
+    const oauth2Realm = {
+      id: 'OAuth2Realm',
+      name: 'OAuth2 Realm',
+    };
+
+    when(Axios.get)
+      .calledWith(APIConstants.REST.PUBLIC.AVAILABLE_REALMS)
+      .mockResolvedValueOnce({
+        data: [...data, samlRealm, oauth2Realm]
+      });
+
+    await renderAndWaitForLoad();
+
+    // Activate both SSO realms
+    userEvent.click(screen.getByText(samlRealm.name));
+    userEvent.click(screen.getByText(oauth2Realm.name));
+
+    userEvent.click(querySubmitButton());
+
+    expect(queryFormError('Invalid configuration. Only one SSO realm can be enabled at a time: SAML Realm, OAuth2 Realm')).toBeInTheDocument();
+  });
+
+  it('allows saving when only one SSO realm is enabled', async () => {
+    const {
+      querySubmitButton,
+      queryFormError
+    } = selectors;
+
+    const samlRealm = {
+      id: 'SamlRealm',
+      name: 'SAML Realm',
+    };
+
+    const oauth2Realm = {
+      id: 'OAuth2Realm',
+      name: 'OAuth2 Realm',
+    };
+
+    when(Axios.get)
+      .calledWith(APIConstants.REST.PUBLIC.AVAILABLE_REALMS)
+      .mockResolvedValueOnce({
+        data: [...data, samlRealm, oauth2Realm]
+      });
+
+    when(Axios.put)
+      .calledWith(
+        APIConstants.REST.PUBLIC.ACTIVE_REALMS,
+        expect.any(Array)
+      )
+      .mockResolvedValue({
+        data: [data[2].id, data[3].id, samlRealm.id],
+      });
+
+    await renderAndWaitForLoad();
+
+    // Activate only one SSO realm
+    userEvent.click(screen.getByText(samlRealm.name));
+
+    expect(querySubmitButton()).not.toHaveClass('disabled');
+
+    await userEvent.click(querySubmitButton());
+
+    expect(Axios.put).toHaveBeenCalledWith(
+      APIConstants.REST.PUBLIC.ACTIVE_REALMS,
+      [data[2].id, data[3].id, samlRealm.id]
+    );
+    expect(queryFormError('Only one SSO realm can be enabled at a time')).not.toBeInTheDocument();
+  });
+
   function getMoveDownButton(name) {
     const localAuthRealm = screen.getByRole('group', { name })
     return within(localAuthRealm).getAllByRole('button')[1]
