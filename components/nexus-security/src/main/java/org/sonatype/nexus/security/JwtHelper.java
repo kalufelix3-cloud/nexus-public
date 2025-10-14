@@ -35,7 +35,6 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.common.eventbus.Subscribe;
 import jakarta.inject.Provider;
-import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -130,10 +129,7 @@ public class JwtHelper
 
     String username = subject.getPrincipal().toString();
     Optional<String> realm = subject.getPrincipals().getRealmNames().stream().findFirst();
-    String userSessionId = Optional.of(subject.getSession())
-        .map(Session::getId)
-        .map(Object::toString)
-        .orElseGet(() -> UUID.randomUUID().toString());
+    String userSessionId = UUID.randomUUID().toString();
 
     String token = createToken(username, realm.orElse(null), userSessionId);
 
