@@ -64,13 +64,11 @@ describe("SearchGenericExt", () => {
   function getDefaultExtJSStateValues() {
     const {
       MALWARE_RISK_ENABLED,
-      MALWARE_RISK_ON_DISK_ENABLED
     } = FeatureFlags;
 
     return {
       'nexus.malware.count': true,
       [MALWARE_RISK_ENABLED]: true,
-      [MALWARE_RISK_ON_DISK_ENABLED]: true
     }
   }
 

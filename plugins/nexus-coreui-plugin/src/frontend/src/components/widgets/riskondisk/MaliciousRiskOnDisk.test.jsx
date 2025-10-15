@@ -12,12 +12,11 @@
  */
 import React from "react";
 import {when} from "jest-when";
-import axios from "axios";
-import {render, screen, waitForElementToBeRemoved} from "@testing-library/react";
+import {render, screen} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {act} from "react-dom/test-utils";
 
-import {APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils";
 
 import {maliciousRiskOnDiskResponse, maliciousRiskOnDiskResponseWithCount0} from "./MaliciousRiskOnDisk.testdata";
@@ -33,8 +32,7 @@ const {
 
 const {
   CLM,
-  MALWARE_RISK_ENABLED,
-  MALWARE_RISK_ON_DISK_ENABLED
+  MALWARE_RISK_ENABLED
 } = FeatureFlags;
 const {MALICIOUS_RISK: {RISK_ON_DISK}} = MaliciousRiskStrings;
 
@@ -72,9 +70,6 @@ describe('MaliciousRiskOnDisk', () => {
     when(ExtJS.useState)
         .calledWith(useGracePeriodEndsDate)
         .mockReturnValue(new Date(''));
-    when(ExtJS.state().getValue)
-        .calledWith(MALWARE_RISK_ON_DISK_ENABLED)
-        .mockReturnValue(true);
     when(ExtJS.state().getValue)
         .calledWith(MALWARE_RISK_ENABLED)
         .mockReturnValue(true);
@@ -121,7 +116,7 @@ describe('MaliciousRiskOnDisk', () => {
 
   it('does not render if feature flag is false', async () => {
     when(ExtJS.state().getValue)
-        .calledWith(MALWARE_RISK_ON_DISK_ENABLED)
+        .calledWith(MALWARE_RISK_ENABLED)
         .mockReturnValue(false);
     await act(async () => {
       render(<MaliciousRiskOnDisk />);
