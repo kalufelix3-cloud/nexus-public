@@ -35,7 +35,6 @@ import classNames from 'classnames';
 const {
   CLM,
   MALWARE_RISK_ENABLED,
-  MALWARE_RISK_ON_DISK_ENABLED, 
   MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED
 } = FeatureFlags;
 
@@ -55,7 +54,7 @@ const EXTJS_EXPANDED_HEIGHT = 292;
 const EXTJS_COLLAPSED_HEIGHT = 115;
 
 export default function MaliciousRiskOnDisk({ toggle, onSizeChanged, className }) {
-  const isRiskOnDiskEnabled = ExtJS.state().getValue(MALWARE_RISK_ON_DISK_ENABLED);
+  const isRiskOnDiskEnabled = ExtJS.state().getValue(MALWARE_RISK_ENABLED);
   const user = ExtJS.useUser();
   const userIsLogged = user ?? false;
   const showMaliciousRiskOnDisk = userIsLogged && isRiskOnDiskEnabled;

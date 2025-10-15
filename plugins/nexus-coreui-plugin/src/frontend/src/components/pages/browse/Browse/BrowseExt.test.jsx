@@ -59,15 +59,13 @@ describe("BrowseExt", () => {
 
   function getDefaultExtJSStateValues() {
     const {
-      MALWARE_RISK_ENABLED,
-      MALWARE_RISK_ON_DISK_ENABLED
+      MALWARE_RISK_ENABLED
     } = FeatureFlags;
 
     return {
       'nexus.react.browse': false,
       'nexus.malware.count': true,
       [MALWARE_RISK_ENABLED]: true,
-      [MALWARE_RISK_ON_DISK_ENABLED]: true,
       browseableformats: [{ id: 'maven2' }, { id: 'nuget' }]
     }
   }
