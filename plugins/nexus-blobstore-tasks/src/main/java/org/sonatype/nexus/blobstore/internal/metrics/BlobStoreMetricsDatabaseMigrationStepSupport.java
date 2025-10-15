@@ -13,7 +13,6 @@
 package org.sonatype.nexus.blobstore.internal.metrics;
 
 import java.sql.Connection;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,7 +25,7 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
-import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
+import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -38,14 +37,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public abstract class BlobStoreMetricsDatabaseMigrationStepSupport
     extends StateGuardLifecycleSupport
-    implements DatabaseMigrationStep
+    implements RepeatableDatabaseMigrationStep
 {
-  /**
-   * Subclasses must provide the migration version.
-   */
-  @Override
-  public abstract Optional<String> version();
-
   private final String blobStoreType;
 
   protected BlobStoreMetricsStore metricsStore;
@@ -71,8 +64,6 @@ public abstract class BlobStoreMetricsDatabaseMigrationStepSupport
 
   @Override
   public void migrate(final Connection connection) throws Exception {
-    log.info("Starting blob store metrics migration for type: {}", blobStoreType);
-
     String names = getBlobStoreConfigurations()
         .filter(this::shouldSaveMetricsToDatabase)
         .collect(Collectors.joining(","));

@@ -74,8 +74,7 @@ export default {
       AVAILABLE: 'Started',
       UNAVAILABLE: 'Failed',
       UNKNOWN: 'Unavailable',
-      UNLIMITED: 'Unlimited',
-      CALCULATING: 'Calculating...'
+      UNLIMITED: 'Unlimited'
     },
 
     FORM: {

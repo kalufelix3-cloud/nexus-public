@@ -61,7 +61,6 @@ export default function BlobStoresList() {
   const onEdit = (type, name) => router.stateService.go(ADMIN.REPOSITORY.BLOBSTORES.EDIT, {type, name});
   const onCreate = () => router.stateService.go(ADMIN.REPOSITORY.BLOBSTORES.CREATE);
   const [current, send] = useMachine(BlobStoresListMachine, {devTools: true});
-  const isCalculating = ExtJS.state().getValue('nexus.datastore.blobstore.metrics.calculating') || false;
   const isLoading = current.matches('loading');
   const {data, error, filter: filterText} = current.context;
   const hasUser = ExtJS.useUser() ?? false;
@@ -130,22 +129,9 @@ export default function BlobStoresList() {
                                            icon={available ? faCheckCircle : faExclamationCircle}/>
                         <span>{available ? BLOB_STORES.LIST.AVAILABLE : BLOB_STORES.LIST.UNAVAILABLE}</span>
                       </NxTableCell>
-                      <NxTableCell isNumeric>
-                        {unavailable
-                          ? BLOB_STORES.LIST.UNKNOWN
-                          : isCalculating
-                            ? BLOB_STORES.LIST.CALCULATING
-                            : blobCount
-                        }
-                      </NxTableCell>
-                      <NxTableCell isNumeric>
-                        {unavailable
-                          ? BLOB_STORES.LIST.UNKNOWN
-                          : isCalculating
-                            ? BLOB_STORES.LIST.CALCULATING
-                            : `${HumanReadableUtils.bytesToString(totalSizeInBytes)} (${totalSizeInBytes})`
-                        }
-                      </NxTableCell>
+                      <NxTableCell isNumeric>{unavailable ? BLOB_STORES.LIST.UNKNOWN : blobCount}</NxTableCell>
+                      <NxTableCell isNumeric>{unavailable ? BLOB_STORES.LIST.UNKNOWN : HumanReadableUtils.bytesToString(
+                          totalSizeInBytes)} ({totalSizeInBytes})</NxTableCell>
                       <NxTableCell isNumeric>
                         {
                           (unavailable && BLOB_STORES.LIST.UNKNOWN) ||

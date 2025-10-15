@@ -88,7 +88,6 @@ public class ComponentNormalizedVersionMigrationStep
 
   @Override
   public void migrate(final Connection connection) throws Exception {
-    log.info("Starting component normalized version migration");
     alterFormats(connection);
     scheduleTask();
   }

@@ -12,11 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.internal.metrics;
 
-import java.util.Optional;
-
 import jakarta.inject.Singleton;
-
-import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.springframework.stereotype.Component;
 
 /**
@@ -24,16 +20,18 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Singleton
-public class FileBlobStoreMetricsMigrationStep_2_19
+public class AzureBlobStoreMetricsMigrationStep
     extends BlobStoreMetricsDatabaseMigrationStepSupport
 {
 
-  public FileBlobStoreMetricsMigrationStep_2_19() {
-    super(FileBlobStore.TYPE);
+  private static final String BLOB_STORE_TYPE = "Azure Cloud Storage";
+
+  public AzureBlobStoreMetricsMigrationStep() {
+    super(BLOB_STORE_TYPE);
   }
 
   @Override
-  public Optional<String> version() {
-    return Optional.of("2.19");
+  public Integer getChecksum() {
+    return 0;
   }
 }

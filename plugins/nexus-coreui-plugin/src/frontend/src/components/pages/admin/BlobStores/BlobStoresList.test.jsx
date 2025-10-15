@@ -16,7 +16,6 @@ import {waitForElementToBeRemoved, within, screen, render} from '@testing-librar
 
 import userEvent from '@testing-library/user-event';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import BlobStoresList from './BlobStoresList';
 import {UIRouter} from "@uirouter/react";
@@ -31,18 +30,6 @@ jest.mock('swagger-ui-react', () => {
 
 jest.mock('axios', () => ({
   get: jest.fn()
-}));
-
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
-  ExtJS: {
-    state: jest.fn(() => ({
-      getValue: jest.fn()
-    })),
-    useUser: jest.fn(),
-    usePermission: jest.fn(() => true),
-    checkPermission: jest.fn(() => true)
-  }
 }));
 
 function renderComponent() {
@@ -331,27 +318,5 @@ describe('BlobStoresList', function() {
 
     expect(selectors.bodyRows().length).toBe(1);
     expect(blobStoreName(0)).toHaveTextContent('test2');
-  });
-
-  it('shows calculating when metrics are being calculated', async function() {
-    const {blobStoreBlobCount, blobStoreTotalSize, queryLoadingMask} = selectors;
-
-    axios.get.mockResolvedValue({data: rows});
-
-    ExtJS.state.mockReturnValue({
-      getValue: jest.fn((key) => {
-        if (key === 'nexus.datastore.blobstore.metrics.calculating') {
-          return true;
-        }
-        return undefined;
-      })
-    });
-
-    renderComponent();
-
-    await waitForElementToBeRemoved(queryLoadingMask());
-
-    expect(blobStoreBlobCount(0)).toHaveTextContent('Calculating...');
-    expect(blobStoreTotalSize(0)).toHaveTextContent('Calculating...');
   });
 });
