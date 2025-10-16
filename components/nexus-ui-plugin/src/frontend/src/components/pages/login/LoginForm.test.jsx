@@ -389,26 +389,5 @@ describe('LoginForm', () => {
       expect(selectors.usernameInput()).toHaveValue('my-user');
       expect(selectors.passwordInput()).toHaveValue('my-pass');
     });
-
-    it('toggles password visibility', async () => {
-      renderComponent();
-      await userEvent.type(selectors.passwordInput(), 'mypassword');
-
-      const showButton = screen.getByLabelText('Show password');
-      expect(selectors.passwordInput()).toHaveAttribute('type', 'password');
-
-      await act(async () => {
-        await userEvent.click(showButton);
-      });
-
-      expect(selectors.passwordInput()).toHaveAttribute('type', 'text');
-      const hideButton = screen.getByLabelText('Hide password');
-
-      await act(async () => {
-        await userEvent.click(hideButton);
-      });
-
-      expect(selectors.passwordInput()).toHaveAttribute('type', 'password');
-    });
   });
 });

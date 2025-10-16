@@ -27,7 +27,6 @@ import React, { useEffect } from 'react';
 import LoginPageStrings from '../../../constants/LoginPageStrings';
 import FormUtils from '../../../interface/FormUtils';
 import LoginFormMachine from './LoginFormMachine';
-import NxPasswordInput from './NxPasswordInput';
 
 const { LOGIN_BUTTON_LOADING, USERNAME_LABEL, PASSWORD_LABEL, LOGIN_BUTTON } = LoginPageStrings;
 
@@ -106,7 +105,7 @@ export default function LoginForm({ primaryButton, onSuccess, onError }) {
         </NxFormGroup>
 
         <NxFormGroup label={PASSWORD_LABEL} isRequired>
-          <NxPasswordInput
+          <NxTextInput type="password"
             {...FormUtils.fieldProps('password', current)}
             {...authErrorOverride}
             onChange={handleFieldChange('password')}
