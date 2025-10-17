@@ -82,7 +82,7 @@ public class BucketManager
       }
       catch (S3Exception e) {
         if (ACCESS_DENIED_CODE.equals(e.awsErrorDetails().errorCode())) {
-          log.debug("Error creating bucket {}", bucket, e);
+          log.error("Error creating bucket {}", bucket, e);
           throw insufficientCreatePermissionsError();
         }
         log.info("Error creating bucket {}", bucket, e);
@@ -120,7 +120,7 @@ public class BucketManager
     catch (S3Exception e) {
       if (INVALID_ACCESS_KEY_ID_CODE.equals(e.awsErrorDetails().errorCode()) ||
           SIGNATURE_DOES_NOT_MATCH_CODE.equals(e.awsErrorDetails().errorCode())) {
-        log.debug("Exception thrown checking AWS credentials", e);
+        log.error("Exception thrown checking AWS credentials with error {}", e.getMessage(), e);
         throw buildException(e);
       }
       log.info("Exception thrown checking AWS credentials.", e);
