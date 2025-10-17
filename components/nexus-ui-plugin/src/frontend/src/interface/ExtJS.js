@@ -424,4 +424,30 @@ export default class ExtJS {
     }, 1);
   }
 
+  /**
+   * Wait for the next permission change event from ExtJS.
+   * Useful after login to ensure permissions are updated before navigation.
+   * 
+   * @returns {Promise<void>} Resolves when permissions change, rejects after 1s timeout
+   */
+  static waitForNextPermissionChange() {
+    return new Promise((resolve, reject) => {
+      const handleChange = () => {
+        console.debug('received permission changes');
+        clearTimeout(timeout);
+        resolve();
+      };
+
+      console.debug('setting up event handler to wait for permission changes');
+      const permissionsController = Ext.getApplication().getController('Permissions');
+      const eventHandler = permissionsController.on({ changed: handleChange, single: true });
+
+      const timeout = setTimeout(() => {
+        console.debug('removing event handler, permission changes have timed out');
+        permissionsController.removeHandler(eventHandler);
+        reject(new Error('timed out waiting for permissions to update'));
+      }, 1000);
+    });
+  }
+
 }

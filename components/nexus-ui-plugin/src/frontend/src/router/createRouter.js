@@ -18,6 +18,7 @@ import { UIRouterReact, hashLocationPlugin, servicesPlugin } from '@uirouter/rea
 import ExtJS from '../interface/ExtJS';
 import isVisible from '../router/isVisible';
 import { showUnsavedChangesModal } from './unsavedChangesDialog';
+import { RouteNames } from "../constants/RouteNames";
 
 const success = 'success';
 const failure = 'failure';
@@ -48,11 +49,20 @@ export function createRouter({ initialRoute, menuRoutes, missingRoute }) {
     console.debug(`transition from ${transition.from().name} to ${transition.to().name}`);
     if (!isVisible(state.data?.visibilityRequirements)) {
       if (!ExtJS.hasUser()) {
-        const result = await offerUserTheChanceToLoginAndRevalidate(transition, state.data?.visibilityRequirements);
+        const isReactLoginEnabled = ExtJS.state().getValue('nexus.login.react.enabled', false);
+        if (isReactLoginEnabled) {
+          transition.abort();
 
-        if (result !== success) {
-          console.warn('state is not visible for navigation after authentication prompt, aborting transition');
-          redirectTo404();
+          console.debug('Redirecting to login page with return URL');
+          let returnTo = router.stateService.href(state.name, transition.params());
+          router.stateService.go(RouteNames.LOGIN, { returnTo } );
+        } else {
+          // pop up ExtJS modal login
+          const result = await offerUserTheChanceToLoginAndRevalidate(transition, state.data?.visibilityRequirements);
+          if (result !== success) {
+            console.warn('state is not visible for navigation after authentication prompt, aborting transition');
+            redirectTo404();
+          }
         }
       } else {
         console.warn('state is not visible for navigation, aborting transition', state.name);
@@ -113,7 +123,7 @@ async function offerUserTheChanceToLoginAndRevalidate(_transition, visibilityReq
     }
 
     // wait for extjs to update permissions
-    await waitForNextPermissionChange();
+    await ExtJS.waitForNextPermissionChange();
 
     console.debug('rechecking visiblity requirements after authentication');
     if (!isVisible(visibilityRequirements)) {
@@ -141,25 +151,5 @@ function promptUserToLogin() {
         reject(err);
       }
     });
-  });
-}
-
-function waitForNextPermissionChange() {
-  return new Promise((resolve, reject) => {
-    const handleChange = () => {
-      console.debug('received permission changes');
-      clearInterval(timeout);
-      resolve();
-    };
-
-    console.debug('setting up event handler to wait for permission changes');
-    const permissionsController = Ext.getApplication().getController('Permissions');
-    const eventHandler = permissionsController.on({ changed: handleChange, single: true });
-
-    const timeout = setTimeout(() => {
-      console.debug('removing event handler, permission changes have timed out');
-      permissionsController.removeHandler(eventHandler);
-      reject(new Error('timed out waiting for permissions to update'));
-    }, 1000);
   });
 }

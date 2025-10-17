@@ -32,6 +32,7 @@ import UIStrings from '../../constants/UIStrings';
 export default function LoginAndUserButton() {
   const signInTitle = "Log In"
   const hasUser = useHasUser();
+  const router = useRouter();
 
   if (hasUser) {
     return <ProfileMenu />
@@ -47,7 +48,12 @@ export default function LoginAndUserButton() {
   }
 
   function onSignInClick() {
-    ExtJS.askToAuthenticate();
+    const isReactLoginEnabled = ExtJS.state().getValue('nexus.login.react.enabled', false);
+    if (isReactLoginEnabled) {
+      router.stateService.go(ROUTE_NAMES.LOGIN);
+    } else {
+      ExtJS.askToAuthenticate();
+    }
   }
 }
 

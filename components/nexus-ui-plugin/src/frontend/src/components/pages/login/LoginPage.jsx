@@ -16,6 +16,7 @@ import { NxTile } from '@sonatype/react-shared-components';
 import { ExtJS } from '@sonatype/nexus-ui-plugin';
 import { useRouter } from '@uirouter/react';
 import UIStrings from '../../../constants/UIStrings';
+import { RouteNames } from "../../../constants/RouteNames";
 import LoginLayout from '../../layout/LoginLayout';
 import LoginForm from './LoginForm';
 import SsoLoginButton from './SsoLoginButton';
@@ -41,9 +42,21 @@ export default function LoginPage({ logoConfig }) {
 
   const showLocalLogin = !isCloudEnvironment;
 
-  const handleLoginSuccess = ({ username }) => {
+  const handleLoginSuccess = async ({ username }) => {
     console.log(`User ${username} authenticated successfully`);
-    // TODO: Add redirect logic after login
+    try {
+      await ExtJS.waitForNextPermissionChange();
+      const returnTo = router.globals.params.returnTo;
+      if (returnTo) {
+        // `router.urlService.url` does set and navigate to the returnTo url
+        router.urlService.url(returnTo);
+      } else {
+        router.stateService.go('browse.welcome');
+      }
+    } catch (ex) {
+      console.warn('redirection unsuccessful: ', ex);
+      router.stateService.go(RouteNames.MISSING_ROUTE);
+    }
   };
 
   const handleLoginError = (error) => {

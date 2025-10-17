@@ -25,8 +25,13 @@ jest.mock('../../layout/LoginLayout', () => {
   };
 });
 
+const mockLoginFormOnSuccess = jest.fn();
+const mockLoginFormOnError = jest.fn();
+
 jest.mock('./LoginForm', () => {
   return function LoginForm(props) {
+    mockLoginFormOnSuccess.mockImplementation(props.onSuccess);
+    mockLoginFormOnError.mockImplementation(props.onError);
     return <div data-testid="login-form" data-primary-button={props.primaryButton}>Login Form</div>;
   };
 });
@@ -43,15 +48,35 @@ jest.mock('./AnonymousAccessButton', () => {
   };
 });
 
-jest.mock('@uirouter/react', () => ({
-  useRouter: () => ({
-    stateService: {
-      go: jest.fn()
-    }
-  })
-}));
+const mockRouterGo = jest.fn();
+const mockRouterUrl = jest.fn();
+const mockRouterParams = {};
 
-jest.mock('@sonatype/nexus-ui-plugin');
+jest.mock('@uirouter/react', () => {
+  const actualModule = jest.requireActual('@uirouter/react');
+  return {
+    ...actualModule,
+    useRouter: () => ({
+      stateService: {
+        go: mockRouterGo
+      },
+      urlService: {
+        url: mockRouterUrl
+      },
+      globals: {
+        params: mockRouterParams
+      }
+    })
+  };
+});
+
+jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ExtJS: {
+    useState: jest.fn(),
+    state: jest.fn(),
+    waitForNextPermissionChange: jest.fn().mockResolvedValue()
+  }
+}));
 
 describe('LoginPage', () => {
   const mockLogoConfig = { url: 'test-logo.png' };
@@ -75,11 +100,15 @@ describe('LoginPage', () => {
       .mockReturnValueOnce(anonymousUsername); // anonymousUsername
   }
 
+  function renderComponent(props) {
+    return render(<LoginPage {...props} />);
+  }
+
   describe('self-hosted environment', () => {
     it('renders login form when no SSO is enabled', () => {
       setupStates(false, false, false);
       
-      render(<LoginPage logoConfig={mockLogoConfig} />);
+      renderComponent({ logoConfig: mockLogoConfig });
       
       expect(screen.getByTestId('login-tile')).toBeInTheDocument();
       expect(screen.getByText(UIStrings.LOGIN_TITLE)).toBeInTheDocument();
@@ -92,7 +121,7 @@ describe('LoginPage', () => {
     it('renders both SSO button and login form with divider when SAML is enabled', () => {
       setupStates(true, false, false);
       
-      render(<LoginPage logoConfig={mockLogoConfig} />);
+      renderComponent({ logoConfig: mockLogoConfig });
       
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.getByTestId('login-form')).toBeInTheDocument();
@@ -103,7 +132,7 @@ describe('LoginPage', () => {
     it('renders both SSO button and login form with divider when OAuth2 is enabled', () => {
       setupStates(false, true, false);
       
-      render(<LoginPage logoConfig={mockLogoConfig} />);
+      renderComponent({ logoConfig: mockLogoConfig });
       
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.getByTestId('login-form')).toBeInTheDocument();
@@ -114,7 +143,7 @@ describe('LoginPage', () => {
     it('sets LoginForm primaryButton to false when SSO is enabled', () => {
       setupStates(true, false, false);
       
-      render(<LoginPage logoConfig={mockLogoConfig} />);
+      renderComponent({ logoConfig: mockLogoConfig });
       
       const loginForm = screen.getByTestId('login-form');
       expect(loginForm).toHaveAttribute('data-primary-button', 'false');
@@ -123,7 +152,7 @@ describe('LoginPage', () => {
     it('sets LoginForm primaryButton to true when SSO is not enabled', () => {
       setupStates(false, false, false);
       
-      render(<LoginPage logoConfig={mockLogoConfig} />);
+      renderComponent({ logoConfig: mockLogoConfig });
       
       const loginForm = screen.getByTestId('login-form');
       expect(loginForm).toHaveAttribute('data-primary-button', 'true');
@@ -134,7 +163,7 @@ describe('LoginPage', () => {
     it('does not render login form in cloud environment without SSO', () => {
       setupStates(false, false, true);
       
-      render(<LoginPage logoConfig={mockLogoConfig} />);
+      renderComponent({ logoConfig: mockLogoConfig });
       
       expect(screen.getByTestId('login-tile')).toBeInTheDocument();
       expect(screen.getByText(UIStrings.LOGIN_TITLE)).toBeInTheDocument();
@@ -147,7 +176,7 @@ describe('LoginPage', () => {
     it('renders only SSO button without divider in cloud environment with OAuth2 enabled', () => {
       setupStates(false, true, true);
       
-      render(<LoginPage logoConfig={mockLogoConfig} />);
+      renderComponent({ logoConfig: mockLogoConfig });
       
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
@@ -158,7 +187,7 @@ describe('LoginPage', () => {
     it('renders only SSO button without divider in cloud environment with SAML enabled', () => {
       setupStates(true, false, true);
       
-      render(<LoginPage logoConfig={mockLogoConfig} />);
+      renderComponent({ logoConfig: mockLogoConfig });
       
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
@@ -169,7 +198,7 @@ describe('LoginPage', () => {
     it('renders only SSO button without divider in cloud environment with both SAML and OAuth2 enabled', () => {
       setupStates(true, true, true);
       
-      render(<LoginPage logoConfig={mockLogoConfig} />);
+      renderComponent({ logoConfig: mockLogoConfig });
       
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
@@ -183,7 +212,7 @@ describe('LoginPage', () => {
       setupStates(false, false, false);
       const customLogoConfig = { url: 'custom-logo.png', alt: 'Custom Logo' };
       
-      render(<LoginPage logoConfig={customLogoConfig} />);
+      renderComponent({ logoConfig: customLogoConfig });
       
       expect(screen.getByTestId('login-layout')).toBeInTheDocument();
     });
@@ -193,7 +222,7 @@ describe('LoginPage', () => {
     it('does not render anonymous access button when anonymous username is not configured', () => {
       setupStates(false, false, false, null);
 
-      render(<LoginPage logoConfig={mockLogoConfig} />);
+      renderComponent({ logoConfig: mockLogoConfig });
 
       expect(screen.getByTestId('login-form')).toBeInTheDocument();
       expect(screen.queryByTestId('continue-without-login-button')).not.toBeInTheDocument();
@@ -202,7 +231,7 @@ describe('LoginPage', () => {
     it('renders anonymous access button when anonymous username is configured', () => {
       setupStates(false, false, false, 'anonymous');
 
-      render(<LoginPage logoConfig={mockLogoConfig} />);
+      renderComponent({ logoConfig: mockLogoConfig });
 
       expect(screen.getByTestId('login-form')).toBeInTheDocument();
       expect(screen.getByTestId('continue-without-login-button')).toBeInTheDocument();
@@ -211,7 +240,7 @@ describe('LoginPage', () => {
     it('renders anonymous access button with SSO enabled', () => {
       setupStates(true, false, false, 'anonymous');
 
-      render(<LoginPage logoConfig={mockLogoConfig} />);
+      renderComponent({ logoConfig: mockLogoConfig });
 
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.getByTestId('login-form')).toBeInTheDocument();
@@ -221,7 +250,7 @@ describe('LoginPage', () => {
     it('does not render anonymous access button when anonymous username is empty string', () => {
       setupStates(false, false, false, '');
 
-      render(<LoginPage logoConfig={mockLogoConfig} />);
+      renderComponent({ logoConfig: mockLogoConfig });
 
       expect(screen.queryByTestId('continue-without-login-button')).not.toBeInTheDocument();
     });
@@ -239,7 +268,7 @@ describe('LoginPage', () => {
     it('handles undefined ExtJS state gracefully', () => {
       mockUseState.mockReturnValue(undefined);
 
-      render(<LoginPage logoConfig={mockLogoConfig} />);
+      renderComponent({ logoConfig: mockLogoConfig });
 
       // Should default to self-hosted behavior
       expect(screen.getByTestId('login-form')).toBeInTheDocument();
@@ -248,9 +277,52 @@ describe('LoginPage', () => {
     it('handles missing logoConfig gracefully', () => {
       setupStates(false, false, false, null);
 
-      render(<LoginPage />);
+      renderComponent({});
 
       expect(screen.getByTestId('login-tile')).toBeInTheDocument();
+    });
+  });
+
+  describe('redirection after login', () => {
+    beforeEach(() => {
+      mockRouterParams.returnTo = undefined;
+      mockRouterGo.mockClear();
+      mockRouterUrl.mockClear();
+      mockLoginFormOnSuccess.mockClear();
+    });
+
+    it('redirects to returnTo URL after successful login', async () => {
+      setupStates(false, false, false, null);
+      mockRouterParams.returnTo = '#admin/repository/repositories';
+      
+      renderComponent({ logoConfig: mockLogoConfig });
+      
+      await mockLoginFormOnSuccess({ username: 'testuser' });
+      
+      expect(mockRouterUrl).toHaveBeenCalledWith('#admin/repository/repositories');
+      expect(mockRouterGo).not.toHaveBeenCalled();
+    });
+
+    it('redirects to welcome page when no returnTo is provided', async () => {
+      setupStates(false, false, false, null);
+      
+      renderComponent({ logoConfig: mockLogoConfig });
+      
+      await mockLoginFormOnSuccess({ username: 'testuser' });
+      
+      expect(mockRouterGo).toHaveBeenCalledWith('browse.welcome');
+      expect(mockRouterUrl).not.toHaveBeenCalled();
+    });
+
+    it('redirects to missing route page when redirection is unsuccessful', async () => {
+      setupStates(false, false, false, null);
+      ExtJS.waitForNextPermissionChange.mockRejectedValueOnce(new Error('Permission check failed'));
+      
+      renderComponent({ logoConfig: mockLogoConfig });
+      
+      await mockLoginFormOnSuccess({ username: 'testuser' });
+      
+      expect(mockRouterGo).toHaveBeenCalledWith('missing_route');
     });
   });
 });
