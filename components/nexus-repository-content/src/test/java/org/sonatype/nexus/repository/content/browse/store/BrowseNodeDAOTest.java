@@ -390,6 +390,76 @@ class BrowseNodeDAOTest
     }
   }
 
+  @Test
+  void testGetMaxNodeId() {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+
+      // Test with existing repository
+      Long maxNodeId = dao.getMaxNodeId(1);
+      assertThat(maxNodeId, is(greaterThan(0L)));
+
+      // Test with non-existent repository
+      Long emptyMaxNodeId = dao.getMaxNodeId(999);
+      assertThat(emptyMaxNodeId, is(nullValue()));
+    }
+  }
+
+  @Test
+  void testDeleteBrowseNodesByIdRange() {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+
+      // Get the current max node ID to determine our range
+      Long maxNodeId = dao.getMaxNodeId(1);
+      assertThat(maxNodeId, is(greaterThan(0L)));
+
+      // Verify we have nodes before deletion
+      List<BrowseNode> listingBefore = getListing(dao);
+      assertThat(listingBefore.size(), is(greaterThan(0)));
+
+      // Delete a range that includes some nodes
+      int deletedCount = dao.deleteBrowseNodesByIdRange(1, 1, maxNodeId);
+      assertThat(deletedCount, is(greaterThan(0)));
+
+      // Verify nodes are deleted
+      List<BrowseNode> listingAfter = getListing(dao);
+      assertThat(listingAfter.size(), is(0));
+
+      session.getTransaction().commit();
+    }
+  }
+
+  @Test
+  void testDeleteBrowseNodesByIdRangeEmptyRange() {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+
+      // Delete a range with no matching nodes
+      int deletedCount = dao.deleteBrowseNodesByIdRange(1, 999999, 999999);
+      assertThat(deletedCount, is(0));
+
+      // Verify original nodes are still there
+      List<BrowseNode> listing = getListing(dao);
+      assertThat(listing.size(), is(3));
+
+      session.getTransaction().commit();
+    }
+  }
+
+  @Test
+  void testDeleteBrowseNodesByIdRangeNonExistentRepository() {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+
+      // Delete from non-existent repository
+      int deletedCount = dao.deleteBrowseNodesByIdRange(999, 1, 1000);
+      assertThat(deletedCount, is(0));
+
+      session.getTransaction().commit();
+    }
+  }
+
   private static List<BrowseNode> getListing(final BrowseNodeDAO dao, final String... paths) {
     List<BrowseNode> listing = dao.getByDisplayPath(1, asList(paths), 100, null, null);
     listing.sort(byName);

@@ -90,6 +90,27 @@ public interface BrowseNodeDAO
   boolean deleteBrowseNodes(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
 
   /**
+   * Gets the maximum node_id for the given repository.
+   *
+   * @param repositoryId the repository containing the browse nodes
+   * @return the maximum node_id or null if no nodes exist
+   */
+  Long getMaxNodeId(@Param("repositoryId") int repositoryId);
+
+  /**
+   * Deletes browse nodes in the given repository within the specified ID range.
+   *
+   * @param repositoryId the repository containing the browse nodes
+   * @param minNodeId the minimum node_id (inclusive)
+   * @param maxNodeId the maximum node_id (inclusive)
+   * @return the number of nodes deleted
+   */
+  int deleteBrowseNodesByIdRange(
+      @Param("repositoryId") int repositoryId,
+      @Param("minNodeId") long minNodeId,
+      @Param("maxNodeId") long maxNodeId);
+
+  /**
    * Deletes a browse node by its asset internal id and path.
    *
    * @param internalAssetId the asset internal id

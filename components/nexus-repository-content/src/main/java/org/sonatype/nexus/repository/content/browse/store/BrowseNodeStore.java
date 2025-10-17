@@ -115,11 +115,31 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
   @Transactional
   public boolean deleteBrowseNodes(final int repositoryId) {
     log.debug("Deleting all browse nodes in repository {}", repositoryId);
-    boolean deleted = false;
-    while (dao().deleteBrowseNodes(repositoryId, deleteBatchSize())) {
-      commitChangesSoFar();
-      deleted = true;
+
+    Long maxNodeId = dao().getMaxNodeId(repositoryId);
+    if (maxNodeId == null) {
+      log.debug("No browse nodes found in repository {}", repositoryId);
+      return false;
     }
+
+    boolean deleted = false;
+    int batchSize = deleteBatchSize();
+    long currentMinId = 1;
+
+    while (currentMinId <= maxNodeId) {
+      long currentMaxId = Math.min(currentMinId + batchSize - 1, maxNodeId);
+      int deletedCount = dao().deleteBrowseNodesByIdRange(repositoryId, currentMinId, currentMaxId);
+
+      if (deletedCount > 0) {
+        deleted = true;
+        log.debug("Deleted {} browse nodes in range {}-{} for repository {}",
+            deletedCount, currentMinId, currentMaxId, repositoryId);
+      }
+
+      commitChangesSoFar();
+      currentMinId = currentMaxId + 1;
+    }
+
     log.debug("Deleted all browse nodes in repository {}", repositoryId);
     return deleted;
   }

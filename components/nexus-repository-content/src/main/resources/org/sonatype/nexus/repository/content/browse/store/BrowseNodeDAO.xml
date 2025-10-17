@@ -219,5 +219,17 @@
     SELECT * FROM ${format}_browse_node WHERE
         parent_id = #{parentNodeId}
     <if test="limit gt 0"> LIMIT #{limit} OFFSET #{offset}</if>;
-    </select>
+  </select>
+
+  <select id="getMaxNodeId" resultType="Long">
+    SELECT MAX(node_id) FROM ${format}_browse_node WHERE repository_id = #{repositoryId};
+  </select>
+
+  <delete id="deleteBrowseNodesByIdRange">
+    DELETE FROM ${format}_browse_node WHERE
+        repository_id = #{repositoryId}
+        AND node_id >= #{minNodeId}
+        AND node_id &lt;= #{maxNodeId};
+  </delete>
+
 </mapper>
