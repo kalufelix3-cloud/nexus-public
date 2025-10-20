@@ -52,6 +52,12 @@ public class Content
   public static final String CONTENT_ETAG = "etag";
 
   /**
+   * Key of content "PCCS Hash" attribute, with type {@link String}. Stores the hash of the PCCS filtered versions for a
+   * component, if PCCS filtering was applied.
+   */
+  public static final String CONTENT_PCCS_HASH = "pccs_hash";
+
+  /**
    * Common prefix for external metadata attributes to be stored in {@link Content#attributes}
    */
   private static final String EXTERNAL_ATTRIBUTE = "external.%s";
