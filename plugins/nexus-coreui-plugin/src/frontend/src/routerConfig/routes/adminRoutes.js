@@ -41,7 +41,7 @@ import HTTP from '../../components/pages/admin/Http/Http';
 import Licensing from '../../components/pages/admin/Licensing/Licensing';
 import Upgrade from '../../components/pages/admin/Upgrade/Upgrade';
 import NodesExt from '../../components/pages/admin/Nodes/NodesExt';
-import TasksExtJSWrapper from '../../components/pages/admin/Tasks/TasksExtJSWrapper';
+import Tasks from '../../components/pages/admin/Tasks/Tasks';
 import Capabilities from '../../components/pages/admin/Capabilities/Capabilities';
 import BlobStoresList from '../../components/pages/admin/BlobStores/BlobStoresList';
 import BlobStoresForm from '../../components/pages/admin/BlobStores/BlobStoresForm';
@@ -670,7 +670,7 @@ export const adminRoutes = [
   {
     name: ADMIN.SYSTEM.TASKS.ROOT,
     url: '/tasks:taskId',
-    component: TasksExtJSWrapper,
+    component: Tasks,
     params: {
       taskId: {
         value: null,

@@ -251,4 +251,10 @@ public class FeatureFlags
   public static final String REACT_LOGIN_ENABLED = "nexus.login.react.enabled";
 
   public static final String REACT_LOGIN_ENABLED_NAMED_VALUE = "${nexus.login.react.enabled:false}";
+
+  /* React Tasks Experience. Available values: true, false. Default value: false */
+  public static final String REACT_TASKS_ENABLED = "nexus.react.tasks.enabled";
+
+  public static final String REACT_TASKS_ENABLED_NAMED_VALUE = "${nexus.react.tasks.enabled:false}";
+
 }
