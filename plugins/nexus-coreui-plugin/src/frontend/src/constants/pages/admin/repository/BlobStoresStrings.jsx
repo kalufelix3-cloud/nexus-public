@@ -54,7 +54,7 @@ export default {
         TYPE: 'Type',
         STATE: 'State',
         COUNT: 'Blob Count',
-        SIZE: 'Total Size',
+        SIZE: 'Used Size',
         SPACE: 'Available Space'
       },
       FILTER_PLACEHOLDER: 'Filter by name',

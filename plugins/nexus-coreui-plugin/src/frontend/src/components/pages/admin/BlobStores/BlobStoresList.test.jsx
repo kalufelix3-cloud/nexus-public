@@ -270,13 +270,13 @@ describe('BlobStoresList', function() {
 
     await waitForElementToBeRemoved(queryLoadingMask());
 
-    userEvent.click(tableHeader('Total Size'));
+    userEvent.click(tableHeader('Used Size'));
 
     expect(blobStoreTotalSize(0)).toHaveTextContent('Unavailable');
     expect(blobStoreTotalSize(1)).toHaveTextContent('0.00 Bytes');
     expect(blobStoreTotalSize(2)).toHaveTextContent('17.38 GB');
 
-    userEvent.click(tableHeader('Total Size'));
+    userEvent.click(tableHeader('Used Size'));
 
     expect(blobStoreTotalSize(0)).toHaveTextContent('17.38 GB');
     expect(blobStoreTotalSize(1)).toHaveTextContent('0.00 Bytes');
