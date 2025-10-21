@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.eclipse.sisu.Parameters;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Iso8601Date;
 import org.sonatype.nexus.common.QualifierUtil;
@@ -82,7 +81,7 @@ public class SystemInformationGeneratorImpl
   public SystemInformationGeneratorImpl(
       ApplicationDirectories applicationDirectories,
       ApplicationVersion applicationVersion,
-      @Parameters Map<String, String> parameters,
+      Map<String, String> parameters,
       NodeAccess nodeAccess,
       DeploymentAccess deploymentAccess,
       List<SystemInformationHelper> systemInformationHelpersList)

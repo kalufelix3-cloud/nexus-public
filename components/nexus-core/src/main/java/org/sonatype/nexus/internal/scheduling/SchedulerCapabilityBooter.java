@@ -15,7 +15,6 @@ package org.sonatype.nexus.internal.scheduling;
 import org.sonatype.nexus.capability.CapabilityBooterSupport;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 
-import org.eclipse.sisu.EagerSingleton;
 import org.springframework.stereotype.Component;
 
 /**
@@ -24,7 +23,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@EagerSingleton
 public class SchedulerCapabilityBooter
     extends CapabilityBooterSupport
 {
