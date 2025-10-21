@@ -15,6 +15,7 @@ package org.sonatype.nexus.configuration.model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,9 @@ public class InstanceConfigurationXO
   private List<ConfigurationXO> configurationXOs = new ArrayList<>();
 
   public void setConfigurationXOs(final List<ConfigurationXO> configurationXOs) {
-    this.configurationXOs = configurationXOs;
+    this.configurationXOs = configurationXOs.stream()
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
   }
 
   public List<ConfigurationXO> getConfigurationXOs() {
