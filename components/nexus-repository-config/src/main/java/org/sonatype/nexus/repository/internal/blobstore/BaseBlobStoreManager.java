@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
@@ -164,41 +165,43 @@ public abstract class BaseBlobStoreManager
     }
 
     log.info("Restoring {} BlobStores", configurations.size());
-    for (BlobStoreConfiguration configuration : configurations) {
-      log.debug("Restoring BlobStore: {}", configuration);
-      BlobStore blobStore = null;
-
-      try {
-        blobStore = blobStorePrototypes.get(configuration.getType()).get();
-        blobStore.init(configuration);
-      }
-      catch (Exception e) {
-        log.error("Unable to restore BlobStore {}", configuration.getName(), e);
-      }
-      finally {
-        if (blobStore != null) {
-          track(configuration.getName(), blobStore);
-        }
-      }
-
-      // TODO - event publishing
-    }
+    configurations.parallelStream().forEach(this::restoreBlobStore);
 
     log.info("Starting {} BlobStores", stores.size());
-    for (Map.Entry<String, BlobStore> entry : stores.entrySet()) {
-      String name = entry.getKey();
-      BlobStore blobStore = entry.getValue();
-      log.debug("Starting BlobStore: {}", name);
-      try {
-        blobStore.start();
-        eventManager.post(new BlobStoreStartedEvent(blobStore));
+    stores.entrySet().parallelStream().forEach(this::startBlobStore);
 
-      }
-      catch (Exception e) {
-        log.error("Unable to start BlobStore {}", name, e);
-      }
+    log.info("Completed initialization");
+  }
 
-      // TODO - event publishing
+  private void restoreBlobStore(final BlobStoreConfiguration configuration) {
+    log.debug("Restoring BlobStore: {}", configuration);
+    BlobStore blobStore = null;
+
+    try {
+      blobStore = blobStorePrototypes.get(configuration.getType()).get();
+      blobStore.init(configuration);
+    }
+    catch (Exception e) {
+      log.error("Unable to restore BlobStore {}", configuration.getName(), e);
+    }
+    finally {
+      if (blobStore != null) {
+        track(configuration.getName(), blobStore);
+      }
+    }
+  }
+
+  private void startBlobStore(final Entry<String, BlobStore> entry) {
+    String name = entry.getKey();
+    BlobStore blobStore = entry.getValue();
+    log.debug("Starting BlobStore: {}", name);
+    try {
+      blobStore.start();
+      eventManager.post(new BlobStoreStartedEvent(blobStore));
+
+    }
+    catch (Exception e) {
+      log.error("Unable to start BlobStore {}", name, e);
     }
 
     log.info("Completed initialization");
@@ -218,8 +221,6 @@ public abstract class BaseBlobStoreManager
       log.debug("Stopping blob-store: {}", name);
       store.stop();
       eventManager.post(new BlobStoreStoppedEvent(store));
-
-      // TODO - event publishing
     }
 
     stores.clear();
