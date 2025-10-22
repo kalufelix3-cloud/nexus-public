@@ -238,6 +238,9 @@ public class FeatureFlags
 
   public static final String CONTAINER_IMAGES_EVAL_ENABLED_NAMED_VALUE = "${nexus.container.images.eval.enabled:true}";
 
+  public static final String CONTAINER_IMAGES_EVAL_API_ENABLED_VALUE =
+      "${nexus.container.images.eval.api.enabled:true}";
+
   public static final String NEXUS_SECURITY_AUTH0_USER_MANAGEMENT_ENABLED =
       "nexus.security.auth0.userManagement.enabled";
 
