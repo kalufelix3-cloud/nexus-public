@@ -30,12 +30,14 @@ import org.sonatype.nexus.servlet.XFrameOptions;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.apache.shiro.authc.AuthenticationException;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
 import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 /**
  * Servlet filter to add error page rendering.
@@ -90,7 +92,12 @@ public class ErrorPageFilter
         return;
       }
       response.setHeader(X_FRAME_OPTIONS, xFrameOptions.getValueForPath(request.getPathInfo()));
-      response.sendError(SC_INTERNAL_SERVER_ERROR);
+
+      int errorCode = SC_INTERNAL_SERVER_ERROR;
+      if (e instanceof AuthenticationException || e.getCause() instanceof AuthenticationException) {
+        errorCode = SC_UNAUTHORIZED;
+      }
+      response.sendError(errorCode);
     }
   }
 }
