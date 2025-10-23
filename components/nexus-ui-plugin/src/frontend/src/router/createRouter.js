@@ -46,6 +46,13 @@ export function createRouter({ initialRoute, menuRoutes, missingRoute }) {
 
     const state = transition.to();
 
+    if (state.name === RouteNames.LOGIN && ExtJS.hasUser()) {
+      console.debug('User is already authenticated, redirecting away from login page');
+      transition.abort();
+      router.stateService.go(RouteNames.WELCOME);
+      return;
+    }
+
     console.debug(`transition from ${transition.from().name} to ${transition.to().name}`);
     if (!isVisible(state.data?.visibilityRequirements)) {
       if (!ExtJS.hasUser()) {
