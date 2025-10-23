@@ -30,7 +30,7 @@
   <properties>
     <sonatype-licensing.version>2.0.2</sonatype-licensing.version>
     <clm.dto.model.version>2.1.6-01</clm.dto.model.version>
-    <insight-brain.version>1.197.0-SONATYPE</insight-brain.version>
+    <insight-brain-client.version>2.0.0-01</insight-brain-client.version>
     <insight-scanner.version>2.37.138-01</insight-scanner.version>
   </properties>
 
@@ -118,6 +118,18 @@
       </dependency>
 
       <dependency>
+        <groupId>com.sonatype.insight.brain</groupId>
+        <artifactId>insight-brain-client</artifactId>
+        <version>${insight-brain-client.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.insight.scan</groupId>
+        <artifactId>insight-client-utils</artifactId>
+        <version>${insight-scanner.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>com.sonatype.insight.scan</groupId>
         <artifactId>insight-scanner-archive</artifactId>
         <version>${insight-scanner.version}</version>
@@ -184,22 +196,6 @@
           <exclusion>
             <groupId>org.eclipse.sisu</groupId>
             <artifactId>org.eclipse.sisu.inject</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sonatype.insight.brain</groupId>
-        <artifactId>insight-rm-common</artifactId>
-        <version>${insight-brain.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sonatype.clm</groupId>
-            <artifactId>com.sonatype.clm.dto.model</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
