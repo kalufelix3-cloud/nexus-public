@@ -561,6 +561,35 @@ describe('GlobalHeader', () => {
 
       expect(within(banner).queryByRole('textbox', { name: 'Search components' })).not.toBeInTheDocument();
     });
+
+    it('properly encodes special characters like slash in search terms', async () => {
+      jest.spyOn(ExtJS, 'search').mockReturnValue(null);
+
+      givenPermissions({
+        'nexus:search:read': true
+      });
+
+      givenBundleActiveStates({
+        'nexus-coreui-plugin': true
+      });
+
+      renderComponent();
+
+      expect(await screen.findByRole('heading', { name: 'Welcome Mock' })).toBeVisible();
+
+      const banner = screen.getByRole('banner');
+      expect(banner).toBeVisible();
+
+      const searchInput = within(banner).getByRole('textbox', { name: 'Search components' });
+      expect(searchInput).toBeVisible();
+
+      await userEvent.type(searchInput, 'aaaa/bbbb');
+      await userEvent.type(searchInput, '{enter}');
+
+      expect(
+        await screen.findByRole('heading', { name: 'Search Mock -- =keyword=aaaa/bbbb' })
+      ).toBeInTheDocument();
+    });
   });
 
   describe('Refresh', () => {

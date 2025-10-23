@@ -51,7 +51,7 @@ export default function Search() {
           : null;
       handleExtJsUnsavedChanges(menuCtrl, async () => {
         if (state.name !== ROUTE_NAMES.BROWSE.SEARCH.GENERIC) {
-          await router.stateService.go(ROUTE_NAMES.BROWSE.SEARCH.GENERIC, { keyword: `=keyword%3D${searchValue}` });
+          await router.stateService.go(ROUTE_NAMES.BROWSE.SEARCH.GENERIC, { keyword: `=keyword=${encodeURIComponent(searchValue)}` });
         } else {
           ExtJS.search(searchValue);
         }
@@ -59,3 +59,4 @@ export default function Search() {
     }
   }
 }
+
