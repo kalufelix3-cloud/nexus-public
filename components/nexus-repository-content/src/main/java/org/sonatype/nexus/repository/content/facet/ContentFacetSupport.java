@@ -17,13 +17,13 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.inject.Inject;
 import javax.validation.ConstraintViolation;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSession;
@@ -52,6 +52,7 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.TransactionalStore;
 
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.inject.Inject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -138,8 +139,22 @@ public abstract class ContentFacetSupport
     Config configToValidate = facet(ConfigurationFacet.class).readSection(configuration, STORAGE, Config.class);
 
     Set<ConstraintViolation<?>> violations = new HashSet<>();
-    maybeAdd(violations, validateBlobStoreNotInGroup(configToValidate.blobStoreName));
+    maybeAdd(violations, validateBlobStore(configToValidate.blobStoreName));
     maybePropagate(violations, log);
+  }
+
+  private ConstraintViolation<?> validateBlobStore(final String blobStoreName) {
+    BlobStore blobstore = dependencies.getBlobStoreManager()
+        .get(blobStoreName);
+
+    if (blobstore != null) {
+      // Blob Store exists, validate its not a member of a group blob store
+      return validateBlobStoreNotInGroup(blobStoreName);
+    }
+
+    return dependencies.getConstraintViolationFactory()
+        .createViolation("%s.blobStoreName".formatted(STORAGE),
+            "No blob store exists with the specified name");
   }
 
   private ConstraintViolation<?> validateBlobStoreNotInGroup(final String blobStoreName) {

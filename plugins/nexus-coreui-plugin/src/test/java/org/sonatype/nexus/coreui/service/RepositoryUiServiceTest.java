@@ -28,7 +28,6 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.coreui.RepositoryReferenceXO;
 import org.sonatype.nexus.coreui.RepositoryXO;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
-import org.sonatype.nexus.repository.BadRequestException;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
@@ -62,7 +61,6 @@ import org.mockito.quality.Strictness;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -70,7 +68,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.coreui.service.RepositoryUiService.INVALID_BLOBSTORENAME_EXCEPTION_MESSAGE;
 
 /**
  * Test for {@link RepositoryUiService}
@@ -82,8 +79,6 @@ import static org.sonatype.nexus.coreui.service.RepositoryUiService.INVALID_BLOB
 class RepositoryUiServiceTest
     extends Test5Support
 {
-  private static final String BLOB_STORE_NAME = "blobStoreName";
-
   @Mock
   private RepositoryCacheInvalidationService repositoryCacheInvalidationService;
 
@@ -153,9 +148,6 @@ class RepositoryUiServiceTest
     when(configuration.copy()).thenReturn(configuration);
     List<Recipe> recipeList = mock(List.class);
     when(QualifierUtil.buildQualifierBeanMap(recipeList)).thenReturn(recipes);
-    when(repositoryXO.getAttributes()).thenReturn(attributes);
-    when(attributes.get("storage")).thenReturn(storage);
-    when(storage.get(BLOB_STORE_NAME)).thenReturn("ValidName");
 
     underTest = Mockito.spy(new RepositoryUiService(repositoryCacheInvalidationService, repositoryManager,
         repositoryMetricsService,
@@ -274,16 +266,6 @@ class RepositoryUiServiceTest
       assertThat(reference.getStatus().getRepositoryName(), is(repoConfiguration.getRepositoryName()));
       assertThat(reference.getStatus().isOnline(), is(repoConfiguration.isOnline()));
     }
-  }
-
-  @Test
-  void testInvalidBLobStoreName() {
-    when(repositoryManager.newConfiguration()).thenReturn(new SimpleConfiguration());
-    when(repositoryXO.getName()).thenReturn("test");
-    when(repositoryXO.getFormat()).thenReturn("format");
-    when(storage.get(BLOB_STORE_NAME)).thenReturn("<b>InvalidName</b>");
-    BadRequestException ex = assertThrows(BadRequestException.class, () -> underTest.create(repositoryXO));
-    assertThat(ex.getMessage(), is(INVALID_BLOBSTORENAME_EXCEPTION_MESSAGE));
   }
 
   private List<Configuration> givenRepoConfigurations() {

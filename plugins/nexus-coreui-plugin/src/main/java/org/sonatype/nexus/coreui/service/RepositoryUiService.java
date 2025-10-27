@@ -24,15 +24,13 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
 
-import org.apache.shiro.authz.AuthorizationException;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
@@ -47,7 +45,12 @@ import org.sonatype.nexus.coreui.search.BrowseableFormatXO;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
 import org.sonatype.nexus.rapture.PasswordPlaceholder;
 import org.sonatype.nexus.rapture.StateContributor;
-import org.sonatype.nexus.repository.*;
+import org.sonatype.nexus.repository.BadRequestException;
+import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.repository.MissingFacetException;
+import org.sonatype.nexus.repository.Recipe;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
@@ -67,18 +70,20 @@ import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.validation.Validate;
-import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 import org.sonatype.nexus.validation.group.Create;
 import org.sonatype.nexus.validation.group.Update;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.coreui.internal.RepositoryCleanupAttributesUtil.initializeCleanupAttributes;
-import org.springframework.stereotype.Component;
 
 @Component
 @Singleton
@@ -266,21 +271,9 @@ public class RepositoryUiService
         .map(DetachedEntityId::new)
         .ifPresent(config::setRoutingRuleId);
 
-    String blobStoreName = repositoryXO.getAttributes().get("storage").get("blobStoreName").toString();
-    validateBlobStoreName(blobStoreName);
     config.setAttributes(repositoryXO.getAttributes());
 
     return asRepository(repositoryManager.create(config));
-  }
-
-  private boolean validateBlobStoreName(String name) throws BadRequestException {
-    if (name != null && name.matches(NamePatternConstants.REGEX)) {
-      return true;
-    }
-    else {
-      throw new BadRequestException(INVALID_BLOBSTORENAME_EXCEPTION_MESSAGE);
-    }
-
   }
 
   @RequiresAuthentication

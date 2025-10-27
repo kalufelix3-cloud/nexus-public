@@ -76,6 +76,7 @@ Ext.define('NX.coreui.view.repository.RepositoryListTemplate', {
         dataIndex: 'blobStoreName',
         stateId: 'blobStoreName',
         flex: 1,
+        renderer: Ext.htmlEncode,
         hidden: me.hideBlobStore,
       },
       {
