@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.WebFilterPriority;
+import org.sonatype.nexus.security.authc.NexusAuthenticationException;
 import org.sonatype.nexus.servlet.XFrameOptions;
 
 import jakarta.inject.Inject;
@@ -94,7 +95,8 @@ public class ErrorPageFilter
       response.setHeader(X_FRAME_OPTIONS, xFrameOptions.getValueForPath(request.getPathInfo()));
 
       int errorCode = SC_INTERNAL_SERVER_ERROR;
-      if (e instanceof AuthenticationException || e.getCause() instanceof AuthenticationException) {
+      if (e instanceof AuthenticationException || e.getCause() instanceof AuthenticationException
+          || e instanceof NexusAuthenticationException || e.getCause() instanceof NexusAuthenticationException) {
         errorCode = SC_UNAUTHORIZED;
       }
       response.sendError(errorCode);
