@@ -31,6 +31,7 @@ import org.sonatype.nexus.common.log.LastShutdownTimeService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.thread.TcclBlock;
+import org.sonatype.nexus.quartz.internal.bulkread.BulkReadScheduler;
 import org.sonatype.nexus.quartz.internal.QuartzSchedulerSPI;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener;
@@ -43,7 +44,6 @@ import com.google.common.eventbus.Subscribe;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.JobListener;
-import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerKey;
@@ -75,7 +75,7 @@ public class DatastoreQuartzSchedulerSPI
       final EventManager eventManager,
       final NodeAccess nodeAccess,
       final Provider<JobStore> jobStoreProvider,
-      final Provider<Scheduler> schedulerProvider,
+      final Provider<BulkReadScheduler> schedulerProvider,
       final LastShutdownTimeService lastShutdownTimeService,
       final DatabaseStatusDelayedExecutor delayedExecutor,
       @Value("${nexus.quartz.recoverInterruptedJobs:true}") final boolean recoverInterruptedJobs)

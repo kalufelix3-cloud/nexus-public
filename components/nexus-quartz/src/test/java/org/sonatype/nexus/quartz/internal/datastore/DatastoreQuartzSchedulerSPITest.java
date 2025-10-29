@@ -12,20 +12,23 @@
  */
 package org.sonatype.nexus.quartz.internal.datastore;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import jakarta.inject.Provider;
-
-import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.log.LastShutdownTimeService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.quartz.internal.QuartzSchedulerProvider;
+import org.sonatype.nexus.quartz.internal.bulkread.BulkReadScheduler;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskState;
@@ -43,13 +46,15 @@ import org.sonatype.nexus.testcommon.event.SimpleEventManager;
 import org.sonatype.nexus.thread.DatabaseStatusDelayedExecutor;
 
 import com.google.common.collect.Lists;
+import jakarta.inject.Provider;
 import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
@@ -64,6 +69,7 @@ import org.quartz.TriggerKey;
 import org.quartz.spi.JobFactory;
 import org.quartz.spi.JobStore;
 import org.quartz.spi.OperableTrigger;
+import org.quartz.utils.ConnectionProvider;
 import org.springframework.beans.factory.FactoryBean;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -77,25 +83,30 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 public class DatastoreQuartzSchedulerSPITest
-    extends TestSupport
+    extends Test5Support
 {
 
-  private DatastoreQuartzSchedulerSPI underTest;
-
+  @Mock
   private JobStore jobStore;
 
-  private QuartzSchedulerProvider scheduler;
+  @Mock
+  private ConnectionProvider connectionProvider;
+
+  private QuartzSchedulerProvider schedulerProvider;
 
   private EventManager eventManager;
 
-  @Before
-  public void before() throws Exception {
+  private DatastoreQuartzSchedulerSPI underTest;
+
+  @BeforeEach
+  void beforeEach() throws Exception {
     NodeAccess nodeAccess = mock(NodeAccess.class);
     when(nodeAccess.getId()).thenReturn("test");
     Provider<JobStore> provider = mock(Provider.class);
-    jobStore = mock(JobStore.class);
     when(provider.get()).thenReturn(jobStore);
-    scheduler = new QuartzSchedulerProvider(nodeAccess, provider, mock(JobFactory.class), 1, 5);
+    mockCustomConnections(connectionProvider);
+    schedulerProvider =
+        new QuartzSchedulerProvider(nodeAccess, provider, connectionProvider, mock(JobFactory.class), 1, 5);
     eventManager = new SimpleEventManager();
 
     LastShutdownTimeService lastShutdownTimeService = mock(LastShutdownTimeService.class);
@@ -109,15 +120,16 @@ public class DatastoreQuartzSchedulerSPITest
     }).when(statusDelayedExecutor).execute(any(Runnable.class));
 
     underTest = new DatastoreQuartzSchedulerSPI(
-        eventManager, nodeAccess, provider, factory(scheduler), lastShutdownTimeService, statusDelayedExecutor, true);
-    scheduler.start();
+        eventManager, nodeAccess, provider, provider(schedulerProvider), lastShutdownTimeService, statusDelayedExecutor,
+        true);
+    schedulerProvider.start();
     underTest.start();
     underTest.getStateGuard().transition(StateGuardLifecycleSupport.State.STARTED);
   }
 
-  @After
+  @AfterEach
   public void after() throws Exception {
-    scheduler.stop();
+    schedulerProvider.stop();
     underTest.stop();
   }
 
@@ -151,7 +163,7 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void exerciseJobEvents() throws SchedulerException {
+  void exerciseJobEvents() throws SchedulerException {
     JobKey jobKey = mockJobDetail();
     mockTrigger(jobKey);
 
@@ -194,7 +206,7 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void exerciseScheduledTriggerEvents() throws SchedulerException {
+  void exerciseScheduledTriggerEvents() throws SchedulerException {
     JobKey jobKey = mockJobDetail();
     TriggerKey triggerKey = mockTrigger(jobKey);
 
@@ -234,7 +246,7 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void exerciseRunNowTriggerEvents() throws SchedulerException {
+  void exerciseRunNowTriggerEvents() throws SchedulerException {
     JobKey jobKey = mockJobDetail();
     TriggerKey triggerKey = mockTrigger(jobKey);
 
@@ -258,20 +270,20 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void recoveringJobsDoesNotFailWhenTheSchedulerThrowsAnException() throws SchedulerException {
+  void recoveringJobsDoesNotFailWhenTheSchedulerThrowsAnException() throws SchedulerException {
     ListenerManager listenerManager = mock(ListenerManager.class);
 
-    Scheduler oldScheduler = underTest.getScheduler();
+    BulkReadScheduler oldScheduler = underTest.getScheduler();
     try {
-      Scheduler mockScheduler = mock(Scheduler.class);
+      BulkReadScheduler mockScheduler = mock(BulkReadScheduler.class);
       underTest.setScheduler(mockScheduler);
-      when(mockScheduler.getListenerManager()).thenReturn(listenerManager);
+      lenient().when(mockScheduler.getListenerManager()).thenReturn(listenerManager);
 
       Pair<Trigger, JobDetail> goodResult = setupJobParameters(mockScheduler, listenerManager, "goodKey");
       Pair<Trigger, JobDetail> exceptionResult = setupJobParameters(mockScheduler, listenerManager, "exceptionKey");
       Pair<Trigger, JobDetail> anotherGoodResult = setupJobParameters(mockScheduler, listenerManager, "anotherGoodKey");
 
-      when(mockScheduler.rescheduleJob(any(TriggerKey.class), eq(exceptionResult.getLeft())))
+      lenient().when(mockScheduler.rescheduleJob(any(TriggerKey.class), eq(exceptionResult.getLeft())))
           .thenThrow(new SchedulerException("THIS IS A TEST EXCEPTION"));
 
       underTest.recoverJob(goodResult.getLeft(), goodResult.getRight());
@@ -286,7 +298,7 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void attemptingToProgrammaticallyRunATaskWhenTheSchedulerIsPausedThrowsAnException() {
+  void attemptingToProgrammaticallyRunATaskWhenTheSchedulerIsPausedThrowsAnException() {
     QuartzTaskInfo quartzTaskInfo = mock(QuartzTaskInfo.class);
     QuartzTaskState quartzTaskState = mock(QuartzTaskState.class);
     underTest.pause();
@@ -298,7 +310,7 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void checkLogicThatDeterminesIfAJobShouldBeRecovered() throws SchedulerException {
+  void checkLogicThatDeterminesIfAJobShouldBeRecovered() throws SchedulerException {
     recoveryTest(1, Now.TYPE, true, TaskState.INTERRUPTED.name());
     recoveryTest(1, Now.TYPE, true, TaskState.FAILED.name());
     recoveryTest(1, Now.TYPE, false, TaskState.INTERRUPTED.name());
@@ -321,17 +333,17 @@ public class DatastoreQuartzSchedulerSPITest
     jobDataMap.put(TaskConfiguration.LAST_RUN_STATE_END_STATE, endState);
 
     Trigger trigger = mock(Trigger.class);
-    when(trigger.getJobDataMap()).thenReturn(jobDataMap);
-    when(trigger.getDescription()).thenReturn("Test description");
+    lenient().when(trigger.getJobDataMap()).thenReturn(jobDataMap);
+    lenient().when(trigger.getDescription()).thenReturn("Test description");
 
     JobDetail jobDetail = mock(JobDetail.class);
     when(jobDetail.requestsRecovery()).thenReturn(requestsRecovery);
-    when(jobDetail.getJobDataMap()).thenReturn(jobDataMap);
-    when(jobDetail.getKey()).thenReturn(new JobKey("keyName"));
+    lenient().when(jobDetail.getJobDataMap()).thenReturn(jobDataMap);
+    lenient().when(jobDetail.getKey()).thenReturn(new JobKey("keyName"));
 
-    Scheduler oldScheduler = underTest.getScheduler();
+    BulkReadScheduler oldScheduler = underTest.getScheduler();
     try {
-      Scheduler mockScheduler = mock(Scheduler.class);
+      BulkReadScheduler mockScheduler = mock(BulkReadScheduler.class);
       underTest.setScheduler(mockScheduler);
       underTest.recoverJob(trigger, jobDetail);
       verify(mockScheduler, times(invocationCount)).scheduleJob(any(Trigger.class));
@@ -343,7 +355,7 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void triggerTimeBeforeLastRunTimeDoesNotModifyJob() throws SchedulerException {
+  void triggerTimeBeforeLastRunTimeDoesNotModifyJob() throws SchedulerException {
     interruptStateTestHelper(
         false,
         DateTime.parse("2002-01-01").toDate(),
@@ -353,7 +365,7 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void triggerTimeExistsButNoLastRunExistsSoTheJobIsSetToInterrupted() throws SchedulerException {
+  void triggerTimeExistsButNoLastRunExistsSoTheJobIsSetToInterrupted() throws SchedulerException {
     interruptStateTestHelper(
         true,
         DateTime.parse("2002-01-01").toDate(),
@@ -363,7 +375,7 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void triggerTimeIsAfterLastRunTimeSoTheJobIsSetToInterrupted() throws SchedulerException {
+  void triggerTimeIsAfterLastRunTimeSoTheJobIsSetToInterrupted() throws SchedulerException {
     interruptStateTestHelper(
         true,
         DateTime.parse("2002-01-01").toDate(),
@@ -373,7 +385,7 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void triggerTimeDoesNotExistSoTheJobIsNotModified() throws SchedulerException {
+  void triggerTimeDoesNotExistSoTheJobIsNotModified() throws SchedulerException {
     interruptStateTestHelper(
         false,
         null,
@@ -383,7 +395,7 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void triggerTimeExistsButEndStateDoesNotSoTheJobIsSetToAsInterrupted() throws SchedulerException {
+  void triggerTimeExistsButEndStateDoesNotSoTheJobIsSetToAsInterrupted() throws SchedulerException {
     interruptStateTestHelper(
         false,
         null,
@@ -393,7 +405,7 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void triggerTimeDoesNotExistNorDoesLastRunTimeSoTheJobIsNotModified() throws SchedulerException {
+  void triggerTimeDoesNotExistNorDoesLastRunTimeSoTheJobIsNotModified() throws SchedulerException {
     interruptStateTestHelper(
         false,
         null,
@@ -403,7 +415,7 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void testFindingTaskByTypeId() {
+  void testFindingTaskByTypeId() {
     List<TaskInfo> tasks = List.of(
         taskInfo("0", "type1", Map.of(), TaskState.WAITING),
         taskInfo("1", "type2", Map.of(), TaskState.WAITING));
@@ -416,7 +428,7 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void testFindingTaskByTypeIdAndConfig() {
+  void testFindingTaskByTypeIdAndConfig() {
     List<TaskInfo> tasks = List.of(
         taskInfo("0", "type1", Map.of("foo", "bar"), TaskState.WAITING),
         taskInfo("1", "type1", Map.of("moo", "baz"), TaskState.WAITING),
@@ -431,7 +443,7 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void testFindingAndSubmittingATaskByTypeId() throws TaskRemovedException {
+  void testFindingAndSubmittingATaskByTypeId() throws TaskRemovedException {
     List<TaskInfo> tasks = List.of(
         taskInfo("0", "type1", Map.of(), TaskState.RUNNING),
         taskInfo("1", "type2", Map.of(), TaskState.WAITING));
@@ -447,7 +459,7 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void testFindingAndSubmittingATaskByTypeIdAndConfig() throws TaskRemovedException {
+  void testFindingAndSubmittingATaskByTypeIdAndConfig() throws TaskRemovedException {
     List<TaskInfo> tasks = List.of(
         taskInfo("0", "type1", Map.of("foo", "bar"), TaskState.RUNNING),
         taskInfo("1", "type1", Map.of("moo", "baz"), TaskState.WAITING),
@@ -471,15 +483,14 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void testAttachJobListener_WhenTriggerIsNull() throws Exception {
-    Scheduler localScheduler = mock(Scheduler.class);
+  void testAttachJobListener_WhenTriggerIsNull() throws Exception {
+    BulkReadScheduler localScheduler = mock(BulkReadScheduler.class);
     QuartzSchedulerProvider schedulerProvider = mock(QuartzSchedulerProvider.class);
-    when(schedulerProvider.getObject()).thenReturn(localScheduler);
     DatastoreQuartzSchedulerSPI custom = new DatastoreQuartzSchedulerSPI(
         mock(EventManager.class),
         mock(NodeAccess.class),
         mock(Provider.class),
-        factory(schedulerProvider),
+        provider(schedulerProvider),
         mock(LastShutdownTimeService.class),
         mock(DatabaseStatusDelayedExecutor.class),
         true);
@@ -495,15 +506,14 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void testAttachJobListener_WhenJobDetailIsNull() throws Exception {
-    Scheduler localScheduler = mock(Scheduler.class);
+  void testAttachJobListener_WhenJobDetailIsNull() throws Exception {
+    BulkReadScheduler localScheduler = mock(BulkReadScheduler.class);
     QuartzSchedulerProvider schedulerProvider = mock(QuartzSchedulerProvider.class);
-    when(schedulerProvider.getObject()).thenReturn(localScheduler);
     DatastoreQuartzSchedulerSPI custom = new DatastoreQuartzSchedulerSPI(
         mock(EventManager.class),
         mock(NodeAccess.class),
         mock(Provider.class),
-        factory(schedulerProvider),
+        provider(schedulerProvider),
         mock(LastShutdownTimeService.class),
         mock(DatabaseStatusDelayedExecutor.class),
         true);
@@ -529,12 +539,12 @@ public class DatastoreQuartzSchedulerSPITest
     tc.setTypeId(typeId);
     config.forEach(tc::setString);
     CurrentState tcs = mock(CurrentState.class);
-    when(tcs.getState()).thenReturn(currentState);
+    lenient().when(tcs.getState()).thenReturn(currentState);
     TaskInfo ti = mock(TaskInfo.class);
-    when(ti.getId()).thenReturn(id);
-    when(ti.getTypeId()).thenReturn(typeId);
-    when(ti.getConfiguration()).thenReturn(tc);
-    when(ti.getCurrentState()).thenReturn(tcs);
+    lenient().when(ti.getId()).thenReturn(id);
+    lenient().when(ti.getTypeId()).thenReturn(typeId);
+    lenient().when(ti.getConfiguration()).thenReturn(tc);
+    lenient().when(ti.getCurrentState()).thenReturn(tcs);
     return ti;
   }
 
@@ -549,28 +559,28 @@ public class DatastoreQuartzSchedulerSPITest
     jobDataMap.put(Schedule.SCHEDULE_TYPE, Now.TYPE);
 
     JobDetail jobDetail = mock(JobDetail.class);
-    when(scheduler.getJobDetail(key)).thenReturn(jobDetail);
-    when(jobDetail.getJobDataMap()).thenReturn(jobDataMap);
-    when(jobDetail.getKey()).thenReturn(key);
-    when(jobDetail.requestsRecovery()).thenReturn(true);
+    lenient().when(scheduler.getJobDetail(key)).thenReturn(jobDetail);
+    lenient().when(jobDetail.getJobDataMap()).thenReturn(jobDataMap);
+    lenient().when(jobDetail.getKey()).thenReturn(key);
+    lenient().when(jobDetail.requestsRecovery()).thenReturn(true);
 
     Trigger trigger = mock(Trigger.class);
-    when(scheduler.getTrigger(TriggerKey.triggerKey(key.getName(), key.getGroup()))).thenReturn(trigger);
-    when(trigger.getJobDataMap()).thenReturn(jobDataMap);
-    when(trigger.getJobKey()).thenReturn(new JobKey("testJobKeyName", "testJobKeyGroup"));
+    lenient().when(scheduler.getTrigger(TriggerKey.triggerKey(key.getName(), key.getGroup()))).thenReturn(trigger);
+    lenient().when(trigger.getJobDataMap()).thenReturn(jobDataMap);
+    lenient().when(trigger.getJobKey()).thenReturn(new JobKey("testJobKeyName", "testJobKeyGroup"));
 
     TriggerKey triggerKey = TriggerKey.triggerKey(keyName, "nexus");
-    when(trigger.getKey()).thenReturn(triggerKey);
+    lenient().when(trigger.getKey()).thenReturn(triggerKey);
 
     TaskConfiguration config = new TaskConfiguration();
 
     QuartzTaskInfo taskInfo = mock(QuartzTaskInfo.class);
-    when(taskInfo.getConfiguration()).thenReturn(config);
+    lenient().when(taskInfo.getConfiguration()).thenReturn(config);
 
     QuartzTaskJobListener jobListener = mock(QuartzTaskJobListener.class);
-    when(jobListener.getTaskInfo()).thenReturn(taskInfo);
+    lenient().when(jobListener.getTaskInfo()).thenReturn(taskInfo);
 
-    when(listenerManager.getJobListener(any())).thenReturn(jobListener);
+    lenient().when(listenerManager.getJobListener(any())).thenReturn(jobListener);
 
     return Pair.of(trigger, jobDetail);
   }
@@ -602,12 +612,12 @@ public class DatastoreQuartzSchedulerSPITest
 
     JobDetail jobDetail = mock(JobDetail.class);
     when(jobDetail.getKey()).thenReturn(jobKey);
-    when(jobDetail.getJobDataMap()).thenReturn(jobDataMap);
+    lenient().when(jobDetail.getJobDataMap()).thenReturn(jobDataMap);
 
-    Scheduler mockScheduler = mock(Scheduler.class);
-    when(mockScheduler.getTriggersOfJob(jobKey)).thenAnswer(invocation -> Lists.newArrayList(trigger));
+    BulkReadScheduler mockScheduler = mock(BulkReadScheduler.class);
+    lenient().when(mockScheduler.getTriggersOfJob(jobKey)).thenAnswer(invocation -> Lists.newArrayList(trigger));
 
-    Scheduler oldScheduler = underTest.getScheduler();
+    BulkReadScheduler oldScheduler = underTest.getScheduler();
     try {
       underTest.setScheduler(mockScheduler);
       underTest.updateLastRunStateInfo(jobDetail, Optional.of(shutdownDate));
@@ -630,6 +640,16 @@ public class DatastoreQuartzSchedulerSPITest
     }
   }
 
+  private void mockCustomConnections(final ConnectionProvider connectionProvider) throws SQLException {
+    Connection connection = mock(Connection.class);
+    PreparedStatement ps = mock(PreparedStatement.class);
+    ResultSet rs = mock(ResultSet.class);
+    when(connectionProvider.getConnection()).thenReturn(connection);
+    when(connection.prepareStatement(any())).thenReturn(ps);
+    when(ps.executeQuery()).thenReturn(rs);
+    when(rs.next()).thenReturn(false);
+  }
+
   private JobKey mockJobDetail() throws JobPersistenceException {
     JobKey jobKey = new JobKey("testJobKeyName", "testJobKeyGroup");
     JobDetail jobDetail = mock(JobDetail.class);
@@ -637,13 +657,13 @@ public class DatastoreQuartzSchedulerSPITest
     map.put(".id", "my-id");
     map.put(".typeId", "type-id");
 
-    when(jobDetail.getKey()).thenReturn(jobKey);
-    when(jobDetail.getDescription()).thenReturn("test job description");
-    when(jobDetail.getJobClass()).thenAnswer(invocation -> Job.class);
-    when(jobDetail.getJobDataMap()).thenReturn(map);
-    when(jobDetail.isDurable()).thenReturn(false);
-    when(jobDetail.requestsRecovery()).thenReturn(false);
-    when(jobStore.retrieveJob(jobKey)).thenReturn(jobDetail);
+    lenient().when(jobDetail.getKey()).thenReturn(jobKey);
+    lenient().when(jobDetail.getDescription()).thenReturn("test job description");
+    lenient().when(jobDetail.getJobClass()).thenAnswer(invocation -> Job.class);
+    lenient().when(jobDetail.getJobDataMap()).thenReturn(map);
+    lenient().when(jobDetail.isDurable()).thenReturn(false);
+    lenient().when(jobDetail.requestsRecovery()).thenReturn(false);
+    lenient().when(jobStore.retrieveJob(jobKey)).thenReturn(jobDetail);
 
     return jobKey;
   }
@@ -652,21 +672,21 @@ public class DatastoreQuartzSchedulerSPITest
     OperableTrigger trigger = mock(OperableTrigger.class);
     TriggerKey triggerKey = new TriggerKey("testTriggerKeyName", "testTriggerKeyGroup");
 
-    when(trigger.getKey()).thenReturn(triggerKey);
-    when(trigger.getJobKey()).thenReturn(jobKey);
-    when(trigger.getDescription()).thenReturn("test trigger description");
+    lenient().when(trigger.getKey()).thenReturn(triggerKey);
+    lenient().when(trigger.getJobKey()).thenReturn(jobKey);
+    lenient().when(trigger.getDescription()).thenReturn("test trigger description");
 
     JobDataMap map = new JobDataMap(new Manual().asMap());
     map.put(".id", "my-id");
     map.put(".typeId", "type-id");
-    when(trigger.getJobDataMap()).thenReturn(map);
+    lenient().when(trigger.getJobDataMap()).thenReturn(map);
 
-    when(jobStore.retrieveTrigger(triggerKey)).thenReturn(trigger);
+    lenient().when(jobStore.retrieveTrigger(triggerKey)).thenReturn(trigger);
 
     return triggerKey;
   }
 
-  private static <T> Provider<T> factory(final FactoryBean<T> factory) {
+  private static <T> Provider<T> provider(final FactoryBean<T> factory) {
     return () -> {
       try {
         return factory.getObject();

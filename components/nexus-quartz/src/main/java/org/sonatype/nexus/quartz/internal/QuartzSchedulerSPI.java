@@ -38,6 +38,7 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.common.thread.TcclBlock;
+import org.sonatype.nexus.quartz.internal.bulkread.BulkReadScheduler;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskFuture;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJob;
@@ -66,7 +67,6 @@ import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.JobPersistenceException;
-import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SchedulerMetaData;
 import org.quartz.Trigger;
@@ -125,7 +125,7 @@ public abstract class QuartzSchedulerSPI
 
   protected final ScheduleFactory scheduleFactory;
 
-  private final Provider<Scheduler> schedulerProvider;
+  private final Provider<BulkReadScheduler> schedulerProvider;
 
   protected final QuartzTriggerConverter triggerConverter;
 
@@ -135,7 +135,7 @@ public abstract class QuartzSchedulerSPI
 
   private final boolean recoverInterruptedJobs;
 
-  protected Scheduler scheduler;
+  protected BulkReadScheduler scheduler;
 
   protected QuartzScheduler quartzScheduler;
 
@@ -147,7 +147,7 @@ public abstract class QuartzSchedulerSPI
       final EventManager eventManager,
       final NodeAccess nodeAccess,
       final Provider<JobStore> jobStoreProvider,
-      final Provider<Scheduler> schedulerProvider,
+      final Provider<BulkReadScheduler> schedulerProvider,
       final LastShutdownTimeService lastShutdownTimeService,
       final DatabaseStatusDelayedExecutor delayedExecutor,
       @Value("${nexus.quartz.recoverInterruptedJobs:true}") final boolean recoverInterruptedJobs)
@@ -172,12 +172,12 @@ public abstract class QuartzSchedulerSPI
   }
 
   @VisibleForTesting
-  public Scheduler getScheduler() {
+  public BulkReadScheduler getScheduler() {
     return scheduler;
   }
 
   @VisibleForTesting
-  public void setScheduler(final Scheduler scheduler) {
+  public void setScheduler(final BulkReadScheduler scheduler) {
     this.scheduler = scheduler;
   }
 
@@ -192,9 +192,9 @@ public abstract class QuartzSchedulerSPI
 
     try {
       // access internal scheduler to simulate signals for remote updates
-      Field schedField = scheduler.getClass().getDeclaredField("sched");
+      Field schedField = scheduler.getDelegate().getClass().getDeclaredField("sched");
       schedField.setAccessible(true);
-      quartzScheduler = (QuartzScheduler) schedField.get(scheduler);
+      quartzScheduler = (QuartzScheduler) schedField.get(scheduler.getDelegate());
     }
     catch (Exception | LinkageError e) {
       log.error("Cannot find QuartzScheduler", e);
@@ -592,18 +592,23 @@ public abstract class QuartzSchedulerSPI
   @Guarded(by = STARTED)
   public List<String> getMissingTriggerDescriptions() {
     try {
-      Set<JobKey> jobKeys = scheduler.getJobKeys(jobGroupEquals(GROUP_NAME));
-      List<String> missingJobDescriptions = new ArrayList<>();
-      for (JobKey jobKey : jobKeys) {
-        Optional<Trigger> trigger = getTrigger(jobKey);
+      // Use optimized bulk queries to fetch jobs and triggers (4 queries instead of 1 + N)
+      Map<JobKey, JobDetail> jobDetails = scheduler.getJobDetailsForGroup(GROUP_NAME);
+      Map<TriggerKey, Trigger> triggers = scheduler.getTriggersForGroup(GROUP_NAME);
 
-        if (trigger.isEmpty()) {
+      List<String> missingJobDescriptions = new ArrayList<>();
+
+      for (JobKey jobKey : jobDetails.keySet()) {
+        TriggerKey triggerKey = triggerKey(jobKey.getName(), jobKey.getGroup());
+        Trigger trigger = triggers.get(triggerKey);
+
+        if (trigger == null) {
           missingJobDescriptions.add(MISSING_TRIGGER_DEFAULT_MESSAGE.formatted(jobKey));
           continue;
         }
 
-        if (isTriggerMissing(trigger.get())) {
-          missingJobDescriptions.add(trigger.get().getDescription());
+        if (isTriggerMissing(trigger)) {
+          missingJobDescriptions.add(trigger.getDescription());
         }
       }
       return missingJobDescriptions;
@@ -841,24 +846,22 @@ public abstract class QuartzSchedulerSPI
 
   private Map<Trigger, JobDetail> getNexusJobs() throws SchedulerException {
     Map<Trigger, JobDetail> nexusJobs = new HashMap<>();
-    try (TcclBlock tccl = TcclBlock.begin(this)) {
-      Set<JobKey> jobKeys = scheduler.getJobKeys(jobGroupEquals(GROUP_NAME));
-      for (JobKey jobKey : jobKeys) {
-        JobDetail jobDetail = scheduler.getJobDetail(jobKey);
-        if (jobDetail == null) {
-          log.error("Missing job-detail for key: {}", jobKey);
-          continue;
-        }
+    // Fetch all job details and triggers using optimized bulk queries (4 queries total instead of 1 + 3N)
+    Map<JobKey, JobDetail> jobsDetails = scheduler.getJobDetailsForGroup(GROUP_NAME);
+    Map<TriggerKey, Trigger> triggers = scheduler.getTriggersForGroup(GROUP_NAME);
 
-        TriggerKey triggerKey = triggerKey(jobKey.getName(), jobKey.getGroup());
-        Trigger trigger = scheduler.getTrigger(triggerKey);
-        if (trigger == null) {
-          trigger = scheduleJobWithManualTrigger(jobKey, jobDetail, triggerKey);
-        }
-
-        nexusJobs.put(trigger, jobDetail);
+    // Match jobs with their triggers, creating manual triggers for jobs without triggers
+    for (Map.Entry<JobKey, JobDetail> entry : jobsDetails.entrySet()) {
+      JobKey key = entry.getKey();
+      JobDetail detail = entry.getValue();
+      TriggerKey triggerKey = triggerKey(key.getName(), key.getGroup());
+      Trigger trigger = triggers.get(triggerKey);
+      if (trigger == null) {
+        trigger = scheduleJobWithManualTrigger(key, detail, triggerKey);
       }
+      nexusJobs.put(trigger, detail);
     }
+
     return nexusJobs;
   }
 

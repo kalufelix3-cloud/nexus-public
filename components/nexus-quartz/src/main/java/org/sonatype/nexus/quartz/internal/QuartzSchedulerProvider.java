@@ -18,6 +18,8 @@ import jakarta.inject.Provider;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.quartz.internal.bulkread.BulkReadScheduler;
+import org.sonatype.nexus.quartz.internal.bulkread.BulkReadSchedulerImpl;
 
 import org.quartz.Scheduler;
 import org.quartz.impl.DefaultThreadExecutor;
@@ -26,6 +28,7 @@ import org.quartz.impl.SchedulerRepository;
 import org.quartz.spi.JobFactory;
 import org.quartz.spi.JobStore;
 import org.quartz.spi.ThreadExecutor;
+import org.quartz.utils.ConnectionProvider;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -45,7 +48,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 @ManagedLifecycle(phase = SERVICES)
 public class QuartzSchedulerProvider
     extends LifecycleSupport
-    implements FactoryBean<Scheduler>
+    implements FactoryBean<BulkReadScheduler>
 {
   private static final String SCHEDULER_NAME = "nexus";
 
@@ -53,24 +56,28 @@ public class QuartzSchedulerProvider
 
   private final Provider<JobStore> jobStore;
 
+  private final ConnectionProvider connectionProvider;
+
   private final JobFactory jobFactory;
 
   private final int threadPoolSize;
 
   private final int threadPriority;
 
-  private volatile Scheduler scheduler;
+  private volatile BulkReadScheduler scheduler;
 
   @Inject
   public QuartzSchedulerProvider(
       final NodeAccess nodeAccess,
       final Provider<JobStore> jobStore,
+      final ConnectionProvider connectionProvider,
       final JobFactory jobFactory,
       @Value("${nexus.quartz.poolSize:20}") final int threadPoolSize,
       @Value("${nexus.quartz.taskThreadPriority:5}") final int threadPriority)
   {
     this.nodeAccess = checkNotNull(nodeAccess);
     this.jobStore = checkNotNull(jobStore);
+    this.connectionProvider = checkNotNull(connectionProvider);
     this.jobFactory = checkNotNull(jobFactory);
     checkArgument(threadPoolSize > 0, "Invalid thread-pool size: %s", threadPoolSize);
     this.threadPoolSize = threadPoolSize;
@@ -89,8 +96,8 @@ public class QuartzSchedulerProvider
 
   @Lazy
   @Override
-  public Scheduler getObject() throws Exception {
-    Scheduler localRef = scheduler;
+  public BulkReadScheduler getObject() throws Exception {
+    BulkReadScheduler localRef = scheduler;
     if (localRef == null) {
       synchronized (this) {
         localRef = scheduler;
@@ -104,10 +111,10 @@ public class QuartzSchedulerProvider
 
   @Override
   public Class<?> getObjectType() {
-    return Scheduler.class;
+    return BulkReadScheduler.class;
   }
 
-  private Scheduler createScheduler() {
+  private BulkReadScheduler createScheduler() {
     try {
       // ensure executed threads have TCCL set
       ThreadExecutor threadExecutor = new DefaultThreadExecutor()
@@ -145,7 +152,9 @@ public class QuartzSchedulerProvider
 
       s.standby();
 
-      return s;
+      // Wrap with BulkReadScheduler for optimized bulk read operations (no N+1 query problem)
+      log.info("Wrapping scheduler with BulkReadScheduler for optimized bulk read queries");
+      return new BulkReadSchedulerImpl(s, connectionProvider, SCHEDULER_NAME);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
