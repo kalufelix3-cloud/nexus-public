@@ -1260,14 +1260,20 @@ public class FileBlobStore
 
   @Override
   public void setBlobAttributes(final BlobId blobId, final BlobAttributes blobAttributes) {
-    try {
-      FileBlobAttributes fileBlobAttributes = getFileBlobAttributes(blobId);
-      fileBlobAttributes.updateFrom(blobAttributes);
-      fileBlobAttributes.store();
+    FileBlobAttributes fileBlobAttributes = getFileBlobAttributes(blobId);
+    if (fileBlobAttributes != null) {
+      try {
+        fileBlobAttributes.updateFrom(blobAttributes);
+        fileBlobAttributes.store();
+      }
+      catch (Exception e) {
+        log.error("Unable to set BlobAttributes for blob id: {}, exception: {}",
+            blobId, e.getMessage(), log.isDebugEnabled() ? e : null);
+      }
     }
-    catch (Exception e) {
-      log.error("Unable to set BlobAttributes for blob id: {}, exception: {}",
-          blobId, e.getMessage(), log.isDebugEnabled() ? e : null);
+    else {
+      // Benign race condition - concurrent request is updating the same blob properties file
+      log.debug("Blob attributes temporarily unavailable for blob id: {} during concurrent access", blobId);
     }
   }
 
@@ -1296,7 +1302,8 @@ public class FileBlobStore
     try {
       FileBlobAttributes blobAttributes = new FileBlobAttributes(blobPath);
       if (!blobAttributes.load()) {
-        log.warn("Attempt to access non-existent blob attributes file {} for blob {}", attributePath(blobId), blobId);
+        log.debug("Attempt to access blob attributes file {} for blob {} (file temporarily unavailable or deleted)",
+            attributePath(blobId), blobId);
         return null;
       }
       else {

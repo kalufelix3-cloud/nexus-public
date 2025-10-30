@@ -870,14 +870,20 @@ public class S3BlobStore
   @Override
   @Timed
   public void setBlobAttributes(final BlobId blobId, final BlobAttributes blobAttributes) {
-    try {
-      S3BlobAttributes s3BlobAttributes = (S3BlobAttributes) getBlobAttributes(blobId);
-      s3BlobAttributes.updateFrom(blobAttributes);
-      s3BlobAttributes.store();
+    S3BlobAttributes s3BlobAttributes = (S3BlobAttributes) getBlobAttributes(blobId);
+    if (s3BlobAttributes != null) {
+      try {
+        s3BlobAttributes.updateFrom(blobAttributes);
+        s3BlobAttributes.store();
+      }
+      catch (Exception e) {
+        log.error("Unable to set BlobAttributes for blob id: {}, exception: {}",
+            blobId, e.getMessage(), log.isDebugEnabled() ? e : null);
+      }
     }
-    catch (Exception e) {
-      log.error("Unable to set BlobAttributes for blob id: {}, exception: {}",
-          blobId, e.getMessage(), log.isDebugEnabled() ? e : null);
+    else {
+      // Benign race condition - concurrent request is updating the same blob properties file
+      log.debug("Blob attributes temporarily unavailable for blob id: {} during concurrent access", blobId);
     }
   }
 
