@@ -29,6 +29,7 @@ import jakarta.inject.Singleton;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
+import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
@@ -113,7 +114,7 @@ public class BrowseEventHandler
 
   private PeriodicJob flushTask;
 
-  private final boolean browseNodeTrimmingEnabled;
+  private final DatabaseCheck databaseCheck;
 
   // simple flag stating whether or not there is a need to fire flush events
   private volatile boolean flushQueued;
@@ -129,7 +130,7 @@ public class BrowseEventHandler
       @Value("${" + FLUSH_ON_COUNT_KEY + ":100}") final int flushOnCount,
       @Value("${" + FLUSH_ON_SECONDS_KEY + ":2}") final int flushOnSeconds,
       @Value("${" + NO_PURGE_DELAY_KEY + ":true}") final boolean noPurgeDelay,
-      @Value("${nexus.browse.trim.enabled:true}") final boolean browseNodeTrimmingEnabled)
+      final DatabaseCheck databaseCheck)
   {
     this.cooperation = checkNotNull(cooperation2Factory).configure()
         .majorTimeout(majorTimeout)
@@ -144,7 +145,7 @@ public class BrowseEventHandler
     checkArgument(flushOnSeconds > 0, FLUSH_ON_SECONDS_KEY + " must be positive");
     this.flushOnSeconds = flushOnSeconds;
     this.noPurgeDelay = noPurgeDelay;
-    this.browseNodeTrimmingEnabled = browseNodeTrimmingEnabled;
+    this.databaseCheck = checkNotNull(databaseCheck);
 
     eventManager.register(flushEventReceiver);
   }
@@ -345,8 +346,8 @@ public class BrowseEventHandler
    * Trims all pending repositories of dangling nodes.
    */
   void maybeTrimRepositories() {
-    if (!browseNodeTrimmingEnabled) {
-      return; // skip trimming if property(nexus.browse.trimming.skip) is disabled
+    if (databaseCheck.isPostgresql()) {
+      return; // skip trimming if we are using PostgreSQL
     }
     if (needsTrim.getAndSet(false)) {
       Iterator<Repository> itr = repositoriesToTrim.iterator();

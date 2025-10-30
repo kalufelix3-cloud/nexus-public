@@ -51,7 +51,7 @@ public class BrowseEventHandlerTest
   public void setup() {
     DefaultCooperation2Factory cooperation = new DefaultCooperation2Factory();
     underTest = new BrowseEventHandler(cooperation, periodicJobService, eventManager, true, Duration.ofSeconds(0),
-        Duration.ofSeconds(30), 100, 2, true, false);
+        Duration.ofSeconds(30), 100, 2, true, databaseCheck);
   }
 
   @Test
