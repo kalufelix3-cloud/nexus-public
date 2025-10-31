@@ -12,13 +12,23 @@
  */
 package org.sonatype.nexus.blobstore;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.blobstore.api.HeavyBlobRef;
 import org.sonatype.nexus.common.log.DryRunPrefix;
+import org.sonatype.nexus.common.stateguard.Guarded;
+
+import org.springframework.util.StopWatch;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
  * Support class for Cloud blob stores.
@@ -29,11 +39,40 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 public abstract class CloudBlobStoreSupport<T extends AttributesLocation>
     extends BlobStoreSupport<T>
 {
+  protected final boolean loadFromDb;
+
   protected CloudBlobStoreSupport(
       final BlobIdLocationResolver blobIdLocationResolver,
-      final DryRunPrefix dryRunPrefix)
+      final DryRunPrefix dryRunPrefix,
+      final boolean loadFromDb)
   {
     super(blobIdLocationResolver, dryRunPrefix);
+    this.loadFromDb = loadFromDb;
+  }
+
+  /**
+   * Optimized get method for cloud blob stores that can load blob metadata from database.
+   * When a HeavyBlobRef is provided and loadFromDb is enabled, this method skips reading
+   * the blob properties file from cloud storage and instead uses the metadata from the database.
+   *
+   * @param blobRef the blob reference, potentially containing cached metadata
+   * @return the blob, or null if not found
+   */
+  @Nullable
+  @Override
+  @Guarded(by = STARTED)
+  public Blob get(final BlobRef blobRef) {
+    if (!(blobRef instanceof HeavyBlobRef) || !loadFromDb) {
+      return get(blobRef.getBlobId());
+    }
+    StopWatch stopWatch = new StopWatch();
+    stopWatch.start("Loading blob from DB " + blobRef.getBlobId());
+    BlobSupport blob = liveBlobs.getUnchecked(blobRef.getBlobId());
+    blob.refresh(Collections.emptyMap(), ((HeavyBlobRef) blobRef).getMetrics());
+    stopWatch.stop();
+    log.debug("elapsed time for Loading blob from DB {}: {} ms", blobRef.getBlobId(),
+        stopWatch.getTotalTime(MILLISECONDS));
+    return blob;
   }
 
   protected abstract Blob writeBlobProperties(BlobId blobId, Map<String, String> headers);

@@ -199,9 +199,10 @@ public class S3BlobStore
       final SoftDeletedBlobIndex deletedBlobIndex,
       final DryRunPrefix dryRunPrefix,
       final BucketManager bucketManager,
-      final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker)
+      final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
+      @Value("${nexus.s3.loadFromDb:false}") final boolean loadFromDb)
   {
-    super(blobIdLocationResolver, dryRunPrefix);
+    super(blobIdLocationResolver, dryRunPrefix, loadFromDb);
     this.amazonS3Factory = checkNotNull(amazonS3Factory);
     this.copier = checkNotNull(copier);
     this.uploader = checkNotNull(uploader);
@@ -256,7 +257,6 @@ public class S3BlobStore
       executorService.shutdown();
       executorService = null;
     }
-    metricsService.stop();
     blobStoreQuotaUsageChecker.stop();
   }
 
@@ -359,7 +359,7 @@ public class S3BlobStore
       }
     }
 
-    final BlobSupport blob = liveBlobs.getUnchecked(blobId);
+    final S3Blob blob = (S3Blob) liveBlobs.getUnchecked(blobId);
 
     Lock lock = blob.lock();
     try {

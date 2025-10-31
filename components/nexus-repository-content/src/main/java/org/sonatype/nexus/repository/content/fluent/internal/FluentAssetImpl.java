@@ -184,7 +184,7 @@ public class FluentAssetImpl
         .orElseThrow(() -> new IllegalStateException("No blob attached to " + asset.path()));
 
     BlobRef blobRef = assetBlob.blobRef();
-    Blob blob = Optional.ofNullable(facet.stores().blobStoreProvider.get().get(blobRef.getBlobId()))
+    Blob blob = Optional.ofNullable(facet.stores().blobStoreProvider.get().get(blobRef))
         .orElseGet(() -> facet.dependencies()
             .getMoveService()
             .map(service -> service.getIfBeingMoved(blobRef, repository().getName()))

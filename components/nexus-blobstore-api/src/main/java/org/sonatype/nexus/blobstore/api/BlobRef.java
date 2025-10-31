@@ -80,7 +80,7 @@ public class BlobRef
    * Matcher which matches all 4 formats
    */
   private static final Pattern BLOB_REF_PATTERN =
-      Pattern.compile(String.format("%s|%s|%s|%s", ORIENT_PATTERN, SQL_PATTERN, CANONICAL_PATTERN, DATE_BASED_PATTERN));
+      Pattern.compile(String.format("%s|%s|%s|%s", ORIENT_PATTERN, SQL_PATTERN, DATE_BASED_PATTERN, CANONICAL_PATTERN));
 
   private static final String BLOB_REF_SIMPLE_FORMAT = "%s@%s";
 
@@ -114,7 +114,7 @@ public class BlobRef
 
   public static BlobRef parse(final String spec) {
     Matcher matcher = BLOB_REF_PATTERN.matcher(spec);
-    checkArgument(matcher.matches(), "Not a valid blob reference");
+    checkArgument(matcher.matches(), "Not a valid blob reference: " + spec);
 
     String store = matcher.group("store");
     if (store != null) {

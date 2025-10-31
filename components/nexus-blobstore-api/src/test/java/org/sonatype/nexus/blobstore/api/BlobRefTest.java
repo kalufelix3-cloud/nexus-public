@@ -23,6 +23,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.fail;
 import static org.sonatype.nexus.blobstore.api.BlobRef.DATE_TIME_FORMATTER;
 
@@ -140,7 +141,7 @@ public class BlobRefTest
       fail("Expected exception");
     }
     catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is("Not a valid blob reference"));
+      assertThat(e.getMessage(), startsWith("Not a valid blob reference"));
     }
   }
 }

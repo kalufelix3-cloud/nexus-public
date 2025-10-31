@@ -109,7 +109,7 @@ class FluentAssetImplTest
     BlobMetrics mockMetrics = mock(BlobMetrics.class);
 
     when(asset.attributes()).thenReturn(new NestedAttributesMap());
-    when(blobStore.get(any())).thenReturn(mockBlob);
+    when(blobStore.get(any(BlobRef.class))).thenReturn(mockBlob);
     when(mockBlob.getMetrics()).thenReturn(mockMetrics);
 
     DateTime creationDate = DateTime.now();
@@ -123,7 +123,7 @@ class FluentAssetImplTest
       assertEquals("text", result.getContentType());
       assertEquals(creationDate, result.getAttributes().get(CONTENT_LAST_MODIFIED));
 
-      verify(blobStore, times(1)).get(any());
+      verify(blobStore, times(1)).get(any(BlobRef.class));
     }
     catch (IOException ex) {
       fail();
@@ -137,7 +137,7 @@ class FluentAssetImplTest
     Repository mockRepository = mock(Repository.class);
 
     when(asset.attributes()).thenReturn(new NestedAttributesMap());
-    when(blobStore.get(any())).thenReturn(null);
+    when(blobStore.get(any(BlobRef.class))).thenReturn(null);
     when(contentFacet.repository()).thenReturn(mockRepository);
     when(contentFacet.dependencies()).thenReturn(dependencies);
     when(dependencies.getMoveService()).thenReturn(Optional.of(moveService));
@@ -156,7 +156,7 @@ class FluentAssetImplTest
       assertEquals("text", result.getContentType());
       assertEquals(creationDate, result.getAttributes().get(CONTENT_LAST_MODIFIED));
 
-      verify(blobStore, times(1)).get(any());
+      verify(blobStore, times(1)).get(any(BlobRef.class));
       verify(moveService, times(1)).getIfBeingMoved(any(BlobRef.class), anyString());
     }
     catch (IOException ex) {
@@ -178,7 +178,7 @@ class FluentAssetImplTest
     attributes.child(Content.CONTENT).set(Content.CONTENT_ETAG, etag);
     attributes.child(Content.CONTENT).set(Content.CONTENT_PCCS_HASH, pccsHash);
     when(asset.attributes()).thenReturn(attributes);
-    when(blobStore.get(any())).thenReturn(mockBlob);
+    when(blobStore.get(any(BlobRef.class))).thenReturn(mockBlob);
     when(contentFacet.repository()).thenReturn(mockRepository);
     when(mockBlob.getMetrics()).thenReturn(mockMetrics);
 
@@ -210,7 +210,7 @@ class FluentAssetImplTest
     attributes.child(Content.CONTENT).set(Content.CONTENT_LAST_MODIFIED, contentCreationDate);
     attributes.child(Content.CONTENT).set(Content.CONTENT_ETAG, contentETag);
     when(asset.attributes()).thenReturn(attributes);
-    when(blobStore.get(any())).thenReturn(mockBlob);
+    when(blobStore.get(any(BlobRef.class))).thenReturn(mockBlob);
     when(contentFacet.repository()).thenReturn(mockRepository);
     when(mockBlob.getMetrics()).thenReturn(mockMetrics);
 
@@ -246,7 +246,7 @@ class FluentAssetImplTest
 
     when(asset.attributes()).thenReturn(attributes);
     when(assetBlob.externalMetadata()).thenReturn(externalAttrs);
-    when(blobStore.get(any())).thenReturn(mockBlob);
+    when(blobStore.get(any(BlobRef.class))).thenReturn(mockBlob);
     when(contentFacet.repository()).thenReturn(mockRepository);
     when(mockBlob.getMetrics()).thenReturn(mockMetrics);
     when(mockRepository.getType()).thenReturn(new ProxyType());

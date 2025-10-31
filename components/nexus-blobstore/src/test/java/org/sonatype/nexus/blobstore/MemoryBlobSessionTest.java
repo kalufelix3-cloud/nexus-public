@@ -87,7 +87,7 @@ public class MemoryBlobSessionTest
     when(blobStore.copy(EXISTING_BLOB_ID, headers)).thenReturn(copiedBlob);
 
     when(blobStore.exists(any())).thenReturn(true);
-    when(blobStore.get(any())).thenAnswer(this::getBlob);
+    when(blobStore.get(any(BlobId.class))).thenAnswer(this::getBlob);
 
     BlobStoreConfiguration storeConfiguration = mock(BlobStoreConfiguration.class);
     when(storeConfiguration.getName()).thenReturn("test-blob-store");

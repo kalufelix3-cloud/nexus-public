@@ -639,7 +639,7 @@ public class S3BlobStoreTest
 
   private S3BlobStore createBlobStore() {
     S3BlobStore blobstore = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(), uploader, copier,
-        false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker);
+        false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker, false);
 
     ReflectionTestUtils.setField(blobstore, "maxRetries", 1);
     ReflectionTestUtils.setField(blobstore, "retryDelayMs", 500L);

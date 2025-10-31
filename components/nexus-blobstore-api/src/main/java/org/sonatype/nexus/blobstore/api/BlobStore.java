@@ -232,6 +232,15 @@ public interface BlobStore
   Blob get(BlobId blobId);
 
   /**
+   * Returns the corresponding {@link Blob}, or {@code null} if the blob does not exist or has been {@link #delete
+   * deleted}.
+   */
+  @Nullable
+  default Blob get(final BlobRef blobRef) {
+    return get(blobRef.getBlobId());
+  }
+
+  /**
    * Returns the corresponding {@link Blob}, or {@code null} if the blob does not exist, or has been
    * {@link #delete deleted} and {@code includeDeleted} is {@code false}).
    */

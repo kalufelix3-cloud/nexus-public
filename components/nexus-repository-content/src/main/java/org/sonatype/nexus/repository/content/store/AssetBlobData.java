@@ -18,13 +18,17 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.ExternalMetadata;
+import org.sonatype.nexus.blobstore.api.HeavyBlobRef;
 import org.sonatype.nexus.common.entity.ContinuationAware;
+import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.repository.content.AssetBlob;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 
 /**
  * {@link AssetBlob} data backed by the content data store.
@@ -61,6 +65,11 @@ public class AssetBlobData
 
   @Override
   public BlobRef blobRef() {
+    if (checksums != null && checksums.containsKey(SHA1.name()) && blobCreated != null) {
+      return new HeavyBlobRef(blobRef,
+          new BlobMetrics(DateHelper.toDateTime(blobCreated), checksums.get(SHA1.name()), blobSize));
+    }
+    // Fall back to regular BlobRef if checksums or blobCreated not available
     return blobRef;
   }
 
