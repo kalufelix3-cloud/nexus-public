@@ -37,21 +37,21 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
 }));
 
 const DEFAULT_OAUTH2_CONFIGURATION = {
-  clientId:"",
-  clientSecret:"",
-  idpAuthorizationUrl:"",
-  idpLogoutUrl:"",
-  idpTokenUrl:"",
-  idpJwksUrl:"",
-  usernameClaim:"",
-  firstNameClaim:"",
-  lastNameClaim:"",
-  emailClaim:"",
-  groupsClaim:"",
-  idpJwsAlgorithm:"RS256",
-  exactMatchClaims:{},
-  authorizationCustomParams: { },
-  tokenRequestCustomParams: { }
+  clientId: "",
+  clientSecret: "",
+  idpAuthorizationUrl: "",
+  idpLogoutUrl: "",
+  idpTokenUrl: "",
+  idpJwksUrl: "",
+  usernameClaim: "",
+  firstNameClaim: "",
+  lastNameClaim: "",
+  emailClaim: "",
+  groupsClaim: "",
+  idpJwsAlgorithm: "RS256",
+  exactMatchClaims: {},
+  authorizationCustomParams: {},
+  tokenRequestCustomParams: {}
 };
 
 const PENDING_REQUEST = () => new Promise(jest.fn());
@@ -147,7 +147,7 @@ describe('OAuth2Configuration', () => {
     expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
   });
 
-  it('enables the discard button when there are changes', async () => {
+  it('enables the discard button when there are changes and executes it', async () => {
     axios.get.mockResolvedValue(DEFAULT_RESPONSE);
 
     const {
@@ -170,77 +170,46 @@ describe('OAuth2Configuration', () => {
       exactMatchClaimsField,
       discardButton
     } = render();
-
-    const discardChanges = async () => {
-      userEvent.click(discardButton());
-      await waitFor(() => expect(discardButton()).toHaveClass('disabled'));
-    };
-
+    
     await waitForElementToBeRemoved(loadingMask);
 
     await TestUtils.changeField(clientIdField, 'aclientid');
-    await discardChanges();
-    await waitFor(() => expect(clientIdField()).toHaveValue(''));
-
     await TestUtils.changeField(clientSecretField, 'aclientsecret');
-    await discardChanges();
-    await waitFor(() => expect(clientSecretField()).toHaveValue(''));
-
     await TestUtils.changeField(idpAuthorizationUrlField, 'http://example.com');
-    await discardChanges();
-    await waitFor(() => expect(idpAuthorizationUrlField()).toHaveValue(''));
-
     await TestUtils.changeField(idpLogoutUrlField, 'http://example.com');
-    await discardChanges();
-    await waitFor(() => expect(idpLogoutUrlField()).toHaveValue(''));
-
     await TestUtils.changeField(idpTokenUrlField, 'http://example.com');
-    await discardChanges();
-    await waitFor(() => expect(idpTokenUrlField()).toHaveValue(''));
-
     await TestUtils.changeField(idpJwksUrlField, 'http://example.com');
-    await discardChanges();
-    await waitFor(() => expect(idpJwksUrlField()).toHaveValue(''));
-
     await TestUtils.changeField(usernameClaimField, 'username');
-    await discardChanges();
-    await waitFor(() => expect(usernameClaimField()).toHaveValue(''));
-
     await TestUtils.changeField(firstNameClaimField, 'firstName');
-    await discardChanges();
-    await waitFor(() => expect(firstNameClaimField()).toHaveValue(''));
-
     await TestUtils.changeField(lastNameClaimField, 'lastName');
-    await discardChanges();
-    await waitFor(() => expect(lastNameClaimField()).toHaveValue(''));
-
     await TestUtils.changeField(emailClaimField, 'email');
-    await discardChanges();
-    await waitFor(() => expect(emailClaimField()).toHaveValue(''));
-
     await TestUtils.changeField(groupsClaimField, 'groups');
-    await discardChanges();
-    await waitFor(() => expect(groupsClaimField()).toHaveValue(''));
-
     await TestUtils.changeField(idpJwsAlgorithmField, 'HS256');
-    await discardChanges();
-    await waitFor(() => expect(idpJwsAlgorithmField()).toHaveValue('RS256'));
-
     await TestUtils.changeField(idpJwksField, '{"keys": []}');
-    await discardChanges();
-    await waitFor(() => expect(idpJwksField()).toHaveValue(''));
-
     await TestUtils.changeField(authorizationCustomParamsField, '{"param":"value"}');
-    await discardChanges();
-    await waitFor(() => expect(authorizationCustomParamsField()).toHaveValue('{}'));
-
     await TestUtils.changeField(tokenRequestCustomParamsField, '{"param":"value"}');
-    await discardChanges();
-    await waitFor(() => expect(tokenRequestCustomParamsField()).toHaveValue('{}'));
-
     await TestUtils.changeField(exactMatchClaimsField, '{"test":"claim"}');
-    await discardChanges();
-    await waitFor(() => expect(exactMatchClaimsField()).toHaveValue('{}'));
+
+    expect(discardButton()).not.toHaveClass('disabled');
+    userEvent.click(discardButton());
+    await waitFor(() => expect(discardButton()).toHaveClass('disabled'));
+
+    expect(clientIdField()).toHaveValue('');
+    expect(clientSecretField()).toHaveValue('');
+    expect(idpAuthorizationUrlField()).toHaveValue('');
+    expect(idpLogoutUrlField()).toHaveValue('');
+    expect(idpTokenUrlField()).toHaveValue('');
+    expect(idpJwksUrlField()).toHaveValue('');
+    expect(usernameClaimField()).toHaveValue('');
+    expect(firstNameClaimField()).toHaveValue('');
+    expect(lastNameClaimField()).toHaveValue('');
+    expect(emailClaimField()).toHaveValue('');
+    expect(groupsClaimField()).toHaveValue('');
+    expect(idpJwsAlgorithmField()).toHaveValue('RS256');
+    expect(idpJwksField()).toHaveValue('');
+    expect(authorizationCustomParamsField()).toHaveValue('{}');
+    expect(tokenRequestCustomParamsField()).toHaveValue('{}');
+    expect(exactMatchClaimsField()).toHaveValue('{}');
   });
 
   it('tells the user the required fields are needed', async () => {
@@ -329,8 +298,8 @@ describe('OAuth2Configuration', () => {
       groupsClaim: 'groups',
       idpJwsAlgorithm: 'RS256',
       exactMatchClaims: {},
-      authorizationCustomParams: { },
-      tokenRequestCustomParams: { }
+      authorizationCustomParams: {},
+      tokenRequestCustomParams: {}
     };
 
     axios.get.mockResolvedValue({data: updatedConfiguration});
@@ -443,8 +412,8 @@ describe('OAuth2Configuration', () => {
       groupsClaim: 'groups',
       idpJwsAlgorithm: 'RS256',
       exactMatchClaims: {},
-      authorizationCustomParams: { },
-      tokenRequestCustomParams: { }
+      authorizationCustomParams: {},
+      tokenRequestCustomParams: {}
     };
 
     await waitForElementToBeRemoved(loadingMask);
