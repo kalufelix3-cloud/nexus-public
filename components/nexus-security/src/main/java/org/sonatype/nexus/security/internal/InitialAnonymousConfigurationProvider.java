@@ -39,7 +39,7 @@ public class InitialAnonymousConfigurationProvider
 
   @Inject
   public InitialAnonymousConfigurationProvider(
-      @Value("${nexus.security.default.anonymous:true}") final boolean enabled)
+      @Value("${nexus.security.default.anonymous:false}") final boolean enabled)
   {
     this.enabled = enabled;
   }

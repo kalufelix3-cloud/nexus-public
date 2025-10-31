@@ -15,39 +15,22 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import { ROUTE_NAMES } from '../routeNames/routeNames';
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
 import CoreUILoginPageWrapper from '../../components/login/CoreUILoginPageWrapper';
 
-/**
- * Login routes configuration.
- * Routes are only registered if the React login feature flag is enabled.
- */
-export function getLoginRoutes() {
-  // Check if ExtJS is available (not available in test environment)
-  if (!ExtJS?.state) {
-    return [];
-  }
-  
-  const isReactLoginEnabled = ExtJS.state().getValue('nexus.login.react.enabled', false);
-  if (isReactLoginEnabled) {
-    return [
-      {
-        name: ROUTE_NAMES.LOGIN,
-        url: 'login?returnTo',
-        component: CoreUILoginPageWrapper,
-        params: {
-          returnTo: {
-            type: 'string',
-            value: null,
-            squash: true
-          }
-        },
-        data: {
-          visibilityRequirements: {}
-        }
+export const loginRoutes = [
+  {
+    name: ROUTE_NAMES.LOGIN,
+    url: 'login?returnTo',
+    component: CoreUILoginPageWrapper,
+    params: {
+      returnTo: {
+        type: 'string',
+        value: null,
+        squash: true
       }
-    ];
+    },
+    data: {
+      visibilityRequirements: {}
+    }
   }
-
-  return [];
-}
+];

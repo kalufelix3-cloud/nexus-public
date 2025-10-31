@@ -58,7 +58,8 @@ export function createRouter({initialRoute, menuRoutes, missingRoute}) {
         const isReactLoginEnabled = ExtJS.state().getValue('nexus.login.react.enabled', false);
         if (isReactLoginEnabled) {
           transition.abort();
-          if (stateFrom.name === RouteNames.LOGIN) {
+          const isAnonymousAccessEnabled = !!ExtJS.state().getValue('anonymousUsername');
+          if (isAnonymousAccessEnabled && stateFrom.name === RouteNames.LOGIN) {
             console.warn('state is not visible for navigation after login, redirecting to 404');
             redirectTo404();
             return;

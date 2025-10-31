@@ -137,6 +137,14 @@ const localLoginMachine = FormUtils.buildFormMachine({
       const serializedResponse = payload ? JSON.stringify(payload) : 'undefined';
       console.log(`Authentication Success: ${serializedResponse}`);
       // Suppress default success toast for login flow
+    },
+
+    setDirtyFlag: () => {
+      // No-op: LocalLogin does not track dirty state
+    },
+
+    clearDirtyFlag: () => {
+      // No-op: LocalLogin does not track dirty state
     }
   },
 

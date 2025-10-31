@@ -71,7 +71,9 @@ export const browseRoutes = [
     component: Welcome,
     data: {
       // make sure we don't inherit from BROWSE
-      visibilityRequirements: {},
+      visibilityRequirements: {
+        anonymousAccessOrHasUser: true,
+      },
       title: BROWSE.WELCOME.TITLE,
     },
   },
@@ -508,6 +510,9 @@ export const browseRoutes = [
     component: BrowseReactExt,
     data: {
       visibilityRequirements: {
+        anonymousAccessOrHasUser: true,
+        // TODO uncomment after done NEXUS-48544-Remove-Feature-Flag-and-Legacy-Authentication-Code
+        // permissionsPrefix: 'nexus:repository-view',
         statesEnabled: [
           {
             key: 'browseableformats',

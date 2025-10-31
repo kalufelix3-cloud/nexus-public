@@ -28,9 +28,6 @@ export default function AnonymousAccess() {
   const router = useRouter();
 
   const handleContinueWithoutLogin = () => {
-    // Changes do not need to be saved when continuing without logging in
-    window.dirty = [];
-
     try {
       const returnTo = router.globals.params.returnTo;
       if (returnTo) {

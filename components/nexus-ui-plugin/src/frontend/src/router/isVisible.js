@@ -46,7 +46,8 @@ export default function isVisible(visibilityRequirements) {
     editions,
     requiresUser,
     browseableFormat,
-    notClustered
+    notClustered,
+    anonymousAccessOrHasUser
   } = visibilityRequirements;
 
   // check that all our expected global dependencies are in place
@@ -112,6 +113,13 @@ export default function isVisible(visibilityRequirements) {
 
   if (browseableFormat && !isFormatBrowseable(browseableFormat)) {
     console.debug('browseableFormat=false', browseableFormat);
+    return false;
+  }
+
+  if (NX.State.getValue('nexus.login.react.enabled', false) &&
+      anonymousAccessOrHasUser &&
+      !(!!NX.State.getValue('anonymousUsername') || Security.hasUser())) {
+    console.debug('anonymousAccessOrHasUser=false', anonymousAccessOrHasUser);
     return false;
   }
 
