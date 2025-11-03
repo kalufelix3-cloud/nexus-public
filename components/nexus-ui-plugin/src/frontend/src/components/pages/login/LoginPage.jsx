@@ -19,6 +19,7 @@ import LoginLayout from '../../layout/LoginLayout';
 import LocalLogin from './LocalLogin';
 import SsoLogin from './SsoLogin';
 import AnonymousAccess from './AnonymousAccess';
+import InitialPasswordInfo from './InitialPasswordInfo';
 
 const { LOGIN_TITLE, LOGIN_SUBTITLE, SSO_DIVIDER_LABEL } = UIStrings;
 
@@ -34,10 +35,12 @@ export default function LoginPage({ logoConfig }) {
   const oauth2Enabled = ExtJS.useState(() => ExtJS.state().getValue('oauth2Enabled', false));
   const isCloudEnvironment = ExtJS.useState(() => ExtJS.state().getValue('isCloud', false));
   const anonymousUsername = ExtJS.useState(() => ExtJS.state().getValue('anonymousUsername'));
+  const adminPasswordFilePath = ExtJS.useState(() => ExtJS.state().getValue('admin.password.file'));
   const isSsoEnabled = samlEnabled || oauth2Enabled;
   const isAnonymousAccessEnabled = !!anonymousUsername;
 
   const showLocalLogin = !isCloudEnvironment;
+  const showInitialPasswordPathInfo = !!adminPasswordFilePath && !isCloudEnvironment;
 
   return (
     <LoginLayout logoConfig={logoConfig}>
@@ -49,6 +52,7 @@ export default function LoginPage({ logoConfig }) {
           </NxTile.Header>
           <NxTile.Content>
             <div className="login-content">
+              {showInitialPasswordPathInfo && <InitialPasswordInfo passwordFilePath={adminPasswordFilePath} />}
               {isSsoEnabled && (
                 <>
                   <SsoLogin />

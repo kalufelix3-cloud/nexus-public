@@ -22,6 +22,8 @@
     width: 450px;
     border: var(--nx-border-width) solid var(--nx-color-global-sidebar-2-border);
 
+
+
     .nx-tile-header {
       text-align: center;
       display: block;
@@ -41,6 +43,27 @@
       flex-direction: column;
       align-items: center;
       gap: 0;
+
+      .initial-password-info {
+        width: 100%;
+        max-width: 336px;
+        margin:0;
+        text-align: left;
+        color: var(--nx-color-text);
+
+        &__text {
+          margin: 0 0 8px 0;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        &__path {
+          margin: 0;
+          font-size: 14px;
+          font-weight: 600;
+          word-break: break-all;
+        }
+      }
 
       .sso-login-button {
         width: 100%;
@@ -76,7 +99,6 @@
       .login-form {
         width: 100%;
         max-width: 336px;
-        margin-top: 24px;
 
         .nx-fieldset {
           width: 100%;

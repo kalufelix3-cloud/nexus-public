@@ -22,6 +22,7 @@ export default {
   LOGIN_BUTTON: 'Log in',
   LOGIN_BUTTON_LOADING: 'Signing in...',
   CONTINUE_WITHOUT_LOGIN: 'Continue without login',
+  INITIAL_PASSWORD_MESSAGE: 'To log in for the first time, use the generated admin password located at:',
   ERRORS: {
     WRONG_CREDENTIALS: 'Wrong username or password',
     CONNECTION_FAILED: 'Connection failed. Please check your network connection.',

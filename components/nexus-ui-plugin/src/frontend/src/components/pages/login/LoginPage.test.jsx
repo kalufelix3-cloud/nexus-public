@@ -42,6 +42,12 @@ jest.mock('./SsoLogin', () => {
   };
 });
 
+jest.mock('./InitialPasswordInfo', () => {
+  return function InitialPasswordInfo({ passwordFilePath }) {
+    return <div data-testid="initial-password-info">{passwordFilePath}</div>;
+  };
+});
+
 const mockRouterGo = jest.fn();
 const mockRouterUrl = jest.fn();
 const mockRouterParams = {};
@@ -89,12 +95,13 @@ describe('LoginPage', () => {
     mockRouterParams.returnTo = undefined;
   });
 
-  function setupStates(samlEnabled = false, oauth2Enabled = false, isCloud = false, anonymousUsername = null) {
+  function setupStates(samlEnabled = false, oauth2Enabled = false, isCloud = false, anonymousUsername = null, adminPasswordFile = null) {
     mockUseState
       .mockReturnValueOnce(samlEnabled)        // samlEnabled
       .mockReturnValueOnce(oauth2Enabled)      // oauth2Enabled
       .mockReturnValueOnce(isCloud)            // isCloudEnvironment
-      .mockReturnValueOnce(anonymousUsername); // anonymousUsername
+      .mockReturnValueOnce(anonymousUsername)  // anonymousUsername
+      .mockReturnValueOnce(adminPasswordFile); // adminPasswordFilePath
   }
 
   function renderComponent(props) {
@@ -104,9 +111,9 @@ describe('LoginPage', () => {
   describe('self-hosted environment', () => {
     it('renders login form when no SSO is enabled', () => {
       setupStates(false, false, false);
-      
+
       renderComponent({ logoConfig: mockLogoConfig });
-      
+
       expect(screen.getByTestId('login-tile')).toBeInTheDocument();
       expect(screen.getByText(UIStrings.LOGIN_TITLE)).toBeInTheDocument();
       expect(screen.getByText(UIStrings.LOGIN_SUBTITLE)).toBeInTheDocument();
@@ -117,9 +124,9 @@ describe('LoginPage', () => {
 
     it('renders both SSO button and login form with divider when SAML is enabled', () => {
       setupStates(true, false, false);
-      
+
       renderComponent({ logoConfig: mockLogoConfig });
-      
+
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.getByTestId('login-form')).toBeInTheDocument();
       // Divider should appear when both SSO and local login are shown
@@ -128,9 +135,9 @@ describe('LoginPage', () => {
 
     it('renders both SSO button and login form with divider when OAuth2 is enabled', () => {
       setupStates(false, true, false);
-      
+
       renderComponent({ logoConfig: mockLogoConfig });
-      
+
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.getByTestId('login-form')).toBeInTheDocument();
       // Divider should appear when both SSO and local login are shown
@@ -139,18 +146,18 @@ describe('LoginPage', () => {
 
     it('sets LocalLogin primaryButton to false when SSO is enabled', () => {
       setupStates(true, false, false);
-      
+
       renderComponent({ logoConfig: mockLogoConfig });
-      
+
       const loginForm = screen.getByTestId('login-form');
       expect(loginForm).toHaveAttribute('data-primary-button', 'false');
     });
 
     it('sets LocalLogin primaryButton to true when SSO is not enabled', () => {
       setupStates(false, false, false);
-      
+
       renderComponent({ logoConfig: mockLogoConfig });
-      
+
       const loginForm = screen.getByTestId('login-form');
       expect(loginForm).toHaveAttribute('data-primary-button', 'true');
     });
@@ -159,9 +166,9 @@ describe('LoginPage', () => {
   describe('cloud environment', () => {
     it('does not render login form in cloud environment without SSO', () => {
       setupStates(false, false, true);
-      
+
       renderComponent({ logoConfig: mockLogoConfig });
-      
+
       expect(screen.getByTestId('login-tile')).toBeInTheDocument();
       expect(screen.getByText(UIStrings.LOGIN_TITLE)).toBeInTheDocument();
       expect(screen.getByText(UIStrings.LOGIN_SUBTITLE)).toBeInTheDocument();
@@ -172,9 +179,9 @@ describe('LoginPage', () => {
 
     it('renders only SSO button without divider in cloud environment with OAuth2 enabled', () => {
       setupStates(false, true, true);
-      
+
       renderComponent({ logoConfig: mockLogoConfig });
-      
+
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
       // No divider because local login is not shown in cloud
@@ -183,9 +190,9 @@ describe('LoginPage', () => {
 
     it('renders only SSO button without divider in cloud environment with SAML enabled', () => {
       setupStates(true, false, true);
-      
+
       renderComponent({ logoConfig: mockLogoConfig });
-      
+
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
       // No divider because local login is not shown in cloud
@@ -194,9 +201,9 @@ describe('LoginPage', () => {
 
     it('renders only SSO button without divider in cloud environment with both SAML and OAuth2 enabled', () => {
       setupStates(true, true, true);
-      
+
       renderComponent({ logoConfig: mockLogoConfig });
-      
+
       expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
       expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
       // No divider because local login is not shown in cloud
@@ -208,9 +215,9 @@ describe('LoginPage', () => {
     it('passes logoConfig to LoginLayout', () => {
       setupStates(false, false, false);
       const customLogoConfig = { url: 'custom-logo.png', alt: 'Custom Logo' };
-      
+
       renderComponent({ logoConfig: customLogoConfig });
-      
+
       expect(screen.getByTestId('login-layout')).toBeInTheDocument();
     });
   });
@@ -289,6 +296,63 @@ describe('LoginPage', () => {
 
       expect(mockRouterGo).toHaveBeenCalledWith('browse.welcome');
       expect(mockRouterUrl).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('initial password info', () => {
+    it('displays initial password info when admin password file path is provided', () => {
+      const passwordFilePath = '/path/to/admin.password';
+      setupStates(false, false, false, null, passwordFilePath);
+
+      renderComponent({ logoConfig: mockLogoConfig });
+
+      expect(screen.getByTestId('initial-password-info')).toBeInTheDocument();
+      expect(screen.getByText(passwordFilePath)).toBeInTheDocument();
+    });
+
+    it('does not display initial password info when admin password file path is not provided', () => {
+      setupStates(false, false, false, null, null);
+
+      renderComponent({ logoConfig: mockLogoConfig });
+
+      expect(screen.queryByTestId('initial-password-info')).not.toBeInTheDocument();
+    });
+
+    it('does not display initial password info when admin password file path is empty string', () => {
+      setupStates(false, false, false, null, '');
+
+      renderComponent({ logoConfig: mockLogoConfig });
+
+      expect(screen.queryByTestId('initial-password-info')).not.toBeInTheDocument();
+    });
+
+    it('does not display initial password info when admin password file path is undefined', () => {
+      setupStates(false, false, false, null, undefined);
+
+      renderComponent({ logoConfig: mockLogoConfig });
+
+      expect(screen.queryByTestId('initial-password-info')).not.toBeInTheDocument();
+    });
+
+    it('displays initial password info with SSO enabled', () => {
+      const passwordFilePath = '/path/to/admin.password';
+      setupStates(true, false, false, null, passwordFilePath);
+
+      renderComponent({ logoConfig: mockLogoConfig });
+
+      expect(screen.getByTestId('initial-password-info')).toBeInTheDocument();
+      expect(screen.getByTestId('sso-login-button')).toBeInTheDocument();
+      expect(screen.getByTestId('login-form')).toBeInTheDocument();
+    });
+
+    it('does not display initial password info in cloud environment', () => {
+      const passwordFilePath = '/path/to/admin.password';
+
+      setupStates(false, false, true, null, passwordFilePath);
+
+      renderComponent({ logoConfig: mockLogoConfig });
+
+      expect(screen.queryByTestId('initial-password-info')).not.toBeInTheDocument();
     });
   });
 
