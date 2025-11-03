@@ -146,22 +146,55 @@ public class AptContentDirector
     }
   }
 
+  /**
+   * Performs a full metadata rebuild by re-adding all package metadata from .deb assets.
+   * This is necessary after move/delete operations because the metadata store may be stale.
+   *
+   * This method:
+   * 1. Re-scans all .deb assets in the repository
+   * 2. Re-adds their metadata to the metadata store
+   * 3. Rebuilds the metadata files (Packages, Release, InRelease)
+   *
+   * @param repository the repository to rebuild
+   * @param operation description of the operation triggering the rebuild
+   */
   private void rebuildRepositoryMetadata(final Repository repository, final String operation) {
     try {
-      log.debug("Rebuilding APT metadata for repository: {} after {}", repository.getName(), operation);
-      repository.facet(AptHostedMetadataFacet.class).rebuildMetadata(Collections.emptyList());
-      log.info("Successfully rebuilt APT metadata for repository: {} after {}", repository.getName(), operation);
+      log.debug("Performing full APT metadata rebuild for repository: {} after {}", repository.getName(), operation);
+
+      AptContentFacet contentFacet = repository.facet(AptContentFacet.class);
+      AptHostedMetadataFacet metadataFacet = repository.facet(AptHostedMetadataFacet.class);
+
+      // Re-add metadata for all .deb assets in the repository
+      int addedCount = 0;
+      for (FluentAsset asset : contentFacet.getAptPackageAssets()) {
+        metadataFacet.addPackageMetadata(asset);
+        addedCount++;
+      }
+
+      log.debug("Added metadata for {} .deb assets in repository: {}", addedCount, repository.getName());
+
+      // Now rebuild the metadata files
+      metadataFacet.removeInReleaseIndex();
+      metadataFacet.rebuildMetadata(Collections.emptyList());
+
+      log.info("Successfully completed full APT metadata rebuild for repository: {}", repository.getName());
     }
     catch (IOException e) {
-      log.warn("Failed to rebuild APT metadata for repository: {} after {}", repository.getName(), operation,
-          log.isDebugEnabled() ? e : null);
+      if (log.isDebugEnabled()) {
+        log.warn("Failed to rebuild APT metadata for repository: {} after {}", repository.getName(), operation, e);
+      }
+      else {
+        log.warn("Failed to rebuild APT metadata for repository: {} after {}. Error: {}", repository.getName(),
+            operation, e.getMessage());
+      }
     }
   }
 
   private void cleanupSourceRepositoryMetadata(final Repository sourceRepo) {
     try {
       // Check if repository is empty (no components)
-      boolean isEmpty = !sourceRepo.facet(ContentFacet.class).components().browse(1, null).iterator().hasNext();
+      boolean isEmpty = sourceRepo.facet(ContentFacet.class).components().count() == 0;
 
       if (isEmpty) {
         log.info("Source repository {} is empty after move - removing all metadata files", sourceRepo.getName());
@@ -173,8 +206,12 @@ public class AptContentDirector
       }
     }
     catch (Exception e) {
-      log.warn("Failed to cleanup metadata for source repository: {} - {}", sourceRepo.getName(), e.getMessage(),
-          log.isDebugEnabled() ? e : null);
+      if (log.isDebugEnabled()) {
+        log.warn("Failed to cleanup metadata for source repository: {} - {}", sourceRepo.getName(), e.getMessage(), e);
+      }
+      else {
+        log.warn("Failed to cleanup metadata for source repository: {} - {}", sourceRepo.getName(), e.getMessage());
+      }
     }
   }
 
@@ -244,16 +281,8 @@ public class AptContentDirector
   /**
    * Result of asset deletion operation containing counts.
    */
-  private static class AssetDeletionResult
+  private record AssetDeletionResult(int totalAssets, int deletedCount)
   {
-    final int totalAssets;
-
-    final int deletedCount;
-
-    AssetDeletionResult(int totalAssets, int deletedCount) {
-      this.totalAssets = totalAssets;
-      this.deletedCount = deletedCount;
-    }
   }
 
   private boolean isAptHostedRepository(final Repository repository) {

@@ -129,12 +129,19 @@ public class AptContentDirectorTest
     when(source.getType()).thenReturn(hostedType);
     when(source.getName()).thenReturn(SOURCE_REPO_NAME);
 
-    // Setup facets
+    // Setup facets for destination repository
     when(destination.facet(AptHostedMetadataFacet.class)).thenReturn(metadataFacet);
+    when(destination.facet(AptContentFacet.class)).thenReturn(aptContentFacet);
+    when(destination.facet(ContentFacet.class)).thenReturn(contentFacet);
+
+    // Setup facets for source repository
     when(source.facet(AptHostedMetadataFacet.class)).thenReturn(sourceMetadataFacet);
     when(source.facet(AptContentFacet.class)).thenReturn(aptContentFacet);
     when(source.facet(ContentFacet.class)).thenReturn(contentFacet);
+
+    // Setup APT facet and content facet behavior
     when(aptContentFacet.getDistribution()).thenReturn(DISTRIBUTION);
+    when(aptContentFacet.getAptPackageAssets()).thenReturn(Collections.emptyList());
     when(contentFacet.components()).thenReturn(fluentComponents);
     when(contentFacet.assets()).thenReturn(fluentAssets);
   }
@@ -212,22 +219,34 @@ public class AptContentDirectorTest
     Component component1 = mock(Component.class);
     Component component2 = mock(Component.class);
     Component component3 = mock(Component.class);
+    AptContentFacet aptContentFacetA = mock(AptContentFacet.class);
+    AptContentFacet aptContentFacetB = mock(AptContentFacet.class);
+    ContentFacet contentFacetA = mock(ContentFacet.class);
+    ContentFacet contentFacetB = mock(ContentFacet.class);
 
     // Setup sourceA
     when(sourceA.getFormat()).thenReturn(aptFormat);
     when(sourceA.getType()).thenReturn(hostedType);
     when(sourceA.getName()).thenReturn("sourceA");
     when(sourceA.facet(AptHostedMetadataFacet.class)).thenReturn(sourceMetadataFacet);
-    when(sourceA.facet(AptContentFacet.class)).thenReturn(aptContentFacet);
-    when(sourceA.facet(ContentFacet.class)).thenReturn(contentFacet);
+    when(sourceA.facet(AptContentFacet.class)).thenReturn(aptContentFacetA);
+    when(sourceA.facet(ContentFacet.class)).thenReturn(contentFacetA);
+    when(aptContentFacetA.getAptPackageAssets()).thenReturn(Collections.emptyList());
+    when(aptContentFacetA.getDistribution()).thenReturn(DISTRIBUTION);
+    when(contentFacetA.components()).thenReturn(fluentComponents);
+    when(contentFacetA.assets()).thenReturn(fluentAssets);
 
     // Setup sourceB
     when(sourceB.getFormat()).thenReturn(aptFormat);
     when(sourceB.getType()).thenReturn(hostedType);
     when(sourceB.getName()).thenReturn("sourceB");
     when(sourceB.facet(AptHostedMetadataFacet.class)).thenReturn(sourceMetadataFacet);
-    when(sourceB.facet(AptContentFacet.class)).thenReturn(aptContentFacet);
-    when(sourceB.facet(ContentFacet.class)).thenReturn(contentFacet);
+    when(sourceB.facet(AptContentFacet.class)).thenReturn(aptContentFacetB);
+    when(sourceB.facet(ContentFacet.class)).thenReturn(contentFacetB);
+    when(aptContentFacetB.getAptPackageAssets()).thenReturn(Collections.emptyList());
+    when(aptContentFacetB.getDistribution()).thenReturn(DISTRIBUTION);
+    when(contentFacetB.components()).thenReturn(fluentComponents);
+    when(contentFacetB.assets()).thenReturn(fluentAssets);
 
     // Setup repository manager
     when(repositoryManager.get("sourceA")).thenReturn(sourceA);
@@ -306,15 +325,30 @@ public class AptContentDirectorTest
       executor.submit(() -> {
         try {
           Repository threadSource = mock(Repository.class);
+          AptContentFacet threadAptFacet = mock(AptContentFacet.class);
+          ContentFacet threadContentFacet = mock(ContentFacet.class);
+          AptHostedMetadataFacet threadMetadataFacet = mock(AptHostedMetadataFacet.class);
+          FluentComponents threadFluentComponents = mock(FluentComponents.class);
+          FluentAssets threadFluentAssets = mock(FluentAssets.class);
+
           when(threadSource.getFormat()).thenReturn(aptFormat);
           when(threadSource.getType()).thenReturn(hostedType);
           when(threadSource.getName()).thenReturn("source-" + threadId);
           when(repositoryManager.get("source-" + threadId)).thenReturn(threadSource);
-          when(threadSource.facet(ContentFacet.class)).thenReturn(contentFacet);
-          when(threadSource.facet(AptContentFacet.class)).thenReturn(aptContentFacet);
-          when(threadSource.facet(AptHostedMetadataFacet.class)).thenReturn(metadataFacet);
+          when(threadSource.facet(ContentFacet.class)).thenReturn(threadContentFacet);
+          when(threadSource.facet(AptContentFacet.class)).thenReturn(threadAptFacet);
+          when(threadSource.facet(AptHostedMetadataFacet.class)).thenReturn(threadMetadataFacet);
+          when(threadAptFacet.getAptPackageAssets()).thenReturn(Collections.emptyList());
+          when(threadAptFacet.getDistribution()).thenReturn(DISTRIBUTION);
+          when(threadContentFacet.components()).thenReturn(threadFluentComponents);
+          when(threadContentFacet.assets()).thenReturn(threadFluentAssets);
 
-          setupEmptyRepository();
+          // Setup empty repository for this thread
+          when(threadFluentComponents.count()).thenReturn(0);
+          Continuation<FluentAsset> emptyAssetPage = mock(Continuation.class);
+          when(emptyAssetPage.iterator()).thenReturn(Collections.emptyIterator());
+          when(emptyAssetPage.nextContinuationToken()).thenReturn(null);
+          when(threadFluentAssets.browse(anyInt(), any())).thenReturn(emptyAssetPage);
 
           // Each thread tracks its own repository
           underTest.beforeMove(component, assets, threadSource, destination);
@@ -345,6 +379,7 @@ public class AptContentDirectorTest
     Continuation<FluentComponent> emptyPage = mock(Continuation.class);
     when(emptyPage.iterator()).thenReturn(emptyIterator);
     when(fluentComponents.browse(1, null)).thenReturn(emptyPage);
+    when(fluentComponents.count()).thenReturn(0);
   }
 
   private void setupNonEmptyRepository() {
@@ -353,6 +388,7 @@ public class AptContentDirectorTest
     Continuation<FluentComponent> page = mock(Continuation.class);
     when(page.iterator()).thenReturn(iterator);
     when(fluentComponents.browse(1, null)).thenReturn(page);
+    when(fluentComponents.count()).thenReturn(1);
   }
 
   private void setupMetadataAssets() {
