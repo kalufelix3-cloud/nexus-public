@@ -51,7 +51,7 @@ public class CompactBlobStoreTaskDescriptor
             BLOB_STORE_NAME_FIELD_ID,
             "Blob store",
             "Select the blob store to compact",
-            MANDATORY).withStoreApi("coreui_Blobstore.read").withIdMapping("name"),
+            MANDATORY).withStoreApi("coreui_Blobstore.readWithAll").withIdMapping("name"),
         new NumberTextFormField(BLOBS_OLDER_THAN_FIELD_ID, "Blobs Older Than",
             "The number of days a blob should kept before permanent deletion (default 0)", false).withMinimumValue(0));
   }

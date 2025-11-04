@@ -138,6 +138,16 @@ public class BlobStoreComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
+  public List<BlobStoreXO> readWithAll() {
+    List<BlobStoreXO> blobStores = read();
+    BlobStoreXO allXO = new BlobStoreXO().withName("(All Blob Stores)");
+    blobStores.add(allXO);
+    return blobStores;
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
   public List<BlobStoreXO> readNoneGroupEntriesIncludingEntryForAll() {
     repositoryPermissionChecker.ensureUserHasAnyPermissionOrAdminAccess(
         singletonList(new ApplicationPermission(BLOB_STORES_DOMAIN, READ)),

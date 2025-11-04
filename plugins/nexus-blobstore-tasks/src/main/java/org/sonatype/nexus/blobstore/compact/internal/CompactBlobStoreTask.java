@@ -16,17 +16,24 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
+import org.sonatype.nexus.blobstore.common.BlobStoreParallelTaskSupport;
+import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
+
+import org.springframework.beans.factory.annotation.Value;
+
+import static org.sonatype.nexus.blobstore.common.BlobStoreParallelTaskSupport.ALL;
 import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreConfiguration;
 import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreStore;
 import org.sonatype.nexus.scheduling.Cancelable;
-import org.sonatype.nexus.scheduling.TaskSupport;
+import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.scheduling.TaskUtils;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -36,7 +43,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.sonatype.nexus.blobstore.compact.internal.CompactBlobStoreTaskDescriptor.BLOBS_OLDER_THAN_FIELD_ID;
-import static org.sonatype.nexus.blobstore.compact.internal.CompactBlobStoreTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -50,10 +56,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class CompactBlobStoreTask
-    extends TaskSupport
+    extends BlobStoreParallelTaskSupport
     implements Cancelable
 {
-  private final BlobStoreManager blobStoreManager;
 
   private final Optional<ChangeRepositoryBlobStoreStore> changeBlobstoreStore;
 
@@ -61,23 +66,24 @@ public class CompactBlobStoreTask
 
   private final TaskUtils taskUtils;
 
+  private final AtomicInteger processed = new AtomicInteger();
+
   @Inject
   public CompactBlobStoreTask(
-      final BlobStoreManager blobStoreManager,
       @Nullable final ChangeRepositoryBlobStoreStore changeBlobstoreStore,
       final BlobStoreUsageChecker blobStoreUsageChecker,
-      final TaskUtils taskUtils)
+      final TaskUtils taskUtils,
+      @Value("${nexus.compact.blobstore.concurrencyLimit:5}") final int concurrencyLimit,
+      @Value("${nexus.compact.blobstore.queueCapacity:20}") final int queueCapacity)
   {
-    this.blobStoreManager = checkNotNull(blobStoreManager);
+    super(concurrencyLimit, queueCapacity);
     this.changeBlobstoreStore = Optional.ofNullable(changeBlobstoreStore);
     this.blobStoreUsageChecker = checkNotNull(blobStoreUsageChecker);
     this.taskUtils = checkNotNull(taskUtils);
   }
 
   @VisibleForTesting
-  void checkForConflicts() {
-    String blobStoreName = checkNotNull(getBlobStoreField());
-
+  void checkForConflicts(final String blobStoreName) {
     taskUtils.checkForConflictingTasks(getId(), getName(), asList("repository.move"), ImmutableMap
         .of("moveInitialBlobstore", asList(blobStoreName), "moveTargetBlobstore", asList(blobStoreName)));
 
@@ -98,27 +104,56 @@ public class CompactBlobStoreTask
     }
   }
 
-  @Override
-  protected Object execute() throws Exception {
-    checkForConflicts();
+  private Runnable compact(final ProgressLogIntervalHelper progress, final BlobStore blobStore) {
+    return () -> {
+      CancelableHelper.checkCancellation();
 
-    BlobStore blobStore = blobStoreManager.get(getBlobStoreField());
-    if (blobStore != null) {
-      blobStore.compact(blobStoreUsageChecker, getBlobsOlderThanField());
-    }
-    else {
-      log.warn("Unable to find blob store: {}", getBlobStoreField());
-    }
-    return null;
+      if (blobStore != null) {
+        String blobStoreName = blobStore.getBlobStoreConfiguration().getName();
+        progress.info("Starting compaction of blob store '{}' ({} blob stores processed)", blobStoreName,
+            processed.get());
+
+        try {
+          checkForConflicts(blobStoreName);
+          blobStore.compact(blobStoreUsageChecker, getBlobsOlderThanField());
+
+          int count = processed.incrementAndGet();
+          progress.info("Completed compaction of blob store '{}' ({} blob stores processed)", blobStoreName, count);
+        }
+        catch (Exception e) {
+          log.error("Failed to compact blob store '{}'", blobStoreName, e);
+        }
+      }
+      else {
+        log.warn("Unable to find blob store: {}", getBlobStoreField());
+      }
+    };
+  }
+
+  @Override
+  protected Object result() {
+    log.info("Compaction completed for {} blob stores", processed.get());
+    return processed.get();
   }
 
   @Override
   public String getMessage() {
-    return "Compacting " + getBlobStoreField() + " blob store";
+    String blobStoreField = getBlobStoreField();
+    if (ALL.equals(blobStoreField)) {
+      return "Compacting all blob stores";
+    }
+    return format("Compacting [%s]", blobStoreField);
   }
 
-  private String getBlobStoreField() {
-    return getConfiguration().getString(BLOB_STORE_NAME_FIELD_ID);
+  @Override
+  protected Stream<Runnable> jobStream(final ProgressLogIntervalHelper progress, final BlobStore blobStore) {
+    return Stream.of(compact(progress, blobStore));
+  }
+
+  /** compact applies to all types of blob stores */
+  @Override
+  protected boolean appliesTo(final BlobStore blobStore) {
+    return true;
   }
 
   private Duration getBlobsOlderThanField() {
