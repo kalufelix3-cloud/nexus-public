@@ -1291,8 +1291,32 @@ public class FileBlobStore
 
   @Override
   protected BlobAttributes loadBlobAttributes(final BlobId blobId) throws IOException {
-    FileBlobAttributes blobAttributes = new FileBlobAttributes(attributePath(blobId));
-    return blobAttributes.load() ? blobAttributes : null;
+    Path attributePath = attributePath(blobId);
+    FileBlobAttributes blobAttributes = new FileBlobAttributes(attributePath);
+
+    try {
+      return blobAttributes.load() ? blobAttributes : null;
+    }
+    catch (Exception e) {
+      log.warn("Corrupt properties file detected for blob {} at {}. Attempting deletion. Error: {}",
+          blobId, attributePath, e.getMessage());
+
+      try {
+        boolean deleted = fileOperations.delete(attributePath);
+        if (deleted) {
+          log.warn("Successfully deleted corrupt properties file for blob {}", blobId);
+        }
+        else {
+          log.debug("Corrupt properties file for blob {} did not exist or was already deleted", blobId);
+        }
+      }
+      catch (IOException deleteException) {
+        log.error("Failed to delete corrupt properties file for blob {}", blobId, deleteException);
+      }
+
+      // Return null so it's treated as "missing" by reconciliation task
+      return null;
+    }
   }
 
   @Nullable

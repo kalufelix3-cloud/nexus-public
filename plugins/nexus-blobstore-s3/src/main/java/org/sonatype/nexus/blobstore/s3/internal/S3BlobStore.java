@@ -1005,8 +1005,28 @@ public class S3BlobStore
 
   @Override
   public BlobAttributes loadBlobAttributes(final BlobId blobId) throws IOException {
-    S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath(blobId));
-    return blobAttributes.load() ? blobAttributes : null;
+    String attributePath = attributePath(blobId);
+    S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath);
+
+    try {
+      return blobAttributes.load() ? blobAttributes : null;
+    }
+    catch (IOException | IllegalArgumentException | IllegalStateException e) {
+      log.warn("Corrupt properties file detected for blob {} at {}. Attempting deletion. Error: {}",
+          blobId, attributePath, e.getMessage());
+
+      try {
+        s3.deleteObject(getConfiguredBucket(), attributePath);
+        log.debug("Deleted corrupt properties file for blob {}", blobId);
+      }
+      catch (Exception deleteException) {
+        log.warn("Could not delete corrupt properties file for blob {} (will be overwritten): {}",
+            blobId, deleteException.getMessage());
+      }
+
+      // Return null to allow reconciliation task to recreate
+      return null;
+    }
   }
 
   @Nullable
