@@ -66,6 +66,7 @@ export { default as LoginPage } from './components/pages/login/LoginPage';
 export { default as LoginLayout } from './components/layout/LoginLayout';
 
 export * from './components/pages/admin/Usage/HistoricalUsageColumns';
+export { default as ChangeIcon } from './components/pages/admin/Usage/ChangeIcon';
 export { default as UnsavedChangesModal } from './components/widgets/UnsavedChangesModal/UnsavedChangesModal';
 
 export { DirectoryList } from './components/widgets/DirectoryList/DirectoryList';
