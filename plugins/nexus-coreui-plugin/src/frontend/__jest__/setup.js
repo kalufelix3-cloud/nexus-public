@@ -39,7 +39,8 @@ window.BlobStoreTypes = {};
 window.HTMLElement.prototype.scrollIntoView = jest.fn();
 window.ResizeObserver = jest.fn().mockReturnValue({
   observe: jest.fn(),
-  unobserve: jest.fn()
+  unobserve: jest.fn(),
+  disconnect: jest.fn()
 });
 
 global.Ext = {

@@ -38,6 +38,15 @@ export default {
     TOTAL_EGRESS_TOOLTIP: 'Egress is based on application-level tracking and may differ from actual network transfer measured by your cloud provider.',
     EGRESS_CHANGE: 'Egress % Change',
     EGRESS_CHANGE_TOOLTIP: 'Change rate of the total monthly egress from the previous month.',
-    ICON: faServer
+    ICON: faServer,
+    CHART: {
+      LEGEND_EGRESS: 'Total Egress',
+      LEGEND_STORAGE: 'Peak Storage',
+      FILTER_OPTION_HEADER: 'Month',
+      AXIS_DAYS: 'Days',
+      AXIS_EGRESS_STORAGE: "Egress and Storage",
+      TITLE: "Usage insights",
+      SUB_TITLE: "Month"
+    }
   }
 };

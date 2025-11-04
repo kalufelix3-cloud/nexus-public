@@ -14,6 +14,7 @@ import React from 'react';
 import {useMachine} from '@xstate/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { UsageInsightsChart } from './UsageInsightsChart'
 
 import {
   NxTable,
@@ -28,16 +29,20 @@ import {
 import HistoricalUsageMachine from './HistoricalUsageMachine';
 import './Usage.scss';
 import UIStrings from "../../../../constants/UIStrings";
+import ExtJS from "../../../../interface/ExtJS";
 
 export default function HistoricalUsage({columns}) {
   const [state] = useMachine(HistoricalUsageMachine, {
       devTools: true
     });
-    const {data} = state.context;
+  const {data} = state.context;
+  const isCloud = ExtJS.useState(() => ExtJS.state().getValue('isCloud', false));
 
   return (<>
         <NxH2>{UIStrings.HISTORICAL_USAGE.TITLE}</NxH2>
         <NxP>{UIStrings.HISTORICAL_USAGE.DESCRIPTION}</NxP>
+        {isCloud && <UsageInsightsChart />}
+
         <NxTable className="historical-usage-table">
           <NxTableHead>
             <NxTableRow>

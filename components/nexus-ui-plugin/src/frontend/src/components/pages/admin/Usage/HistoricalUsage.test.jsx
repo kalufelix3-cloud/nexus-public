@@ -16,6 +16,11 @@ import Axios from 'axios';
 import HistoricalUsage from './HistoricalUsage';
 import TestUtils from '../../../../interface/TestUtils';
 import { historicalUsageColumns } from './HistoricalUsageColumns';
+import ExtJS from '../../../../interface/ExtJS';
+
+jest.mock('./UsageInsightsChart', () => ({
+  UsageInsightsChart: () => <div data-testid="usage-insights-chart">Usage Insights Chart</div>
+}));
 
 jest.mock('axios', () => ({
   get: jest.fn()
@@ -33,6 +38,7 @@ describe('Licensing Historical Usage', () => {
   ];
 
   beforeEach(() => {
+    jest.clearAllMocks();
     Axios.get.mockResolvedValue({ data: [] });
   });
 
@@ -50,7 +56,7 @@ describe('Licensing Historical Usage', () => {
   it('renders the table headers correctly', async () => {
     await renderView();
 
-    expect(screen.getByText('Month')).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Month' })).toBeInTheDocument();
     expect(screen.getByText('Peak Components')).toBeInTheDocument();
     expect(screen.getByText('Components % Change')).toBeInTheDocument();
     expect(screen.getByText('Total Requests')).toBeInTheDocument();
@@ -176,5 +182,31 @@ describe('Licensing Historical Usage', () => {
       egressTooltipTrigger,
       'Egress is based on application-level tracking and may differ from actual network transfer measured by your cloud provider.'
     );
+  });
+
+  describe('Usage Insights Chart', () => {
+    it('does not render the chart when isCloud is false', async () => {
+      jest.spyOn(ExtJS, 'useState').mockReturnValue(false);
+
+      await renderView();
+
+      expect(screen.queryByTestId('usage-insights-chart')).not.toBeInTheDocument();
+    });
+
+    it('does not render the chart when isCloud is not present', async () => {
+      jest.spyOn(ExtJS, 'useState').mockReturnValue(undefined);
+
+      await renderView();
+
+      expect(screen.queryByTestId('usage-insights-chart')).not.toBeInTheDocument();
+    });
+
+    it('renders the chart when isCloud is true', async () => {
+      jest.spyOn(ExtJS, 'useState').mockReturnValue(true);
+
+      await renderView();
+
+      expect(screen.getByTestId('usage-insights-chart')).toBeInTheDocument();
+    });
   });
 });
