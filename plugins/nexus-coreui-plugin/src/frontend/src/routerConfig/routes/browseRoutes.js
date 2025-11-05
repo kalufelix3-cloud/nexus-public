@@ -47,6 +47,7 @@ import Tags from '../../components/pages/browse/Tags/Tags';
 import { ROUTE_NAMES } from '../routeNames/routeNames';
 import UploadList from '../../components/pages/browse/Upload/UploadList';
 import UploadDetails from '../../components/pages/browse/Upload/UploadDetails';
+import TestForm from '../../components/pages/TestForm';
 
 const { MALWARE_RISK_ENABLED } = FeatureFlags;
 
@@ -585,6 +586,17 @@ export const browseRoutes = [
         editions: ['PRO'],
       },
       title: BROWSE.MALWARERISK.TITLE,
+    },
+  },
+
+  // Test route for DynamicFormField
+  {
+    name: 'browse.testform',
+    url: '/testform',
+    component: TestForm,
+    data: {
+      visibilityRequirements: {},
+      title: 'Dynamic Form Field Test',
     },
   },
 ];
