@@ -440,13 +440,14 @@ export default class ExtJS {
 
       console.debug('setting up event handler to wait for permission changes');
       const permissionsController = Ext.getApplication().getController('Permissions');
-      const eventHandler = permissionsController.on({ changed: handleChange, single: true });
+      permissionsController.on("changed", handleChange);
 
       const timeout = setTimeout(() => {
         console.debug('removing event handler, permission changes have timed out');
-        permissionsController.removeHandler(eventHandler);
+        permissionsController.un("changed", handleChange);
         reject(new Error('timed out waiting for permissions to update'));
-      }, 1000);
+        // TODO the timeout duration will be modified on https://sonatype.atlassian.net/browse/NEXUS-49142
+      }, 2000);
     });
   }
 
