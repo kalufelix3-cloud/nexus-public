@@ -12,6 +12,11 @@
  */
 package org.sonatype.nexus.common.template;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.sonatype.nexus.common.encoding.EncodingUtil;
@@ -28,6 +33,42 @@ import static java.util.stream.Collectors.joining;
 @TemplateAccessible
 public class EscapeHelper
 {
+
+  private static final Map<String, String> DEFAULT_RULES;
+
+  static {
+    DEFAULT_RULES = new LinkedHashMap<>();
+    DEFAULT_RULES.put("%", "%25");
+    DEFAULT_RULES.put(":", "%3A");
+    DEFAULT_RULES.put(" ", "%20");
+  }
+
+  private final Map<String, String> transformRules;
+
+  private final Pattern transformPattern; // compiled once, preserves rule order
+
+  public EscapeHelper() {
+    this(null);
+  }
+
+  public EscapeHelper(final String urlEscapeRulesConfig) {
+    this.transformRules = urlEscapeRulesConfig == null
+        ? DEFAULT_RULES
+        : UrlEscapeConfigParser.parseRules(urlEscapeRulesConfig);
+
+    // Build alternation in *insertion order*; Pattern.quote each key
+    if (transformRules.isEmpty()) {
+      this.transformPattern = null; // means: no transform
+    }
+    else {
+      String alternation = transformRules.keySet()
+          .stream()
+          .map(Pattern::quote)
+          .collect(Collectors.joining("|"));
+      this.transformPattern = Pattern.compile(alternation);
+    }
+  }
+
   public String html(final String value) {
     return StringEscapeUtils.escapeHtml4(value);
   }
@@ -73,15 +114,18 @@ public class EscapeHelper
   }
 
   private String transform(final String value) {
-    if (value == null || value.isEmpty()) {
+    if (value == null || value.isEmpty() || transformPattern == null) {
       return value;
     }
-    else {
-      return value
-          .replace("%", "%25")
-          .replace(":", "%3A")
-          .replace(" ", "%20");
+    Matcher m = transformPattern.matcher(value);
+    StringBuilder builder = new StringBuilder(value.length());
+    while (m.find()) {
+      String match = m.group();
+      String replacement = transformRules.get(match);
+      m.appendReplacement(builder, Matcher.quoteReplacement(replacement));
     }
+    m.appendTail(builder);
+    return builder.toString();
   }
 
   public String uri(final Object value) {

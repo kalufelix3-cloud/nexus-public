@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
-import org.sonatype.nexus.common.template.EscapeHelper;
 import org.sonatype.nexus.content.raw.RawContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentProxyFacetSupport;
 import org.sonatype.nexus.repository.view.Content;
@@ -52,7 +51,7 @@ public class RawProxyFacet
 
   @Override
   protected String getUrl(final Context context) {
-    return new EscapeHelper().uriSegments(removeSlashPrefix(assetPath(context)));
+    return getEscapeHelper().uriSegments(removeSlashPrefix(assetPath(context)));
   }
 
   @Override

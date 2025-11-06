@@ -34,6 +34,7 @@ import javax.validation.constraints.NotNull;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.io.Cooperation;
+import org.sonatype.nexus.common.template.EscapeHelper;
 import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheSyncTokenEvent;
 import org.sonatype.nexus.repository.BadRequestException;
 import org.sonatype.nexus.repository.ETagHeaderUtils;
@@ -175,6 +176,8 @@ public abstract class ProxyFacetSupport
 
   private Cooperation2 proxyCooperation;
 
+  private EscapeHelper escapeHelper;
+
   private static final String CTX_REQ_STOPWATCH = "request.stopwatch";
 
   protected static final String HTTP_RESPONSE = "request.http_response";
@@ -214,6 +217,13 @@ public abstract class ProxyFacetSupport
         .majorTimeout(majorTimeout)
         .minorTimeout(minorTimeout)
         .threadsPerKey(threadsPerKey);
+  }
+
+  @Inject
+  protected void configureUrlEscapeRules(
+      @Nullable @Value("${nexus.proxy.url.escape.rules:#{null}}") final String urlEscapeRulesConfig)
+  {
+    this.escapeHelper = new EscapeHelper(urlEscapeRulesConfig);
   }
 
   @Inject
@@ -812,6 +822,10 @@ public abstract class ProxyFacetSupport
   @VisibleForTesting
   Map<String, Integer> getThreadCooperationPerRequest() {
     return proxyCooperation.getThreadCountPerKey();
+  }
+
+  protected EscapeHelper getEscapeHelper() {
+    return escapeHelper;
   }
 
   @Subscribe
