@@ -16,10 +16,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -66,6 +68,7 @@ import org.quartz.SchedulerException;
 import org.quartz.SchedulerListener;
 import org.quartz.Trigger;
 import org.quartz.TriggerKey;
+import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.spi.JobFactory;
 import org.quartz.spi.JobStore;
 import org.quartz.spi.OperableTrigger;
@@ -76,11 +79,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.quartz.JobKey.jobKey;
 
 public class DatastoreQuartzSchedulerSPITest
     extends Test5Support
@@ -128,16 +134,16 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @AfterEach
-  public void after() throws Exception {
+  void after() throws Exception {
     schedulerProvider.stop();
     underTest.stop();
   }
 
   @Test
-  public void schedulingInThePastShouldFireTriggerInNextHour() throws JobPersistenceException {
+  void schedulingInThePastShouldFireTriggerInNextHour() throws JobPersistenceException {
     DateTime now = DateTime.now();
     DateTime startAt = DateTime.parse("2010-06-30T01:20");
-    underTest.scheduleTask(new TaskConfiguration(), new Hourly(startAt.toDate()));
+    underTest.scheduleTask(validTaskConfiguration(), new Hourly(startAt.toDate()));
 
     ArgumentCaptor<OperableTrigger> triggerRecorder = ArgumentCaptor.forClass(OperableTrigger.class);
     verify(jobStore).storeJobAndTrigger(any(JobDetail.class), triggerRecorder.capture());
@@ -149,9 +155,9 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  public void schedulingPlanReconcileExist() throws SchedulerException {
+  void schedulingPlanReconcileExist() throws SchedulerException {
     DateTime startAt = DateTime.parse("2010-06-30T01:20");
-    underTest.scheduleTask(new TaskConfiguration(), new Hourly(startAt.toDate()));
+    underTest.scheduleTask(validTaskConfiguration(), new Hourly(startAt.toDate()));
 
     Exception exception = assertThrows(ValidationErrorsException.class, () -> {
       // Code that is expected to throw the exception
@@ -526,6 +532,134 @@ public class DatastoreQuartzSchedulerSPITest
     Optional<QuartzTaskJobListener> result = custom.attachJobListener(jobKey);
 
     assertThat(result, equalTo(Optional.empty()));
+  }
+
+  @Test
+  void testFindTaskByIdWhenTaskExists() throws SchedulerException {
+    String taskId = UUID.randomUUID().toString();
+    JobKey jobKey = new JobKey(taskId, "nexus");
+
+    BulkReadScheduler localScheduler = mock(BulkReadScheduler.class);
+    when(localScheduler.checkExists(jobKey)).thenReturn(true);
+
+    ListenerManager listenerManager = mock(ListenerManager.class);
+    when(localScheduler.getListenerManager()).thenReturn(listenerManager);
+
+    QuartzTaskInfo taskInfo = mock(QuartzTaskInfo.class);
+    QuartzTaskJobListener listener = mock(QuartzTaskJobListener.class);
+    when(listener.getTaskInfo()).thenReturn(taskInfo);
+    when(listenerManager.getJobListener(any(String.class))).thenReturn(listener);
+
+    BulkReadScheduler oldScheduler = underTest.getScheduler();
+    try {
+      underTest.setScheduler(localScheduler);
+      TaskInfo result = underTest.getTaskById(taskId);
+
+      assertThat(result, equalTo(taskInfo));
+      verify(localScheduler).checkExists(jobKey);
+    }
+    finally {
+      underTest.setScheduler(oldScheduler);
+    }
+  }
+
+  @Test
+  void testFindTaskByIdWhenTaskDoesNotExist() throws SchedulerException {
+    String taskId = UUID.randomUUID().toString();
+    JobKey jobKey = new JobKey(taskId, "nexus");
+
+    BulkReadScheduler localScheduler = mock(BulkReadScheduler.class);
+    when(localScheduler.checkExists(jobKey)).thenReturn(false);
+
+    BulkReadScheduler oldScheduler = underTest.getScheduler();
+    try {
+      underTest.setScheduler(localScheduler);
+      TaskInfo result = underTest.getTaskById(taskId);
+
+      assertThat(result, nullValue());
+      verify(localScheduler).checkExists(jobKey);
+      verify(localScheduler, never()).getListenerManager();
+    }
+    finally {
+      underTest.setScheduler(oldScheduler);
+    }
+  }
+
+  @Test
+  void testFindTaskByIdWhenJobExistsButNoListener() throws SchedulerException {
+    String taskId = UUID.randomUUID().toString();
+    JobKey jobKey = new JobKey(taskId, "nexus");
+
+    BulkReadScheduler localScheduler = mock(BulkReadScheduler.class);
+    when(localScheduler.checkExists(jobKey)).thenReturn(true);
+
+    ListenerManager listenerManager = mock(ListenerManager.class);
+    when(localScheduler.getListenerManager()).thenReturn(listenerManager);
+    when(listenerManager.getJobListener(any(String.class))).thenReturn(null);
+
+    BulkReadScheduler oldScheduler = underTest.getScheduler();
+    try {
+      underTest.setScheduler(localScheduler);
+      TaskInfo result = underTest.getTaskById(taskId);
+
+      assertThat(result, nullValue());
+      verify(localScheduler).checkExists(jobKey);
+    }
+    finally {
+      underTest.setScheduler(oldScheduler);
+    }
+  }
+
+  @Test
+  void testFindTaskByIdFallbackToLegacyPattern() throws SchedulerException {
+    String configId = UUID.randomUUID().toString();
+    String quartzId = UUID.randomUUID().toString(); // Different UUID
+    JobKey directJobKey = jobKey(configId, "nexus");
+    JobKey legacyJobKey = jobKey(quartzId, "nexus");
+
+    // Mock scheduler that returns nothing for direct lookup (new pattern fails)
+    BulkReadScheduler localScheduler = mock(BulkReadScheduler.class);
+    when(localScheduler.checkExists(directJobKey)).thenReturn(false); // New pattern not found
+
+    // Mock the legacy allTasks() scan path
+    ListenerManager listenerManager = mock(ListenerManager.class);
+    when(localScheduler.getListenerManager()).thenReturn(listenerManager);
+    when(localScheduler.getJobKeys(any(GroupMatcher.class))).thenReturn(Collections.singleton(legacyJobKey));
+
+    // Create mock task with legacy pattern (JobKey != config.getId)
+    QuartzTaskInfo legacyTaskInfo = mock(QuartzTaskInfo.class);
+
+    when(legacyTaskInfo.getId()).thenReturn(configId);
+    when(legacyTaskInfo.getJobKey()).thenReturn(new JobKey(quartzId, "nexus")); // Different!
+
+    // Mock listener with legacy JobKey
+    QuartzTaskJobListener legacyListener = mock(QuartzTaskJobListener.class);
+    when(legacyListener.getTaskInfo()).thenReturn(legacyTaskInfo);
+    when(listenerManager.getJobListener(contains(quartzId))).thenReturn(legacyListener);
+
+    BulkReadScheduler oldScheduler = underTest.getScheduler();
+    try {
+      underTest.setScheduler(localScheduler);
+
+      // Try to find task by config ID
+      TaskInfo result = underTest.getTaskById(configId);
+
+      // Verify: new pattern tried first, then fallback found it
+      assertThat(result, notNullValue());
+      assertThat(result.getId(), equalTo(configId));
+      verify(localScheduler).checkExists(directJobKey);
+      verify(localScheduler).getJobKeys(any(GroupMatcher.class));
+    }
+    finally {
+      underTest.setScheduler(oldScheduler);
+    }
+  }
+
+  private TaskConfiguration validTaskConfiguration() {
+    TaskConfiguration taskConfiguration = new TaskConfiguration();
+    taskConfiguration.setId(UUID.randomUUID().toString());
+
+    return taskConfiguration;
   }
 
   private static TaskInfo taskInfo(

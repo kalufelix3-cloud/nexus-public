@@ -22,11 +22,9 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
@@ -81,6 +79,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Maps.filterKeys;
 import static java.util.Collections.emptyMap;
+import static org.quartz.JobKey.jobKey;
 import static org.quartz.TriggerBuilder.newTrigger;
 import static org.quartz.TriggerKey.triggerKey;
 import static org.quartz.impl.matchers.GroupMatcher.jobGroupEquals;
@@ -681,9 +680,7 @@ public abstract class QuartzSchedulerSPI
       final TaskConfiguration config,
       final Schedule schedule) throws SchedulerException
   {
-    // Use always new jobKey, as if THIS task reschedules THIS/itself, "new" should not interfere with "this"
-    // Currently only healthcheck does this, by rescheduling itself
-    JobKey jobKey = JobKey.jobKey(UUID.randomUUID().toString(), GROUP_NAME);
+    JobKey jobKey = JobKey.jobKey(config.getId(), GROUP_NAME);
 
     // get trigger, but use identity of jobKey
     // This is only for simplicity, as is not a requirement: NX job:triggers are 1:1 so tying them as this is ok
@@ -871,13 +868,13 @@ public abstract class QuartzSchedulerSPI
   @Nullable
   @VisibleForTesting
   protected QuartzTaskInfo findTaskById(final String id) throws SchedulerException {
-    try (TcclBlock tccl = TcclBlock.begin(this)) {
-      return allTasks().values()
-          .stream()
-          .filter((task) -> task.getId().equals(id))
-          .findFirst()
-          .orElse(null);
+    QuartzTaskInfo taskInfo = findTaskInfo(id);
+    if (taskInfo == null) {
+      // Legacy lookup by scanning all tasks and looking for matching config id
+      taskInfo = findTaskInfoLegacy(id);
     }
+
+    return taskInfo;
   }
 
   /**
@@ -1046,6 +1043,33 @@ public abstract class QuartzSchedulerSPI
       return !nodeAccess.getId().equals(limitedNodeId);
     }
     return false;
+  }
+
+  /**
+   * Finds a quartz task info using the given id as a {@link JobKey jobkey}.
+   */
+  protected QuartzTaskInfo findTaskInfo(final String id) throws SchedulerException {
+    JobKey jobKey = jobKey(id, GROUP_NAME);
+    // Check if job exists in database (source of truth)
+    if (!scheduler.checkExists(jobKey)) {
+      return null;
+    }
+
+    // Get the listener from in-memory cache
+    return Optional.ofNullable(findJobListener(jobKey))
+        .map(QuartzTaskJobListener::getTaskInfo)
+        .orElse(null);
+  }
+
+  /**
+   * Finds a quartz task info comparing the given id with the task configuration id.
+   */
+  protected QuartzTaskInfo findTaskInfoLegacy(final String id) throws SchedulerException {
+    return allTasks().values()
+        .stream()
+        .filter((task) -> task.getId().equals(id))
+        .findFirst()
+        .orElse(null);
   }
 
   protected boolean isLimitedToThisNode(final Trigger trigger) {
