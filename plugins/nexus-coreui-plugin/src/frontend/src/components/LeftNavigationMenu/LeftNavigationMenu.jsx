@@ -198,6 +198,13 @@ export default function LeftNavigationMenu() {
           data-analytics-id="nxrm-global-navbar-search-rubygems"
           params={{ keyword: null }}
         />
+          <LeftNavigationMenuCollapsibleChildItem
+              name={BROWSE.SEARCH.TERRAFORM}
+              text={UIStrings.SEARCH.TERRAFORM.MENU.text}
+              icon={UIStrings.SEARCH.TERRAFORM.MENU.icon}
+              data-analytics-id="nxrm-global-navbar-search-terraform"
+              params={{ keyword: null }}
+          />
         <LeftNavigationMenuCollapsibleChildItem
           name={BROWSE.SEARCH.YUM}
           text={UIStrings.SEARCH.YUM.MENU.text}

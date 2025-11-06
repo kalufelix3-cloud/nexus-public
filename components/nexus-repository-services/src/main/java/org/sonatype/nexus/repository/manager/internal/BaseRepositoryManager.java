@@ -153,6 +153,13 @@ public abstract class BaseRepositoryManager
   }
 
   /**
+   * Check if a recipe is available by name.
+   */
+  private boolean isRecipeAvailable(final String name) {
+    return recipes.containsKey(name);
+  }
+
+  /**
    * Lookup a repository by name.
    */
   private Repository repository(final String name) {
@@ -263,6 +270,12 @@ public abstract class BaseRepositoryManager
     log.info("Restoring {} repositories", configurations.size());
     for (Configuration configuration : configurations) {
       log.debug("Restoring repository: {}", configuration);
+      String recipeName = configuration.getRecipeName();
+      if (!isRecipeAvailable(recipeName)) {
+        log.warn("Skipping repository '{}' because recipe '{}' is not available (possibly disabled by feature flag)",
+            configuration.getRepositoryName(), recipeName);
+        continue;
+      }
       Repository repository = newRepository(configuration);
       track(repository);
 

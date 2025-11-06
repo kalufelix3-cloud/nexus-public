@@ -245,6 +245,21 @@ export default {
         }
       }
     },
+      TERRAFORM: {
+          MENU: {
+              text: 'Terraform',
+              description: 'Search for components by Terraform attributes',
+              icon: faSearch
+          },
+          CRITERIA: {
+              GROUP: 'Terraform Repositories',
+              FIELD_LABEL: {
+                  PROVIDER: 'Provider',
+                  NAMESPACE: 'Namespace',
+                  NAME: 'Name',
+              }
+          }
+      },
     YUM: {
       MENU: {
         text: 'Yum',

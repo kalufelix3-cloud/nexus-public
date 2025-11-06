@@ -40,6 +40,7 @@ import SearchPypiExt from '../../components/pages/browse/Search/SearchPypiExt';
 import SearchRExt from '../../components/pages/browse/Search/SearchRExt';
 import SearchRawExt from '../../components/pages/browse/Search/SearchRawExt';
 import SearchRubygemsExt from '../../components/pages/browse/Search/SearchRubygemsExt';
+import SearchTerraformExt from '../../components/pages/browse/Search/SearchTerraformExt';
 import SearchYumExt from '../../components/pages/browse/Search/SearchYumExt';
 import FeatureFlags from '../../constants/FeatureFlags';
 import { UIView } from '@uirouter/react';
@@ -486,6 +487,25 @@ export const browseRoutes = [
       },
     },
   },
+    {
+        name: BROWSE.SEARCH.TERRAFORM,
+        url: '/terraform/:keyword',
+        component: SearchTerraformExt,
+        data: {
+            visibilityRequirements: {
+                permissions: ['nexus:search:read'],
+                browseableFormat: 'terraform',
+            },
+            title: BROWSE.SEARCH.TITLE,
+        },
+        params: {
+            keyword: {
+                value: null,
+                raw: true,
+                dynamic: true,
+            },
+        },
+    },
   {
     name: BROWSE.SEARCH.YUM,
     url: '/yum/:keyword',
