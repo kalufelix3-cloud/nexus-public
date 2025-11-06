@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import { ExtJS } from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../constants/UIStrings';
@@ -25,14 +25,22 @@ jest.mock('../../layout/LoginLayout', () => {
   };
 });
 
-const mockLoginFormOnSuccess = jest.fn();
-const mockLoginFormOnError = jest.fn();
+const mockOnErrorCallbacks = {
+  local: jest.fn(),
+};
 
 jest.mock('./LocalLogin', () => {
   return function LoginForm(props) {
-    mockLoginFormOnSuccess.mockImplementation(props.onSuccess);
-    mockLoginFormOnError.mockImplementation(props.onError);
-    return <div data-testid="login-form" data-primary-button={props.primaryButton}>Login Form</div>;
+    // Store the onError callback when component renders
+    if (props.onError) {
+      mockOnErrorCallbacks.local = props.onError;
+    }
+
+    return (
+      <div data-testid="login-form" data-primary-button={props.primaryButton}>
+        Login Form
+      </div>
+    );
   };
 });
 
@@ -237,6 +245,65 @@ describe('LoginPage', () => {
       renderComponent({ logoConfig: customLogoConfig });
 
       expect(screen.getByTestId('login-layout')).toBeInTheDocument();
+    });
+  });
+
+  describe('general error handling', () => {
+    it('does not display error alert initially', () => {
+      setupStates(false, false, false);
+
+      renderComponent({ logoConfig: mockLogoConfig });
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('displays general errors received from LocalLogin', () => {
+      setupStates(false, false, false);
+
+      renderComponent({ logoConfig: mockLogoConfig });
+
+      act(() => {
+        mockOnErrorCallbacks.local('Server unavailable');
+      });
+
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent('Server unavailable');
+    });
+
+    it('allows user to dismiss the error alert', () => {
+      setupStates(false, false, false);
+
+      renderComponent({ logoConfig: mockLogoConfig });
+
+      act(() => {
+        mockOnErrorCallbacks.local('Connection failed. Please check your network connection.');
+      });
+
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+
+      const closeButton = screen.getByRole('button', { name: /close/i });
+      fireEvent.click(closeButton);
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('replaces previous error when new error is received', () => {
+      setupStates(false, false, false);
+
+      renderComponent({ logoConfig: mockLogoConfig });
+
+      act(() => {
+        mockOnErrorCallbacks.local('First error');
+      });
+
+      expect(screen.getByRole('alert')).toHaveTextContent('First error');
+
+      act(() => {
+        mockOnErrorCallbacks.local('Second error');
+      });
+
+      expect(screen.getByRole('alert')).toHaveTextContent('Second error');
+      expect(screen.queryByText('First error')).not.toBeInTheDocument();
     });
   });
 

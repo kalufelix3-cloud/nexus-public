@@ -38,11 +38,13 @@ const { LOGIN_BUTTON_LOADING, USERNAME_LABEL, PASSWORD_LABEL, LOGIN_BUTTON } = L
  *
  * @param {Object} props - Component props
  * @param {boolean} props.primaryButton - REQUIRED: If true, login button uses primary variant
+ * @param {Function} props.onError - Optional callback to report server errors to parent component
  */
-export default function LocalLogin({ primaryButton }) {
+export default function LocalLogin({ primaryButton, onError }) {
   const router = useRouter();
 
   const handleLoginSuccess = async ({ username }) => {
+    onError?.(null);
     console.log(`User ${username} authenticated successfully`);
     try {
       await ExtJS.waitForNextPermissionChange();
@@ -68,7 +70,17 @@ export default function LocalLogin({ primaryButton }) {
         };
         await handleLoginSuccess(loginData);
       },
-      logSaveError: (_, event) => { console.error('Login failed:', event.data);}
+      logSaveError: (_, event) => {
+        console.error('Login failed:', event.data);
+        const error = event.data;
+        const status = error.response?.status;
+        if (onError && status !== 403) {
+          const errorMessage = status === 0
+            ? LoginPageStrings.ERRORS.CONNECTION_FAILED
+            : error.response?.data?.message || LoginPageStrings.ERRORS.AUTHENTICATION_FAILED;
+          onError(errorMessage);
+        }
+      }
     }
   });
 
@@ -78,6 +90,8 @@ export default function LocalLogin({ primaryButton }) {
   const isLoading = current.matches('saving');
   const hasAuthError = Boolean(saveErrors.username && saveErrors.password);
   const authErrorOverride = hasAuthError ? { validationErrors: ' ' } : {};
+
+  const shouldShowInlineError = serverError && hasAuthError;
 
   const handleFieldChange = (fieldName) => (value) => {
     if (serverError) {
@@ -91,13 +105,16 @@ export default function LocalLogin({ primaryButton }) {
   };
 
   useEffect(() => {
+    if (!serverError) {
+      onError?.(null);
+    }
     if (serverError && saveErrorData?.username) {
       const inputElement = document.getElementById('username');
       if (inputElement) {
         inputElement.focus();
       }
     }
-  }, [serverError, saveErrorData?.username]);
+  }, [serverError, saveErrorData?.username, onError]);
 
   const statefulFormProps = {
     ...formProps,
@@ -142,7 +159,7 @@ export default function LocalLogin({ primaryButton }) {
         </NxFormGroup>
 
         <div className="server-error-container">
-          {serverError && (
+          {shouldShowInlineError && (
             <div className="server-error-message">
               <NxFontAwesomeIcon icon={faExclamationCircle} />
               {serverError}
@@ -166,5 +183,6 @@ export default function LocalLogin({ primaryButton }) {
 }
 
 LocalLogin.propTypes = {
-  primaryButton: PropTypes.bool.isRequired
+  primaryButton: PropTypes.bool.isRequired,
+  onError: PropTypes.func
 };

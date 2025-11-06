@@ -10,9 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { ExtJS } from "@sonatype/nexus-ui-plugin";
-import { NxTile } from "@sonatype/react-shared-components";
+import { NxTile, NxErrorAlert } from "@sonatype/react-shared-components";
 import UIStrings from "../../../constants/UIStrings";
 import LoginLayout from "../../layout/LoginLayout";
 import AnonymousAccess from "./AnonymousAccess";
@@ -38,6 +38,8 @@ const ssoAuthenticationRealms = ["samlEnabled", "oauth2Enabled"];
  * @param {Object} logoConfig - Logo configuration passed to LoginLayout
  */
 export default function LoginPage({ logoConfig }) {
+  const [generalError, setGeneralError] = useState(null);
+
   const isCloudEnvironment = ExtJS.state().getValue("isCloud", false);
   const showContinueWithoutLogin =
     !!ExtJS.state().getValue("anonymousUsername");
@@ -58,6 +60,11 @@ export default function LoginPage({ logoConfig }) {
 
   return (
     <LoginLayout logoConfig={logoConfig}>
+      {generalError && (
+        <NxErrorAlert onClose={() => setGeneralError(null)}>
+          {generalError}
+        </NxErrorAlert>
+      )}
       <div className="login-page">
         <NxTile className="login-tile" data-testid="login-tile">
           <NxTile.Header>
@@ -79,7 +86,7 @@ export default function LoginPage({ logoConfig }) {
                   )}
                 </>
               )}
-              {showLocalLogin && <LocalLogin primaryButton={!showSSOLogin} />}
+              {showLocalLogin && <LocalLogin primaryButton={!showSSOLogin} onError={setGeneralError} />}
               {showContinueWithoutLogin && <AnonymousAccess />}
             </div>
           </NxTile.Content>

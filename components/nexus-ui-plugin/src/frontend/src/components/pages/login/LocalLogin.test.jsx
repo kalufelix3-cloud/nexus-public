@@ -244,7 +244,8 @@ describe('LocalLogin', () => {
     });
 
     it('displays connection errors returned by the server', async () => {
-      renderComponent();
+      const mockOnError = jest.fn();
+      renderComponent({ onError: mockOnError });
       await fillCredentials('admin', 'oops');
 
       const failure = new Error('Server error');
@@ -255,7 +256,10 @@ describe('LocalLogin', () => {
         await userEvent.click(selectors.loginButton());
       });
 
-      await waitFor(() => expect(selectors.serverErrorMessage()).toHaveTextContent('Authentication failed'));
+      await waitFor(() => {
+        expect(mockOnError).toHaveBeenCalledWith('Authentication failed');
+        expect(selectors.serverErrorMessage()).not.toBeInTheDocument();
+      });
     });
 
     it('focuses username input after authentication error', async () => {
