@@ -56,6 +56,7 @@ public class DatastoreHighAvailabilitySupportChecker
         .add("cargo")
         .add("composer")
         .add("huggingface")
+        .add("terraform")
         .build();
   }
 }

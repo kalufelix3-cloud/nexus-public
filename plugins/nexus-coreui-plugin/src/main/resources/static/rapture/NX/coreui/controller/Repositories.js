@@ -93,6 +93,7 @@ Ext.define('NX.coreui.controller.Repositories', {
     'repository.recipe.RubygemsGroup',
     'repository.recipe.RubygemsHosted',
     'repository.recipe.RubygemsProxy',
+    'repository.recipe.TerraformProxy',
     'repository.recipe.YumGroup',
     'repository.recipe.YumHosted',
     'repository.recipe.YumProxy'

@@ -32,6 +32,9 @@ public class FeatureFlags
   /* Composer format is temporarily hidden behind the feature flag. Default value: false */
   public static final String COMPOSER_FORMAT_ENABLED = "nexus.format.composer.enabled";
 
+  /* Terraform format is temporarily hidden behind the feature flag. Default value: false */
+  public static final String TERRAFORM_FORMAT_ENABLED = "nexus.format.terraform.enabled";
+
   /* Docker GC Custom task enabled. Available values: true, false. Default value: false */
   public static final String DOCKER_GC_CUSTOM_TASK_ENABLED = "nexus.docker.gc.custom.enabled";
 

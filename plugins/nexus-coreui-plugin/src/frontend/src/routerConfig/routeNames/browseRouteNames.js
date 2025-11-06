@@ -63,6 +63,7 @@ export default {
     R: 'browse.search.r',
     RAW: 'browse.search.raw',
     RUBYGEMS: 'browse.search.rubygems',
+    TERRAFORM: 'browse.search.terraform',
     YUM: 'browse.search.yum',
   },
 };
