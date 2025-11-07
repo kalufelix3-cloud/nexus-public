@@ -32,9 +32,6 @@ import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.Tag;
 import org.sonatype.nexus.capability.Taggable;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
-import org.sonatype.nexus.crypto.secrets.SecretData;
-import org.sonatype.nexus.crypto.secrets.SecretsService;
-import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.ItemselectFormField;
 import org.sonatype.nexus.formfields.PasswordFormField;
@@ -104,7 +101,7 @@ public class GlobalWebhookCapability
 
   @Override
   protected Configuration createConfig(final Map<String, String> properties) throws Exception {
-    return new GlobalWebhookCapability.Configuration(properties, secretsService(), secretsStore());
+    return new GlobalWebhookCapability.Configuration(properties);
   }
 
   @Override
@@ -150,23 +147,12 @@ public class GlobalWebhookCapability
     public URI url;
 
     @Nullable
-    private final String secretId;
+    public String secret;
 
-    private final SecretsService secretsService;
-
-    private final SecretsStore secretsStore;
-
-    public Configuration(
-        final Map<String, String> properties,
-        final SecretsService secretsService,
-        final SecretsStore secretsStore)
-    {
+    public Configuration(final Map<String, String> properties) {
       this.names = parseList(properties.get(P_NAMES));
       this.url = parseUri(properties.get(P_URL));
-      // Store only the secret ID - decrypt on-demand when needed
-      this.secretId = Strings.emptyToNull(properties.get(P_SECRET));
-      this.secretsService = secretsService;
-      this.secretsStore = secretsStore;
+      this.secret = Strings.emptyToNull(properties.get(P_SECRET));
     }
 
     private static List<String> parseList(final String value) {
@@ -183,27 +169,7 @@ public class GlobalWebhookCapability
     @Nullable
     @Override
     public String getSecret() {
-      // Decrypt secret on-demand when needed using SecretsStore
-      if (secretId == null || secretId.isEmpty()) {
-        // Return empty string if secret is empty (for backwards compatibility in tests)
-        return secretId == null ? null : secretId;
-      }
-      // If SecretsService/Store not available (e.g., in tests or validation), return the value as-is
-      if (secretsStore == null || secretsService == null) {
-        return secretId;
-      }
-      // Try to parse as integer secret ID and decrypt
-      try {
-        SecretData data = secretsStore.read(Integer.parseInt(secretId)).orElse(null);
-        if (data == null) {
-          return null;
-        }
-        return String.valueOf(secretsService.from(data.getSecret()).decrypt());
-      }
-      catch (NumberFormatException e) {
-        // If not a valid secret ID, return the value as-is (for backwards compatibility)
-        return secretId;
-      }
+      return secret;
     }
   }
 
@@ -261,8 +227,7 @@ public class GlobalWebhookCapability
 
     @Override
     protected Configuration createConfig(final Map<String, String> properties) {
-      // This is only used for validation - pass null for secrets as they won't be accessed during validation
-      return new Configuration(properties, null, null);
+      return new Configuration(properties);
     }
 
     @Override

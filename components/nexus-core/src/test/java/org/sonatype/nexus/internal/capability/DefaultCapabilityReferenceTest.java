@@ -31,8 +31,6 @@ import org.sonatype.nexus.capability.condition.internal.LogicalConditionsImpl;
 import org.sonatype.nexus.capability.condition.internal.NexusConditionsImpl;
 import org.sonatype.nexus.capability.condition.internal.NexusIsActiveCondition;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.crypto.secrets.SecretsService;
-import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.sonatype.nexus.testcommon.event.SimpleEventManager;
 
 import org.junit.Before;
@@ -81,12 +79,6 @@ public class DefaultCapabilityReferenceTest
 
   @Mock
   private CapabilityRegistry capabilityRegistry;
-
-  @Mock
-  private SecretsService secretsService;
-
-  @Mock
-  private SecretsStore secretsStore;
 
   private DefaultCapabilityReference underTest;
 
@@ -140,9 +132,7 @@ public class DefaultCapabilityReferenceTest
         capabilityIdentity("test"),
         capabilityType("TEST"),
         mock(CapabilityDescriptor.class),
-        capability,
-        secretsService,
-        secretsStore);
+        capability);
 
     underTest.create(Collections.<String, String>emptyMap(), Collections.emptyMap());
   }
@@ -331,9 +321,7 @@ public class DefaultCapabilityReferenceTest
         capabilityIdentity("test"),
         capabilityType("TEST"),
         mock(CapabilityDescriptor.class),
-        capability,
-        secretsService,
-        secretsStore);
+        capability);
     final HashMap<String, String> properties = new HashMap<String, String>();
     underTest.load(properties, properties);
 

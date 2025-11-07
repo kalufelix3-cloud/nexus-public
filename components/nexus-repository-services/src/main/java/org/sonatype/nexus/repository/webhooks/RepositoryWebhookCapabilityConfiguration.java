@@ -18,9 +18,6 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
-import org.sonatype.nexus.crypto.secrets.SecretData;
-import org.sonatype.nexus.crypto.secrets.SecretsService;
-import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.sonatype.nexus.repository.config.RepositoryName;
 import org.sonatype.nexus.validation.constraint.Url;
 
@@ -49,24 +46,13 @@ public class RepositoryWebhookCapabilityConfiguration
   URI url;
 
   @Nullable
-  private final String secretId;
+  String secret;
 
-  private final SecretsService secretsService;
-
-  private final SecretsStore secretsStore;
-
-  RepositoryWebhookCapabilityConfiguration(
-      final Map<String, String> properties,
-      final SecretsService secretsService,
-      final SecretsStore secretsStore)
-  {
+  RepositoryWebhookCapabilityConfiguration(final Map<String, String> properties) {
     repository = properties.get(P_REPOSITORY);
     names = parseList(properties.get(P_NAMES));
     url = parseUri(properties.get(P_URL));
-    // Store only the secret ID - decrypt on-demand when needed
-    this.secretId = Strings.emptyToNull(properties.get(P_SECRET));
-    this.secretsService = secretsService;
-    this.secretsStore = secretsStore;
+    secret = Strings.emptyToNull(properties.get(P_SECRET));
   }
 
   private static final Splitter LIST_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
@@ -92,26 +78,6 @@ public class RepositoryWebhookCapabilityConfiguration
   @Override
   @Nullable
   public String getSecret() {
-    // Decrypt secret on-demand when needed using SecretsStore
-    if (secretId == null || secretId.isEmpty()) {
-      // Return empty string if secret is empty (for backwards compatibility in tests)
-      return secretId == null ? null : secretId;
-    }
-    // If SecretsService/Store not available (e.g., in tests or validation), return the value as-is
-    if (secretsStore == null || secretsService == null) {
-      return secretId;
-    }
-    // Try to parse as integer secret ID and decrypt
-    try {
-      SecretData data = secretsStore.read(Integer.parseInt(secretId)).orElse(null);
-      if (data == null) {
-        return null;
-      }
-      return String.valueOf(secretsService.from(data.getSecret()).decrypt());
-    }
-    catch (NumberFormatException e) {
-      // If not a valid secret ID, return the value as-is (for backwards compatibility)
-      return secretId;
-    }
+    return secret;
   }
 }
