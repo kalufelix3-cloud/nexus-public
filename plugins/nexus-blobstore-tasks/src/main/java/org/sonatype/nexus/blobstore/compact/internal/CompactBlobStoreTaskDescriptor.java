@@ -20,8 +20,10 @@ import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
-import static org.sonatype.nexus.formfields.FormField.MANDATORY;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 
 /**
  * Task descriptor for {@link CompactBlobStoreTask}.
@@ -41,12 +43,14 @@ public class CompactBlobStoreTaskDescriptor
   public static final String BLOBS_OLDER_THAN_FIELD_ID = "blobsOlderThan";
 
   @Inject
-  public CompactBlobStoreTaskDescriptor() {
+  public CompactBlobStoreTaskDescriptor(
+      @Value("${nexus.tasks.compactBlobstore.enabled:true}") final boolean visible)
+  {
     super(TYPE_ID,
         CompactBlobStoreTask.class,
         "Admin - Compact blob store",
-        VISIBLE,
-        EXPOSED,
+        visible,
+        visible,
         new ComboboxFormField<String>(
             BLOB_STORE_NAME_FIELD_ID,
             "Blob store",
