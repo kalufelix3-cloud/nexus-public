@@ -37,8 +37,6 @@ public class TestCryptoHelper
     implements CryptoHelper
 {
 
-  private final SecureRandom secureRandom = new SecureRandom();
-
   @Override
   public Provider getProvider() {
     return null;
@@ -76,7 +74,7 @@ public class TestCryptoHelper
 
   @Override
   public SecureRandom createSecureRandom() {
-    return secureRandom;
+    return new SecureRandom();
   }
 
   @Override
