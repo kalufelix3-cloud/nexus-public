@@ -14,6 +14,9 @@ package org.sonatype.nexus.capability;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.crypto.secrets.SecretsService;
+import org.sonatype.nexus.crypto.secrets.SecretsStore;
+
 /**
  * A capability is a stateful representation of configuration and lifecycle exposed for generalized management.
  */
@@ -23,8 +26,11 @@ public interface Capability
    * Initializes the capability after it has been created by factory.
    *
    * @param context capability context
+   * @param secretsService secrets service for encryption/removal
+   * @param secretsStore secrets store for on-demand decryption
+   * @since 3.87
    */
-  void init(CapabilityContext context);
+  void init(CapabilityContext context, SecretsService secretsService, SecretsStore secretsStore);
 
   /**
    * Returns description of capability.

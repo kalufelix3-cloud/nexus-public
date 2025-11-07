@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.internal.capability;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,6 +37,7 @@ import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
+import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.sonatype.nexus.formfields.Encrypted;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.PasswordFormField;
@@ -112,6 +112,9 @@ public class DefaultCapabilityRegistryTest
 
   @Mock
   private CapabilityDescriptor capabilityDescriptor;
+
+  @Mock
+  private SecretsStore secretsStore;
 
   private DefaultCapabilityRegistry underTest;
 
@@ -196,6 +199,7 @@ public class DefaultCapabilityRegistryTest
         achf,
         vchf,
         secretsService,
+        secretsStore,
         validatorProvider);
 
     rec = ArgumentCaptor.forClass(CapabilityEvent.class);
@@ -326,7 +330,7 @@ public class DefaultCapabilityRegistryTest
 
     verify(capabilityStorage).getAll();
     verify(descriptor).version();
-    verify(descriptor).formFields();
+    // formFields() is no longer called since we don't automatically decrypt secrets
     verify(descriptor).validate(fooId, oldProps, ValidationMode.LOAD);
     verifyNoMoreInteractions(descriptor, capabilityStorage);
   }
@@ -403,7 +407,7 @@ public class DefaultCapabilityRegistryTest
     verify(capabilityStorage).getAll();
     verify(descriptor, atLeastOnce()).version();
     verify(descriptor).convert(oldProps, 0);
-    verify(descriptor).formFields();
+    // formFields() is no longer called since we don't automatically decrypt secrets
 
     verifyNoMoreInteractions(descriptor, capabilityStorage);
   }
@@ -449,12 +453,13 @@ public class DefaultCapabilityRegistryTest
   }
 
   /**
-   * Verify that value is decrypted when corresponding field is marked with {@link Encrypted}.
+   * Verify that encrypted value remains encrypted when loaded (NOT automatically decrypted).
    */
   @Test
   public void loadWithEncryptedProperty() throws Exception {
     Map<String, String> properties = Maps.newHashMap();
-    properties.put("foo", secretsService.encryptMaven("", "bar".toCharArray(), "").getId());
+    String encryptedValue = secretsService.encryptMaven("", "bar".toCharArray(), "").getId();
+    properties.put("foo", encryptedValue);
 
     final CapabilityStorageItem item = new CapabilityStorageItemData();
     item.setVersion(0);
@@ -466,16 +471,16 @@ public class DefaultCapabilityRegistryTest
     final CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
     when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
     when(descriptor.version()).thenReturn(0);
-    when(descriptor.formFields()).thenReturn(Arrays.<FormField>asList(
-        new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)));
 
     underTest.load();
 
     ArgumentCaptor<Object> ebRec = ArgumentCaptor.forClass(Object.class);
 
     verify(eventManager, atLeastOnce()).post(ebRec.capture());
+    // Properties should contain encrypted value, NOT decrypted
     assertThat(
-        ((CapabilityEvent) ebRec.getAllValues().get(0)).getReference().context().properties().get("foo"), is("bar"));
+        ((CapabilityEvent) ebRec.getAllValues().get(0)).getReference().context().properties().get("foo"),
+        is(encryptedValue));
   }
 
   /**
@@ -602,13 +607,16 @@ public class DefaultCapabilityRegistryTest
 
     oldProps.put("p1", "v1a");
     oldProps.put("p2", "v2a");
+    String encryptedPassword = secretsService.encryptMaven("", "admin123".toCharArray(), "").getId();
+    oldProps.put("password", encryptedPassword);
     underTest.pullAndRefreshReferencesFromDB();
 
     assertThat(underTest.getAll(), hasSize(1));
     properties = references.stream().findFirst().get().properties();
     assertEquals("v1a", properties.get("p1"));
     assertEquals("v2a", properties.get("p2"));
-    assertEquals("admin123", properties.get("password"));
+    // Password should remain encrypted in properties - NOT automatically decrypted
+    assertEquals(encryptedPassword, properties.get("password"));
   }
 
   @Test

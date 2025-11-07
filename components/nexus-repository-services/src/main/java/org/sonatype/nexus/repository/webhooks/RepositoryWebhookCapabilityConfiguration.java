@@ -18,6 +18,8 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
+import org.sonatype.nexus.crypto.secrets.SecretsService;
+import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.sonatype.nexus.repository.config.RepositoryName;
 import org.sonatype.nexus.validation.constraint.Url;
 
@@ -46,13 +48,24 @@ public class RepositoryWebhookCapabilityConfiguration
   URI url;
 
   @Nullable
-  String secret;
+  private final String secretId;
 
-  RepositoryWebhookCapabilityConfiguration(final Map<String, String> properties) {
+  private final SecretsService secretsService;
+
+  private final SecretsStore secretsStore;
+
+  RepositoryWebhookCapabilityConfiguration(
+      final Map<String, String> properties,
+      final SecretsService secretsService,
+      final SecretsStore secretsStore)
+  {
     repository = properties.get(P_REPOSITORY);
     names = parseList(properties.get(P_NAMES));
     url = parseUri(properties.get(P_URL));
-    secret = Strings.emptyToNull(properties.get(P_SECRET));
+    // Store only the secret ID - decrypt on-demand when needed
+    this.secretId = Strings.emptyToNull(properties.get(P_SECRET));
+    this.secretsService = secretsService;
+    this.secretsStore = secretsStore;
   }
 
   private static final Splitter LIST_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
@@ -78,6 +91,6 @@ public class RepositoryWebhookCapabilityConfiguration
   @Override
   @Nullable
   public String getSecret() {
-    return secret;
+    return decryptSecret(secretId, secretsStore, secretsService);
   }
 }

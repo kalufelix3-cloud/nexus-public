@@ -26,6 +26,8 @@ import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.common.template.TemplateThrowableAdapter;
 import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.crypto.secrets.SecretsService;
+import org.sonatype.nexus.crypto.secrets.SecretsStore;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -50,15 +52,35 @@ public abstract class CapabilitySupport<ConfigT>
 
   private CapabilityContext context;
 
+  private SecretsService secretsService;
+
+  private SecretsStore secretsStore;
+
   private ConfigT config;
 
   @Override
-  public void init(final CapabilityContext context) {
+  public void init(
+      final CapabilityContext context,
+      final SecretsService secretsService,
+      final SecretsStore secretsStore)
+  {
     this.context = checkNotNull(context);
+    this.secretsService = secretsService;
+    this.secretsStore = secretsStore;
   }
 
   protected CapabilityContext context() {
     return context;
+  }
+
+  protected SecretsService secretsService() {
+    checkState(secretsService != null, "SecretsService not available");
+    return secretsService;
+  }
+
+  protected SecretsStore secretsStore() {
+    checkState(secretsStore != null, "SecretsStore not available");
+    return secretsStore;
   }
 
   @Override

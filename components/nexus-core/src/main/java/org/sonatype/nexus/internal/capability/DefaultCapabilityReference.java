@@ -28,6 +28,8 @@ import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.crypto.secrets.SecretsService;
+import org.sonatype.nexus.crypto.secrets.SecretsStore;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Maps.newHashMap;
@@ -65,6 +67,10 @@ public class DefaultCapabilityReference
 
   private final ReentrantReadWriteLock stateLock;
 
+  private final SecretsService secretsService;
+
+  private final SecretsStore secretsStore;
+
   private Map<String, String> encryptedProperties;
 
   private Map<String, String> capabilityProperties;
@@ -83,7 +89,9 @@ public class DefaultCapabilityReference
       final CapabilityIdentity id,
       final CapabilityType type,
       final CapabilityDescriptor descriptor,
-      final Capability capability)
+      final Capability capability,
+      final SecretsService secretsService,
+      final SecretsStore secretsStore)
   {
     this.capabilityRegistry = checkNotNull(capabilityRegistry);
     this.eventManager = checkNotNull(eventManager);
@@ -92,6 +100,8 @@ public class DefaultCapabilityReference
     this.type = checkNotNull(type);
     this.descriptor = checkNotNull(descriptor);
     this.capability = checkNotNull(capability);
+    this.secretsService = checkNotNull(secretsService);
+    this.secretsStore = checkNotNull(secretsStore);
     capabilityProperties = EMPTY_MAP;
 
     state = new NewState();
@@ -99,7 +109,7 @@ public class DefaultCapabilityReference
     activationHandler = checkNotNull(activationListenerFactory).create(this);
     validityHandler = checkNotNull(validityConditionHandlerFactory).create(this);
 
-    capability.init(this);
+    capability.init((CapabilityContext) this, secretsService, secretsStore);
   }
 
   @Override
@@ -335,7 +345,8 @@ public class DefaultCapabilityReference
   public Map<String, String> properties() {
     try {
       stateLock.readLock().lock();
-      return capabilityProperties;
+      // Return encrypted properties (with secret IDs) so capabilities decrypt on-demand
+      return unmodifiableMap(encryptedProperties);
     }
     finally {
       stateLock.readLock().unlock();

@@ -32,6 +32,8 @@ import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.Tag;
 import org.sonatype.nexus.capability.Taggable;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
+import org.sonatype.nexus.crypto.secrets.SecretsService;
+import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.ItemselectFormField;
 import org.sonatype.nexus.formfields.PasswordFormField;
@@ -101,7 +103,7 @@ public class GlobalWebhookCapability
 
   @Override
   protected Configuration createConfig(final Map<String, String> properties) throws Exception {
-    return new GlobalWebhookCapability.Configuration(properties);
+    return new GlobalWebhookCapability.Configuration(properties, secretsService(), secretsStore());
   }
 
   @Override
@@ -147,12 +149,23 @@ public class GlobalWebhookCapability
     public URI url;
 
     @Nullable
-    public String secret;
+    private final String secretId;
 
-    public Configuration(final Map<String, String> properties) {
+    private final SecretsService secretsService;
+
+    private final SecretsStore secretsStore;
+
+    public Configuration(
+        final Map<String, String> properties,
+        final SecretsService secretsService,
+        final SecretsStore secretsStore)
+    {
       this.names = parseList(properties.get(P_NAMES));
       this.url = parseUri(properties.get(P_URL));
-      this.secret = Strings.emptyToNull(properties.get(P_SECRET));
+      // Store only the secret ID - decrypt on-demand when needed
+      this.secretId = Strings.emptyToNull(properties.get(P_SECRET));
+      this.secretsService = secretsService;
+      this.secretsStore = secretsStore;
     }
 
     private static List<String> parseList(final String value) {
@@ -169,7 +182,7 @@ public class GlobalWebhookCapability
     @Nullable
     @Override
     public String getSecret() {
-      return secret;
+      return decryptSecret(secretId, secretsStore, secretsService);
     }
   }
 
@@ -227,7 +240,8 @@ public class GlobalWebhookCapability
 
     @Override
     protected Configuration createConfig(final Map<String, String> properties) {
-      return new Configuration(properties);
+      // This is only used for validation - pass null for secrets as they won't be accessed during validation
+      return new Configuration(properties, null, null);
     }
 
     @Override
