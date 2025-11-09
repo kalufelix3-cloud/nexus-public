@@ -60,4 +60,25 @@ public interface SecretsService
    * Checks if there are any secrets that have not been re-encrypted with the default key.
    */
   boolean isReEncryptRequired();
+
+  /**
+   * Exports the encrypted secret value for the given secret ID token.
+   * This is used during configuration export to get the encrypted value that can be imported into another system.
+   *
+   * @param secretId the secret ID token (e.g., "_123" or legacy encrypted string)
+   * @return the encrypted secret string, or null if the secret ID is null or the secret cannot be found
+   */
+  String exportEncrypted(String secretId);
+
+  /**
+   * Imports an encrypted secret value into the secrets store.
+   * This is used during configuration import to create a new secret entry with an existing encrypted value.
+   *
+   * @param purpose the purpose of the secret (e.g., "email", "ldap")
+   * @param encryptedValue the encrypted secret string (PHC format or legacy encrypted string)
+   * @param userId the user performing the import, may be null
+   * @return a Secret instance with the new ID
+   * @throws CipherException if the import fails
+   */
+  Secret importEncrypted(String purpose, String encryptedValue, String userId) throws CipherException;
 }

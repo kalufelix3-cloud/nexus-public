@@ -20,6 +20,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.security.UserIdHelper;
@@ -54,7 +55,15 @@ public class HttpAuthenticationPasswordEncoder
    */
   public void encodeHttpAuthPassword(final Map<String, Map<String, Object>> attributes) {
     getAuthentication(attributes).ifPresent(authentication -> {
-      authentication.computeIfPresent(PASSWORD, (key, value) -> encrypt((String) value));
+      authentication.computeIfPresent(PASSWORD, (key, value) -> {
+        // only need to encrypt if a Secret object isn't already in place. Typically create
+        // from UI or REST will have a clear text password here, import from migration will have
+        // a valid Secret object already created
+        if (value instanceof String) {
+          return encrypt((String) value);
+        }
+        return ((Secret) value).getId();
+      });
     });
   }
 

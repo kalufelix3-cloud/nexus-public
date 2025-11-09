@@ -240,6 +240,63 @@ public class SecretsServiceImpl
     log.trace("Secret id: {} successfully re-encrypted", secretId);
   }
 
+  @Override
+  public String exportEncrypted(final String secretId) {
+    if (secretId == null) {
+      return null;
+    }
+
+    // If it's a legacy token (doesn't start with _), just return it as-is
+    if (isLegacyToken(secretId)) {
+      log.debug("Exporting legacy encrypted secret");
+      return secretId;
+    }
+
+    // For modern secrets, look up the encrypted value from the store
+    try {
+      SecretData data = secretsStore.read(parseToken(secretId))
+          .orElse(null);
+      if (data == null) {
+        log.warn("Unable to find secret for token {} during export", secretId);
+        return null;
+      }
+      return data.getSecret();
+    }
+    catch (Exception e) {
+      log.warn("Error exporting encrypted secret for token {}", secretId, e);
+      return null;
+    }
+  }
+
+  @Override
+  public Secret importEncrypted(
+      final String purpose,
+      final String encryptedValue,
+      final String userId) throws CipherException
+  {
+    if (encryptedValue == null) {
+      return null;
+    }
+
+    // PHC format strings start with $ and are modern secrets that need to be stored
+    // Legacy encrypted values don't start with $ or _, just wrap them
+    if (isLegacyToken(encryptedValue) && !encryptedValue.startsWith("$")) {
+      log.debug("Importing legacy encrypted secret");
+      return new SecretImpl(encryptedValue);
+    }
+
+    // Decrypt and re-encrypt to generate new values with fresh encryption parameters
+    // This ensures:
+    // 1) No security concerns when copying secrets between instances
+    // 2) Secrets are properly migrated when instances use different encryption keys
+    try {
+      return encrypt(purpose, toChars(cipherFactory.create(defaultKey, encryptedValue).decrypt()), null, userId);
+    }
+    catch (Exception e) {
+      throw new CipherException("Failed to import encrypted secret", e);
+    }
+  }
+
   private char[] doDecrypt(final String token) throws CipherException {
     if (isLegacyToken(token)) {
       return decryptLegacy(token);

@@ -72,6 +72,23 @@ public class HttpAuthenticationPasswordEncoderTest
             UserIdHelper.get());
   }
 
+  @Test
+  public void shouldHandleSecretObjectWithoutEncrypting() {
+    // Arrange - password value is already a Secret object (from import)
+    final Map<String, Map<String, Object>> attributes = getAttributesWithSecret("password", aSecret);
+    when(aSecret.getId()).thenReturn("_123");
+
+    // Act
+    underTest.encodeHttpAuthPassword(attributes);
+
+    // Assert - should NOT call encryptMaven since it's already a Secret
+    verify(secretService, never())
+        .encryptMaven(AUTHENTICATION_CONFIGURATION, PASSWORD.toCharArray(),
+            UserIdHelper.get());
+
+    // Assert - should have called getId() to extract the Secret ID
+    verify(aSecret).getId();
+  }
 
   @Test
   public void shouldEncodeWhenPasswordAreDifferent() {
@@ -128,6 +145,7 @@ public class HttpAuthenticationPasswordEncoderTest
     verify(secretService)
         .remove(aSecret);
   }
+
   @Test
   public void shouldNotRemovePasswordSecretWhenNoPreviousSecret() {
     mockEncrypt(PASSWORD);
@@ -157,6 +175,22 @@ public class HttpAuthenticationPasswordEncoderTest
   private static Map<String, Map<String, Object>> getAttributes(
       final String authSecretKey,
       final String authSecretValue)
+  {
+    Map<String, Object> authentication = new HashMap<>();
+    authentication.put(authSecretKey, authSecretValue);
+
+    Map<String, Object> httpClient = new HashMap<>();
+    httpClient.put("authentication", authentication);
+
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    attributes.put("httpclient", httpClient);
+
+    return attributes;
+  }
+
+  private static Map<String, Map<String, Object>> getAttributesWithSecret(
+      final String authSecretKey,
+      final Secret authSecretValue)
   {
     Map<String, Object> authentication = new HashMap<>();
     authentication.put(authSecretKey, authSecretValue);

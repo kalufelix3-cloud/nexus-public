@@ -449,4 +449,164 @@ public class SecretsServiceImplTest
         eq(null));
     return encryptedValue.getValue();
   }
+
+  @Test
+  public void testExportEncryptedWithModernSecret() {
+    // Setup: create a modern secret with ID
+    int fakeId = random.nextInt();
+    String encryptedValue = "$pbkdf2$v=1$i=10000,l=32$abc123$def456";
+
+    when(secretsStore.read(fakeId)).thenReturn(Optional.of(
+        getMockSecretData(fakeId, null, encryptedValue)));
+
+    // Export the encrypted value
+    String exported = underTestSha1.exportEncrypted("_" + fakeId);
+
+    // Should return the encrypted PHC string
+    assertThat(exported, is(encryptedValue));
+    verify(secretsStore).read(fakeId);
+  }
+
+  @Test
+  public void testExportEncryptedWithLegacySecret() {
+    // Legacy secrets don't start with underscore
+    String legacyEncrypted = "some-legacy-encrypted-value";
+
+    // Export should return the value as-is without querying the store
+    String exported = underTestSha1.exportEncrypted(legacyEncrypted);
+
+    assertThat(exported, is(legacyEncrypted));
+    verifyNoInteractions(secretsStore);
+  }
+
+  @Test
+  public void testExportEncryptedWithNullSecret() {
+    String exported = underTestSha1.exportEncrypted(null);
+    assertThat(exported, is((String) null));
+    verifyNoInteractions(secretsStore);
+  }
+
+  @Test
+  public void testExportEncryptedWhenSecretNotFound() {
+    int fakeId = random.nextInt();
+    when(secretsStore.read(fakeId)).thenReturn(Optional.empty());
+
+    String exported = underTestSha1.exportEncrypted("_" + fakeId);
+
+    assertThat(exported, is((String) null));
+    verify(secretsStore).read(fakeId);
+  }
+
+  @Test
+  public void testImportEncryptedWithModernSecret() {
+    // Setup: First create a real encrypted value to use for import
+    char[] secret = "test-password".toCharArray();
+    int originalId = random.nextInt();
+    when(databaseCheck.isAtLeast(anyString())).thenReturn(true);
+    when(secretsStore.create(anyString(), any(), anyString(), any())).thenReturn(originalId);
+    when(encryptionKeySource.getActiveKey()).thenReturn(Optional.empty());
+
+    Secret encrypted = underTestSha1.encrypt("test", secret, null);
+    verify(secretsStore).create(anyString(), any(), encryptedValue.capture(), any());
+    String realEncryptedValue = encryptedValue.getValue();
+
+    // Now import this encrypted value
+    int newId = random.nextInt() + 1000;
+    when(secretsStore.create(eq("email"), any(), anyString(), eq("testUser"))).thenReturn(newId);
+
+    // Import the encrypted value
+    Secret imported = underTestSha1.importEncrypted("email", realEncryptedValue, "testUser");
+
+    // Should create a new entry in the store and return a new ID
+    assertThat(imported.getId(), is("_" + newId));
+    // Verify it was re-encrypted (the stored value should be different from original due to new IV/salt)
+    verify(secretsStore).create(eq("email"), eq(null), argThat(value -> {
+      return !value.equals(realEncryptedValue) && value.startsWith("$");
+    }), eq("testUser"));
+  }
+
+  @Test
+  public void testImportEncryptedWithLegacySecret() {
+    // Legacy secrets are just wrapped, not stored
+    String legacyEncrypted = "some-legacy-encrypted-value";
+
+    Secret imported = underTestSha1.importEncrypted("email", legacyEncrypted, null);
+
+    // Should return a Secret wrapping the legacy value without storing
+    assertThat(imported.getId(), is(legacyEncrypted));
+    verifyNoInteractions(secretsStore);
+  }
+
+  @Test
+  public void testImportEncryptedWithNullValue() {
+    Secret imported = underTestSha1.importEncrypted("email", null, null);
+    assertThat(imported, is((Secret) null));
+    verifyNoInteractions(secretsStore);
+  }
+
+  @Test
+  public void testImportEncryptedWithActiveKey() {
+    // Setup: First create a real encrypted value to use for import
+    char[] secret = "test-password".toCharArray();
+    int originalId = random.nextInt();
+    when(databaseCheck.isAtLeast(anyString())).thenReturn(true);
+    when(secretsStore.create(anyString(), any(), anyString(), any())).thenReturn(originalId);
+    when(encryptionKeySource.getActiveKey()).thenReturn(Optional.empty());
+
+    Secret encrypted = underTestSha1.encrypt("test", secret, null);
+    verify(secretsStore).create(anyString(), any(), encryptedValue.capture(), any());
+    String realEncryptedValue = encryptedValue.getValue();
+
+    // Now import with an active key
+    int newId = random.nextInt() + 1000;
+    SecretEncryptionKey activeKey = getMockSecretKey("active-key", "some-key-value");
+    when(secretsStore.create(eq("httpclient"), eq("active-key"), anyString(), any())).thenReturn(newId);
+    when(encryptionKeySource.getActiveKey()).thenReturn(Optional.of(activeKey));
+
+    // Import the encrypted value
+    Secret imported = underTestSha1.importEncrypted("httpclient", realEncryptedValue, null);
+
+    // Should create a new entry with the active key ID and re-encrypted value
+    assertThat(imported.getId(), is("_" + newId));
+    verify(secretsStore).create(eq("httpclient"), eq("active-key"), argThat(value -> {
+      return !value.equals(realEncryptedValue) && value.startsWith("$");
+    }), eq(null));
+  }
+
+  @Test
+  public void testExportImportRoundTrip() {
+    // Test a full round-trip: encrypt -> export -> import -> decrypt
+    int originalId = random.nextInt();
+    int newId = random.nextInt() + 1000; // Different ID
+    char[] secret = "test-password".toCharArray();
+
+    when(databaseCheck.isAtLeast(anyString())).thenReturn(true);
+    when(secretsStore.create(eq("test"), any(), anyString(), any())).thenReturn(originalId);
+    when(encryptionKeySource.getActiveKey()).thenReturn(Optional.empty());
+
+    // 1. Encrypt a secret
+    Secret encrypted = underTestSha1.encrypt("test", secret, null);
+    verify(secretsStore).create(eq("test"), any(), encryptedValue.capture(), any());
+    String storedEncryptedValue = encryptedValue.getValue();
+
+    // 2. Export it (simulating export from one system)
+    when(secretsStore.read(originalId)).thenReturn(Optional.of(
+        getMockSecretData(originalId, null, storedEncryptedValue)));
+    String exported = underTestSha1.exportEncrypted(encrypted.getId());
+    assertThat(exported, is(storedEncryptedValue));
+
+    // 3. Import it (simulating import to another system)
+    // Import will decrypt and re-encrypt, so we need to capture the new encrypted value
+    ArgumentCaptor<String> reEncryptedValue = ArgumentCaptor.forClass(String.class);
+    when(secretsStore.create(eq("imported"), any(), anyString(), any())).thenReturn(newId);
+    Secret imported = underTestSha1.importEncrypted("imported", exported, null);
+    assertThat(imported.getId(), is("_" + newId));
+    verify(secretsStore).create(eq("imported"), eq(null), reEncryptedValue.capture(), eq(null));
+
+    // 4. Decrypt and verify - use the re-encrypted value, not the original
+    when(secretsStore.read(newId)).thenReturn(Optional.of(
+        getMockSecretData(newId, null, reEncryptedValue.getValue())));
+    char[] decrypted = imported.decrypt();
+    assertThat(decrypted, is(secret));
+  }
 }
