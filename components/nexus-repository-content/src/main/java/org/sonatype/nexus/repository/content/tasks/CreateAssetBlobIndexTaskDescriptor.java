@@ -22,7 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-@AvailabilityVersion(from = "2.18.2")
+@AvailabilityVersion(from = "1.0")
 @Component
 @Scope(SCOPE_SINGLETON)
 public class CreateAssetBlobIndexTaskDescriptor
