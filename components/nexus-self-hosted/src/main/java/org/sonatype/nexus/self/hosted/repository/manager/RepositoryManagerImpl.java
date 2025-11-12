@@ -14,10 +14,6 @@ package org.sonatype.nexus.self.hosted.repository.manager;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
@@ -35,6 +31,9 @@ import org.sonatype.nexus.repository.manager.internal.HttpAuthenticationPassword
 import org.sonatype.nexus.repository.manager.internal.RepositoryAdminSecurityContributor;
 import org.sonatype.nexus.repository.manager.internal.RepositoryFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;

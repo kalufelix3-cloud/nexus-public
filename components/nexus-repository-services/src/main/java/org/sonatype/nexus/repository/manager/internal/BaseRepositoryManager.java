@@ -467,6 +467,7 @@ public abstract class BaseRepositoryManager
     Set<ConstraintViolation<?>> violations = new HashSet<>();
     configurationValidators.forEach(
         validator -> maybeAdd(violations, validator.validate(configuration)));
+
     maybePropagate(violations, log);
   }
 

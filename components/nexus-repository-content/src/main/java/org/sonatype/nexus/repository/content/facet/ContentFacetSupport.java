@@ -17,13 +17,13 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.inject.Inject;
 import javax.validation.ConstraintViolation;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSession;
@@ -52,6 +52,7 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.TransactionalStore;
 
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.inject.Inject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -138,11 +139,21 @@ public abstract class ContentFacetSupport
     Config configToValidate = facet(ConfigurationFacet.class).readSection(configuration, STORAGE, Config.class);
 
     Set<ConstraintViolation<?>> violations = new HashSet<>();
+    // Only validate blob store group membership if the blob store exists
+    // Existence validation happens in BaseRepositoryManager.validateConfiguration() during create/update
     maybeAdd(violations, validateBlobStoreNotInGroup(configToValidate.blobStoreName));
     maybePropagate(violations, log);
   }
 
   private ConstraintViolation<?> validateBlobStoreNotInGroup(final String blobStoreName) {
+    // Skip validation if blob store doesn't exist - allow repositories to load even if their blob store
+    // is missing (e.g., deleted, corrupted DB) so the application can start and the repository can be fixed/deleted
+    // rather than blocking entire application startup
+    BlobStore blobStore = dependencies.getBlobStoreManager().get(blobStoreName);
+    if (blobStore == null) {
+      return null;
+    }
+
     return dependencies.getBlobStoreManager()
         .getParent(blobStoreName)
         .map(groupName -> dependencies.getConstraintViolationFactory()
