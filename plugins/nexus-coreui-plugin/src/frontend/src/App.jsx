@@ -44,11 +44,7 @@ export function App() {
   // Render minimal layout for login route
   if (isLoginRoute) {
     return (
-      <>
-        <SystemNotices />
-        <UnsavedChangesModal/>
         <UIView />
-      </>
     );
   }
 
