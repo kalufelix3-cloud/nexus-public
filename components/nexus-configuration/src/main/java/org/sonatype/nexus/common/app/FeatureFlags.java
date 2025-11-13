@@ -284,4 +284,7 @@ public class FeatureFlags
 
   public static final String NEXUS_USER_CONFIGURATION_SOURCE_ENABLED = "nexus.user.configuration.source.enabled";
 
+  /* Swift format is temporarily hidden behind the feature flag. Default value: false */
+  public static final String SWIFT_FORMAT_ENABLED = "nexus.format.swift.enabled";
+
 }
