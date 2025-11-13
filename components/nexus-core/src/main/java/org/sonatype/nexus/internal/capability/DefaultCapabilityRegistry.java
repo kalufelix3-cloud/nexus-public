@@ -733,9 +733,8 @@ public class DefaultCapabilityRegistry
 
           if (value != null) {
             String oldSecretId = oldProperties.get(formField.getId());
-            String oldSecret = safelyLoadSecret(oldSecretId);
 
-            if (Objects.equals(oldSecret, value)) {
+            if (Objects.equals(oldSecretId, value)) {
               log.debug("Reusing existing secret for field {}", formField.getId());
               // existing secret matches
               encrypted.put(formField.getId(), oldSecretId);

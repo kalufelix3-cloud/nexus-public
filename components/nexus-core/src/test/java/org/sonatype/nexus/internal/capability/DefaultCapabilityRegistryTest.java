@@ -675,6 +675,160 @@ public class DefaultCapabilityRegistryTest
     return underTest.add(CAPABILITY_TYPE, true, null, properties);
   }
 
+  /**
+   * Test that encryptValuesIfNeeded reuses existing secret ID when value hasn't changed.
+   */
+  @Test
+  public void updateWithEncryptedProperty_reuseExistingSecret() throws Exception {
+    CapabilityReference reference = createCapabilityWithSecret("my-secret");
+
+    ArgumentCaptor<CapabilityStorageItem> csiRec = ArgumentCaptor.forClass(CapabilityStorageItem.class);
+    verify(capabilityStorage).add(csiRec.capture());
+    CapabilityStorageItem initial = csiRec.getValue();
+    String originalSecretId = initial.getProperties().get("foo");
+    assertThat(originalSecretId, is("0"));
+
+    // Update with the same encrypted secret ID (simulating UI returning the secret ID unchanged)
+    Map<String, String> updateProps = Maps.newHashMap();
+    updateProps.put("foo", originalSecretId);
+
+    underTest.update(reference.context().id(), true, null, updateProps);
+
+    // Verify that the secret service was NOT called to re-encrypt (only once from the initial create)
+    verify(secretsService, times(1)).encryptMaven("capabilities", "my-secret".toCharArray(), "testuser");
+
+    // Verify storage update was called and the secret ID is unchanged
+    verify(capabilityStorage).update(any(CapabilityIdentity.class), csiRec.capture());
+    CapabilityStorageItem updated = csiRec.getAllValues().get(csiRec.getAllValues().size() - 1);
+    String updatedSecretId = updated.getProperties().get("foo");
+    assertThat(updatedSecretId, is(originalSecretId)); // Same secret ID
+  }
+
+  /**
+   * Test that encryptValuesIfNeeded creates new secret when value has changed.
+   */
+  @Test
+  public void updateWithEncryptedProperty_createNewSecretWhenValueChanges() throws Exception {
+    CapabilityReference reference = createCapabilityWithSecret("my-secret");
+
+    ArgumentCaptor<CapabilityStorageItem> csiRec = ArgumentCaptor.forClass(CapabilityStorageItem.class);
+    verify(capabilityStorage).add(csiRec.capture());
+    CapabilityStorageItem initial = csiRec.getValue();
+    String originalSecretId = initial.getProperties().get("foo");
+    assertThat(originalSecretId, is("0"));
+
+    // Update with a new secret value
+    Map<String, String> updateProps = Maps.newHashMap();
+    updateProps.put("foo", "new-secret");
+
+    underTest.update(reference.context().id(), true, null, updateProps);
+
+    // Verify that the secret service was called to encrypt the new value
+    verify(secretsService).encryptMaven("capabilities", "my-secret".toCharArray(), "testuser");
+    verify(secretsService).encryptMaven("capabilities", "new-secret".toCharArray(), "testuser");
+
+    // Verify storage update was called and the secret ID is different
+    verify(capabilityStorage).update(any(CapabilityIdentity.class), csiRec.capture());
+    CapabilityStorageItem updated = csiRec.getAllValues().get(csiRec.getAllValues().size() - 1);
+    String updatedSecretId = updated.getProperties().get("foo");
+    assertThat(updatedSecretId, is("1")); // New secret ID
+    assertThat(updatedSecretId, is(not(originalSecretId))); // Different from original
+  }
+
+  /**
+   * Test that encryptValuesIfNeeded handles null old properties correctly.
+   */
+  @Test
+  public void createWithEncryptedProperty_noOldProperties() throws Exception {
+    final CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
+    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
+    when(descriptor.formFields()).thenReturn(Collections.singletonList(
+        new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)));
+
+    Map<String, String> properties = Maps.newHashMap();
+    properties.put("foo", "my-secret");
+
+    // Create with empty old properties (simulated by passing empty map in encryptValuesIfNeeded)
+    underTest.add(CAPABILITY_TYPE, true, null, properties);
+
+    ArgumentCaptor<CapabilityStorageItem> csiRec = ArgumentCaptor.forClass(CapabilityStorageItem.class);
+    verify(capabilityStorage).add(csiRec.capture());
+    CapabilityStorageItem item = csiRec.getValue();
+
+    // Should create a new secret
+    String secretId = item.getProperties().get("foo");
+    assertThat(secretId, is(notNullValue()));
+    verify(secretsService).encryptMaven("capabilities", "my-secret".toCharArray(), "testuser");
+  }
+
+  /**
+   * Test that encryptValuesIfNeeded handles null or empty values correctly.
+   */
+  @Test
+  public void updateWithEncryptedProperty_handleNullValue() throws Exception {
+    CapabilityReference reference = createCapabilityWithSecret("my-secret");
+
+    ArgumentCaptor<CapabilityStorageItem> csiRec = ArgumentCaptor.forClass(CapabilityStorageItem.class);
+    verify(capabilityStorage).add(csiRec.capture());
+
+    // Update with null value for the encrypted field
+    Map<String, String> updateProps = Maps.newHashMap();
+    updateProps.put("foo", null);
+
+    underTest.update(reference.context().id(), true, null, updateProps);
+
+    // Should only have called encrypt once (during creation)
+    verify(secretsService, times(1)).encryptMaven("capabilities", "my-secret".toCharArray(), "testuser");
+
+    // Verify the field is null in the updated properties
+    verify(capabilityStorage).update(any(CapabilityIdentity.class), csiRec.capture());
+    CapabilityStorageItem updated = csiRec.getAllValues().get(csiRec.getAllValues().size() - 1);
+    assertThat(updated.getProperties().get("foo"), is(nullValue()));
+  }
+
+  /**
+   * Test that encryptValuesIfNeeded handles multiple encrypted fields correctly.
+   */
+  @Test
+  public void updateWithMultipleEncryptedProperties() throws Exception {
+    final CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
+    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
+    when(descriptor.formFields()).thenReturn(java.util.Arrays.asList(
+        new PasswordFormField("password1", "password1", "First password", FormField.OPTIONAL),
+        new PasswordFormField("password2", "password2", "Second password", FormField.OPTIONAL)));
+
+    Map<String, String> properties = Maps.newHashMap();
+    properties.put("password1", "secret1");
+    properties.put("password2", "secret2");
+
+    CapabilityReference reference = underTest.add(CAPABILITY_TYPE, true, null, properties);
+
+    ArgumentCaptor<CapabilityStorageItem> csiRec = ArgumentCaptor.forClass(CapabilityStorageItem.class);
+    verify(capabilityStorage).add(csiRec.capture());
+    CapabilityStorageItem initial = csiRec.getValue();
+    String secret1Id = initial.getProperties().get("password1");
+    String secret2Id = initial.getProperties().get("password2");
+
+    // Update: keep password1 the same, change password2
+    Map<String, String> updateProps = Maps.newHashMap();
+    updateProps.put("password1", secret1Id); // Reuse existing
+    updateProps.put("password2", "new-secret2"); // Change value
+
+    underTest.update(reference.context().id(), true, null, updateProps);
+
+    // Should have encrypted: secret1, secret2 (create), and new-secret2 (update)
+    verify(secretsService).encryptMaven("capabilities", "secret1".toCharArray(), "testuser");
+    verify(secretsService).encryptMaven("capabilities", "secret2".toCharArray(), "testuser");
+    verify(secretsService).encryptMaven("capabilities", "new-secret2".toCharArray(), "testuser");
+
+    verify(capabilityStorage).update(any(CapabilityIdentity.class), csiRec.capture());
+    CapabilityStorageItem updated = csiRec.getAllValues().get(csiRec.getAllValues().size() - 1);
+
+    // password1 should have same secret ID, password2 should have new secret ID
+    assertThat(updated.getProperties().get("password1"), is(secret1Id));
+    assertThat(updated.getProperties().get("password2"), is(not(secret2Id)));
+  }
+
   private static Subject subject(final String principal) {
     Subject subject = mock(Subject.class);
     when(subject.getPrincipal()).thenReturn(principal);
