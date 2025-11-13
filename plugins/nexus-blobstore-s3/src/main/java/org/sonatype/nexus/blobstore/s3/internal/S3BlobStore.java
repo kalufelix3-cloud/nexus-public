@@ -544,7 +544,8 @@ public class S3BlobStore
       final Duration blobsOlderThan)
   {
     OffsetDateTime date = OffsetDateTime.now().minus(blobsOlderThan);
-    log.info("Begin deleted blobs processing before {}", date);
+    String blobStoreName = blobStoreConfiguration.getName();
+    log.info("Begin deleted blobs processing for blob store '{}' before {}", blobStoreName, date);
     // only process each blob once (in-use blobs may be re-added to the index)
     try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
       int numBlobs = deletedBlobIndex.count(date);
@@ -563,8 +564,8 @@ public class S3BlobStore
           log.debug("Still in use to deferring");
         }
 
-        progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
-            counter.incrementAndGet(), numBlobs);
+        progressLogger.info("Blob store '{}' - Elapsed time: {}, processed: {}/{}", blobStoreName,
+            progressLogger.getElapsed(), counter.incrementAndGet(), numBlobs);
       });
     }
   }

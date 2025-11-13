@@ -939,7 +939,8 @@ public class FileBlobStore
       final Duration blobsOlderThan)
   {
     OffsetDateTime date = OffsetDateTime.now().minus(blobsOlderThan);
-    log.info("Begin deleted blobs processing before {}", date);
+    String blobStoreName = getBlobStoreConfiguration().getName();
+    log.info("Begin deleted blobs processing for blob store '{}' before {}", blobStoreName, date);
 
     // only process each blob once (in-use blobs may be re-added to the index)
     try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS)) {
@@ -958,8 +959,8 @@ public class FileBlobStore
           log.debug("Still in use to deferring");
         }
 
-        progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
-            counter.incrementAndGet(), numBlobs);
+        progressLogger.info("Blob store '{}' - Elapsed time: {}, processed: {}/{}", blobStoreName,
+            progressLogger.getElapsed(), counter.incrementAndGet(), numBlobs);
       });
       // once done removing stuff, clean any empty directories left around in the directpath area
       pruneEmptyDirectories(progressLogger, contentDir.resolve(DIRECT_PATH_ROOT));
@@ -986,7 +987,8 @@ public class FileBlobStore
 
   @VisibleForTesting
   void doCompactWithoutDeletedBlobIndex(@Nullable final BlobStoreUsageChecker inUseChecker) throws IOException {
-    log.info("Begin deleted blobs processing without deleted blob index");
+    String blobStoreName = getBlobStoreConfiguration().getName();
+    log.info("Begin deleted blobs processing for blob store '{}' without deleted blob index", blobStoreName);
     // clear the deleted blob index ahead of time, so we won't lose deletes that may occur while the compact is being
     // performed
     blobDeletionIndex.deleteAllRecords();
@@ -1051,7 +1053,9 @@ public class FileBlobStore
         blobDeletionIndex.createRecord(blobId);
       }
       else {
-        progressLogger.info("Elapsed time: {}, processed: {}", progressLogger.getElapsed(), count.incrementAndGet());
+        String blobStoreName = getBlobStoreConfiguration().getName();
+        progressLogger.info("Blob store '{}' - Elapsed time: {}, processed: {}", blobStoreName,
+            progressLogger.getElapsed(), count.incrementAndGet());
       }
     }
     else {

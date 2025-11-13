@@ -29,10 +29,12 @@ import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreStore;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskUtils;
 
+import org.apache.shiro.mgt.SecurityManager;
+import org.apache.shiro.util.ThreadContext;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThrows;
@@ -69,12 +71,17 @@ public class CompactBlobStoreTaskTest
   @Mock
   BlobStoreManager blobStoreManager;
 
+  @Mock
+  SecurityManager securityManager;
+
   TaskConfiguration configuration;
 
   CompactBlobStoreTask underTest;
 
   @Before
   public void setUp() {
+    ThreadContext.bind(securityManager);
+
     configuration = new TaskConfiguration();
     configuration.setString(BLOBSTORE_NAME_FIELD_ID, BLOBSTORE_NAME);
     configuration.setString(".name", TASK_NAME);
@@ -83,6 +90,11 @@ public class CompactBlobStoreTaskTest
 
     underTest = new CompactBlobStoreTask(changeBlobstoreStore, blobStoreUsageChecker, taskUtils, 5, 20);
     underTest.install(blobStoreManager);
+  }
+
+  @After
+  public void tearDown() {
+    ThreadContext.unbindSecurityManager();
   }
 
   @Test

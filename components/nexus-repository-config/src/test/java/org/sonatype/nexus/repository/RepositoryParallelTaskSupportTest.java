@@ -24,6 +24,9 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
+import org.apache.shiro.mgt.SecurityManager;
+import org.apache.shiro.util.ThreadContext;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -40,6 +43,9 @@ class RepositoryParallelTaskSupportTest
   @Mock
   RepositoryManager repositoryManager;
 
+  @Mock
+  SecurityManager securityManager;
+
   TaskConfiguration task = new TaskConfiguration();
 
   final Map<Repository, Stream<Runnable>> runnables = new HashMap<>();
@@ -48,9 +54,16 @@ class RepositoryParallelTaskSupportTest
 
   @BeforeEach
   void setup() {
+    ThreadContext.bind(securityManager);
+
     undertest.install(repositoryManager, new GroupType());
     task.setTypeId("typeId");
     task.setId("id");
+  }
+
+  @AfterEach
+  void tearDown() {
+    ThreadContext.unbindSecurityManager();
   }
 
   @Test

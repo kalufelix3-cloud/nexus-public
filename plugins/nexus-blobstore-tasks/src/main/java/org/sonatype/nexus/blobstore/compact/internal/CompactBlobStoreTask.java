@@ -74,7 +74,7 @@ public class CompactBlobStoreTask
       final BlobStoreUsageChecker blobStoreUsageChecker,
       final TaskUtils taskUtils,
       @Value("${nexus.compact.blobstore.concurrencyLimit:5}") final int concurrencyLimit,
-      @Value("${nexus.compact.blobstore.queueCapacity:20}") final int queueCapacity)
+      @Value("${nexus.compact.blobstore.queueCapacity:5}") final int queueCapacity)
   {
     super(concurrencyLimit, queueCapacity);
     this.changeBlobstoreStore = Optional.ofNullable(changeBlobstoreStore);
@@ -110,15 +110,15 @@ public class CompactBlobStoreTask
 
       if (blobStore != null) {
         String blobStoreName = blobStore.getBlobStoreConfiguration().getName();
-        progress.info("Starting compaction of blob store '{}' ({} blob stores processed)", blobStoreName,
-            processed.get());
+        log.debug("Starting compaction of blob store '{}'", blobStoreName);
 
         try {
           checkForConflicts(blobStoreName);
           blobStore.compact(blobStoreUsageChecker, getBlobsOlderThanField());
 
           int count = processed.incrementAndGet();
-          progress.info("Completed compaction of blob store '{}' ({} blob stores processed)", blobStoreName, count);
+          log.debug("Completed compaction of blob store '{}'", blobStoreName);
+          progress.info("Compacted {} blob stores", count);
         }
         catch (Exception e) {
           log.error("Failed to compact blob store '{}'", blobStoreName, e);

@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.thread.NexusThreadFactory;
+import org.sonatype.nexus.thread.internal.MDCAwareRunnable;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -68,7 +69,7 @@ public abstract class ParallelTaskSupport
       List<Future<Object>> futures = jobStream(progress).map(runnable -> {
         // check cancellation before scheduling job so the primary thread throws an exception and stops queuing jobs
         CancelableHelper.checkCancellation();
-        return executor.submit(runnable, new Object());
+        return executor.submit(new MDCAwareRunnable(runnable), new Object());
       })
           .toList();
 

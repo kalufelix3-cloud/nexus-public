@@ -47,6 +47,9 @@ import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
+import org.apache.shiro.mgt.SecurityManager;
+import org.apache.shiro.util.ThreadContext;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -92,15 +95,25 @@ class ExternalMetadataTaskTest
   @Mock
   AssetBlobStore assetBlobStore;
 
+  @Mock
+  SecurityManager securityManager;
+
   ExternalMetadataTask underTest;
 
   @BeforeEach
   void setup() {
+    ThreadContext.bind(securityManager);
+
     underTest = new ExternalMetadataTask(blobStoreManager, 5, 15);
     underTest.install(repositoryManager, new GroupType());
 
     lenient().when(content.stores()).thenReturn(stores);
     lenient().when(stores.assetBlobStore()).thenReturn(assetBlobStore);
+  }
+
+  @AfterEach
+  void tearDown() {
+    ThreadContext.unbindSecurityManager();
   }
 
   @Test

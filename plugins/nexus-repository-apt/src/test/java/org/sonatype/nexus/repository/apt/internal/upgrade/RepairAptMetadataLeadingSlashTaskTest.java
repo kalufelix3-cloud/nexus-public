@@ -44,6 +44,9 @@ import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
+import org.apache.shiro.mgt.SecurityManager;
+import org.apache.shiro.util.ThreadContext;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
@@ -70,10 +73,15 @@ class RepairAptMetadataLeadingSlashTaskTest
   @Mock
   GroupType groupType;
 
+  @Mock
+  SecurityManager securityManager;
+
   private RepairAptMetadataLeadingSlashTask underTest;
 
   @BeforeEach
   void setup() {
+    ThreadContext.bind(securityManager);
+
     underTest = new RepairAptMetadataLeadingSlashTask(5);
     underTest.install(repositoryManager, groupType);
     TaskConfiguration configuration = new TaskConfiguration();
@@ -82,6 +90,11 @@ class RepairAptMetadataLeadingSlashTaskTest
     configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, RepositoryTaskSupport.ALL_REPOSITORIES);
     underTest.configure(configuration);
 
+  }
+
+  @AfterEach
+  void tearDown() {
+    ThreadContext.unbindSecurityManager();
   }
 
   @Test
