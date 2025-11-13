@@ -83,11 +83,11 @@
     <it.test.log.level>INFO</it.test.log.level>
 
     <!--
-    Default compile support for Java17+
+    Default compile support for Java21+
     -->
-    <maven.compiler.release>17</maven.compiler.release>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.release>21</maven.compiler.release>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
 
     <!--
     Sonar configuration.
@@ -968,8 +968,8 @@
             <verbose>true</verbose>
             <Xlint>ignore</Xlint>
             <encoding>UTF-8</encoding>
-            <source>17</source>
-            <target>17</target>
+            <source>21</source>
+            <target>21</target>
             <argumentFileDirectory>${project.build.directory}/aspectj</argumentFileDirectory>
             <aspectLibraries>
               <aspectLibrary>
@@ -1168,17 +1168,17 @@
               <fail>true</fail>
               <rules>
                 <!--
-                Require Maven 3.9.6+ for java17 support
+                Require Maven 3.9.6+ for java21 support
                 -->
                 <requireMavenVersion>
                   <version>[3.9.6,)</version>
                 </requireMavenVersion>
 
                 <!--
-                Require Java 17+
+                Require Java 21+
                 -->
                 <requireJavaVersion>
-                  <version>[17,)</version>
+                  <version>[21,)</version>
                 </requireJavaVersion>
 
                 <!--
