@@ -29,7 +29,7 @@
       CONSTRAINT pk_privilege_id PRIMARY KEY (id)
     );
 
-    CREATE INDEX IF NOT EXISTS idx_privilege_by_name ON privilege(name)
+    <!-- Index handled by PrivilegeIndexMigrationStep_2_46 to avoid lock contention (NEXUS-49154) -->
   </insert>
 
   <select id="browse" resultType="CPrivilegeData">

@@ -44,14 +44,7 @@
       -- skip FK for parent_id; doesn't work well when batch deleting from the root
     );
 
-    CREATE UNIQUE INDEX IF NOT EXISTS uk_${format}_browse_node_parent_display
-        ON ${format}_browse_node (repository_id, parent_id, display_name);
-
-    CREATE INDEX IF NOT EXISTS idx_${format}_browse_node_asset_id
-        ON ${format}_browse_node (asset_id);
-
-    CREATE INDEX IF NOT EXISTS idx_${format}_browse_node_component_id
-        ON ${format}_browse_node (component_id);
+    <!-- Indexes handled by BrowseNodeIndexesMigrationStep_2_66 to avoid lock contention (NEXUS-49154) -->
     --
     -- This index was added via an upgrade step task BrowseNodeMigrationStep_1_38, this is why this is commented out
     -- CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_${format}_browse_node_parent_id ON ${format}_browse_node (parent_id);

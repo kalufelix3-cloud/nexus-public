@@ -36,9 +36,7 @@
       CONSTRAINT uk_${format}_asset_blob_ref UNIQUE (blob_ref)
     );
 
-    <!-- H2: Indexes needed for test environments (safe with IF NOT EXISTS) -->
-    CREATE INDEX IF NOT EXISTS idx_${format}_asset_blob_added_to_repository ON ${format}_asset_blob (added_to_repository);
-    CREATE INDEX IF NOT EXISTS idx_${format}_asset_blob_created ON ${format}_asset_blob (blob_created);
+    <!-- H2: Indexes handled by AssetBlobIndexesMigrationStep_2_67 to avoid lock contention (NEXUS-49154) -->
     --
   </insert>
 

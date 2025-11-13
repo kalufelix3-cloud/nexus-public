@@ -43,29 +43,18 @@
     -- This index was added via an uprade step task, see CoordinateMigrationStep_2_13, hence why this is commented out
     -- CREATE INDEX IF NOT EXISTS idx_${format}_component_coordinate ON ${format}_component (repository_id, namespace, name, version);
 
-    CREATE INDEX IF NOT EXISTS idx_${format}_component_kind ON ${format}_component (kind);
-
     <!-- normalized_version column is already in CREATE TABLE (line 30) -->
     <!-- ComponentNormalizedVersionMigrationStep (Repeatable) handles:
          - Adding column if missing (for formats added after initial install)
-         - Adding index
          - Scheduling task to populate values
     -->
-    CREATE INDEX IF NOT EXISTS idx_${format}_normalized_version ON  ${format}_component (normalized_version);
-    <if test="_databaseId == 'PostgreSQL'">
-      <!-- Add NOT NULL constraint only if all rows have normalized_version populated -->
-      <![CDATA[
-      DO $$
-        BEGIN
-          IF NOT EXISTS (SELECT 1 FROM ${format}_component WHERE normalized_version IS NULL) THEN
-            ALTER TABLE ${format}_component ALTER COLUMN normalized_version SET NOT NULL;
-          END IF;
-        END $$;
-      ]]>
-    </if>
+    <!-- NOT NULL constraint handled by ComponentNormalizedVersionConstraintMigrationStep_2_69 to avoid lock contention (NEXUS-49154) -->
 
     <!-- entity_version column is now in CREATE TABLE (line 34) -->
-    <!-- ComponentEntityVersionMigrationStep_2_20 handles adding it to existing databases -->
+    <!-- ComponentEntityVersionMigrationStep_2_28 handles adding it to existing databases -->
+
+    <!-- Indexes handled by ComponentTableIndexesMigrationStep_2_50 to avoid lock contention (NEXUS-49154) -->
+    <!-- Creates idx_{format}_component_kind and idx_{format}_normalized_version for all formats -->
   </insert>
 
   <sql id="componentNamespaceMatch">

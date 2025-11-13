@@ -28,16 +28,13 @@
     );
 
     <!-- date_path_ref column is now in CREATE TABLE (line 26) -->
-    <!-- SoftDeletedBlobsDatePathRefMigrationStep_2_23 handles adding it to existing databases -->
+    <!-- SoftDeletedBlobsDatePathRefMigrationStep_2_31 handles adding it to existing databases -->
 
-    CREATE INDEX IF NOT EXISTS idx_soft_deleted_blobs_source_blob_store_name
-        ON soft_deleted_blobs (source_blob_store_name, blob_id);
-
-    /*
-    -- See SoftDeletedBlobsByBlobStoreIndexMigrationStep_2_7.java
-    CREATE INDEX IF NOT EXISTS idx_soft_deleted_blobs_by_source_blob_store_name_record_id"
-    ON soft_deleted_blobs (source_blob_store_name, record_id);
-     */
+    <!-- Index handled by SoftDeletedBlobsIndexMigrationStep_2_48 to avoid lock contention (NEXUS-49154) -->
+    <!--
+    Additional index created by SoftDeletedBlobsByBlobStoreIndexMigrationStep_2_7:
+    idx_soft_deleted_blobs_by_source_blob_store_name_record_id (source_blob_store_name, record_id)
+     -->
   </insert>
 
   <insert id="createRecord">

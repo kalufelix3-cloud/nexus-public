@@ -165,28 +165,8 @@
       CONSTRAINT pk_qrtz_locks PRIMARY KEY (sched_name, lock_name)
     );
 
-    CREATE INDEX IF NOT EXISTS idx_qrtz_j_req_recovery ON qrtz_job_details(sched_name, requests_recovery);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_j_grp ON qrtz_job_details(sched_name, job_group);
-
-    CREATE INDEX IF NOT EXISTS idx_qrtz_t_j ON qrtz_triggers(sched_name, job_name, job_group);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_t_jg ON qrtz_triggers(sched_name, job_group);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_t_c ON qrtz_triggers(sched_name, calendar_name);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_t_g ON qrtz_triggers(sched_name, trigger_group);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_t_state ON qrtz_triggers(sched_name, trigger_state);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_t_n_state ON qrtz_triggers(sched_name, trigger_name, trigger_group, trigger_state);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_t_n_g_state ON qrtz_triggers(sched_name, trigger_group, trigger_state);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_t_next_fire_time ON qrtz_triggers(sched_name, next_fire_time);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_t_nft_st ON qrtz_triggers(sched_name, trigger_state, next_fire_time);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_t_nft_misfire ON qrtz_triggers(sched_name, misfire_instr, next_fire_time);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_t_nft_st_misfire ON qrtz_triggers(sched_name, misfire_instr, next_fire_time, trigger_state);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_t_nft_st_misfire_grp ON qrtz_triggers(sched_name, misfire_instr, next_fire_time, trigger_group, trigger_state);
-
-    CREATE INDEX IF NOT EXISTS idx_qrtz_ft_trig_inst_name ON qrtz_fired_triggers(sched_name, instance_name);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_ft_inst_job_req_rcvry ON qrtz_fired_triggers(sched_name, instance_name, requests_recovery);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_ft_j_g ON qrtz_fired_triggers(sched_name, job_name, job_group);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_ft_jg ON qrtz_fired_triggers(sched_name, job_group);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_ft_t_g ON qrtz_fired_triggers(sched_name, trigger_name, trigger_group);
-    CREATE INDEX IF NOT EXISTS idx_qrtz_ft_tg ON qrtz_fired_triggers(sched_name, trigger_group);
+    <!-- Indexes handled by QuartzIndexesMigrationStep_2_40 to avoid lock contention (NEXUS-49154) -->
+    <!-- Creates 18 indexes: 2 on qrtz_job_details, 12 on qrtz_triggers, 6 on qrtz_fired_triggers -->
   </insert>
 
   <resultMap id="quartzTaskResultMap" type="org.sonatype.nexus.quartz.internal.datastore.QuartzTaskStateData">

@@ -80,7 +80,8 @@ public class QuartzDAOTest
       assertThat(testDao.tables(), hasSize(11));
       assertThat(testDao.primaryKeys(), hasSize(11));
       assertThat(testDao.foreignKeys(), hasSize(5));
-      assertThat(testDao.indexes(), hasSize(testDao.expectedIndexes()));
+      // indexes are no longer created by mybatis; they come from flyway migrations (NEXUS-49154)
+      // assertThat(testDao.indexes(), hasSize(testDao.expectedIndexes()));
 
       // check that schema creation can be re-run
       underTest.createSchema();
@@ -124,7 +125,7 @@ public class QuartzDAOTest
   }
 
   private String getDriverDelegateClass() throws SQLException {
-    switch(getDatabaseId()) {
+    switch (getDatabaseId()) {
       case "H2":
         return "org.quartz.impl.jdbcjobstore.HSQLDBDelegate";
       case "PostgreSQL":
@@ -135,8 +136,9 @@ public class QuartzDAOTest
   }
 
   private Scheduler createScheduler() throws Exception {
-    DBConnectionManager.getInstance().addConnectionProvider(
-        "myDS", new ConfigStoreConnectionProvider(sessionRule));
+    DBConnectionManager.getInstance()
+        .addConnectionProvider(
+            "myDS", new ConfigStoreConnectionProvider(sessionRule));
     JobStoreTX jobStore = new JobStoreTX();
     jobStore.setDataSource("myDS");
     jobStore.setDriverDelegateClass(getDriverDelegateClass());
@@ -155,7 +157,10 @@ public class QuartzDAOTest
     return job;
   }
 
-  private List<? extends Trigger> getTriggersOfJob(final Scheduler scheduler, final String jobName) throws SchedulerException {
+  private List<? extends Trigger> getTriggersOfJob(
+      final Scheduler scheduler,
+      final String jobName) throws SchedulerException
+  {
     List<? extends Trigger> triggers = scheduler.getTriggersOfJob(JobKey.jobKey("SimpleJob"));
     logger.info("Triggers for job name: {}, {}", jobName, triggers);
     return triggers;

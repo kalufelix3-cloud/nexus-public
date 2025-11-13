@@ -25,7 +25,7 @@
       CONSTRAINT pk_logging_overrides_id PRIMARY KEY (id)
       );
 
-    CREATE UNIQUE INDEX IF NOT EXISTS uk_name ON logging_overrides (name);
+    <!-- Index handled by LoggingOverridesIndexMigrationStep_2_44 to avoid lock contention (NEXUS-49154) -->
   </insert>
 
   <insert id="createRecord" parameterType="LoggingOverridesData">

@@ -26,8 +26,7 @@
       CONSTRAINT pk_nexus_key_value PRIMARY KEY (key)
     );
 
-    CREATE UNIQUE INDEX IF NOT EXISTS uk_nexus_key_value_key ON nexus_key_value (key);
-    CREATE INDEX IF NOT EXISTS idx_nexus_key_value_key ON nexus_key_value (key);
+    <!-- Indexes handled by NexusKeyValueIndexesMigrationStep_2_42 to avoid lock contention (NEXUS-49154) -->
   </insert>
 
   <insert id="createSchema" databaseId="H2">
@@ -41,8 +40,7 @@
       CONSTRAINT pk_nexus_key_value PRIMARY KEY (`key`)
       );
 
-    CREATE UNIQUE INDEX IF NOT EXISTS uk_nexus_key_value_key ON nexus_key_value (`key`);
-    CREATE INDEX IF NOT EXISTS idx_nexus_key_value_key ON nexus_key_value (`key`);
+    <!-- Indexes handled by NexusKeyValueIndexesMigrationStep_2_42 to avoid lock contention (NEXUS-49154) -->
   </insert>
 
   <select id="get" resultType="org.sonatype.nexus.kv.NexusKeyValue" databaseId="PostgreSQL">

@@ -35,9 +35,7 @@
       CONSTRAINT uk_api_key_v2_domain_access_key UNIQUE (domain, access_key)
     );
 
-    CREATE INDEX IF NOT EXISTS idx_api_key_v2_domain_created ON api_key_v2 (domain, created);
-    CREATE INDEX IF NOT EXISTS idx_api_key_v2_created ON api_key_v2 (created);
-    CREATE INDEX IF NOT EXISTS idx_api_key_v2_principals ON api_key_v2 (principals);
+    <!-- Indexes handled by ApiKeyIndexesMigrationStep_2_41 to avoid lock contention (NEXUS-49154) -->
   </insert>
 
 
