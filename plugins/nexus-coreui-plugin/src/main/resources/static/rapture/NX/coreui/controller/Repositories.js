@@ -556,10 +556,7 @@ Ext.define('NX.coreui.controller.Repositories', {
 
     //bind the enable/disable state to whether user has perms to edit a repo
     button.mon(
-        NX.Conditions.and(
-            NX.Conditions.isPermitted('nexus:repository-admin:*:*:edit'),
-            NX.Conditions.watchEvents(me.getObservables(), me.watchEventsHandler({editRecord: true}))
-        ),
+        NX.Conditions.watchEvents(me.getObservables(), me.watchEventsHandler({editRecord: true})),
         {
           satisfied: function() {
             button.enable();
@@ -593,10 +590,7 @@ Ext.define('NX.coreui.controller.Repositories', {
 
     //bind the enable/disable state to whether user has perms to edit a repo
     button.mon(
-        NX.Conditions.and(
-            NX.Conditions.isPermitted('nexus:repository-admin:*:*:edit'),
-            NX.Conditions.watchEvents(me.getObservables(), me.watchEventsHandler({editRecord: true}))
-        ),
+        NX.Conditions.watchEvents(me.getObservables(), me.watchEventsHandler({editRecord: true})),
         {
           satisfied: function() {
             button.enable();
