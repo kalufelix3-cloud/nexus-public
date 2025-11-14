@@ -200,7 +200,7 @@ public class S3BlobStore
       final DryRunPrefix dryRunPrefix,
       final BucketManager bucketManager,
       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
-      @Value("${nexus.s3.loadFromDb:false}") final boolean loadFromDb)
+      @Value("${nexus.s3.loadFromDb:true}") final boolean loadFromDb)
   {
     super(blobIdLocationResolver, dryRunPrefix, loadFromDb);
     this.amazonS3Factory = checkNotNull(amazonS3Factory);
