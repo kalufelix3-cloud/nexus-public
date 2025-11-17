@@ -184,12 +184,12 @@ public class MavenPath
 
   private final Coordinates coordinates;
 
-  public MavenPath(final String path, final Coordinates coordinates)
-  {
+  public MavenPath(final String path, final Coordinates coordinates) {
     checkNotNull(path);
-    checkArgument(!path.startsWith("/"), "Path must not start with '/'");
-    this.path = path;
-    this.fileName = this.path.substring(path.lastIndexOf('/') + 1);
+    String normalizedPath = normalizePath(path);
+    checkArgument(!normalizedPath.startsWith("/"), "Path must not start with '/'");
+    this.path = normalizedPath;
+    this.fileName = this.path.substring(normalizedPath.lastIndexOf('/') + 1);
     HashType ht = null;
     for (HashType v : HashType.values()) {
       if (this.fileName.endsWith("." + v.getExt())) {
@@ -288,13 +288,11 @@ public class MavenPath
             coordinates.getBaseVersion(),
             coordinates.getClassifier(),
             coordinates.getExtension().substring(0, coordinates.getExtension().length() - hashSuffixLen),
-            coordinates.getSignatureType()
-        );
+            coordinates.getSignatureType());
       }
       return new MavenPath(
           path.substring(0, path.length() - hashSuffixLen),
-          mainCoordinates
-      );
+          mainCoordinates);
     }
     else if (coordinates != null && coordinates.getSignatureType() != null) {
       int signatureSuffixLen = coordinates.getSignatureType().getExt().length() + 1; // the dot
@@ -308,12 +306,10 @@ public class MavenPath
           coordinates.getBaseVersion(),
           coordinates.getClassifier(),
           coordinates.getExtension().substring(0, coordinates.getExtension().length() - signatureSuffixLen),
-          null
-      );
+          null);
       return new MavenPath(
           path.substring(0, path.length() - signatureSuffixLen),
-          mainCoordinates
-      );
+          mainCoordinates);
     }
     return this;
   }
@@ -353,13 +349,11 @@ public class MavenPath
           coordinates.getBaseVersion(),
           coordinates.getClassifier(),
           coordinates.getExtension() + "." + hashExtension,
-          coordinates.getSignatureType()
-      );
+          coordinates.getSignatureType());
     }
     return new MavenPath(
         path + "." + hashExtension,
-        hashCoordinates
-    );
+        hashCoordinates);
   }
 
   /**
@@ -381,12 +375,10 @@ public class MavenPath
         coordinates.getBaseVersion(),
         coordinates.getClassifier(),
         coordinates.getExtension() + "." + signatureType.getExt(),
-        signatureType
-    );
+        signatureType);
     return new MavenPath(
         path + "." + signatureType.getExt(),
-        signatureCoordinates
-    );
+        signatureCoordinates);
   }
 
   /**
@@ -409,8 +401,7 @@ public class MavenPath
         origin.coordinates.getBaseVersion(),
         classifier,
         extension,
-        null
-    );
+        null);
     // strip ".ext"
     String newPath = origin.path.substring(0, origin.path.length() - origin.coordinates.extension.length() - 1);
     if (origin.coordinates.classifier != null) {
@@ -423,8 +414,7 @@ public class MavenPath
     newPath += "." + extension;
     return new MavenPath(
         newPath,
-        newCoordinates
-    );
+        newCoordinates);
   }
 
   /**
@@ -468,5 +458,16 @@ public class MavenPath
         "path='" + path + '\'' +
         ", hashType=" + hashType +
         '}';
+  }
+
+  /**
+   * Will convert "\" to "/" and strip any leading "/"
+   */
+  private String normalizePath(final String path) {
+    String pathWithoutLeadingSlash = path.replace("\\", "/");
+    if (pathWithoutLeadingSlash.startsWith("/")) {
+      pathWithoutLeadingSlash = pathWithoutLeadingSlash.substring(1);
+    }
+    return pathWithoutLeadingSlash;
   }
 }

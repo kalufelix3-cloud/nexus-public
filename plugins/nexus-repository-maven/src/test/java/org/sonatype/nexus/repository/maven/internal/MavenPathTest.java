@@ -257,4 +257,11 @@ public class MavenPathTest
     assertThat(mavenPath.getCoordinates().getExtension(), equalTo("jar"));
     assertThat(mavenPath.isSubordinate(), is(false));
   }
+
+  @Test
+  public void testMavenPath_canFixPathItselfAndNotBeLazyAndRequireEveryoneElseToFixItForHim() {
+    String path = "\\org\\some\\group\\id\\artifactId\\1.0.0\\artifactId-1.0.0.jar";
+    MavenPath mavenPath = new MavenPath(path, null);
+    assertThat(mavenPath.getPath(), is("org/some/group/id/artifactId/1.0.0/artifactId-1.0.0.jar"));
+  }
 }
