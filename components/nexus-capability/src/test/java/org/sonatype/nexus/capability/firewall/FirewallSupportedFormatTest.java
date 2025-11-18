@@ -26,7 +26,6 @@ public class FirewallSupportedFormatTest
         FirewallSupportedFormat.R,
         FirewallSupportedFormat.GO,
         FirewallSupportedFormat.P2,
-        FirewallSupportedFormat.APT,
         FirewallSupportedFormat.RUBYGEMS,
         FirewallSupportedFormat.NPM,
         FirewallSupportedFormat.YUM,
@@ -50,7 +49,6 @@ public class FirewallSupportedFormatTest
     assertEquals("r", FirewallSupportedFormat.R.getValue());
     assertEquals("go", FirewallSupportedFormat.GO.getValue());
     assertEquals("p2", FirewallSupportedFormat.P2.getValue());
-    assertEquals("apt", FirewallSupportedFormat.APT.getValue());
     assertEquals("rubygems", FirewallSupportedFormat.RUBYGEMS.getValue());
     assertEquals("npm", FirewallSupportedFormat.NPM.getValue());
     assertEquals("yum", FirewallSupportedFormat.YUM.getValue());
@@ -69,7 +67,7 @@ public class FirewallSupportedFormatTest
   @Test
   public void testGetValues() {
     String[] expectedValues = {
-        "r", "go", "p2", "apt", "rubygems", "npm", "yum", "pypi", "cargo", "conan", "conda", "nuget", "maven2",
+        "r", "go", "p2", "rubygems", "npm", "yum", "pypi", "cargo", "conan", "conda", "nuget", "maven2",
         "composer", "cocoapods", "huggingface", "docker", "raw"
     };
     assertArrayEquals(expectedValues, FirewallSupportedFormat.getValues());

@@ -19,7 +19,6 @@ public enum FirewallSupportedFormat
   R("r"),
   GO("go"),
   P2("p2"),
-  APT("apt"),
   RUBYGEMS("rubygems"),
   NPM("npm"),
   YUM("yum"),
