@@ -58,4 +58,18 @@ public enum WritePolicy
   public boolean checkDeleteAllowed() {
     return this == ALLOW || this == ALLOW_ONCE;
   }
+
+  public static WritePolicy fromString(String value) {
+    if (value == null) {
+      return null;
+    }
+
+    try {
+      return WritePolicy.valueOf(value.toUpperCase());
+    }
+    catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("Invalid writePolicy: '" + value + "'. Valid values: ALLOW, ALLOW_ONCE, DENY",
+          e);
+    }
+  }
 }
