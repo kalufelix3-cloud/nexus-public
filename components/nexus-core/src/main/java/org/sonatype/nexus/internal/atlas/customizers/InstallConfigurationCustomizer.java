@@ -54,6 +54,8 @@ public class InstallConfigurationCustomizer
 {
   private static final String INSTALL_ETC = "install/etc";
 
+  private static final String WORK_ETC = "work/etc";
+
   private final ApplicationDirectories applicationDirectories;
 
   private final String NEXUS_PROPERTIES = "nexus.properties";
@@ -79,9 +81,9 @@ public class InstallConfigurationCustomizer
     File workDir = applicationDirectories.getWorkDirectory();
     if (workDir != null) {
       File etcDir = new File(workDir, "etc");
-      includeFileIfExists(supportBundle, new File(etcDir, NEXUS_PROPERTIES), INSTALL_ETC, HIGH);
-      includeAllFilesInDirIfExists(supportBundle, new File(etcDir, "fabric"), INSTALL_ETC, HIGH);
-      includeAllFilesInDirIfExists(supportBundle, new File(etcDir, "logback"), INSTALL_ETC, HIGH);
+      includeFileIfExists(supportBundle, new File(etcDir, NEXUS_PROPERTIES), WORK_ETC, HIGH);
+      includeAllFilesInDirIfExists(supportBundle, new File(etcDir, "fabric"), WORK_ETC, HIGH);
+      includeAllFilesInDirIfExists(supportBundle, new File(etcDir, "logback"), WORK_ETC, HIGH);
     }
   }
 

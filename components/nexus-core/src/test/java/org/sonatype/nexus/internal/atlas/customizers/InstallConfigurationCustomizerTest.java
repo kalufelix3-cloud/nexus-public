@@ -40,6 +40,7 @@ import static org.mockito.Mockito.when;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.DEFAULT;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.CONFIG;
 
@@ -274,5 +275,52 @@ public class InstallConfigurationCustomizerTest
     }
 
     assertThat(actual, containsInAnyOrder(expected.toArray()));
+  }
+
+  @Test
+  public void testDuplicateFilenamesInInstallAndWorkDontConflict() throws Exception {
+    // Create the same filename in both install and work directories
+    File installFabricDir = new File(etcDir, "fabric");
+    installFabricDir.mkdir();
+    File installFile = new File(installFabricDir, "nexus-store.properties");
+    Files.write(installFile.toPath(), Collections.singleton("install.location=true"));
+
+    File workEtcDir = new File(workDir, "etc");
+    workEtcDir.mkdir();
+    File workFabricDir = new File(workEtcDir, "fabric");
+    workFabricDir.mkdir();
+    File workFile = new File(workFabricDir, "nexus-store.properties");
+    Files.write(workFile.toPath(), Collections.singleton("work.location=true"));
+
+    ApplicationDirectories applicationDirectories = mock(ApplicationDirectories.class);
+    when(applicationDirectories.getInstallDirectory()).thenReturn(installDir);
+    when(applicationDirectories.getWorkDirectory()).thenReturn(workDir);
+
+    InstallConfigurationCustomizer customizer = new InstallConfigurationCustomizer(applicationDirectories);
+
+    SupportBundle supportBundle = new SupportBundle();
+    customizer.customize(supportBundle);
+
+    List<SupportBundle.ContentSource> sources = supportBundle.getSources();
+
+    // Verify both files are included with different paths
+    long installCount = sources.stream()
+        .filter(s -> s.getPath().equals("install/etc/fabric/nexus-store.properties"))
+        .count();
+
+    long workCount = sources.stream()
+        .filter(s -> s.getPath().equals("work/etc/fabric/nexus-store.properties"))
+        .count();
+
+    assertEquals("Install file should be included once", 1, installCount);
+    assertEquals("Work file should be included once", 1, workCount);
+
+    // Verify no duplicate paths exist
+    List<String> paths = sources.stream()
+        .map(SupportBundle.ContentSource::getPath)
+        .collect(Collectors.toList());
+
+    long uniquePaths = paths.stream().distinct().count();
+    assertEquals("All paths should be unique (no duplicates)", paths.size(), uniquePaths);
   }
 }

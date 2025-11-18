@@ -338,39 +338,44 @@ public class SupportZipGeneratorImpl
           }
 
           log.debug("Adding content entry: {} {} bytes", source, source.getSize());
-          ZipEntry entry = addEntry(zip, source.getPath());
 
-          try (InputStream input = source.getContent()) {
-            // determine if the current file is a log file
-            boolean isLogFile = source.getType() == LOG || source.getType() == TASKLOG || source.getType() == AUDITLOG
-                || source.getType() == ARCHIVEDLOG;
-            // only apply truncation logic to log files
-            byte[] buff = new byte[chunkSize];
-            int len;
-            long writtenBytes = 0;
-            while ((len = input.read(buff)) != -1) {
-              // truncate content if max file size or max ZIP size reached
-              if ((isLogFile && limitFileSizes && writtenBytes + len > maxContentSize) ||
-                  (limitZipSize && stream.getCount() + len > maxZipSize)) {
-                log.warn("Truncating source contents; limit reached: {}", source.getPath());
-                zip.write(TRUNCATED_TOKEN.getBytes());
-                truncated.set(true);
-                break;
+          ZipEntry entry = null;
+          try {
+            entry = addEntry(zip, source.getPath());
+
+            try (InputStream input = source.getContent()) {
+              // determine if the current file is a log file
+              boolean isLogFile = source.getType() == LOG || source.getType() == TASKLOG || source.getType() == AUDITLOG
+                  || source.getType() == ARCHIVEDLOG;
+              // only apply truncation logic to log files
+              byte[] buff = new byte[chunkSize];
+              int len;
+              long writtenBytes = 0;
+              while ((len = input.read(buff)) != -1) {
+                // truncate content if max file size or max ZIP size reached
+                if ((isLogFile && limitFileSizes && writtenBytes + len > maxContentSize) ||
+                    (limitZipSize && stream.getCount() + len > maxZipSize)) {
+                  log.warn("Truncating source contents; limit reached: {}", source.getPath());
+                  zip.write(TRUNCATED_TOKEN.getBytes());
+                  truncated.set(true);
+                  break;
+                }
+
+                zip.write(buff, 0, len);
+                writtenBytes += len;
+
+                // flush so we can detect compressed size for partially written files
+                zip.flush();
               }
-
-              zip.write(buff, 0, len);
-              writtenBytes += len;
-
-              // flush so we can detect compressed size for partially written files
-              zip.flush();
             }
           }
           catch (Exception e) { // NOSONAR - catching all exceptions so that a bad file of any sort won't cause us to
             // stop
             log.warn("Unable to include {} in bundle, moving onto next file.", source.getPath(), e);
           }
-
-          closeEntry(zip, entry);
+          if (entry != null) {
+            closeEntry(zip, entry);
+          }
         });
 
         // add truncated marker if we truncated anything
