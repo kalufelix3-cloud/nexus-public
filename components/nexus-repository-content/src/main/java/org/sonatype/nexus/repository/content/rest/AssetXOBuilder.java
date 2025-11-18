@@ -93,6 +93,7 @@ public class AssetXOBuilder
     String uploader = assetBlob.flatMap(AssetBlob::createdBy).orElse(null);
     String uploaderIp = assetBlob.flatMap(AssetBlob::createdByIp).orElse(null);
     long fileSize = assetBlob.map(AssetBlob::blobSize).orElse(0L);
+    String blobStoreName = assetBlob.map(AssetBlob::blobRef).map(blobRef -> blobRef.getStore()).orElse(null);
 
     Date lastModified = assetBlob.map(AssetBlob::blobCreated)
         .map(OffsetDateTime::toInstant)
@@ -112,7 +113,8 @@ public class AssetXOBuilder
         .attributes(getExpandedAttributes(asset, format, assetDescriptors))
         .uploader(uploader)
         .uploaderIp(uploaderIp)
-        .fileSize(fileSize);
+        .fileSize(fileSize)
+        .blobStoreName(blobStoreName);
   }
 
   @Nullable

@@ -133,6 +133,34 @@ public class AssetXOBuilderTest
     assertNotNull(assetXO.getBlobCreated());
   }
 
+  @Test
+  public void fromAsset_blobStoreNamePopulated() {
+    // Verify that blobStoreName is populated in AssetXO from BlobRef
+    OffsetDateTime assetCreated = OffsetDateTime.now();
+    OffsetDateTime blobCreated = OffsetDateTime.now();
+
+    Asset asset = anAssetWithTimestamps(assetCreated, blobCreated,
+        "default@051ae249-9d2d-4807-85d0-9c920198b3b7@2025-11-13T09:31");
+
+    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null);
+
+    assertThat(assetXO.getBlobStoreName(), is("default"));
+  }
+
+  @Test
+  public void fromEagerAsset_blobStoreNamePopulated() {
+    // Verify that blobStoreName is populated in AssetXO from BlobRef for eager loading
+    OffsetDateTime assetCreated = OffsetDateTime.now();
+    OffsetDateTime blobCreated = OffsetDateTime.now();
+
+    Asset asset = anAssetWithTimestamps(assetCreated, blobCreated,
+        "test-blob@14c05db1-4329-4733-a5de-2ee6fa5c46c2@2025-11-17T07:55");
+
+    AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null);
+
+    assertThat(assetXO.getBlobStoreName(), is("test-blob"));
+  }
+
   private Asset anAsset() {
     AssetData asset = new AssetData();
     asset.setAssetId(AN_ASSET_ID);
@@ -145,6 +173,10 @@ public class AssetXOBuilderTest
   }
 
   private Asset anAssetWithTimestamps(OffsetDateTime assetCreated, OffsetDateTime blobCreated) {
+    return anAssetWithTimestamps(assetCreated, blobCreated, null);
+  }
+
+  private Asset anAssetWithTimestamps(OffsetDateTime assetCreated, OffsetDateTime blobCreated, String blobRefString) {
     AssetData asset = new AssetData();
     asset.setAssetId(AN_ASSET_ID);
     asset.setPath(ASSET_PATH);
@@ -153,6 +185,9 @@ public class AssetXOBuilderTest
     AssetBlobData assetBlob = new AssetBlobData();
     assetBlob.setAssetBlobId(1);
     assetBlob.setBlobCreated(blobCreated);
+    if (blobRefString != null) {
+      assetBlob.setBlobRef(org.sonatype.nexus.blobstore.api.BlobRef.parse(blobRefString));
+    }
     asset.setAssetBlob(assetBlob);
 
     return asset;
