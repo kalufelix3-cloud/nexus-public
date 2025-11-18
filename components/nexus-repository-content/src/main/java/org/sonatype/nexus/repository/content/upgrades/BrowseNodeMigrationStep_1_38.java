@@ -14,7 +14,9 @@ package org.sonatype.nexus.repository.content.upgrades;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import jakarta.inject.Inject;
@@ -52,26 +54,85 @@ public class BrowseNodeMigrationStep_1_38
 
   @Override
   public void migrate(final Connection connection) throws Exception {
-    String finalIndexClause = isH2(connection)
+    boolean isH2 = isH2(connection);
+    String finalIndexClause = isH2
         ? CREATE_PARENT_ID_INDEX_H2 + INDEX_NAME
         : CREATE_PARENT_ID_INDEX_PG + INDEX_NAME;
 
-    formats.forEach(format -> executeStatement(connection,
-        String.format(finalIndexClause, format.getValue(), format.getValue())));
+    List<Exception> collectedExceptions = new ArrayList<>();
+    int successCount = 0;
+
+    for (Format format : formats) {
+      String formatValue = format.getValue();
+      String tableName = formatValue + "_browse_node";
+      String indexName = "idx_" + formatValue + "_browse_node_parent_id";
+
+      try {
+        if (!tableExists(connection, tableName)) {
+          log.debug("Table {} does not exist, skipping index creation", tableName);
+          continue;
+        }
+
+        if (indexExists(connection, tableName, indexName)) {
+          log.debug("Index {} already exists on table {}, skipping", indexName, tableName);
+          continue;
+        }
+
+        String sqlStatement = String.format(finalIndexClause, formatValue, formatValue);
+        executeStatement(connection, sqlStatement);
+        successCount++;
+      }
+      catch (SQLException e) {
+        log.warn("Failed to create index '{}' on table '{}'. The index creation may have timed out or " +
+            "failed due to concurrent operations. Error: {}", indexName, tableName, e.getMessage());
+
+        if (!isH2) {
+          dropInvalidIndex(connection, indexName);
+        }
+
+        collectedExceptions.add(e);
+      }
+    }
+
+    log.info("Created {} out of {} browse_node parent_id indexes", successCount, formats.size());
+
+    if (!collectedExceptions.isEmpty()) {
+      log.warn("Failed to create {} index(es). The upgrade will continue, but these indexes " +
+          "should be created manually for optimal performance.", collectedExceptions.size());
+
+      for (Exception e : collectedExceptions) {
+        log.debug("Index creation failure details:", e);
+      }
+    }
   }
 
-  private void executeStatement(final Connection connection, final String sqlStatement) {
+  private void executeStatement(final Connection connection, final String sqlStatement) throws SQLException {
     try (PreparedStatement select = connection.prepareStatement(sqlStatement)) {
       select.executeUpdate();
     }
+  }
+
+  private void dropInvalidIndex(final Connection connection, final String indexName) {
+    try {
+      String checkInvalidSql = "SELECT 1 FROM pg_indexes WHERE indexname = ?";
+      try (PreparedStatement stmt = connection.prepareStatement(checkInvalidSql)) {
+        stmt.setString(1, indexName.toLowerCase(java.util.Locale.ENGLISH));
+        try (ResultSet rs = stmt.executeQuery()) {
+          if (rs.next()) {
+            String dropSql = "DROP INDEX CONCURRENTLY IF EXISTS " + indexName;
+            executeStatement(connection, dropSql);
+            log.info("Dropped invalid index: {}", indexName);
+          }
+        }
+      }
+    }
     catch (SQLException e) {
-      log.error("Failed to apply browse_node index change ('{}')", sqlStatement, e);
-      throw new RuntimeException(e);
+      log.warn("Failed to drop invalid index '{}'. Manual cleanup may be required.", indexName, e);
     }
   }
 
   @Override
   public boolean canExecuteInTransaction() {
-    return false; // PostgreSQL does not support concurrent index creation in a transaction
+    return false;
   }
 }
