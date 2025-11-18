@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import SwaggerUI from "swagger-ui-react"
 import {
   ContentBody,
@@ -19,6 +19,11 @@ import {
   PageHeader,
   PageTitle
 } from '@sonatype/nexus-ui-plugin';
+import {
+  NxTextInput,
+  NxFormGroup,
+  NxButton
+} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
 import 'swagger-ui-react/swagger-ui.css';
@@ -59,6 +64,36 @@ function responseInterceptor(response) {
 }
 
 export default function Api() {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Comprehensive search functionality
+  useEffect(() => {
+    const filterOperations = () => {
+      const swaggerContainer = document.querySelector('.swagger-ui');
+      if (!swaggerContainer) {
+        return;
+      }
+
+      const operations = swaggerContainer.querySelectorAll('.opblock');
+      const lowerSearchTerm = searchTerm.toLowerCase();
+
+      operations.forEach(operation => {
+        const operationText = operation.textContent.toLowerCase();
+        const shouldShow = !lowerSearchTerm || operationText.includes(lowerSearchTerm);
+        
+        if (shouldShow) {
+          operation.classList.remove('hidden');
+        } else {
+          operation.classList.add('hidden');
+        }
+      });
+    };
+
+    // Add delay to allow Swagger UI to render
+    const timeoutId = setTimeout(filterOperations, 100);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
   return (
     <Page>
       <PageHeader>
@@ -69,6 +104,32 @@ export default function Api() {
         />
       </PageHeader>
       <ContentBody className="nxrm-api">
+        <div className="api-search-container">
+          <NxFormGroup 
+            label="Search Operations" 
+            sublabel="Search by operation name, path, or description"
+          >
+            <NxTextInput
+              placeholder="Enter search term..."
+              value={searchTerm}
+              onChange={setSearchTerm}
+              data-analytics-id="swagger-ui-search-input"
+            />
+          </NxFormGroup>
+          {searchTerm && (
+            <div className="api-search-feedback">
+              <strong>Filtering:</strong> Operations containing "{searchTerm}"
+              <NxButton
+                variant="tertiary"
+                className="api-search-clear-btn"
+                onClick={() => setSearchTerm('')}
+                data-analytics-id="swagger-ui-search-clear-btn"
+              >
+                Clear
+              </NxButton>
+            </div>
+          )}
+        </div>
         <SwaggerUI
           url={ExtJS.urlOf('/service/rest/swagger.json')}
           requestInterceptor={requestInterceptor}
