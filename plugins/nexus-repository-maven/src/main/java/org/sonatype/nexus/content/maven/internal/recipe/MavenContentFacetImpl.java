@@ -287,10 +287,9 @@ public class MavenContentFacetImpl
     MavenAttributesHelper.setMavenAttributes(
         (Maven2ComponentStore) stores().componentStore, component, coordinates, model, contentRepositoryId());
 
-    if (isNew) {
-      publishEvents(component);
-    }
-    else {
+    publishEvents(component);
+
+    if (!isNew) {
       // kind isn't set for existing components
       optionalKind.ifPresent(component::kind);
     }
