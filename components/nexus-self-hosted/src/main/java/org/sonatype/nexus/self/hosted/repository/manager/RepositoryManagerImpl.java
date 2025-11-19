@@ -52,7 +52,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.REPOSITORIES;
     typeClass = RepositoryManager.class,
     description = "Repository manager")
 public class RepositoryManagerImpl
-    extends BaseRepositoryManager
+    extends BaseRepositoryManager<BlobStoreManager>
 {
   @Inject
   public RepositoryManagerImpl(

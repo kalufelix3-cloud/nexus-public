@@ -77,7 +77,7 @@ import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
  *
  * @since 3.0
  */
-public abstract class BaseRepositoryManager
+public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
     extends StateGuardLifecycleSupport
     implements RepositoryManager, EventAware
 {
@@ -105,7 +105,7 @@ public abstract class BaseRepositoryManager
 
   private final boolean skipDefaultRepositories;
 
-  protected final BlobStoreManager blobStoreManager;
+  protected final BSM blobStoreManager;
 
   protected final GroupMemberMappingCache groupMemberMappingCache;
 
@@ -123,7 +123,7 @@ public abstract class BaseRepositoryManager
       final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
       final FreezeService freezeService,
       final boolean skipDefaultRepositories,
-      final BlobStoreManager blobStoreManager,
+      final BSM blobStoreManager,
       final GroupMemberMappingCache groupMemberMappingCache,
       final List<ConfigurationValidator> configurationValidators,
       final HttpAuthenticationPasswordEncoder httpAuthenticationPasswordEncoder)

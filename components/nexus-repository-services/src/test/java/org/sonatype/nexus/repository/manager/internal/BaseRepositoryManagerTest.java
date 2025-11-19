@@ -200,7 +200,7 @@ public class BaseRepositoryManagerTest
   private HttpAuthenticationPasswordEncoder httpAuthenticationPasswordEncoder;
 
   // Subject of the test
-  private BaseRepositoryManager repositoryManager;
+  private BaseRepositoryManager<BlobStoreManager> repositoryManager;
 
   private MockedStatic<QualifierUtil> mockedStatic;
 
@@ -295,7 +295,7 @@ public class BaseRepositoryManagerTest
     when(repository.optionalFacet(any(Class.class))).thenReturn(Optional.empty());
   }
 
-  private BaseRepositoryManager buildRepositoryManagerImpl(
+  private BaseRepositoryManager<BlobStoreManager> buildRepositoryManagerImpl(
       final boolean defaultsConfigured,
       final boolean skipDefaultRepositories) throws Exception
   {
@@ -309,11 +309,11 @@ public class BaseRepositoryManagerTest
     return initializeAndStartRepositoryManager(skipDefaultRepositories);
   }
 
-  private BaseRepositoryManager initializeAndStartRepositoryManager(
+  private BaseRepositoryManager<BlobStoreManager> initializeAndStartRepositoryManager(
       final boolean skipDefaultRepositories) throws Exception
   {
     when(QualifierUtil.buildQualifierBeanMap(any())).thenReturn(Map.of(recipeName, recipe));
-    repositoryManager = new BaseRepositoryManager(eventManager, configurationStore, repositoryFactory,
+    repositoryManager = new BaseRepositoryManager<>(eventManager, configurationStore, repositoryFactory,
         configurationFacetProvider, List.of(), securityContributor,
         defaultRepositoriesContributorList, freezeService, skipDefaultRepositories, blobStoreManager,
         groupMemberMappingCache, List.of(), httpAuthenticationPasswordEncoder)
@@ -324,7 +324,9 @@ public class BaseRepositoryManagerTest
     return repositoryManager;
   }
 
-  private BaseRepositoryManager buildRepositoryManagerImpl(final boolean defaultsConfigured) throws Exception {
+  private BaseRepositoryManager<BlobStoreManager> buildRepositoryManagerImpl(
+      final boolean defaultsConfigured) throws Exception
+  {
     return buildRepositoryManagerImpl(defaultsConfigured, false);
   }
 
@@ -445,7 +447,7 @@ public class BaseRepositoryManagerTest
 
   @Test
   public void testCreate_concurrentCreatesShouldNotFail() throws Exception {
-    BaseRepositoryManager repositoryManager = initializeAndStartRepositoryManager(true);
+    BaseRepositoryManager<BlobStoreManager> repositoryManager = initializeAndStartRepositoryManager(true);
     repositoryManager.create(makeRepo("r1"));
     repositoryManager.create(makeRepo("r2"));
 
