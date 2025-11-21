@@ -73,6 +73,16 @@
     ORDER BY asset_blob_id LIMIT #{limit};
   </select>
 
+  <select id="browseAssetBlobsByBlobStore" resultType="AssetBlobData">
+    SELECT *
+      FROM ${format}_asset_blob
+     WHERE blob_ref LIKE (#{blobStoreName} || '@%')
+    <if test="continuationToken != null">
+       AND asset_blob_id > #{continuationToken}
+    </if>
+    ORDER BY asset_blob_id LIMIT #{limit};
+  </select>
+
   <select id="browseAssetBlobsWithinDuration" resultType="org.sonatype.nexus.repository.content.AssetReconcileData">
     SELECT AB.blob_ref, R.name as repository, A.path, AB.asset_blob_id FROM ${format}_asset_blob AB
                     JOIN ${format}_asset A ON AB.asset_blob_id = A.asset_blob_id

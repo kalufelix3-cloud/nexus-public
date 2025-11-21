@@ -65,6 +65,19 @@ public interface AssetBlobDAO
       @Param("continuationToken") @Nullable String continuationToken);
 
   /**
+   * Browse asset blobs whose blobref matches the blob store name
+   *
+   * @param limit
+   * @param blobStoreName
+   * @param continuationToken
+   * @return
+   */
+  Continuation<AssetBlob> browseAssetBlobsByBlobStore(
+      @Param("limit") int limit,
+      @Param("blobStoreName") String blobStoreName,
+      @Param("continuationToken") @Nullable String continuationToken);
+
+  /**
    * Browse asset blobs in the content data store in a paged fashion.
    *
    * @param limit maximum number of asset blobs to return

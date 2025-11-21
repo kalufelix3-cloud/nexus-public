@@ -111,5 +111,5 @@ public abstract class BlobStoreTaskSupport
    *
    * @param blobStore the blob store to be processed
    */
-  protected abstract void execute(final BlobStore blobStore);
+  protected abstract void execute(final BlobStore blobStore) throws Exception;
 }

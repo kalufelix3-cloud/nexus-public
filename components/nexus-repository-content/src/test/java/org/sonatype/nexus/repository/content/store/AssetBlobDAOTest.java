@@ -40,6 +40,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -86,8 +87,7 @@ class AssetBlobDAOTest
 
       assertThat(dao.browseUnusedAssetBlobs(1, 60, null), contains(sameBlob(assetBlob1)));
 
-      assertThat(dao.browseUnusedAssetBlobs(2, 60, null),
-          contains(sameBlob(assetBlob1), sameBlob(assetBlob2)));
+      assertThat(dao.browseUnusedAssetBlobs(2, 60, null), contains(sameBlob(assetBlob1), sameBlob(assetBlob2)));
 
       session.getTransaction().commit();
     }
@@ -358,6 +358,34 @@ class AssetBlobDAOTest
         }
       });
     }
+  }
+
+  @Test
+  void testBrowseAssetBlobsByBlobStore() {
+    Continuation<AssetBlob> result =
+        sessionRule.withDAO(TestAssetBlobDAO.class, dao -> dao.browseAssetBlobsByBlobStore(1, "test-store", null));
+
+    assertThat(result, hasSize(0));
+
+    AssetBlobData assetBlob = generateAssetBlob();
+
+    sessionRule.callDAO(TestAssetBlobDAO.class, dao -> {
+      dao.createAssetBlob(assetBlob);
+      dao.createAssetBlob(generateAssetBlob());
+    });
+
+    String blobStore = assetBlob.blobRef().getStore();
+    result = sessionRule.withDAO(TestAssetBlobDAO.class, dao -> dao.browseAssetBlobsByBlobStore(1, blobStore, null));
+
+    assertThat(result, hasSize(1));
+
+    String nextToken = result.nextContinuationToken();
+    result =
+        sessionRule.withDAO(TestAssetBlobDAO.class, dao -> dao.browseAssetBlobsByBlobStore(1, blobStore, nextToken));
+
+    assertThat(result, hasSize(1));
+    assertThat("Page should change", result.nextContinuationToken(), not(nextToken));
+
   }
 
   private void prepareLegacyFormatAssetBlobs(final int assetsCount, final int legacyAssetsCount) throws SQLException {
