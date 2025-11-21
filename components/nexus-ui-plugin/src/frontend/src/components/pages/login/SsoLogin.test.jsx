@@ -275,4 +275,22 @@ describe('SsoLogin', () => {
       });
     });
   });
+
+  describe('autoFocus behavior', () => {
+    beforeEach(() => {
+      mockUseState
+        .mockReturnValueOnce(true)  // samlEnabled
+        .mockReturnValueOnce(false); // oauth2Enabled
+    });
+
+    it('always focuses button on mount', async () => {
+      render(<SsoLogin />);
+      const button = screen.getByRole('button');
+
+      // Wait for autofocus to take effect
+      await waitFor(() => {
+        expect(document.activeElement).toBe(button);
+      }, { timeout: 1000 });
+    });
+  });
 });

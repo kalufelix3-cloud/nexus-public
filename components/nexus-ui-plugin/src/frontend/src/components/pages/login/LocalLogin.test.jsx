@@ -466,4 +466,24 @@ describe('LocalLogin', () => {
       });
     });
   });
+
+  describe('autoFocus behavior', () => {
+    it('focuses username input when primaryButton is true', async () => {
+      renderComponent({ primaryButton: true });
+      const usernameInput = document.getElementById('username');
+
+      // Wait for autofocus to take effect
+      await waitFor(() => {
+        expect(document.activeElement).toBe(usernameInput);
+      }, { timeout: 1000 });
+    });
+
+    it('does not focus username input when primaryButton is false', () => {
+      renderComponent({ primaryButton: false });
+      const usernameInput = document.getElementById('username');
+
+      // Username input should not be focused
+      expect(document.activeElement).not.toBe(usernameInput);
+    });
+  });
 });
