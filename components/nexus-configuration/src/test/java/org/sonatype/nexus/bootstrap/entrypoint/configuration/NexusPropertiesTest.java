@@ -12,10 +12,6 @@
  */
 package org.sonatype.nexus.bootstrap.entrypoint.configuration;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-
 import org.sonatype.goodies.testsupport.Test5Support;
 
 import org.junit.jupiter.api.AfterEach;
@@ -24,6 +20,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+
+/**
+ * Tests for {@link NexusProperties#enforceCommunityEditionAnalytics()} method.
+ * Uses the @VisibleForTesting constructor to bypass file-based initialization.
+ */
 
 class NexusPropertiesTest
     extends Test5Support
@@ -77,31 +78,11 @@ class NexusPropertiesTest
   }
 
   /**
-   * Helper method to create a NexusProperties instance with minimal setup.
-   * Note: This will trigger the full initialization, but for this specific test
-   * we're only interested in testing the enforceCommunityEditionAnalytics method.
+   * Helper method to create a NexusProperties instance for testing.
+   * Uses the @VisibleForTesting constructor that bypasses file loading.
    */
   private NexusProperties createNexusProperties() {
-    try {
-      // Create temp directories for basedir and datadir
-      File basedir = util.createTempDir();
-      File datadir = util.createTempDir();
-
-      // Set required system properties for NexusProperties initialization
-      System.setProperty(NexusDirectoryConfiguration.BASEDIR_SYS_PROP, basedir.getAbsolutePath());
-      System.setProperty(NexusDirectoryConfiguration.DATADIR_SYS_PROP, datadir.getAbsolutePath());
-
-      // Create the etc directory in basedir and the required nexus-default.properties file
-      File etcDir = new File(basedir, "etc");
-      etcDir.mkdirs();
-      File defaultPropertiesFile = new File(etcDir, "nexus-default.properties");
-      // Create an empty properties file - NexusProperties just needs it to exist
-      Files.write(defaultPropertiesFile.toPath(), "# Default properties for test\n".getBytes());
-
-      return new NexusProperties();
-    }
-    catch (IOException e) {
-      throw new RuntimeException("Failed to set up test environment", e);
-    }
+    // Use the test constructor that skips file-based initialization
+    return new NexusProperties(new PropertyMap());
   }
 }

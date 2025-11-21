@@ -26,6 +26,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.codehaus.plexus.interpolation.EnvarBasedValueSource;
 import org.codehaus.plexus.interpolation.InterpolationException;
 import org.codehaus.plexus.interpolation.Interpolator;
@@ -68,6 +69,13 @@ public class NexusProperties
   public NexusProperties() {
     super("nexus-properties");
     init();
+  }
+
+  @VisibleForTesting
+  NexusProperties(final PropertyMap propertiesForTesting) {
+    super("nexus-properties");
+    nexusProperties = propertiesForTesting;
+    // Skip init() for testing - properties are provided directly
   }
 
   @Override
