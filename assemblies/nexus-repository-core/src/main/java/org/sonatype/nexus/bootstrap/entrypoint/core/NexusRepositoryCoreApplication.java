@@ -38,6 +38,7 @@ public class NexusRepositoryCoreApplication
     // as it is abruptly terminating logging during shutdown
     // and thus preventing the logs from Nexus's shutdown sequence from being added to the log file
     System.setProperty("logging.register-shutdown-hook", "false");
+    System.setProperty("nexus.edition", "CORE");
 
     new SpringApplicationBuilder(NexusRepositoryCoreApplication.class)
         .bannerMode(OFF)
