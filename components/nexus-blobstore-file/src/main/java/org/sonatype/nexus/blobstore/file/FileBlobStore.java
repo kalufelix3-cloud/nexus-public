@@ -199,6 +199,10 @@ public class FileBlobStore
 
   private final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
 
+  private int blobAttributesMaxRetries;
+
+  private int blobAttributesRetryDelayMs;
+
   @Inject
   public FileBlobStore(
       final BlobIdLocationResolver blobIdLocationResolver,
@@ -776,6 +780,11 @@ public class FileBlobStore
       throw new BlobStoreException(
           "Unable to initialize blob store directory structure: " + getConfiguredBlobStorePath(), e, null);
     }
+
+    this.blobAttributesMaxRetries = SystemPropertiesHelper.getInteger(
+        "nexus.blobstore.setBlobAttributes.maxRetries", 3);
+    this.blobAttributesRetryDelayMs = SystemPropertiesHelper.getInteger(
+        "nexus.blobstore.setBlobAttributes.retryDelayMs", 100);
   }
 
   private void checkExists(final Path path, final BlobId blobId) throws IOException {
@@ -1265,19 +1274,49 @@ public class FileBlobStore
   @Override
   public void setBlobAttributes(final BlobId blobId, final BlobAttributes blobAttributes) {
     FileBlobAttributes fileBlobAttributes = getFileBlobAttributes(blobId);
-    if (fileBlobAttributes != null) {
+    if (fileBlobAttributes == null) {
+      // Benign race condition - concurrent request is updating the same blob
+      // properties file
+      log.debug("Blob attributes temporarily unavailable for blob id: {} during concurrent access",
+          blobId);
+      return;
+    }
+
+    for (int attempt = 1; attempt <= blobAttributesMaxRetries; attempt++) {
       try {
+        fileBlobAttributes = getFileBlobAttributes(blobId);
+        if (fileBlobAttributes == null) {
+          log.debug("Blob attributes not found for blob id: {} during retry attempt {}", blobId, attempt);
+          return;
+        }
+
         fileBlobAttributes.updateFrom(blobAttributes);
         fileBlobAttributes.store();
+
+        if (attempt > 1) {
+          log.debug("Successfully set BlobAttributes for {} on attempt {}", blobId, attempt);
+        }
+
+        return;
       }
       catch (Exception e) {
-        log.error("Unable to set BlobAttributes for blob id: {}, exception: {}",
-            blobId, e.getMessage(), log.isDebugEnabled() ? e : null);
+        if (attempt < blobAttributesMaxRetries) {
+          log.warn("Failed to set BlobAttributes for {} on attempt {}, retrying after {}ms",
+              blobId, attempt, blobAttributesRetryDelayMs);
+
+          try {
+            Thread.sleep(blobAttributesRetryDelayMs);
+          }
+          catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw new BlobStoreException("Interrupted while retrying setBlobAttributes", e, blobId);
+          }
+        }
+        else {
+          log.error("Failed to set BlobAttributes for {} after {} attempts", blobId, blobAttributesMaxRetries);
+          throw new BlobStoreException("Unable to set BlobAttributes after retries", e, blobId);
+        }
       }
-    }
-    else {
-      // Benign race condition - concurrent request is updating the same blob properties file
-      log.debug("Blob attributes temporarily unavailable for blob id: {} during concurrent access", blobId);
     }
   }
 

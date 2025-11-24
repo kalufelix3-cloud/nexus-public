@@ -823,4 +823,86 @@ public class FileBlobStoreTest
     assertThat(result, is(fileBlob));
     verify(liveBlobsMock, times(1)).getUnchecked(blobId);
   }
+
+  @Test
+  public void testSetBlobAttributes_NullCheck_ReturnsEarly() throws Exception {
+    BlobId blobId = new BlobId("null-blob");
+    BlobAttributes blobAttributes = mock(BlobAttributes.class);
+
+    underTest.setBlobAttributes(blobId, blobAttributes);
+
+    verify(blobAttributes, never()).getProperties();
+  }
+
+  @Test
+  public void testSetBlobAttributes_SuccessfulFirstAttempt() throws Exception {
+    BlobId blobId = new BlobId("success-blob");
+    BlobAttributes blobAttributes = mock(BlobAttributes.class);
+    FileBlobAttributes fileBlobAttributes = mock(FileBlobAttributes.class);
+
+    FileBlobStore spyUnderTest = spy(underTest);
+    when(spyUnderTest.getFileBlobAttributes(blobId)).thenReturn(fileBlobAttributes);
+
+    spyUnderTest.setBlobAttributes(blobId, blobAttributes);
+
+    verify(fileBlobAttributes, times(1)).updateFrom(blobAttributes);
+    verify(fileBlobAttributes, times(1)).store();
+  }
+
+  @Test
+  public void testSetBlobAttributes_RetriesOnException() throws Exception {
+    BlobId blobId = new BlobId("retry-blob");
+    BlobAttributes blobAttributes = mock(BlobAttributes.class);
+    FileBlobAttributes fileBlobAttributes = mock(FileBlobAttributes.class);
+
+    FileBlobStore spyUnderTest = spy(underTest);
+    when(spyUnderTest.getFileBlobAttributes(blobId)).thenReturn(fileBlobAttributes);
+    doThrow(new IOException("Concurrent write")).doNothing().when(fileBlobAttributes).store();
+
+    spyUnderTest.setBlobAttributes(blobId, blobAttributes);
+
+    verify(fileBlobAttributes, times(2)).updateFrom(blobAttributes);
+    verify(fileBlobAttributes, times(2)).store();
+  }
+
+  @Test
+  public void testSetBlobAttributes_ExhaustsAllRetries() throws Exception {
+    BlobId blobId = new BlobId("exhausted-retry-blob");
+    BlobAttributes blobAttributes = mock(BlobAttributes.class);
+    FileBlobAttributes fileBlobAttributes = mock(FileBlobAttributes.class);
+
+    FileBlobStore spyUnderTest = spy(underTest);
+    when(spyUnderTest.getFileBlobAttributes(blobId)).thenReturn(fileBlobAttributes);
+    doThrow(new IOException("Persistent failure")).when(fileBlobAttributes).store();
+
+    try {
+      spyUnderTest.setBlobAttributes(blobId, blobAttributes);
+      fail("Expected BlobStoreException");
+    }
+    catch (BlobStoreException e) {
+      assertTrue(e.getMessage().contains("Unable to set BlobAttributes after retries"));
+    }
+
+    verify(fileBlobAttributes, times(3)).updateFrom(blobAttributes);
+    verify(fileBlobAttributes, times(3)).store();
+  }
+
+  @Test
+  public void testSetBlobAttributes_NullDuringRetry() throws Exception {
+    BlobId blobId = new BlobId("null-during-retry-blob");
+    BlobAttributes blobAttributes = mock(BlobAttributes.class);
+    FileBlobAttributes fileBlobAttributes = mock(FileBlobAttributes.class);
+
+    FileBlobStore spyUnderTest = spy(underTest);
+    when(spyUnderTest.getFileBlobAttributes(blobId))
+        .thenReturn(fileBlobAttributes)
+        .thenReturn(fileBlobAttributes)
+        .thenReturn(null);
+    doThrow(new IOException("Concurrent write")).when(fileBlobAttributes).store();
+
+    spyUnderTest.setBlobAttributes(blobId, blobAttributes);
+
+    verify(fileBlobAttributes, times(1)).updateFrom(blobAttributes);
+    verify(fileBlobAttributes, times(1)).store();
+  }
 }
