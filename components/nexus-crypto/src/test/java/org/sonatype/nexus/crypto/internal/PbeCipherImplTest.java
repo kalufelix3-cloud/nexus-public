@@ -129,4 +129,41 @@ class PbeCipherImplTest
 
     assertThrows(NullPointerException.class, () -> cipher.encrypt(null));
   }
+
+  @Test
+  void testEncryptDecryptWithAwsS3SecretKeyFormat() {
+    PbeCipherImpl cipher = new PbeCipherImpl(cryptoHelper, hashingHandler, secretKey, null, true, null);
+    String awsSecretKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY=";
+
+    EncryptedSecret encrypted = cipher.encrypt(awsSecretKey.getBytes());
+    assertNotNull(encrypted);
+
+    PbeCipherImpl decryptCipher = new PbeCipherImpl(cryptoHelper, hashingHandler, secretKey, encrypted, true, null);
+    byte[] decrypted = decryptCipher.decrypt();
+
+    assertArrayEquals(awsSecretKey.getBytes(), decrypted);
+  }
+
+  @Test
+  void testEncryptDecryptWithBase64PaddingCharacters() {
+    PbeCipherImpl cipher = new PbeCipherImpl(cryptoHelper, hashingHandler, secretKey, null, true, null);
+
+    String[] testSecrets = {
+        "mySecret=Key123=",
+        "mySecret+Key+123",
+        "mySecret/Key/123",
+        "mySecret=/+Key=/+123=/+",
+        "wJalrXUtnFEMI/K7MDENG+bPxRfiCY=EXAMPLEKEY"
+    };
+
+    for (String secret : testSecrets) {
+      EncryptedSecret encrypted = cipher.encrypt(secret.getBytes());
+      assertNotNull(encrypted, "Encryption failed for: " + secret);
+
+      PbeCipherImpl decryptCipher = new PbeCipherImpl(cryptoHelper, hashingHandler, secretKey, encrypted, true, null);
+      byte[] decrypted = decryptCipher.decrypt();
+
+      assertArrayEquals(secret.getBytes(), decrypted, "Round-trip failed for: " + secret);
+    }
+  }
 }
