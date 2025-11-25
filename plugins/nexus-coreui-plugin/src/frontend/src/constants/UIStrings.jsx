@@ -10,8 +10,6 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
-
 import {UIStrings} from '@sonatype/nexus-ui-plugin';
 import AnonymousAccessStrings from './pages/admin/security/AnonymousAccessStrings';
 import RealmsStrings from './pages/admin/security/RealmsStrings';
@@ -56,7 +54,6 @@ import UpgradeTriggerModalStrings from './UpgradeTriggerModalStrings';
 import ZDUMarketingModalStrings from './ZDUMarketingModalStrings';
 import MaliciousRiskStrings  from "./pages/maliciousrisk/MaliciousRiskStrings";
 import SearchStrings from './pages/browse/search/SearchStrings';
-import Capabilities from './pages/admin/system/Capabilities';
 import UpgradeStrings from "./pages/admin/system/UpgradeStrings";
 import RepositoryDirectoryStrings from './pages/admin/repository/RepositoryDirectoryStrings';
 import AdminSecurityDirectoryStrings from './pages/admin/repository/AdminSecurityDirectoryStrings';
@@ -112,7 +109,6 @@ export default {
 
   // admin/system
   ...ApiStrings,
-  ...Capabilities,
   ...EmailServerStrings,
   ...HttpStrings,
   ...TasksStrings,

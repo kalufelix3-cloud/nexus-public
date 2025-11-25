@@ -12,7 +12,6 @@
  */
 import React from 'react';
 import { NxH3, NxPageSidebar } from '@sonatype/react-shared-components';
-import { useCurrentStateAndParams } from '@uirouter/react';
 import {
   LeftNavigationMenuItem,
   LeftNavigationMenuCollapsibleItem,
@@ -22,13 +21,10 @@ import {
 import './SettingsPageLayout.scss';
 import { ROUTE_NAMES } from '../../../routerConfig/routeNames/routeNames';
 import UIStrings from '../../../constants/UIStrings';
+import { isExtjsCapabilitiesEnabled, isReactCapabilitiesEnabled } from '@sonatype/nexus-ui-plugin';
 
 export default function SettingsSidebar() {
   const ADMIN = ROUTE_NAMES.ADMIN;
-
-  const {
-    state: { name: currentPageName }
-  } = useCurrentStateAndParams();
 
   return (
     <NxPageSidebar className="nxrm-settings">
@@ -208,12 +204,22 @@ export default function SettingsSidebar() {
           text={UIStrings.API.MENU.text}
           data-analytics-id="nxrm-global-secondary-navbar-system-api"
         />
-        <LeftNavigationMenuCollapsibleChildItem
-          name={ADMIN.SYSTEM.CAPABILITIES.ROOT}
-          text={UIStrings.CAPABILITIES.MENU.text}
-          params={{ id: null }}
-          data-analytics-id="nxrm-global-secondary-navbar-system-capabilities"
-        />
+        {isExtjsCapabilitiesEnabled() &&
+          <LeftNavigationMenuCollapsibleChildItem
+            name={ADMIN.SYSTEM.CAPABILITIES_EXTJS.ROOT}
+            text={UIStrings.CAPABILITIES.MENU.text}
+            params={{ id: null }}
+            data-analytics-id='nxrm-global-secondary-navbar-system-capabilities'
+          />
+        }
+        {isReactCapabilitiesEnabled() &&
+          <LeftNavigationMenuCollapsibleChildItem
+            name={ADMIN.SYSTEM.CAPABILITIES.LIST}
+            text={UIStrings.CAPABILITIES.MENU.text}
+            selectedState={ADMIN.SYSTEM.CAPABILITIES.ROOT}
+            data-analytics-id='nxrm-global-secondary-navbar-system-capabilities'
+          />
+        }
         <LeftNavigationMenuCollapsibleChildItem
           name={ADMIN.SYSTEM.EMAILSERVER.ROOT}
           text={UIStrings.EMAIL_SERVER.MENU.text}

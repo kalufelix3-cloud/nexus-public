@@ -1,4 +1,4 @@
-/*
+/**
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,10 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+.capabilities-state {
+  text-transform: capitalize;
+  white-space: nowrap;
 
-import ExtJS from '../interface/ExtJS';
-import { isVisible } from '../interface/NavigationUtils';
+  .nx-icon {
+    margin-right: var(--nx-spacing-2x);
+  }
 
-export default function useIsVisible(visibilityRequirements) {
-  return ExtJS.useVisiblityWithChanges(() => isVisible(visibilityRequirements));
+  &__active {
+    .nx-icon {
+      color: var(--nx-color-success);
+    }
+  }
+
+  &__error, &__passive {
+    .nx-icon {
+      color: var(--nx-color-error);
+    }
+  }
+
+  &__disabled {
+    .nx-icon {
+      color: var(--nx-swatch-grey-60);
+    }
+  }
 }

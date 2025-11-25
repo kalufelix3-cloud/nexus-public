@@ -19,6 +19,8 @@ import { Permissions } from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../constants/UIStrings';
 import { runLinkNotVisibleTest, runLinkVisiblityTest } from '../../../testUtils/directoryPageTestUtils';
 import { ROUTE_NAMES } from '../../../routerConfig/routeNames/routeNames';
+import {screen} from "@testing-library/react";
+import {renderComponentRoute} from "../../../testUtils/renderUtils";
 
 describe('AdminSystemDirectoryPage', () => {
   beforeEach(() => {
@@ -44,15 +46,70 @@ describe('AdminSystemDirectoryPage', () => {
   });
 
   describe('Capabilities Link', () => {
-    it('shows given permissions', async () => {
-      givenPermissions({ ['nexus:capabilities:read']: true});
-      await runLinkVisiblityTestForSystemPage(UIStrings.CAPABILITIES.MENU);
+    it('renders both extjs and react links given sufficient permissions and feature flags enabled', async () => {
+      givenPermissions({ 'nexus:capabilities:read': true });
+
+      await renderComponentRoute(ROUTE_NAMES.ADMIN.SYSTEM.DIRECTORY);
+
+      const extJsLink = screen.getAllByRole('link', { name: 'Capabilities' })[0];
+      expect(extJsLink).toBeVisible();
+      expect(extJsLink.href).toContain('/#admin/system/capabilities-extjs');
+
+      const reactLink = screen.getAllByRole('link', { name: 'Capabilities' })[1];
+      expect(reactLink).toBeVisible();
+      expect(reactLink.href).toContain('/#admin/system/capabilities');
     });
 
-    it('does not show without permissions', async () => {
+    it('does not render any link when user does not have permissions', async () => {
       givenPermissions({ ['nexus:capabilities:read']: false });
       await runLinkNotVisibleTestForSystemPage(UIStrings.CAPABILITIES.MENU);
+    })
+
+    it('does not render react link when react feature flag is disabled', async () => {
+      givenUserLoggedIn();
+      givenPermissions({ 'nexus:capabilities:read': true });
+      givenExtJSState({
+        ...defaultExtState(),
+        'nexus.react.capabilities.enabled': false
+      })
+
+      await renderComponentRoute(ROUTE_NAMES.ADMIN.SYSTEM.DIRECTORY);
+
+      const links = screen.getAllByRole('link', { name: 'Capabilities' });
+      expect(links).toHaveLength(1);
+
+      const extJsLink = links[0];
+      expect(extJsLink).toBeVisible();
+      expect(extJsLink.href).toContain('/#admin/system/capabilities-extjs');
     });
+
+    it('does not render ExtJs link when ExtJs feature flag is disabled', async () => {
+      givenUserLoggedIn();
+      givenPermissions({ 'nexus:capabilities:read': true });
+      givenExtJSState({
+        ...defaultExtState(),
+        'nexus.extjs.capabilities.enabled': false
+      });
+
+      await renderComponentRoute(ROUTE_NAMES.ADMIN.SYSTEM.DIRECTORY);
+
+      const links = screen.getAllByRole('link', { name: 'Capabilities' });
+      expect(links).toHaveLength(1);
+
+      const reactLink = links[0];
+      expect(reactLink).toBeVisible();
+      expect(reactLink.href).toContain('/#admin/system/capabilities');
+    });
+
+    it('does not render any link when both ExtJs and React feature flag is disabled', async () => {
+      givenPermissions({ ['nexus:capabilities:read']: true });
+      givenExtJSState({
+        ...defaultExtState(),
+        'nexus.extjs.capabilities.enabled': false,
+        'nexus.react.capabilities.enabled': false
+      });
+      await runLinkNotVisibleTestForSystemPage(UIStrings.CAPABILITIES.MENU);
+    })
   });
 
   describe('Email Server Link', () => {
@@ -136,7 +193,11 @@ describe('AdminSystemDirectoryPage', () => {
   });
 
   function defaultExtState() {
-    return { usertoken: { licenseValid: true } };
+    return {
+      'nexus.extjs.capabilities.enabled': true,
+      'nexus.react.capabilities.enabled': true,
+      usertoken: { licenseValid: true }
+    };
   }
 
   async function runLinkVisiblityTestForSystemPage(menu) {

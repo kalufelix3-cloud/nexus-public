@@ -71,6 +71,7 @@ export default class FormUtils {
         isTouched: {},
         loadError: null,
         saveError: null,
+        deleteError: null,
         saveErrorData: {},
         validationErrors: {},
         data: {},
@@ -157,6 +158,7 @@ export default class FormUtils {
         },
 
         confirmDelete: {
+          entry: 'clearDeleteError',
           invoke: {
             src: 'confirmDelete',
             onDone: 'delete',
@@ -172,7 +174,7 @@ export default class FormUtils {
             },
             onError: {
               target: 'loaded',
-              actions: 'onDeleteError'
+              actions: ['logDeleteError', 'onDeleteError']
             }
           }
         },
@@ -222,6 +224,9 @@ export default class FormUtils {
           saveError: () => undefined,
           saveErrors: () => ({})
         }),
+        clearDeleteError: assign({
+          deleteError: null,
+        }),
         logSaveError: (_, event) => {
           if (event.data?.message) {
             console.log(`Save Error: ${event.data?.message}`);
@@ -231,6 +236,17 @@ export default class FormUtils {
         logDeleteSuccess: () => {
           // Intentionally left blank for users to override
         },
+        logDeleteError: (_, event) => {
+          if (event.data?.message) {
+            console.log(`Delete Error: ${event.data?.message}`);
+          }
+        },
+        onDeleteError: assign({
+          deleteError: (_, event) => {
+            const message = event.data?.message || event.data?.response?.data?.message;
+            return message ? `${message}` : 'Delete failed';
+          }
+        }),
 
         setLoadError: assign({
           loadError: (_, event) => {
@@ -297,7 +313,14 @@ export default class FormUtils {
 
         onLoadedEntry: () => {
           /* hook for users to override on entry to the loaded state */
-        }
+        },
+
+        setDeleteError: assign({
+          deleteError: (_, event) => {
+            const message = event.data?.message;
+            return message ? `${message}` : null;
+          }
+        }),
       },
 
       guards: {
@@ -501,7 +524,10 @@ export default class FormUtils {
     return {
       checkboxId: String(join('.', fieldName)),
       name: String(join('.', fieldName)),
-      isChecked: Boolean(pathOr(defaultValue, fieldName, data))
+      isChecked: (() => {
+        const value = pathOr(defaultValue, fieldName, data);
+        return value === 'true' ? true : (value === 'false' ? false : value);
+      })()
     };
   }
 

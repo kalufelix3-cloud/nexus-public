@@ -15,7 +15,14 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import { UIView } from '@uirouter/react';
-import { CleanupPoliciesList, CleanupPoliciesForm, Permissions } from '@sonatype/nexus-ui-plugin';
+import {
+  CleanupPoliciesList,
+  CleanupPoliciesForm,
+  Permissions,
+  CapabilitiesList,
+  CapabilitiesCreate,
+  CapabilitiesEdit,
+} from '@sonatype/nexus-ui-plugin';
 import IqServer from '../../components/pages/admin/IqServer/IqServer';
 import RepositoriesExt from '../../components/pages/admin/Repositories/RepositoriesExt';
 import DataStoreConfiguration from '../../components/pages/admin/DataStoreConfiguration/DataStoreConfiguration';
@@ -30,7 +37,7 @@ import Realms from '../../components/pages/admin/Realms/Realms';
 import UserTokens from '../../components/pages/admin/UserTokens/UserTokens';
 import CrowdSettings from '../../components/pages/admin/CrowdSettings/CrowdSettings';
 import SamlConfiguration from '../../components/pages/admin/SamlConfiguration/SamlConfiguration';
-import OAuth2Configuration from "../../components/pages/admin/OAuth2Configuration/OAuth2Configuration";
+import OAuth2Configuration from '../../components/pages/admin/OAuth2Configuration/OAuth2Configuration';
 import SupportRequest from '../../components/pages/admin/SupportRequest/SupportRequest';
 import SystemInformation from '../../components/pages/admin/SystemInformation/SystemInformation';
 import MetricHealth from '../../components/pages/admin/MetricHealth/MetricHealth';
@@ -42,7 +49,6 @@ import Licensing from '../../components/pages/admin/Licensing/Licensing';
 import Upgrade from '../../components/pages/admin/Upgrade/Upgrade';
 import NodesExt from '../../components/pages/admin/Nodes/NodesExt';
 import Tasks from '../../components/pages/admin/Tasks/Tasks';
-import Capabilities from '../../components/pages/admin/Capabilities/Capabilities';
 import BlobStoresList from '../../components/pages/admin/BlobStores/BlobStoresList';
 import BlobStoresForm from '../../components/pages/admin/BlobStores/BlobStoresForm';
 import LdapServersExt from '../../components/pages/admin/LdapServers/LdapServersExt';
@@ -63,6 +69,7 @@ import RoutingRulesGlobalPreview from '../../components/pages/admin/RoutingRules
 import LoggingConfigurationList from '../../components/pages/admin/LoggingConfiguration/LoggingConfigurationList.jsx';
 import LoggingConfigurationForm from '../../components/pages/admin/LoggingConfiguration/LoggingConfigurationForm.jsx';
 import { ROUTE_NAMES } from '../routeNames/routeNames';
+import Capabilities from '../../components/pages/admin/Capabilities/Capabilities.jsx';
 
 const ADMIN = ROUTE_NAMES.ADMIN;
 
@@ -519,9 +526,9 @@ export const adminRoutes = [
         statesEnabled: [
           {
             key: 'oauth2Available',
-            defaultValue: false
-          }
-        ]
+            defaultValue: false,
+          },
+        ],
       },
       title: ADMIN.SECURITY.OAUTH2.TITLE,
     },
@@ -699,8 +706,8 @@ export const adminRoutes = [
   },
 
   {
-    name: ADMIN.SYSTEM.CAPABILITIES.ROOT,
-    url: '/capabilities:id',
+    name: ADMIN.SYSTEM.CAPABILITIES_EXTJS.ROOT,
+    url: '/capabilities-extjs:id',
     component: Capabilities,
     params: {
       id: {
@@ -713,8 +720,38 @@ export const adminRoutes = [
       visibilityRequirements: {
         permissions: ['nexus:capabilities:read'],
       },
+      title: ADMIN.SYSTEM.CAPABILITIES_EXTJS.TITLE,
+    },
+  },
+
+  {
+    name: ADMIN.SYSTEM.CAPABILITIES.ROOT,
+    abstract: true,
+    component: UIView,
+    data: {
+      visibilityRequirements: {
+        permissions: ['nexus:capabilities:read'],
+      },
       title: ADMIN.SYSTEM.CAPABILITIES.TITLE,
     },
+  },
+
+  {
+    name: ADMIN.SYSTEM.CAPABILITIES.CREATE,
+    url: '/capabilities/create',
+    component: CapabilitiesCreate,
+  },
+
+  {
+    name: ADMIN.SYSTEM.CAPABILITIES.EDIT,
+    url: '/capabilities/edit/{id}',
+    component: CapabilitiesEdit,
+  },
+
+  {
+    name: ADMIN.SYSTEM.CAPABILITIES.LIST,
+    url: '/capabilities',
+    component: CapabilitiesList,
   },
 
   {

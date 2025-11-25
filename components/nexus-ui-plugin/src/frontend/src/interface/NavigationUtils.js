@@ -15,6 +15,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
+import ExtJS from "./ExtJS";
+
 /**
  * This is used to check the visibility of route defined with UIRouter. It expects a visibilityRequirements block
  *
@@ -31,7 +33,7 @@
  * @param visibilityRequirements
  * @returns {boolean}
  */
-export default function isVisible(visibilityRequirements) {
+export function isVisible(visibilityRequirements) {
   if (!visibilityRequirements) {
     return true;
   }
@@ -239,4 +241,16 @@ function hasValidDependencies() {
   }
 
   return true;
+}
+
+export function useIsVisible(visibilityRequirements) {
+  return ExtJS.useVisiblityWithChanges(() => isVisible(visibilityRequirements));
+}
+
+export function isExtjsCapabilitiesEnabled() {
+  return ExtJS.state().getValue('nexus.extjs.capabilities.enabled');
+}
+
+export function isReactCapabilitiesEnabled() {
+  return ExtJS.state().getValue('nexus.react.capabilities.enabled');
 }

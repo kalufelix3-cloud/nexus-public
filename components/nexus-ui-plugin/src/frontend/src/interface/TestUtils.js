@@ -18,6 +18,7 @@ import {fireEvent, render, screen, waitFor, within, waitForElementToBeRemoved} f
 import userEvent from '@testing-library/user-event';
 import UIStrings from "../constants/UIStrings";
 import {pick} from 'ramda';
+import { interpret } from 'xstate';
 
 const {SETTINGS: {SAVE_BUTTON_LABEL, DISCARD_BUTTON_LABEL}} = UIStrings;
 
@@ -38,6 +39,30 @@ export default class TestUtils {
       // Intentionally left blank so the promise is never resolved for tests
     });
   }
+
+  /**
+   * Helper function to manage XState machine service lifecycle in tests.
+   * Ensures service is properly started and stopped regardless of test outcome.
+   *
+   * @param {Object} machine - The XState machine to interpret
+   * @param {Function} testFn - The test function that receives the service
+   * @returns {Promise} The result of the test function
+   *
+   * @example
+   * await TestUtils.withTestMachine(MyMachine, async (service) => {
+   *   const finalState = await waitForState(service, (state) => state.matches('loaded'));
+   *   expect(finalState.context.data).toBe(testData);
+   * });
+   */
+  static async withTestMachine(machine, testFn) {
+    const service = interpret(machine);
+    try {
+      service.start();
+      return await testFn(service);
+    } finally {
+      service.stop();
+    }
+  };
 
   /**
    * @deprecated call render directly and use the {selectors} in this class instead

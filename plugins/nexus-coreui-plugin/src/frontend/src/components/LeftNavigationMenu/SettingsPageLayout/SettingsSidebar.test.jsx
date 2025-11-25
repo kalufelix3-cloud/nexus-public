@@ -661,15 +661,69 @@ describe('SettingsSidebar', () => {
       });
 
       describe('capabilities link', () => {
-        it('renders given sufficient permissions', async () => {
+        it('renders both extjs and react links given sufficient permissions and feature flags enabled', async () => {
           givenUserLoggedIn();
           givenPermissions({ 'nexus:capabilities:read': true });
+
           renderComponent();
-          await assertLinkVisible('Capabilities', '/#admin/system/capabilities', 'System');
+          await expandMenu('System');
+          const extJsLink = screen.getAllByRole('link', { name: 'Capabilities' })[0];
+          expect(extJsLink).toBeVisible();
+          expect(extJsLink.href).toContain('/#admin/system/capabilities-extjs');
+
+          const reactLink = screen.getAllByRole('link', { name: 'Capabilities' })[1];
+          expect(reactLink).toBeVisible();
+          expect(reactLink.href).toContain('/#admin/system/capabilities');
         });
 
-        it('does not render when user does not have permissions', async () => {
+        it('does not render any link when user does not have permissions', async () => {
           givenUserLoggedIn();
+          renderComponent();
+          await assertLinkNotVisible('Capabilities', 'System');
+        });
+
+        it('does not render react link when react feature flag is disabled', async () => {
+          givenUserLoggedIn();
+          givenPermissions({ 'nexus:capabilities:read': true });
+          givenExtJSState({
+            ...getDefaultStateValues(),
+            'nexus.react.capabilities.enabled': false
+          });
+          renderComponent();
+          await expandMenu('System');
+          const links = screen.getAllByRole('link', { name: 'Capabilities' });
+          expect(links).toHaveLength(1);
+
+          const extJsLink = links[0];
+          expect(extJsLink).toBeVisible();
+          expect(extJsLink.href).toContain('/#admin/system/capabilities-extjs');
+        });
+
+        it('does not render ExtJs link when ExtJs feature flag is disabled', async () => {
+          givenUserLoggedIn();
+          givenPermissions({ 'nexus:capabilities:read': true });
+          givenExtJSState({
+            ...getDefaultStateValues(),
+            'nexus.extjs.capabilities.enabled': false
+          });
+          renderComponent();
+          await expandMenu('System');
+          const links = screen.getAllByRole('link', { name: 'Capabilities' });
+          expect(links).toHaveLength(1);
+
+          const reactLink = links[0];
+          expect(reactLink).toBeVisible();
+          expect(reactLink.href).toContain('/#admin/system/capabilities');
+        });
+
+        it('does not render any link when both ExtJs and React feature flag is disabled', async () => {
+          givenUserLoggedIn();
+          givenPermissions({ 'nexus:capabilities:read': true });
+          givenExtJSState({
+            ...getDefaultStateValues(),
+            'nexus.extjs.capabilities.enabled': false,
+            'nexus.react.capabilities.enabled': false
+          });
           renderComponent();
           await assertLinkNotVisible('Capabilities', 'System');
         });
@@ -799,6 +853,8 @@ describe('SettingsSidebar', () => {
   function getDefaultStateValues() {
     return {
       'nexus.react.welcome': true,
+      'nexus.extjs.capabilities.enabled': true,
+      'nexus.react.capabilities.enabled': true,
       usertoken: { licenseValid: false },
     };
   }

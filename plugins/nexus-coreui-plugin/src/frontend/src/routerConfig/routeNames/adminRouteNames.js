@@ -126,10 +126,6 @@ export default {
       ROOT: 'admin.system.api',
       TITLE: 'API',
     },
-    CAPABILITIES: {
-      ROOT: 'admin.system.capabilities',
-      TITLE: 'Capabilities',
-    },
     EMAILSERVER: {
       ROOT: 'admin.system.emailserver',
       TITLE: 'Email Server',

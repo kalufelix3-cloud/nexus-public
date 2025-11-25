@@ -83,7 +83,7 @@ export function NavigationLinkWithCollapsibleList({ children, text, isSelected, 
         // Inert is a fairly new standard attribute that prevents the browser from rendering the element and its children
         // This is useful for accessibility, as it prevents screen readers from reading the content when the list is collapsed
         // https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/inert
-        inert={!isExpanded ? '' : undefined}
+        inert={!isExpanded}
       >
         {children}
       </ul>

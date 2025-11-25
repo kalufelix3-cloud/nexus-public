@@ -195,6 +195,7 @@ function editComponent(current, dynamicProps, id, initialValue, onChange) {
 function simpleReadOnlyComponent(id, label, value, dynamicProps = {}) {
   label = dynamicProps?.label || label;
   value = (typeof value === 'boolean' ? (value ? 'Enabled' : 'Disabled') : value) || 'NA';
+  value = (value === 'true' && 'Enabled' || value === 'false' && 'Disabled') || value;
 
   return (
     <NxReadOnly>

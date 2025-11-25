@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import { useIsActive, useRouter, useSref } from '@uirouter/react';
-import useIsVisible from './useIsVisible';
+import { useIsVisible } from '../interface/NavigationUtils';
 
 /**
  * @param name - route sate name

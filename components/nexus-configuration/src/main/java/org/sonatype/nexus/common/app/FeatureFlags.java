@@ -282,7 +282,16 @@ public class FeatureFlags
 
   public static final String NEXUS_USER_CONFIGURATION_SOURCE_ENABLED = "nexus.user.configuration.source.enabled";
 
+  /* ExtJS Capabilities Page. Available values: true, false. Default value: false */
+  public static final String EXTJS_CAPABILITIES_ENABLED = "nexus.extjs.capabilities.enabled";
+
+  public static final String EXTJS_CAPABILITIES_NAMED_VALUE = "${nexus.extjs.capabilities.enabled:false}";
+
+  /* React Capabilities Page. Available values: true, false. Default value: true */
+  public static final String REACT_CAPABILITIES_ENABLED = "nexus.react.capabilities.enabled";
+
+  public static final String REACT_CAPABILITIES_NAMED_VALUE = "${nexus.react.capabilities.enabled:true}";
+
   /* Swift format is temporarily hidden behind the feature flag. Default value: false */
   public static final String SWIFT_FORMAT_ENABLED = "nexus.format.swift.enabled";
-
 }

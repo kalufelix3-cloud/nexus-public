@@ -14,7 +14,7 @@
 import React from 'react';
 import { useSref, useRouter } from '@uirouter/react';
 import { NxList } from '@sonatype/react-shared-components';
-import useIsVisible from '../../../router/useIsVisible';
+import { useIsVisible } from '../../../interface/NavigationUtils';
 import classNames from 'classnames';
 
 export default function DirectoryListItem({ text, description, routeName, params, className, ...props }) {

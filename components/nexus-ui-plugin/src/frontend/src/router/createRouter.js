@@ -16,7 +16,7 @@
  */
 import {UIRouterReact, hashLocationPlugin, servicesPlugin} from '@uirouter/react';
 import ExtJS from '../interface/ExtJS';
-import isVisible from '../router/isVisible';
+import {isVisible} from '../interface/NavigationUtils';
 import {showUnsavedChangesModal} from './unsavedChangesDialog';
 import {RouteNames} from "../constants/RouteNames";
 

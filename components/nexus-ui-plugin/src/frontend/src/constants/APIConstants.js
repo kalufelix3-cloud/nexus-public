@@ -86,6 +86,19 @@ export default {
         FORCE_RELEASE: 'forceRelease'
       }
     },
+    CAPABILITY: {
+      ACTION: 'capability_Capability',
+      METHODS: {
+        READ: 'read',
+        READ_TYPES: 'readTypes',
+        CREATE: 'create',
+        UPDATE: 'update',
+        UPDATE_NOTES: 'updateNotes',
+        REMOVE: 'remove',
+        ENABLE: 'enable',
+        DISABLE: 'disable',
+      },
+    },
     SMALL_PAGE_SIZE: 25,
     MIDDLE_PAGE_SIZE: 50,
     BIG_PAGE_SIZE: 300,
@@ -175,12 +188,6 @@ export default {
       ACTION: 'proui_TagList',
       METHODS: {
         READ_TAGS: 'readTags'
-      }
-    },
-    CAPABILITY: {
-      ACTION: 'capability_Capability',
-      METHODS: {
-        READ: 'read',
       },
     },
   },

@@ -15,6 +15,7 @@ import UIStrings from '../../../constants/UIStrings';
 import { DirectoryList, DirectoryPage } from '@sonatype/nexus-ui-plugin';
 import React from 'react';
 import { ROUTE_NAMES } from '../../../routerConfig/routeNames/routeNames';
+import { isExtjsCapabilitiesEnabled, isReactCapabilitiesEnabled } from '@sonatype/nexus-ui-plugin';
 
 export default function AdminSystemDirectoryPage() {
   const ADMIN = ROUTE_NAMES.ADMIN;
@@ -26,20 +27,32 @@ export default function AdminSystemDirectoryPage() {
           description={UIStrings.ADMIN_SYSTEM_DIRECTORY.MENU.description}
       >
         <DirectoryList>
-         <DirectoryList.DirectoryListItem
+          <DirectoryList.DirectoryListItem
               data-analytics-id="nxrm-admin-system-directory-api-lnk"
               text={UIStrings.API.MENU.text}
               description={UIStrings.API.MENU.description}
               routeName={ADMIN.SYSTEM.API.ROOT}
           />
 
-          <DirectoryList.DirectoryListItem
-              data-analytics-id="nxrm-admin-system-directory-capabilities-lnk"
-              text={UIStrings.CAPABILITIES.MENU.text}
-              description={UIStrings.CAPABILITIES.MENU.description}
-              routeName={ADMIN.SYSTEM.CAPABILITIES.ROOT}
-              params={{ id: null }}
-          />
+          {isExtjsCapabilitiesEnabled() &&
+            <DirectoryList.DirectoryListItem
+                data-analytics-id="nxrm-admin-system-directory-capabilities-lnk"
+                text={UIStrings.CAPABILITIES.MENU.text}
+                description={UIStrings.CAPABILITIES.MENU.description}
+                routeName={ADMIN.SYSTEM.CAPABILITIES_EXTJS.ROOT}
+                params={{ id: null }}
+            />
+          }
+
+          {isReactCapabilitiesEnabled() &&
+            <DirectoryList.DirectoryListItem
+                data-analytics-id="nxrm-admin-system-directory-capabilities-lnk"
+                text={UIStrings.CAPABILITIES.MENU.text}
+                description={UIStrings.CAPABILITIES.MENU.description}
+                routeName={ADMIN.SYSTEM.CAPABILITIES.LIST}
+                params={{ id: null }}
+            />
+          }
 
           <DirectoryList.DirectoryListItem
               data-analytics-id="nxrm-admin-system-directory-email-server-lnk"

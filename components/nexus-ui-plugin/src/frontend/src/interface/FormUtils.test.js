@@ -396,7 +396,39 @@ describe('FormUtils', () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith('update event must have a name and value or a data object', event);
       consoleErrorSpy.mockRestore();
     });
-  })
+  });
+
+  describe('checkboxProps', () => {
+    it('returns isChecked as boolean true for true string value', () => {
+      const props = FormUtils.checkboxProps('test', makeContext({data: {test: 'true'}}));
+      expect(props.isChecked).toBe(true);
+    });
+
+    it('returns isChecked as boolean false for false string value', () => {
+      const props = FormUtils.checkboxProps('test', makeContext({data: {test: 'false'}}));
+      expect(props.isChecked).toBe(false);
+    });
+
+    it('returns isChecked as boolean true for boolean true value', () => {
+      const props = FormUtils.checkboxProps('test', makeContext({data: {test: true}}));
+      expect(props.isChecked).toBe(true);
+    });
+
+    it('returns isChecked as boolean false for boolean false value', () => {
+      const props = FormUtils.checkboxProps('test', makeContext({data: {test: false}}));
+      expect(props.isChecked).toBe(false);
+    });
+
+    it('returns isChecked as defaultValue when value is undefined', () => {
+      const props = FormUtils.checkboxProps('test', makeContext({data: {}}), true);
+      expect(props.isChecked).toBe(true);
+    });
+
+    it('returns isChecked as false when value is undefined and no defaultValue', () => {
+      const props = FormUtils.checkboxProps('test', makeContext({data: {}}));
+      expect(props.isChecked).toBe(false);
+    });
+  });
 
   describe('machine', () => {
     it('When delete service is finish successfully, the dirty flag should be removed', (done) => {
@@ -426,6 +458,90 @@ describe('FormUtils', () => {
       const fetchService = interpret(machineMock).onTransition((state) => {
         if (state.matches('ended')) {
           expect(global.dirty).toEqual([]);
+          done();
+        }
+      });
+
+      fetchService.start();
+      fetchService.send({ type: 'CONFIRM_DELETE' });
+    });
+
+    it('When delete service fails, deleteError should be set in context', (done) => {
+      const machineId = 'mock';
+      const deleteErrorMessage = 'Failed to delete resource';
+
+      const machineMock = FormUtils.buildFormMachine({id: machineId, initial: 'loaded'})
+        .withConfig({
+          actions: {
+            validate: () => ({}),
+          },
+          services: {
+            confirmDelete:  () => Promise.resolve('success'),
+            delete: () => Promise.reject(new Error(deleteErrorMessage))
+          },
+          guards: {
+            canDelete: () => true
+          }
+        });
+
+      const fetchService = interpret(machineMock).onTransition((state) => {
+        if (state.matches('loaded') && state.context.deleteError) {
+          // After delete fails, we should be back in loaded state with error
+          expect(state.context.deleteError).toBeDefined();
+          expect(state.context.deleteError).toContain(deleteErrorMessage);
+          fetchService.stop();
+          done();
+        }
+      });
+
+      fetchService.start();
+      fetchService.send({ type: 'CONFIRM_DELETE' });
+    });
+
+    it('When delete is retried after a failure, deleteError should be cleared', (done) => {
+      const machineId = 'mock';
+      const deleteErrorMessage = 'Failed to delete resource';
+      let deleteAttemptCount = 0;
+      let hasSeenError = false;
+
+      const machineMock = FormUtils.buildFormMachine({id: machineId, initial: 'loaded'})
+        .withConfig({
+          actions: {
+            onDeleteSuccess: () => ({}),
+            validate: () => ({}),
+          },
+          services: {
+            confirmDelete:  () => Promise.resolve('success'),
+            delete: () => {
+              deleteAttemptCount++;
+              if (deleteAttemptCount === 1) {
+                // First attempt fails
+                return Promise.reject(new Error(deleteErrorMessage));
+              }
+              // Second attempt succeeds
+              return Promise.resolve('success');
+            }
+          },
+          guards: {
+            canDelete: () => true
+          }
+        });
+
+      const fetchService = interpret(machineMock).onTransition((state) => {
+        if (state.matches('loaded') && state.context.deleteError && !hasSeenError) {
+          // After first delete fails, we should be back in loaded state with error
+          hasSeenError = true;
+          expect(state.context.deleteError).toBeDefined();
+          expect(state.context.deleteError).toContain(deleteErrorMessage);
+          // Retry the delete
+          fetchService.send({ type: 'CONFIRM_DELETE' });
+        } else if (state.matches('delete') && hasSeenError) {
+          // When entering delete state for retry, deleteError should be cleared
+          expect(state.context.deleteError).toBeNull();
+        } else if (state.matches('ended')) {
+          // After successful delete, deleteError should still be null
+          expect(state.context.deleteError).toBeNull();
+          fetchService.stop();
           done();
         }
       });
