@@ -96,7 +96,7 @@ public class ApiKeysReEncryptServiceImplTest
         .thenReturn(configuration);
     when(taskScheduler.getTaskById(ReEncryptPrincipalsTaskDescriptor.TYPE_ID)).thenReturn(null).thenReturn(taskInfo);
 
-    underTest.submitReEncryption("algorithmToBeUsed", null);
+    underTest.submitReEncryption("algorithmToBeUsed", null, null);
 
     verify(taskScheduler).submit(taskConfigurationCaptor.capture());
     TaskConfiguration submittedTask = taskConfigurationCaptor.getValue();
@@ -115,7 +115,7 @@ public class ApiKeysReEncryptServiceImplTest
         .thenReturn(configuration);
     when(taskScheduler.getTaskById(ReEncryptPrincipalsTaskDescriptor.TYPE_ID)).thenReturn(null).thenReturn(taskInfo);
 
-    underTest.submitReEncryption(null, null);
+    underTest.submitReEncryption(null, null, null);
     verify(taskScheduler).submit(taskConfigurationCaptor.capture());
 
     TaskConfiguration submittedTask = taskConfigurationCaptor.getValue();
@@ -136,7 +136,7 @@ public class ApiKeysReEncryptServiceImplTest
         .thenReturn(configuration);
     when(taskScheduler.getTaskById(ReEncryptPrincipalsTaskDescriptor.TYPE_ID)).thenReturn(null).thenReturn(taskInfo);
 
-    underTest.submitReEncryption("algorithmToBeUsed", notifyEmail);
+    underTest.submitReEncryption("algorithmToBeUsed", null, notifyEmail);
     verify(taskScheduler).submit(taskConfigurationCaptor.capture());
 
     TaskConfiguration submittedTask = taskConfigurationCaptor.getValue();
@@ -148,12 +148,12 @@ public class ApiKeysReEncryptServiceImplTest
   @Test
   public void testSubmitReEncryption_OnUnsupportedVersion() {
     when(databaseCheck.isAtLeast(anyString())).thenReturn(false);
-    assertThrows(ReEncryptionNotSupportedException.class, () -> underTest.submitReEncryption("algorithmToBeUsed", null));
+    assertThrows(ReEncryptionNotSupportedException.class, () -> underTest.submitReEncryption("algorithmToBeUsed",  null,null));
   }
 
   @Test
   public void testSubmitReEncryption_TaskAlreadySubmitted() {
     when(taskScheduler.getTaskByTypeId(ReEncryptPrincipalsTaskDescriptor.TYPE_ID)).thenReturn(taskInfo);
-    assertThrows(IllegalStateException.class, () -> underTest.submitReEncryption(null, null));
+    assertThrows(IllegalStateException.class, () -> underTest.submitReEncryption(null,  null,null));
   }
 }

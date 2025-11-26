@@ -36,6 +36,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -83,7 +84,7 @@ public class ReEncryptPrincipalsTaskTest
   public void setup() throws Exception {
     underTest =
         spy(new ReEncryptPrincipalsTask(sessionSupplier, encryptionKeySource, pbeCipherFactory, "password", "salt",
-            "iv", "algorithm"));
+            "iv", "PBKDF2WithHmacSHA256", null));
     doReturn(setupTaskConfig()).when(underTest).taskConfiguration();
 
     Connection mockConnection = mock(Connection.class);
@@ -98,7 +99,7 @@ public class ReEncryptPrincipalsTaskTest
     when(mockConnection.prepareStatement(UPDATE)).thenReturn(mockPreparedStatementUpdate);
 
     mockPbeCipherToEncrypt = mock(PbeCipher.class);
-    when(pbeCipherFactory.create(any(), any(), any())).thenReturn(mockPbeCipherToEncrypt);
+    when(pbeCipherFactory.create(any(), any(), any(), any())).thenReturn(mockPbeCipherToEncrypt);
     when(mockPbeCipherToEncrypt.encrypt(any()))
         .thenReturn(EncryptedSecret.parse("$test2$kv1=v1,kv2=v2$test-salt2$dGVzdA=="));
   }
@@ -113,7 +114,6 @@ public class ReEncryptPrincipalsTaskTest
 
     assertThat(result).isEqualTo(3);
     verify(sessionSupplier, times(1)).openConnection(anyString());
-    verify(pbeCipherFactory, times(1)).create(any(), eq("salt"), eq("iv"));
     verify(pbeCipherFactory, times(3)).create(any(), any());
     verify(mockPreparedStatementSelect, times(2)).executeQuery();
     verify(mockPbeCipherToDecrypt, times(3)).decrypt();
@@ -137,10 +137,8 @@ public class ReEncryptPrincipalsTaskTest
 
     assertThat(result).isEqualTo(3);
     verify(sessionSupplier, times(1)).openConnection(anyString());
-    verify(pbeCipherFactory, times(1)).create(keyToBeUsed, "test-salt", "test-iv");
-    verify(pbeCipherFactory, times(1)).create(any(), eq("$old-algorithm$iv=6976$c2FsdA==$bmV3LXByaW5jaXBhbHMx"));
-    verify(pbeCipherFactory, times(1)).create(any(), eq("$old-algorithm$iv=6976$c2FsdA==$bmV3LXByaW5jaXBhbHMy"));
-    verify(pbeCipherFactory, times(1)).create(any(), eq("$old-algorithm$iv=6976$c2FsdA==$bmV3LXByaW5jaXBhbHMz"));
+    verify(pbeCipherFactory, times(1)).create(keyToBeUsed, "test-salt", "test-iv", 10000);
+    verify(pbeCipherFactory, times(3)).create(any(SecretEncryptionKey.class), anyString());
 
     verify(mockPreparedStatementSelect, times(2)).executeQuery();
     verify(mockPbeCipherToDecrypt, times(3)).decrypt();
@@ -166,13 +164,8 @@ public class ReEncryptPrincipalsTaskTest
 
     assertThat(result).isEqualTo(3);
     verify(sessionSupplier, times(1)).openConnection(anyString());
-    verify(pbeCipherFactory, times(1)).create(keyToBeUsed, "test-salt", "test-iv");
-    verify(pbeCipherFactory, times(1)).create(any(),
-        eq("$old-algorithm$iv=6f6c642d6976$b2xkLXNhbHQ=$bmV3LXByaW5jaXBhbHMx"));
-    verify(pbeCipherFactory, times(1)).create(any(),
-        eq("$old-algorithm$iv=6f6c642d6976$b2xkLXNhbHQ=$bmV3LXByaW5jaXBhbHMy"));
-    verify(pbeCipherFactory, times(1)).create(any(),
-        eq("$old-algorithm$iv=6f6c642d6976$b2xkLXNhbHQ=$bmV3LXByaW5jaXBhbHMz"));
+    verify(pbeCipherFactory, times(1)).create(keyToBeUsed, "test-salt", "test-iv", 10000);
+    verify(pbeCipherFactory, times(3)).create(eq(keyToBeUsed), anyString());
 
     verify(mockPreparedStatementSelect, times(2)).executeQuery();
     verify(mockPbeCipherToDecrypt, times(3)).decrypt();
@@ -195,12 +188,96 @@ public class ReEncryptPrincipalsTaskTest
 
     assertThat(result).isEqualTo(2);
     verify(sessionSupplier, times(1)).openConnection(anyString());
-    verify(pbeCipherFactory, times(1)).create(any(), any(), any());
+    verify(pbeCipherFactory, times(1)).create(any(), any(), any(), any());
     verify(pbeCipherFactory, times(3)).create(any(), any());
     verify(mockPreparedStatementSelect, times(2)).executeQuery();
     verify(mockPbeCipherToDecrypt, times(3)).decrypt();
     verify(mockPbeCipherToEncrypt, times(2)).encrypt(any());
     verify(mockPreparedStatementUpdate, times(2)).executeUpdate();
+  }
+
+  @Test
+  public void testExecuteWithCustomIterationsFromTaskConfiguration() throws Exception {
+    underTest = spy(new ReEncryptPrincipalsTask(sessionSupplier, encryptionKeySource, pbeCipherFactory,
+        "password", "salt", "iv", "PBKDF2WithHmacSHA256", 15000));
+
+    TaskConfiguration customTaskConfig = new TaskConfiguration();
+    customTaskConfig.setId(UUID.randomUUID().toString());
+    customTaskConfig.setTypeId(ReEncryptTaskDescriptor.TYPE_ID);
+    customTaskConfig.setString("algorithmForDecryption", "PBKDF2WithHmacSHA1");
+    customTaskConfig.setInteger("iterationsForDecryption", 5000);
+    doReturn(customTaskConfig).when(underTest).taskConfiguration();
+
+    Connection mockConnection = mock(Connection.class);
+    when(sessionSupplier.openConnection("nexus")).thenReturn(mockConnection);
+    when(mockConnection.prepareStatement(SELECT)).thenReturn(mockPreparedStatementSelect);
+    when(mockConnection.prepareStatement(UPDATE)).thenReturn(mockPreparedStatementUpdate);
+
+    PbeCipher mockPbeCipherToDecrypt = mock(PbeCipher.class);
+    when(pbeCipherFactory.create(any(), any())).thenReturn(mockPbeCipherToDecrypt);
+    when(mockPbeCipherToDecrypt.decrypt()).thenReturn("decrypted".getBytes());
+
+    Object result = underTest.execute();
+
+    assertThat(result).isEqualTo(3);
+    verify(sessionSupplier, times(1)).openConnection(anyString());
+    verify(pbeCipherFactory, times(1)).create(any(), eq("salt"), eq("iv"), eq(15000));
+    verify(mockPreparedStatementSelect, times(2)).executeQuery();
+    verify(mockPbeCipherToDecrypt, times(3)).decrypt();
+    verify(mockPbeCipherToEncrypt, times(3)).encrypt(any());
+    verify(mockPreparedStatementUpdate, times(3)).executeUpdate();
+  }
+
+  @Test
+  public void testExecuteWithIterationsFromNexusProperties() throws Exception {
+    underTest = spy(new ReEncryptPrincipalsTask(sessionSupplier, encryptionKeySource, pbeCipherFactory,
+        "password", "salt", "iv", "PBKDF2WithHmacSHA256", 210000));
+
+    TaskConfiguration customTaskConfig = new TaskConfiguration();
+    customTaskConfig.setId(UUID.randomUUID().toString());
+    customTaskConfig.setTypeId(ReEncryptTaskDescriptor.TYPE_ID);
+    customTaskConfig.setString("algorithmForDecryption", "PBKDF2WithHmacSHA1");
+    doReturn(customTaskConfig).when(underTest).taskConfiguration();
+
+    Connection mockConnection = mock(Connection.class);
+    when(sessionSupplier.openConnection("nexus")).thenReturn(mockConnection);
+    when(mockConnection.prepareStatement(SELECT)).thenReturn(mockPreparedStatementSelect);
+    when(mockConnection.prepareStatement(UPDATE)).thenReturn(mockPreparedStatementUpdate);
+
+    PbeCipher mockPbeCipherToDecrypt = mock(PbeCipher.class);
+    when(pbeCipherFactory.create(any(), any())).thenReturn(mockPbeCipherToDecrypt);
+    when(mockPbeCipherToDecrypt.decrypt()).thenReturn("decrypted".getBytes());
+
+    Object result = underTest.execute();
+
+    assertThat(result).isEqualTo(3);
+    verify(pbeCipherFactory, times(1)).create(any(), eq("salt"), eq("iv"), eq(210000));
+  }
+
+  @Test
+  public void testExecuteWithoutConfiguredIterations_UsesDefaults() throws Exception {
+    underTest = spy(new ReEncryptPrincipalsTask(sessionSupplier, encryptionKeySource, pbeCipherFactory,
+        "password", "salt", "iv", "PBKDF2WithHmacSHA256", null));
+
+    TaskConfiguration customTaskConfig = new TaskConfiguration();
+    customTaskConfig.setId(UUID.randomUUID().toString());
+    customTaskConfig.setTypeId(ReEncryptTaskDescriptor.TYPE_ID);
+    customTaskConfig.setString("algorithmForDecryption", "PBKDF2WithHmacSHA1");
+    doReturn(customTaskConfig).when(underTest).taskConfiguration();
+
+    Connection mockConnection = mock(Connection.class);
+    when(sessionSupplier.openConnection("nexus")).thenReturn(mockConnection);
+    when(mockConnection.prepareStatement(SELECT)).thenReturn(mockPreparedStatementSelect);
+    when(mockConnection.prepareStatement(UPDATE)).thenReturn(mockPreparedStatementUpdate);
+
+    PbeCipher mockPbeCipherToDecrypt = mock(PbeCipher.class);
+    when(pbeCipherFactory.create(any(), any())).thenReturn(mockPbeCipherToDecrypt);
+    when(mockPbeCipherToDecrypt.decrypt()).thenReturn("decrypted".getBytes());
+
+    Object result = underTest.execute();
+
+    assertThat(result).isEqualTo(3);
+    verify(pbeCipherFactory, times(1)).create(any(), eq("salt"), eq("iv"), eq(10000));
   }
 
   private static @NotNull ResultSet getMockResultSet() throws SQLException {
@@ -217,11 +294,41 @@ public class ReEncryptPrincipalsTaskTest
     return mockResultSet;
   }
 
+  @Test
+  public void testExecuteWithUnsupportedAlgorithmThrowsException() throws Exception {
+    underTest = spy(new ReEncryptPrincipalsTask(sessionSupplier, encryptionKeySource, pbeCipherFactory,
+        "password", "salt", "iv", "PBKDF2WithHmacSHA256", 15000));
+
+    TaskConfiguration customTaskConfig = new TaskConfiguration();
+    customTaskConfig.setId(UUID.randomUUID().toString());
+    customTaskConfig.setTypeId(ReEncryptTaskDescriptor.TYPE_ID);
+    // Set an unsupported algorithm
+    customTaskConfig.setString("algorithmForDecryption", "UnsupportedAlgorithm");
+    doReturn(customTaskConfig).when(underTest).taskConfiguration();
+
+    Connection mockConnection = mock(Connection.class);
+    when(sessionSupplier.openConnection("nexus")).thenReturn(mockConnection);
+    when(mockConnection.prepareStatement(SELECT)).thenReturn(mockPreparedStatementSelect);
+    when(mockConnection.prepareStatement(UPDATE)).thenReturn(mockPreparedStatementUpdate);
+
+    // Execute should throw IllegalArgumentException
+    try {
+      underTest.execute();
+      fail("Expected IllegalArgumentException to be thrown");
+    }
+    catch (IllegalArgumentException e) {
+      assertThat(e.getMessage()).contains("Unsupported algorithm: 'UnsupportedAlgorithm'");
+      assertThat(e.getMessage()).contains("Supported algorithms are:");
+      assertThat(e.getMessage()).contains("PBKDF2WithHmacSHA1");
+      assertThat(e.getMessage()).contains("PBKDF2WithHmacSHA256");
+    }
+  }
+
   private static TaskConfiguration setupTaskConfig() {
     TaskConfiguration taskConfiguration = new TaskConfiguration();
     taskConfiguration.setId(UUID.randomUUID().toString());
     taskConfiguration.setTypeId(ReEncryptTaskDescriptor.TYPE_ID);
-    taskConfiguration.setString("algorithmForDecryption", "old-algorithm");
+    taskConfiguration.setString("algorithmForDecryption", "PBKDF2WithHmacSHA1");
     return taskConfiguration;
   }
 }

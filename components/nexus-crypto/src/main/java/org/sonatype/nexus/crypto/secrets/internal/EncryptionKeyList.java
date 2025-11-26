@@ -105,6 +105,8 @@ public class EncryptionKeyList
 
     private String iv;
 
+    private Integer keyIterations;
+
     public FixedEncryption() {
     }
 
@@ -112,6 +114,13 @@ public class EncryptionKeyList
       this.keyId = keyId;
       this.salt = salt;
       this.iv = iv;
+    }
+
+    public FixedEncryption(final String keyId, final String salt, final String iv, final Integer keyIterations) {
+      this.keyId = keyId;
+      this.salt = salt;
+      this.iv = iv;
+      this.keyIterations = keyIterations;
     }
 
     public String getKeyId() {
@@ -136,6 +145,14 @@ public class EncryptionKeyList
 
     public void setIv(final String iv) {
       this.iv = iv;
+    }
+
+    public Integer getKeyIterations() {
+      return keyIterations;
+    }
+
+    public void setKeyIterations(final Integer keyIterations) {
+      this.keyIterations = keyIterations;
     }
   }
 }

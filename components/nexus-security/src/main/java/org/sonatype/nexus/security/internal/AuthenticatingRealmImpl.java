@@ -19,6 +19,7 @@ import jakarta.inject.Singleton;
 
 import org.sonatype.nexus.common.Description;
 import org.sonatype.nexus.common.app.FeatureFlags;
+import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
 import org.sonatype.nexus.security.NexusSimpleAuthenticationInfo;
 import org.sonatype.nexus.security.RealmCaseMapping;
 import org.sonatype.nexus.security.authc.NexusAuthenticationException;
@@ -46,6 +47,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import static org.sonatype.nexus.crypto.internal.EncryptionHelper.KEY_ITERATION_PHC;
 import static org.sonatype.nexus.security.internal.DefaultRealmConstants.DEFAULT_REALM_NAME;
 import static org.sonatype.nexus.security.internal.DefaultRealmConstants.DESCRIPTION;
 
@@ -74,16 +76,20 @@ public class AuthenticatingRealmImpl
 
   private final String nexusPasswordAlgorithm;
 
+  private final Integer configuredIterations;
+
   @Inject
   public AuthenticatingRealmImpl(
       final SecurityConfigurationManager configuration,
       final PasswordService passwordService,
       @Value("${nexus.orient.enabled:false}") final boolean orient,
-      @Value(FeatureFlags.NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED_VALUE) final String nexusPasswordAlgorithm)
+      @Value(FeatureFlags.NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED_VALUE) final String nexusPasswordAlgorithm,
+      @Value(FeatureFlags.NEXUS_SECURITY_PASSWORD_ITERATIONS_NAMED_VALUE) final Integer configuredIterations)
   {
     this.configuration = configuration;
     this.passwordService = passwordService;
     this.nexusPasswordAlgorithm = nexusPasswordAlgorithm;
+    this.configuredIterations = configuredIterations;
 
     PasswordMatcher passwordMatcher = new PasswordMatcher();
     passwordMatcher.setPasswordService(this.passwordService);
@@ -110,9 +116,10 @@ public class AuthenticatingRealmImpl
     }
 
     if (user.isActive()) {
-      // If the user has a password hashed with a different algorithm as configured and valid credentials are provided,
-      // transparently re-hash the password using the configured algorithm.
-      if (!isUsingConfiguredAlgorithm(user.getPassword()) && isValidCredentials(upToken, user)) {
+      // Transparently re-hash the password when:
+      // 1. Password algorithm doesn't match the configured algorithm (nexus.security.password.algorithm), OR
+      // 2. Password iterations don't match the configured iterations (nexus.security.password.iteration)
+      if (!isUsingConfiguredAlgorithmAndIterations(user.getPassword()) && isValidCredentials(upToken, user)) {
         reHashPassword(user, new String(upToken.getPassword()));
       }
 
@@ -127,8 +134,61 @@ public class AuthenticatingRealmImpl
     }
   }
 
-  private boolean isUsingConfiguredAlgorithm(final String password) {
-    return password != null && password.startsWith("$" + this.nexusPasswordAlgorithm);
+  /**
+   * Checks if the password hash uses both the configured algorithm and iterations.
+   *
+   * @param password the password hash to check (in PHC string format or legacy format)
+   * @return true if the password uses the configured algorithm AND iterations, false otherwise
+   */
+  private boolean isUsingConfiguredAlgorithmAndIterations(final String password) {
+    if (password == null) {
+      return false;
+    }
+
+    boolean isUsingConfiguredAlgorithm = password.startsWith("$" + this.nexusPasswordAlgorithm);
+    boolean isUsingConfiguredIterations = isUsingConfiguredOrDefaultIterations(password);
+
+    return isUsingConfiguredAlgorithm && isUsingConfiguredIterations;
+  }
+
+  /**
+   * Checks if the password hash uses the configured iterations, or if no specific iterations are required.
+   * Returns true in the following cases:
+   * - No specific iterations configured (nexus.security.password.iteration not set)
+   * - Password hash contains iterations that match the configured iterations
+   * - Password hash is in legacy/unparseable format (backwards compatibility)
+   *
+   * @param password the password hash to check (in PHC string format or legacy format)
+   * @return true if the password uses the configured iterations or no specific iterations are required
+   */
+  private boolean isUsingConfiguredOrDefaultIterations(final String password) {
+    // If no specific iterations configured, accept any iterations (early return for performance)
+    if (this.configuredIterations == null) {
+      return true;
+    }
+
+    try {
+      EncryptedSecret encryptedSecret = EncryptedSecret.parse(password);
+      String iterationsStr = encryptedSecret.getAttributes().get(KEY_ITERATION_PHC);
+
+      if (iterationsStr == null) {
+        return false;
+      }
+
+      try {
+        int storedIterations = Integer.parseInt(iterationsStr);
+        return storedIterations == this.configuredIterations;
+      }
+      catch (NumberFormatException e) {
+        logger.debug("Could not parse iterations from password hash");
+        return false;
+      }
+    }
+    catch (Exception e) {
+      logger.debug("Could not parse password hash", e);
+      // If error parsing, it's an old format - assume it's acceptable for backwards compatibility
+      return true;
+    }
   }
 
   /**

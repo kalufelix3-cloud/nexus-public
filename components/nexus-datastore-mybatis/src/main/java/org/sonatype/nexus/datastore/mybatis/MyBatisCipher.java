@@ -63,6 +63,7 @@ final class MyBatisCipher
     String saltValue = salt;
     String ivValue = iv;
     SecretEncryptionKey keyForEncryption = new SecretEncryptionKey(null, password);
+    Integer iterationsForEncryption = null;
 
     Optional<FixedEncryption> fixedEncryptionConfiguration = encryptionKeySource.getFixedEncryption();
     if (fixedEncryptionConfiguration.isPresent()) {
@@ -73,7 +74,8 @@ final class MyBatisCipher
       saltValue = encryptionConfig.getSalt() != null ? encryptionConfig.getSalt() : saltValue;
       ivValue = encryptionConfig.getIv() != null ? encryptionConfig.getIv() : ivValue;
     }
-    this.pbeCipher = checkNotNull(pbeCipherFactory).create(keyForEncryption, saltValue, ivValue);
+    this.pbeCipher =
+        checkNotNull(pbeCipherFactory).create(keyForEncryption, saltValue, ivValue, iterationsForEncryption);
   }
 
   /**
@@ -83,7 +85,7 @@ final class MyBatisCipher
   MyBatisCipher() {
     this("changeme", "changeme", "0123456789ABCDEF",
         new PbeCipherFactoryImpl(new CryptoHelperImpl(false),
-            new HashingHandlerFactoryImpl(new CryptoHelperImpl(false)), "PBKDF2WithHmacSHA1"),
+            new HashingHandlerFactoryImpl(new CryptoHelperImpl(false)), "PBKDF2WithHmacSHA1", null),
         new EncryptionKeySourceImpl(null, null));
   }
 

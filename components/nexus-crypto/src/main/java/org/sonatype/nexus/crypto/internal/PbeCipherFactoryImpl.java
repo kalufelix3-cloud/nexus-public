@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE;
+import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_SECRETS_ITERATIONS_NAMED_VALUE;
 import static org.sonatype.nexus.crypto.internal.EncryptionHelper.KEY_ITERATION_PHC;
 import static org.sonatype.nexus.crypto.internal.EncryptionHelper.KEY_LEN_PHC;
 import static org.sonatype.nexus.crypto.internal.EncryptionHelper.fromBase64;
@@ -56,20 +57,24 @@ public class PbeCipherFactoryImpl
 
   private final String nexusSecretsAlgorithm;
 
+  private final Integer configuredSecretsIterations;
+
   @Inject
   public PbeCipherFactoryImpl(
       final CryptoHelper cryptoHelper,
       final HashingHandlerFactory hashingHandlerFactory,
-      final @Value(NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE) String nexusSecretsAlgorithm)
+      final @Value(NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE) String nexusSecretsAlgorithm,
+      final @Value(NEXUS_SECURITY_SECRETS_ITERATIONS_NAMED_VALUE) Integer configuredSecretsIterations)
   {
     this.cryptoHelper = checkNotNull(cryptoHelper);
     this.hashingHandlerFactory = checkNotNull(hashingHandlerFactory);
     this.nexusSecretsAlgorithm = nexusSecretsAlgorithm;
+    this.configuredSecretsIterations = configuredSecretsIterations;
   }
 
   @Override
   public PbeCipher create(final SecretEncryptionKey secretEncryptionKey) throws CipherException {
-    return doCreate(secretEncryptionKey, null, null, null);
+    return doCreate(secretEncryptionKey, null, null, null, null);
   }
 
   @Override
@@ -77,28 +82,31 @@ public class PbeCipherFactoryImpl
       final SecretEncryptionKey secretEncryptionKey,
       final String encryptedSecret) throws CipherException
   {
-    return doCreate(secretEncryptionKey, encryptedSecret, null, null);
+    return doCreate(secretEncryptionKey, encryptedSecret, null, null, null);
   }
 
   @Override
   public PbeCipher create(
       final SecretEncryptionKey secretEncryptionKey,
       final String salt,
-      final String iv) throws CipherException
+      final String iv,
+      final Integer iterations) throws CipherException
   {
-    return doCreate(secretEncryptionKey, null, salt, iv);
+    return doCreate(secretEncryptionKey, null, salt, iv, iterations);
   }
 
   private PbeCipher doCreate(
       final SecretEncryptionKey secretEncryptionKey,
       final String encryptedSecret,
       final String salt,
-      final String iv)
+      final String iv,
+      final Integer iterations)
   {
     checkNotNull(secretEncryptionKey);
     EncryptedSecret storedEncryptedSecret = null;
     String algorithm = nexusSecretsAlgorithm;
     boolean isDefaultCipher = true;
+    Integer iterationsToBeUsed = iterations;
 
     byte[] saltToBeUsed = salt != null ? salt.getBytes() : null;
 
@@ -107,9 +115,28 @@ public class PbeCipherFactoryImpl
       algorithm = getAlgorithm(storedEncryptedSecret);
       isDefaultCipher = nexusSecretsAlgorithm.equals(algorithm);
       saltToBeUsed = fromBase64(storedEncryptedSecret.getSalt());
+
+      if (iterationsToBeUsed == null) {
+        String iterationsStr = storedEncryptedSecret.getAttributes().get(KEY_ITERATION_PHC);
+        if (iterationsStr != null) {
+          try {
+            iterationsToBeUsed = Integer.parseInt(iterationsStr);
+            isDefaultCipher = isDefaultCipher && (configuredSecretsIterations == null
+                || configuredSecretsIterations.equals(iterationsToBeUsed));
+          }
+          catch (NumberFormatException e) {
+          }
+        }
+
+      }
     }
 
-    HashingHandler hashingHandler = hashingHandlerFactory.create(algorithm, saltToBeUsed);
+    // Use configured iterations from nexus.properties if no explicit iterations provided
+    if (iterationsToBeUsed == null && configuredSecretsIterations != null) {
+      iterationsToBeUsed = configuredSecretsIterations;
+    }
+
+    HashingHandler hashingHandler = hashingHandlerFactory.create(algorithm, saltToBeUsed, iterationsToBeUsed);
 
     return new PbeCipherImpl(cryptoHelper, hashingHandler, secretEncryptionKey, storedEncryptedSecret, isDefaultCipher,
         iv);

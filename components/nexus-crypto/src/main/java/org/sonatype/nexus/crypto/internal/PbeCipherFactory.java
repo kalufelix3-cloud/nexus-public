@@ -42,6 +42,10 @@ public interface PbeCipherFactory
   // Create a PBE cipher using the specified algorithm from encryptedSecret, needed for decryption and verify
   PbeCipher create(SecretEncryptionKey secretEncryptionKey, String encryptedSecret) throws CipherException;
 
-  // create a PBE cipher using an algorithm from NEXUS_SECRETS_ALGORITHM property, salt, and IV
-  PbeCipher create(SecretEncryptionKey secretEncryptionKey, String salt, String iv) throws CipherException;
+  // create a PBE cipher using an algorithm from NEXUS_SECRETS_ALGORITHM property, salt, IV and iterations
+  PbeCipher create(
+      SecretEncryptionKey secretEncryptionKey,
+      String salt,
+      String iv,
+      Integer iterations) throws CipherException;
 }

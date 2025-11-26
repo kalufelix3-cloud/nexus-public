@@ -54,9 +54,11 @@ public abstract class ApiKeysEncryptionApiResource
   @RequiresPermissions("nexus:*")
   public Response reEncrypt(@Nullable final ApiKeysReEncryptionRequestApiXO request) {
     String algorithmForDecryption = request != null ? request.getAlgorithmForDecryption() : null;
+    Integer iterationsForDecryption = request != null ? request.getIterationsForDecryption() : null;
     String notifyEmail = request != null ? request.getNotifyEmail() : null;
     try {
-      String taskId = apiKeysReEncryptService.submitReEncryption(algorithmForDecryption, notifyEmail);
+      String taskId =
+          apiKeysReEncryptService.submitReEncryption(algorithmForDecryption, iterationsForDecryption, notifyEmail);
       Map<String, Object> response = ImmutableMap.of("status", Status.ACCEPTED.getStatusCode(), "message",
           "Task submitted. ID: " + taskId);
       return Response

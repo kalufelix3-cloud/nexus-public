@@ -24,6 +24,8 @@ public final class EncryptionHelper
 
   public static final String KEY_LEN_PHC = "key_len";
 
+  public static final String IV = "iv";
+
   public static String toBase64(final byte[] value) {
     return Base64Variants.getDefaultVariant().encode(value);
   }

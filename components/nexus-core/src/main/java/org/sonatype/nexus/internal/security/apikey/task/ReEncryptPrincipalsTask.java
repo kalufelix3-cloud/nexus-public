@@ -16,6 +16,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -42,8 +43,15 @@ import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE;
+import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_SECRETS_ITERATIONS_NAMED_VALUE;
+import static org.sonatype.nexus.crypto.internal.EncryptionHelper.IV;
+import static org.sonatype.nexus.crypto.internal.EncryptionHelper.KEY_ITERATION_PHC;
 import static org.sonatype.nexus.crypto.internal.EncryptionHelper.fromBase64;
 import static org.sonatype.nexus.crypto.internal.EncryptionHelper.toBase64;
+import static org.sonatype.nexus.crypto.internal.HashingHandlerFactoryImpl.DEFAULT_ITERATIONS_SHA1;
+import static org.sonatype.nexus.crypto.internal.HashingHandlerFactoryImpl.DEFAULT_ITERATIONS_SHA256;
+import static org.sonatype.nexus.crypto.internal.HashingHandlerFactoryImpl.KEY_FACTORY_ALGORITHM_SHA1;
+import static org.sonatype.nexus.crypto.internal.HashingHandlerFactoryImpl.KEY_FACTORY_ALGORITHM_SHA256;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 @Component
@@ -53,6 +61,7 @@ public class ReEncryptPrincipalsTask
     extends TaskSupport
     implements Cancelable
 {
+
   private static final int INTERVAL_IN_SECONDS = 60;
 
   private static final String SELECT = """
@@ -82,6 +91,8 @@ public class ReEncryptPrincipalsTask
 
   private final String nexusSecretsAlgorithm;
 
+  private final Integer nexusSecretsIterations;
+
   @Inject
   public ReEncryptPrincipalsTask(
       final DataSessionSupplier sessionSupplier,
@@ -90,7 +101,8 @@ public class ReEncryptPrincipalsTask
       @Value("${nexus.mybatis.cipher.password:changeme}") final String password,
       @Value("${nexus.mybatis.cipher.salt:changeme}") final String salt,
       @Value("${nexus.mybatis.cipher.iv:0123456789ABCDEF}") final String iv,
-      @Value(NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE) final String nexusSecretsAlgorithm)
+      @Value(NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE) final String nexusSecretsAlgorithm,
+      @Value(NEXUS_SECURITY_SECRETS_ITERATIONS_NAMED_VALUE) final Integer nexusSecretsIterations)
   {
     this.sessionSupplier = checkNotNull(sessionSupplier);
     this.encryptionKeySource = checkNotNull(encryptionKeySource);
@@ -99,6 +111,7 @@ public class ReEncryptPrincipalsTask
     this.salt = salt;
     this.iv = iv;
     this.nexusSecretsAlgorithm = nexusSecretsAlgorithm;
+    this.nexusSecretsIterations = nexusSecretsIterations;
   }
 
   @Override
@@ -117,7 +130,13 @@ public class ReEncryptPrincipalsTask
     String saltForEncryption = salt;
     String ivForDecryption = iv;
     String ivForEncryption = iv;
+
     String algorithmForDecryption = getValueFromTaskConfiguration("algorithmForDecryption", nexusSecretsAlgorithm);
+    Integer iterationsForDecryption = Integer.parseInt(getValueFromTaskConfiguration("iterationsForDecryption",
+        defaultIterationByAlgorithm(algorithmForDecryption).toString()));
+    Integer iterationsForEncryption = nexusSecretsIterations != null
+        ? nexusSecretsIterations
+        : defaultIterationByAlgorithm(nexusSecretsAlgorithm);
 
     Optional<FixedEncryption> previousEncryptionConfigOptional = encryptionKeySource.getPreviousFixedEncryption();
     if (previousEncryptionConfigOptional.isPresent()) {
@@ -137,7 +156,8 @@ public class ReEncryptPrincipalsTask
       ivForEncryption = config.getIv() != null ? config.getIv() : ivForEncryption;
     }
 
-    PbeCipher cipherForEncryption = pbeCipherFactory.create(keyForEncryption, saltForEncryption, ivForEncryption);
+    PbeCipher cipherForEncryption =
+        pbeCipherFactory.create(keyForEncryption, saltForEncryption, ivForEncryption, iterationsForEncryption);
     try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS);
         Connection conn = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME);
         PreparedStatement select = conn.prepareStatement(SELECT);
@@ -160,7 +180,8 @@ public class ReEncryptPrincipalsTask
             byte[] principals = results.getBytes("principals");
             try {
               byte[] decrypted =
-                  decrypt(keyForDecryption, algorithmForDecryption, saltForDecryption, ivForDecryption, principals);
+                  decrypt(keyForDecryption, algorithmForDecryption, saltForDecryption, ivForDecryption,
+                      iterationsForDecryption, principals);
               byte[] encrypted = reEncrypt(cipherForEncryption, decrypted);
               updatePrincipal(update, domain, username, accessKey, encrypted);
               processedCount++;
@@ -190,12 +211,19 @@ public class ReEncryptPrincipalsTask
       final String algorithm,
       final String salt,
       final String iv,
+      final Integer keyIterations,
       final byte[] principalsBytes)
   {
+    Map<String, String> attributes = new HashMap<>(Map.of(
+        IV, Hex.toHexString(iv.getBytes())));
+    if (keyIterations != null) {
+      attributes.put(KEY_ITERATION_PHC, String.valueOf(keyIterations));
+    }
+
     EncryptedSecret encryptedSecret = new EncryptedSecret(algorithm, null,
         toBase64(salt.getBytes()),
         toBase64(principalsBytes),
-        Map.of("iv", Hex.toHexString(iv.getBytes())));
+        attributes);
     PbeCipher cipherToDecrypt = pbeCipherFactory.create(secretKeyToDecrypt, encryptedSecret.toPhcString());
     return cipherToDecrypt.decrypt();
   }
@@ -221,6 +249,16 @@ public class ReEncryptPrincipalsTask
     update.setString(3, username);
     update.setString(4, accessKey);
     update.executeUpdate();
+  }
+
+  private static Integer defaultIterationByAlgorithm(final String algorithm) {
+    return switch (algorithm) {
+      case KEY_FACTORY_ALGORITHM_SHA1 -> DEFAULT_ITERATIONS_SHA1;
+      case KEY_FACTORY_ALGORITHM_SHA256 -> DEFAULT_ITERATIONS_SHA256;
+      default -> throw new IllegalArgumentException(
+          String.format("Unsupported algorithm: '%s'. Supported algorithms are: '%s', '%s'",
+              algorithm, KEY_FACTORY_ALGORITHM_SHA1, KEY_FACTORY_ALGORITHM_SHA256));
+    };
   }
 
   private String getValueFromTaskConfiguration(final String configurationKey, final String defaultValue) {

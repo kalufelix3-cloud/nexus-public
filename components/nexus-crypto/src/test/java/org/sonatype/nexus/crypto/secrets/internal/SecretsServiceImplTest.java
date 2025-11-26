@@ -90,9 +90,10 @@ public class SecretsServiceImplTest
   @Before
   public void setup() throws Exception {
     HashingHandlerFactory hashingHandlerFactory = new HashingHandlerFactoryImpl(cryptoHelper);
-    PbeCipherFactory sha1Factory = new PbeCipherFactoryImpl(cryptoHelper, hashingHandlerFactory, "PBKDF2WithHmacSHA1");
+    PbeCipherFactory sha1Factory =
+        new PbeCipherFactoryImpl(cryptoHelper, hashingHandlerFactory, "PBKDF2WithHmacSHA1", null);
     PbeCipherFactory sha256Factory =
-        new PbeCipherFactoryImpl(cryptoHelper, hashingHandlerFactory, "PBKDF2WithHmacSHA256");
+        new PbeCipherFactoryImpl(cryptoHelper, hashingHandlerFactory, "PBKDF2WithHmacSHA256", null);
 
     underTestSha1 = new SecretsServiceImpl(cipherFactory, mavenCipher, PhraseService.LEGACY_PHRASE_SERVICE, sha1Factory,
         secretsStore, encryptionKeySource, databaseCheck, false);
@@ -104,7 +105,8 @@ public class SecretsServiceImplTest
   @Test
   public void testLegacyCannotBeUsedWithFips() {
     HashingHandlerFactory hashingHandlerFactory = new HashingHandlerFactoryImpl(cryptoHelper);
-    PbeCipherFactory sha1Factory = new PbeCipherFactoryImpl(cryptoHelper, hashingHandlerFactory, "PBKDF2WithHmacSHA1");
+    PbeCipherFactory sha1Factory =
+        new PbeCipherFactoryImpl(cryptoHelper, hashingHandlerFactory, "PBKDF2WithHmacSHA1", null);
     when(databaseCheck.isAtLeast(anyString())).thenReturn(false);
     IllegalStateException expected = assertThrows(IllegalStateException.class,
         () -> new SecretsServiceImpl(cipherFactory, mavenCipher, PhraseService.LEGACY_PHRASE_SERVICE, sha1Factory,

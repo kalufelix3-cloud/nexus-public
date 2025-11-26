@@ -25,7 +25,7 @@ public class EncryptDecryptServiceTest
 
   EncryptDecryptService encryptDecryptService =
       new EncryptDecryptService(new PbeCipherFactoryImpl(new CryptoHelperImpl(false),
-          new HashingHandlerFactoryImpl(new CryptoHelperImpl(false)), "PBKDF2WithHmacSHA1"));
+          new HashingHandlerFactoryImpl(new CryptoHelperImpl(false)), "PBKDF2WithHmacSHA1", null));
 
   @Test
   public void testEncryptionDecryption() {

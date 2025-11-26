@@ -26,4 +26,6 @@ public interface HashingHandlerFactory
   HashingHandler create(String encryptedSecret) throws CipherException;
 
   HashingHandler create(String algorithmIdentifier, byte[] salt) throws CipherException;
+
+  HashingHandler create(String algorithmIdentifier, byte[] salt, Integer iterations) throws CipherException;
 }

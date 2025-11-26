@@ -69,9 +69,10 @@ public class ApiKeysReEncryptServiceImpl
   @Override
   public String submitReEncryption(
       final String algorithmForDecryption,
+      final Integer iterationsForDecryption,
       final String notifyEmail) throws MissingKeyException, ReEncryptionNotSupportedException
   {
-    return submitTask(algorithmForDecryption, notifyEmail);
+    return submitTask(algorithmForDecryption, iterationsForDecryption, notifyEmail);
   }
 
   private void checkReEncryptionSupported() {
@@ -95,17 +96,26 @@ public class ApiKeysReEncryptServiceImpl
    * @param notifyEmail the email address to notify when the re-encryption principals task is complete
    * @return the task id
    */
-  private String submitTask(final String algorithmForDecryption, final String notifyEmail) {
+  private String submitTask(
+      final String algorithmForDecryption,
+      final Integer iterationsForDecryption,
+      final String notifyEmail)
+  {
     checkReEncryptionSupported();
     checkTaskNotSubmitted();
-    TaskInfo scheduledTask = Optional.ofNullable(maybeScheduleReEncrypt(algorithmForDecryption, notifyEmail))
-        .orElseThrow(() -> new RuntimeException("Failed to schedule re-encryption task"));
+    TaskInfo scheduledTask =
+        Optional.ofNullable(maybeScheduleReEncrypt(algorithmForDecryption, iterationsForDecryption, notifyEmail))
+            .orElseThrow(() -> new RuntimeException("Failed to schedule re-encryption task"));
     return scheduledTask.getId();
   }
 
-  private TaskInfo maybeScheduleReEncrypt(final String algorithmForDecryption, final String notifyEmail) {
+  private TaskInfo maybeScheduleReEncrypt(
+      final String algorithmForDecryption,
+      final Integer iterationsForDecryption,
+      final String notifyEmail)
+  {
     try {
-      return cooperation.on(() -> scheduleReEncryptTask(algorithmForDecryption, notifyEmail))
+      return cooperation.on(() -> scheduleReEncryptTask(algorithmForDecryption, iterationsForDecryption, notifyEmail))
           .checkFunction(this::getTaskInfo)
           .cooperate("schedule_re-encryption-api-keys-principal");
     }
@@ -115,12 +125,20 @@ public class ApiKeysReEncryptServiceImpl
     }
   }
 
-  private TaskInfo scheduleReEncryptTask(final String algorithmForDecryption, final String notifyEmail) {
+  private TaskInfo scheduleReEncryptTask(
+      final String algorithmForDecryption,
+      final Integer iterationsForDecryption,
+      final String notifyEmail)
+  {
     return getTaskInfo().orElseGet(() -> {
       log.debug("Scheduling re-encrypt principals task");
       TaskConfiguration taskConfiguration =
           taskScheduler.createTaskConfigurationInstance(ReEncryptPrincipalsTaskDescriptor.TYPE_ID);
       taskConfiguration.setString("algorithmForDecryption", algorithmForDecryption);
+      if (iterationsForDecryption != null) {
+        taskConfiguration.setInteger("iterationsForDecryption", iterationsForDecryption);
+      }
+
       Optional.ofNullable(notifyEmail).ifPresent(taskConfiguration::setAlertEmail);
       return taskScheduler.submit(taskConfiguration);
     });

@@ -19,5 +19,6 @@ public interface ApiKeysReEncryptService
 {
   String submitReEncryption(
       String algorithmForDecryption,
+      Integer iterationsForDecryption,
       String notifyEmail) throws MissingKeyException, ReEncryptionNotSupportedException;
 }

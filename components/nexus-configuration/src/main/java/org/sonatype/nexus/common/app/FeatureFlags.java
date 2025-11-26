@@ -246,8 +246,14 @@ public class FeatureFlags
   public static final String NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED_VALUE =
       "${nexus.security.password.algorithm:shiro1}";
 
+  public static final String NEXUS_SECURITY_PASSWORD_ITERATIONS_NAMED_VALUE =
+      "${nexus.security.password.iterations:}";
+
   public static final String NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE =
       "${nexus.security.secrets.algorithm:PBKDF2WithHmacSHA1}";
+
+  public static final String NEXUS_SECURITY_SECRETS_ITERATIONS_NAMED_VALUE =
+      "${nexus.security.secrets.iterations:}";
 
   public static final String CONTAINER_IMAGES_EVAL_ENABLED = "nexus.container.images.eval.enabled";
 

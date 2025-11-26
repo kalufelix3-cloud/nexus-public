@@ -46,9 +46,9 @@ public class DefaultSecurityPasswordServiceTest
 
   @Before
   public void setUp() throws Exception {
-    underTest = new DefaultSecurityPasswordService(new LegacyNexusPasswordService(), "shiro1",
+    underTest = new DefaultSecurityPasswordService(new LegacyNexusPasswordService(), "shiro1", null,
         hashingHandlerFactory);
-    when(hashingHandlerFactory.create(any(String.class), any(byte[].class))).thenReturn(hashingHandler);
+    when(hashingHandlerFactory.create(any(String.class), any(byte[].class), any())).thenReturn(hashingHandler);
     when(hashingHandlerFactory.create(any(String.class))).thenReturn(hashingHandler);
   }
 

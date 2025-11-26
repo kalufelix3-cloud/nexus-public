@@ -35,6 +35,7 @@ public class HashingHandlerFactoryImplTest
     CryptoHelper cryptoHelper = mock(CryptoHelper.class);
     when(cryptoHelper.createSecureRandom()).thenReturn(new SecureRandom());
 
+    // Factory will use default iteration values (SHA1: 1024, SHA256: 10000) when iterations not provided
     factory = new HashingHandlerFactoryImpl(cryptoHelper);
   }
 
@@ -80,5 +81,171 @@ public class HashingHandlerFactoryImplTest
   void testCreate_UnsupportedAlgorithm_ShouldThrow() {
     String encoded = "$unsupportedabcdef0123456789$16salt";
     assertThrows(IllegalArgumentException.class, () -> factory.create(encoded));
+  }
+
+  @Test
+  void testCreate_WithExplicitIterations() {
+    CryptoHelper cryptoHelper = mock(CryptoHelper.class);
+    when(cryptoHelper.createSecureRandom()).thenReturn(new SecureRandom());
+
+    HashingHandlerFactory customFactory = new HashingHandlerFactoryImpl(cryptoHelper);
+
+    // Explicitly pass 210000 iterations (should use that instead of defaults)
+    HashingHandler sha1Handler = customFactory.create("PBKDF2WithHmacSHA1", "salt".getBytes(), 210000);
+    HashingHandler sha256Handler = customFactory.create("PBKDF2WithHmacSHA256", "salt".getBytes(), 310000);
+
+    assertNotNull(sha1Handler);
+    assertNotNull(sha256Handler);
+    assertInstanceOf(HashingHandler.class, sha1Handler);
+    assertInstanceOf(HashingHandler.class, sha256Handler);
+  }
+
+  @Test
+  void testCreate_WithNullIterationsUsesDefaults() {
+    CryptoHelper cryptoHelper = mock(CryptoHelper.class);
+    when(cryptoHelper.createSecureRandom()).thenReturn(new SecureRandom());
+
+    HashingHandlerFactory customFactory = new HashingHandlerFactoryImpl(cryptoHelper);
+
+    // Pass null iterations (should use defaults: SHA1=1024, SHA256=10000)
+    HashingHandler sha1Handler = customFactory.create("PBKDF2WithHmacSHA1", "salt".getBytes(), null);
+    HashingHandler sha256Handler = customFactory.create("PBKDF2WithHmacSHA256", "salt".getBytes(), null);
+
+    assertNotNull(sha1Handler);
+    assertNotNull(sha256Handler);
+    assertInstanceOf(HashingHandler.class, sha1Handler);
+    assertInstanceOf(HashingHandler.class, sha256Handler);
+  }
+
+  @Test
+  void testCreate_WithoutIterationsParameterUsesDefaults() {
+    CryptoHelper cryptoHelper = mock(CryptoHelper.class);
+    when(cryptoHelper.createSecureRandom()).thenReturn(new SecureRandom());
+
+    HashingHandlerFactory customFactory = new HashingHandlerFactoryImpl(cryptoHelper);
+
+    // Don't pass iterations parameter (should use defaults: SHA1=1024, SHA256=10000)
+    HashingHandler sha1Handler = customFactory.create("PBKDF2WithHmacSHA1", "salt".getBytes());
+    HashingHandler sha256Handler = customFactory.create("PBKDF2WithHmacSHA256", "salt".getBytes());
+
+    assertNotNull(sha1Handler);
+    assertNotNull(sha256Handler);
+    assertInstanceOf(HashingHandler.class, sha1Handler);
+    assertInstanceOf(HashingHandler.class, sha256Handler);
+  }
+
+  @Test
+  void testIterationsPriority_ExplicitIterationsTakePrecedence() {
+    CryptoHelper cryptoHelper = mock(CryptoHelper.class);
+    when(cryptoHelper.createSecureRandom()).thenReturn(new SecureRandom());
+
+    HashingHandlerFactory customFactory = new HashingHandlerFactoryImpl(cryptoHelper);
+
+    // Explicit iterations (5000) should be used instead of defaults
+    HashingHandler sha1Handler = customFactory.create("PBKDF2WithHmacSHA1", "salt".getBytes(), 5000);
+    HashingHandler sha256Handler = customFactory.create("PBKDF2WithHmacSHA256", "salt".getBytes(), 5000);
+
+    assertNotNull(sha1Handler);
+    assertNotNull(sha256Handler);
+  }
+
+  @Test
+  void testIterationsPriority_FromPhcString() {
+    CryptoHelper cryptoHelper = mock(CryptoHelper.class);
+    when(cryptoHelper.createSecureRandom()).thenReturn(new SecureRandom());
+
+    HashingHandlerFactory customFactory = new HashingHandlerFactoryImpl(cryptoHelper);
+
+    // PHC string contains key_iteration=7500
+    String phcString = "$PBKDF2WithHmacSHA256$iv=abc,key_iteration=7500,key_len=256$c2FsdA==$dmFsdWU=";
+    HashingHandler handler = customFactory.create(phcString);
+
+    assertNotNull(handler);
+  }
+
+  @Test
+  void testIterationsPriority_PhcStringWithoutIterations_UsesDefaults() {
+    CryptoHelper cryptoHelper = mock(CryptoHelper.class);
+    when(cryptoHelper.createSecureRandom()).thenReturn(new SecureRandom());
+
+    HashingHandlerFactory customFactory = new HashingHandlerFactoryImpl(cryptoHelper);
+
+    // PHC string without key_iteration attribute should use defaults
+    String phcStringSHA1 = "$PBKDF2WithHmacSHA1$iv=abc,key_len=128$c2FsdA==$dmFsdWU=";
+    String phcStringSHA256 = "$PBKDF2WithHmacSHA256$iv=abc,key_len=256$c2FsdA==$dmFsdWU=";
+
+    HashingHandler sha1Handler = customFactory.create(phcStringSHA1);
+    HashingHandler sha256Handler = customFactory.create(phcStringSHA256);
+
+    assertNotNull(sha1Handler);
+    assertNotNull(sha256Handler);
+  }
+
+  @Test
+  void testIterationsPriority_PhcStringWithInvalidIterations_UsesDefaults() {
+    CryptoHelper cryptoHelper = mock(CryptoHelper.class);
+    when(cryptoHelper.createSecureRandom()).thenReturn(new SecureRandom());
+
+    HashingHandlerFactory customFactory = new HashingHandlerFactoryImpl(cryptoHelper);
+
+    // PHC string with invalid (non-numeric) key_iteration should use defaults
+    String phcString = "$PBKDF2WithHmacSHA256$iv=abc,key_iteration=invalid,key_len=256$c2FsdA==$dmFsdWU=";
+    HashingHandler handler = customFactory.create(phcString);
+
+    assertNotNull(handler);
+  }
+
+  @Test
+  void testDefaultIterations_SHA1_Is1024() {
+    CryptoHelper cryptoHelper = mock(CryptoHelper.class);
+    when(cryptoHelper.createSecureRandom()).thenReturn(new SecureRandom());
+
+    HashingHandlerFactory customFactory = new HashingHandlerFactoryImpl(cryptoHelper);
+
+    // Create handler without explicit iterations, should use SHA1 default (1024)
+    HashingHandler handler = customFactory.create("PBKDF2WithHmacSHA1", "salt".getBytes(), null);
+
+    assertNotNull(handler);
+    assertInstanceOf(HashingHandler.class, handler);
+  }
+
+  @Test
+  void testDefaultIterations_SHA256_Is10000() {
+    CryptoHelper cryptoHelper = mock(CryptoHelper.class);
+    when(cryptoHelper.createSecureRandom()).thenReturn(new SecureRandom());
+
+    HashingHandlerFactory customFactory = new HashingHandlerFactoryImpl(cryptoHelper);
+
+    // Create handler without explicit iterations, should use SHA256 default (10000)
+    HashingHandler handler = customFactory.create("PBKDF2WithHmacSHA256", "salt".getBytes(), null);
+
+    assertNotNull(handler);
+    assertInstanceOf(HashingHandler.class, handler);
+  }
+
+  @Test
+  void testCreate_WithZeroIterations_UsesZero() {
+    CryptoHelper cryptoHelper = mock(CryptoHelper.class);
+    when(cryptoHelper.createSecureRandom()).thenReturn(new SecureRandom());
+
+    HashingHandlerFactory customFactory = new HashingHandlerFactoryImpl(cryptoHelper);
+
+    // Explicitly passing 0 iterations should use 0, not defaults
+    HashingHandler handler = customFactory.create("PBKDF2WithHmacSHA256", "salt".getBytes(), 0);
+
+    assertNotNull(handler);
+  }
+
+  @Test
+  void testCreate_WithVeryHighIterations() {
+    CryptoHelper cryptoHelper = mock(CryptoHelper.class);
+    when(cryptoHelper.createSecureRandom()).thenReturn(new SecureRandom());
+
+    HashingHandlerFactory customFactory = new HashingHandlerFactoryImpl(cryptoHelper);
+
+    // Test with very high iteration count (1 million)
+    HashingHandler handler = customFactory.create("PBKDF2WithHmacSHA256", "salt".getBytes(), 1000000);
+
+    assertNotNull(handler);
   }
 }

@@ -40,6 +40,7 @@ import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED_VALUE;
+import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_PASSWORD_ITERATIONS_NAMED_VALUE;
 
 /**
  * Default {@link PasswordService}.
@@ -83,10 +84,13 @@ public class DefaultSecurityPasswordService
 
   private final HashingHandlerFactory hashingHandlerFactory;
 
+  private final Integer configuredPasswordIterations;
+
   @Inject
   public DefaultSecurityPasswordService(
       @Qualifier("legacy") final PasswordService legacyPasswordService,
       @Value(NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED_VALUE) final String nexusPasswordAlgorithm,
+      @Value(NEXUS_SECURITY_PASSWORD_ITERATIONS_NAMED_VALUE) final Integer configuredPasswordIterations,
       HashingHandlerFactory hashingHandlerFactory)
   {
     this.legacyNexusPasswordService = checkNotNull(legacyPasswordService);
@@ -101,6 +105,7 @@ public class DefaultSecurityPasswordService
 
     this.nexusPasswordAlgorithm = checkNotNull(nexusPasswordAlgorithm);
     this.hashingHandlerFactory = hashingHandlerFactory;
+    this.configuredPasswordIterations = configuredPasswordIterations;
   }
 
   @Override
@@ -109,7 +114,9 @@ public class DefaultSecurityPasswordService
       return defaultShiroPasswordService.encryptPassword(plaintextPassword);
     }
     try {
-      HashingHandler hashingHandler = hashingHandlerFactory.create(nexusPasswordAlgorithm, null);
+      // Pass configuredPasswordIterations explicitly for user passwords
+      HashingHandler hashingHandler =
+          hashingHandlerFactory.create(nexusPasswordAlgorithm, null, configuredPasswordIterations);
       return hashingHandler.hash(convertToCharArray(plaintextPassword)).toPhcString();
     }
     catch (CipherException | IllegalArgumentException | NullPointerException e) {

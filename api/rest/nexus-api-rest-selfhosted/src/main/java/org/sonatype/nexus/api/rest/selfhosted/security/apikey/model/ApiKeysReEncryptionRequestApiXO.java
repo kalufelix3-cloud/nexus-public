@@ -22,6 +22,10 @@ public class ApiKeysReEncryptionRequestApiXO
   @Nullable
   private String algorithmForDecryption;
 
+  @ApiModelProperty("Optional - The iterations to be used to decrypt the principals")
+  @Nullable
+  private Integer iterationsForDecryption;
+
   @ApiModelProperty("Optional - Email to notify when task finishes")
   @Nullable
   private String notifyEmail;
@@ -32,15 +36,22 @@ public class ApiKeysReEncryptionRequestApiXO
 
   public ApiKeysReEncryptionRequestApiXO(
       @Nullable final String algorithm,
+      @Nullable final Integer iterations,
       @Nullable final String notifyEmail)
   {
     this.algorithmForDecryption = algorithm;
+    this.iterationsForDecryption = iterations;
     this.notifyEmail = notifyEmail;
   }
 
   @Nullable
   public String getAlgorithmForDecryption() {
     return algorithmForDecryption;
+  }
+
+  @Nullable
+  public Integer getIterationsForDecryption() {
+    return iterationsForDecryption;
   }
 
   @Nullable
