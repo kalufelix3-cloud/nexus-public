@@ -44,9 +44,9 @@ import org.sonatype.nexus.repository.content.store.example.TestContentRepository
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
+import org.sonatype.nexus.testdb.DatabaseTest;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,7 +98,7 @@ class BrowseNodeMigrationStep_1_36Test
     store = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME);
   }
 
-  @Test
+  @DatabaseTest
   void testUnknownFormat() throws Exception {
     when(fakeFormat.getValue()).thenReturn("foo");
     BrowseNodeMigrationStep_1_36 upgradeStep = new BrowseNodeMigrationStep_1_36(Collections.singletonList(fakeFormat),
@@ -111,7 +111,7 @@ class BrowseNodeMigrationStep_1_36Test
     verify(fakeFormat).getValue();
   }
 
-  @Test
+  @DatabaseTest
   void testMigration() throws Exception {
     generatePaths(10);
     generateNamespaces(10);

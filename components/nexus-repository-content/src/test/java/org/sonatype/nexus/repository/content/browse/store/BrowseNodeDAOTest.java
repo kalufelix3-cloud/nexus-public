@@ -32,11 +32,11 @@ import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
 import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
+import org.sonatype.nexus.testdb.DatabaseTest;
 
 import com.google.common.collect.ImmutableMap;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import static com.google.common.collect.ImmutableList.of;
 import static java.util.Arrays.asList;
@@ -158,7 +158,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest(postgresql = false)
   void testPlainBrowsing() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -205,7 +205,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest(postgresql = false)
   void testFilteredBrowsing() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -244,7 +244,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest(postgresql = false)
   void testComponentAssetDeletesNullify() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -305,7 +305,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest(postgresql = false)
   void testRepositoryDeleteCascades() {
     assumeFalse(isPostgreSQL());
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
@@ -340,7 +340,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest(postgresql = false)
   void testFilterClauseIsolation() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -351,7 +351,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest(postgresql = false)
   void testGetByRequestPath() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -362,7 +362,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest(postgresql = false)
   void testDeleteByAssetIdAndPath() {
     assumeTrue(isPostgreSQL());
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
@@ -375,7 +375,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest(postgresql = false)
   void testGetNodeParents() {
     assumeTrue(isPostgreSQL());
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
@@ -390,7 +390,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest(postgresql = false)
   void testGetMaxNodeId() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -405,7 +405,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest(postgresql = false)
   void testDeleteBrowseNodesByIdRange() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -430,7 +430,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest(postgresql = false)
   void testDeleteBrowseNodesByIdRangeEmptyRange() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -447,7 +447,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest(postgresql = false)
   void testDeleteBrowseNodesByIdRangeNonExistentRepository() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);

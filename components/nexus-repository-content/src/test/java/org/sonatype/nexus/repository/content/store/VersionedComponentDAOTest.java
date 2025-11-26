@@ -12,8 +12,9 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import org.sonatype.nexus.testdb.DatabaseTest;
+
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 /**
  * Test {@link ComponentDAO} with entity versioning enabled
@@ -27,67 +28,67 @@ class VersionedComponentDAOTest
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testCrudOperations() throws InterruptedException {
     super.testCrudOperations();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testBrowseComponentCoordinates() {
     super.testBrowseComponentCoordinates();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testContinuationBrowsing() {
     super.testContinuationBrowsing();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testDeleteAllComponents() {
     super.testDeleteAllComponents();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testPurgeOperation() {
     super.testPurgeOperation();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testRoundTrip() {
     super.testRoundTrip();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testBrowseComponentsInRepositories() {
     super.testBrowseComponentsInRepositories();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testFilterClauseIsolation() {
     super.testFilterClauseIsolation();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testContinuationSetBrowsing() {
     super.testContinuationSetBrowsing();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testNormalizationMethods() {
     super.testNormalizationMethods();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testBrowseComponentsEager() {
     super.testBrowseComponentsEager();
   }

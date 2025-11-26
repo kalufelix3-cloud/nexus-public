@@ -19,10 +19,10 @@ import java.util.Map;
 import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
 import org.sonatype.nexus.testdb.DatabaseExtension;
+import org.sonatype.nexus.testdb.DatabaseTest;
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
 import com.google.common.collect.Iterables;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,7 +37,7 @@ class UpgradeTaskDAOTest
   @DataSessionConfiguration(daos = UpgradeTaskDAO.class)
   TestDataSessionSupplier dataSession;
 
-  @Test
+  @DatabaseTest
   void testBrowse() {
     dataSession.callDAO(UpgradeTaskDAO.class, dao -> {
       dao.create(new UpgradeTaskData("task-one", Map.of()));
@@ -51,7 +51,7 @@ class UpgradeTaskDAOTest
     assertThat(tasks.stream().map(UpgradeTaskData::getTaskId).toList(), contains("task-one", "task-two"));
   }
 
-  @Test
+  @DatabaseTest
   void testBrowseBefore() {
     dataSession.callDAO(UpgradeTaskDAO.class, dao -> dao.create(new UpgradeTaskData("task-one", Map.of())));
 

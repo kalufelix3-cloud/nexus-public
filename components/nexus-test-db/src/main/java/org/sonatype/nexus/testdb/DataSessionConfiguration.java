@@ -21,15 +21,23 @@ import org.sonatype.nexus.datastore.api.DataAccess;
 
 import org.apache.ibatis.type.TypeHandler;
 
-import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
-
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DataSessionConfiguration
 {
-  String storeName() default DEFAULT_DATASTORE_NAME;
-
-  Class<? extends DataAccess>[] daos();
+  Class<? extends DataAccess>[] daos() default {};
 
   Class<? extends TypeHandler<?>>[] typeHandlers() default {};
+
+  /**
+   * Can be used to prevent the H2 database from being used for all tests. Individual tests may disable H2 via the
+   * {@link DatabaseTest} annotation.
+   */
+  boolean h2() default true;
+
+  /**
+   * Can be used to prevent the PostgreSQL database from being used for all tests. Individual tests may disable
+   * PostgreSQL via the {@link DatabaseTest} annotation.
+   */
+  boolean postgresql() default true;
 }

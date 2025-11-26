@@ -10,41 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.store;
+package org.sonatype.nexus.testdb;
 
-import org.sonatype.nexus.testdb.DatabaseTest;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import org.junit.jupiter.api.BeforeEach;
-
-class VersionedAssetStoreTest
-    extends AssetStoreTestSupport
+/**
+ * Used to indicate a {@link TypeHandler} which should be registered
+ */
+@Target({ElementType.ANNOTATION_TYPE, ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface TestTypeHandler
 {
-  @BeforeEach
-  protected void setup() {
-    initialiseStores(true);
-  }
 
-  @Override
-  @DatabaseTest
-  protected void testDeleteAsset() {
-    super.testDeleteAsset();
-  }
-
-  @Override
-  @DatabaseTest
-  protected void testBrowseUpdatedAssetsDifferentDates() {
-    super.testBrowseUpdatedAssetsDifferentDates();
-  }
-
-  @Override
-  @DatabaseTest
-  protected void testBrowseUpdatedAssetsIdenticalDates() {
-    super.testBrowseUpdatedAssetsIdenticalDates();
-  }
-
-  @Override
-  @DatabaseTest
-  protected void testDeleteAssetsByPaths() {
-    super.testDeleteAssetsByPaths();
-  }
 }

@@ -60,6 +60,7 @@ import org.sonatype.nexus.repository.content.store.example.TestContentRepository
 import org.sonatype.nexus.repository.content.store.example.TestPlainStoreProvider;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
 import org.sonatype.nexus.testdb.DatabaseExtension;
+import org.sonatype.nexus.testdb.DatabaseTest;
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
@@ -69,7 +70,6 @@ import com.google.common.collect.Lists;
 import jakarta.inject.Provider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -147,7 +147,7 @@ class FormatStoreManagerTest
     testContext.close();
   }
 
-  @Test
+  @DatabaseTest
   void testPlainBindings() {
     FormatStoreManager underTest = getFormatStoreManager(new TestPlainStoreProvider());
 
@@ -169,7 +169,7 @@ class FormatStoreManagerTest
     assertThat(underTest.assetBlobStore(DEFAULT_DATASTORE_NAME), sameInstance(assetBlobStore));
   }
 
-  @Test
+  @DatabaseTest
   void testPlainOperations() {
     FormatStoreManager underTest = getFormatStoreManager(new TestPlainStoreProvider());
 
@@ -219,7 +219,7 @@ class FormatStoreManagerTest
     assertThat(result.get().blob().get().blobRef().getBlob(), is(BLOB_ID));
   }
 
-  @Test
+  @DatabaseTest
   void testBespokeBindings() {
     FormatStoreManager underTest = getFormatStoreManager(new TestBespokeStoreProvider());
 
@@ -241,7 +241,7 @@ class FormatStoreManagerTest
     assertThat(assetBlobStore, isA(AssetBlobStore.class));
   }
 
-  @Test
+  @DatabaseTest
   void testBespokeOperations() {
     // our bespoke schema will be applied automatically via 'extendSchema'...
     FormatStoreManager underTest = getFormatStoreManager(new TestBespokeStoreProvider());
@@ -271,7 +271,7 @@ class FormatStoreManagerTest
     assertThat(result.get().path(), is("/path/to/asset"));
   }
 
-  @Test
+  @DatabaseTest
   void testEventing() {
     FormatStoreManager underTest = getFormatStoreManager(new TestPlainStoreProvider());
 
@@ -354,7 +354,7 @@ class FormatStoreManagerTest
     verifyNoMoreInteractions(eventManager);
   }
 
-  @Test
+  @DatabaseTest
   void testPurgeEvent() {
     FormatStoreManager underTest = getFormatStoreManager(new TestPlainStoreProvider());
 
@@ -439,7 +439,7 @@ class FormatStoreManagerTest
     verifyNoMoreInteractions(eventManager);
   }
 
-  @Test
+  @DatabaseTest
   void testFindByComponentIds() {
     FormatStoreManager underTest = getFormatStoreManager(new TestPlainStoreProvider());
 
