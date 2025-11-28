@@ -76,7 +76,10 @@ class QuartzDAOTest
       QuartzTestDAO testDao = session.access(QuartzTestDAO.class);
 
       assertThat(testDao.tables(), hasSize(11));
-      assertThat(testDao.primaryKeys(), hasSize(11));
+      assertThat(testDao.primaryKeys()
+          .stream()
+          .filter(key -> key.toLowerCase().startsWith("pk_qrtz"))
+          .toList(), hasSize(11));
       assertThat(testDao.foreignKeys(), hasSize(5));
       // indexes are no longer created by mybatis; they come from flyway migrations (NEXUS-49154)
       // assertThat(testDao.indexes(), hasSize(testDao.expectedIndexes()));

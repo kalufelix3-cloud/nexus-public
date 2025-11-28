@@ -124,9 +124,11 @@ public class DatabaseExtension
   }
 
   private void startPostgres() {
-    // 11.9 is the minimum support version
+    // Nexus support policy is we support versions of PostgreSQL which are currently supported
+    // https://www.postgresql.org/support/versioning/
+    // 14 is the minimum support version as of November 2025
     postgres = new PostgreSQLContainer<>(
-        DockerImageName.parse("docker-all.repo.sonatype.com/postgres:11.9").asCompatibleSubstituteFor("postgres"));
+        DockerImageName.parse("docker-all.repo.sonatype.com/postgres:14.20").asCompatibleSubstituteFor("postgres"));
 
     postgres.withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("postgres")))
         .withCommand("postgres", "-c",
