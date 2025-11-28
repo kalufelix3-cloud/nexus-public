@@ -19,103 +19,105 @@ import ExtJS from '../interface/ExtJS';
 
 jest.mock('../interface/ExtJS');
 
-describe('createRouter - login redirect', () => {
+describe('createRouter - onBefore - validate permissions and configuration on each route request', () => {
   let router;
 
   beforeEach(() => {
+    jest.clearAllMocks();
+
     ExtJS.hasUser = jest.fn().mockReturnValue(false);
+    // Default to anonymous access disabled
     ExtJS.state = jest.fn().mockReturnValue({
       getValue: jest.fn().mockReturnValue(false)
     });
 
     router = getTestRouter();
-    jest.clearAllMocks();
   });
 
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  it('should redirect authenticated users away from login page', async () => {
+  it('authenticated user goes to login page, should redirect to welcome page', async () => {
     ExtJS.hasUser.mockReturnValue(true);
 
-    const loginRoute = {
-      name: 'login',
-      url: '/login',
-      component: () => null,
-      data: { visibilityRequirements: {} }
-    };
-
-    router.stateRegistry.register(loginRoute);
-
-    await router.urlService.sync();
-
-    const originalGo = router.stateService.go.bind(router.stateService);
-    const goSpy = jest.spyOn(router.stateService, 'go').mockImplementation((...args) => {
-      return originalGo(...args);
-    });
-
+    const goSpy = jest.spyOn(router.stateService, 'go');
     await router.stateService.go('login').catch(() => {});
 
-    expect(goSpy).toHaveBeenCalledWith('browse.welcome');
-
-    goSpy.mockRestore();
+    expect(goSpy).toHaveBeenCalledTimes(2);
+    expect(goSpy).toHaveBeenNthCalledWith(1, 'login');
+    expect(goSpy).toHaveBeenNthCalledWith(2, 'browse.welcome');
   });
 
-  it('should allow unauthenticated users to access login page', async () => {
-    ExtJS.hasUser.mockReturnValue(false);
-
-    const loginRoute = {
-      name: 'login',
-      url: '/login',
-      component: () => null,
-      data: { visibilityRequirements: {} }
-    };
-
-    router.stateRegistry.register(loginRoute);
-
-    await router.urlService.sync();
+  it('go to visible pages, should be allowed', async () => {
+    await router.stateService.go('browse.welcome');
+    expect(router.stateService.current.name).toBe('browse.welcome');
 
     await router.stateService.go('login');
-
     expect(router.stateService.current.name).toBe('login');
   });
 
-  it('should allow authenticated users to access non-login pages', async () => {
+  it('authenticated user goes to unauthorized page, should redirect to 404', async () => {
     ExtJS.hasUser.mockReturnValue(true);
-
-    await router.urlService.sync();
-
+    // Navigate to a known state first to clear any residual state
     await router.stateService.go('browse.welcome');
 
-    expect(router.stateService.current.name).toBe('browse.welcome');
-    expect(router.stateService.current.name).not.toBe('login');
-  });
-
-  it('should redirect authenticated users away from login page to default route', async () => {
-    ExtJS.hasUser.mockReturnValue(true);
-
-    const loginRoute = {
-      name: 'login',
-      url: '/login',
+    const protectedRoute = {
+      name: 'protected',
+      url: '/protected',
       component: () => null,
-      data: { visibilityRequirements: {} }
+      data: { visibilityRequirements: { permissions: ['admin:all'] } }
     };
-
-    router.stateRegistry.register(loginRoute);
-
+    router.stateRegistry.register(protectedRoute);
     await router.urlService.sync();
 
-    const originalGo = router.stateService.go.bind(router.stateService);
-    const goSpy = jest.spyOn(router.stateService, 'go').mockImplementation((...args) => {
-      return originalGo(...args);
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    await router.stateService.go('protected').catch(() => {});
+
+    expect(goSpy).toHaveBeenCalledTimes(2);
+    expect(goSpy).toHaveBeenNthCalledWith(1, 'protected');
+    expect(goSpy).toHaveBeenNthCalledWith(2, 'missing.route');
+  });
+
+  it('from login anonymous user goes to unauthorized page, should redirect to 404', async () => {
+    ExtJS.state.mockReturnValue({
+      getValue: jest.fn().mockReturnValue('anonymous')
     });
 
-    await router.stateService.go('login').catch(() => {});
+    const protectedRoute = {
+      name: 'protected',
+      url: '/protected',
+      component: () => null,
+      data: { visibilityRequirements: { permissions: ['admin:all'] } }
+    };
+    router.stateRegistry.register(protectedRoute);
+    await router.urlService.sync();
 
-    expect(goSpy).toHaveBeenCalledWith('browse.welcome');
-    expect(router.stateService.current.name).not.toBe('login');
+    // First go to login
+    await router.stateService.go('login');
 
-    goSpy.mockRestore();
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    await router.stateService.go('protected').catch(() => {});
+
+    expect(goSpy).toHaveBeenCalledTimes(2);
+    expect(goSpy).toHaveBeenNthCalledWith(1, 'protected');
+    expect(goSpy).toHaveBeenNthCalledWith(2, 'missing.route');
+  });
+
+  it('unauthenticated user goes to unauthorized page, should redirect to login page with returnTo parameter', async () => {
+    const protectedRoute = {
+      name: 'protected',
+      url: '/protected?filter&sort',
+      component: () => null,
+      data: { visibilityRequirements: { permissions: ['admin:all'] } }
+    };
+    router.stateRegistry.register(protectedRoute);
+    await router.urlService.sync();
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    const urlSpy = jest.spyOn(router.urlService, 'url').mockReturnValue('/protected?filter=maven&sort=name');
+    await router.stateService.go('protected', { filter: 'maven', sort: 'name' }).catch(() => {});
+
+    const expectedReturnTo = btoa('#/protected?filter=maven&sort=name');
+    expect(goSpy).toHaveBeenCalledTimes(2);
+    expect(goSpy).toHaveBeenNthCalledWith(1, 'protected', { filter: 'maven', sort: 'name' });
+    expect(goSpy).toHaveBeenNthCalledWith(2, 'login', {returnTo: expectedReturnTo});
+    expect(urlSpy).toHaveBeenCalled();
   });
 });

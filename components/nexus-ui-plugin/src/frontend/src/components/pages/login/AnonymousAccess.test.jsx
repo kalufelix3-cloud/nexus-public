@@ -98,6 +98,32 @@ describe('AnonymousAccess', () => {
       expect(mockRouter.urlService.url).toHaveBeenCalledWith(returnToUrl);
       expect(mockRouter.stateService.go).not.toHaveBeenCalled();
     });
+
+    it('navigates to missing route when returnTo decoding fails', () => {
+      mockRouter.globals.params.returnTo = 'invalid-base64';
+      render(<AnonymousAccess />);
+      const button = screen.getByTestId('continue-without-login-button');
+
+      fireEvent.click(button);
+
+      expect(mockRouter.stateService.go).toHaveBeenCalledWith('missing_route');
+      expect(mockRouter.urlService.url).not.toHaveBeenCalled();
+    });
+
+    it('falls back to missing route when urlService navigation throws', () => {
+      mockRouter.globals.params.returnTo = btoa('/some/path');
+      mockRouter.urlService.url.mockImplementation(() => {
+        throw new Error('navigation failed');
+      });
+
+      render(<AnonymousAccess />);
+      const button = screen.getByTestId('continue-without-login-button');
+
+      fireEvent.click(button);
+
+      expect(mockRouter.stateService.go).toHaveBeenCalledWith('missing_route');
+      expect(mockRouter.urlService.url).toHaveBeenCalled();
+    });
   });
 
   describe('accessibility', () => {

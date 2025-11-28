@@ -19,6 +19,12 @@ export function getTestRouter() {
   const initialRoute = 'browse.welcome';
   const menuRoutes = [
     {
+      name: 'login',
+      url: '/login',
+      component: () => <div>login page</div>,
+      data: { visibilityRequirements: {} }
+    },
+    {
       name: 'browse',
       url: 'browse',
       component: UIView,
