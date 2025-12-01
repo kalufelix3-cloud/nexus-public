@@ -55,6 +55,11 @@ public interface ApiKeyStore
   int deleteApiKeys(OffsetDateTime expiration);
 
   /**
+   * Remove all expired API-Keys for the specified domain
+   */
+  int deleteApiKeys(String domain, OffsetDateTime expiration);
+
+  /**
    * Deletes every API-Key associated with the given principals in every domain.
    */
   int deleteApiKeys(PrincipalCollection principals);

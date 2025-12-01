@@ -142,6 +142,12 @@ public class ApiKeyStoreImpl
 
   @Transactional
   @Override
+  public int deleteApiKeys(final String domain, final OffsetDateTime expiration) {
+    return dao().deleteApiKeysByDomainAndExpiration(domain, expiration);
+  }
+
+  @Transactional
+  @Override
   public void updateApiKey(
       final ApiKeyInternal from,
       final PrincipalCollection principalCollection)

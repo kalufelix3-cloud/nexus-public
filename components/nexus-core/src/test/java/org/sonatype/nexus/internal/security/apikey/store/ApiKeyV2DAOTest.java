@@ -299,7 +299,8 @@ class ApiKeyV2DAOTest
     withDao(dao -> dao.save(entity2));
     withDao(dao -> dao.save(anApiKeyEntity(API_KEY2, ANOTHER_DOMAIN, A_PRINCIPAL)));
 
-    assertThat(callDao(dao -> dao.browseCreatedBefore(DOMAIN, entity2Date.minusSeconds(1L))), contains(token(entity1)));
+    assertThat(callDao(dao -> dao.browseByDomainCreatedBefore(DOMAIN, entity2Date.minusSeconds(1L))),
+        contains(token(entity1)));
   }
 
   private ApiKeyV2Data anApiKeyEntity(

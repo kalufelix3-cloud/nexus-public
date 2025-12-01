@@ -109,6 +109,12 @@
     WHERE created &lt; #{expiration};
   </delete>
 
+  <delete id="deleteApiKeysByDomainAndExpiration">
+    DELETE FROM api_key
+    WHERE domain = #{domain}
+      AND created &lt; #{expiration};
+  </delete>
+
   <update id="update" parameterType="ApiKeyData" databaseId="PostgreSQL">
     INSERT INTO api_key (primary_principal
                         , domain

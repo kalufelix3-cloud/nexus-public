@@ -97,6 +97,25 @@ public class ApiKeyStoreV2Impl
         .sum();
   }
 
+  @Transactional
+  @Override
+  public int deleteApiKeys(final String domain, final OffsetDateTime expiration) {
+    Collection<ApiKeyInternal> expiredKeys = dao().browseByDomainCreatedBefore(domain, expiration);
+
+    if (expiredKeys.isEmpty()) {
+      return 0;
+    }
+
+    int count = dao().deleteApiKeysByDomainAndExpiration(domain, expiration);
+
+    expiredKeys.stream()
+        .map(ApiKeyV2Data.class::cast)
+        .map(ApiKeyV2Data::getSecret)
+        .forEach(secretsService::remove);
+
+    return count;
+  }
+
   @Override
   public int deleteApiKeys(final PrincipalCollection principals) {
     return findApiKeysForUser(principals)

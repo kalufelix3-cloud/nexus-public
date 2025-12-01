@@ -153,6 +153,11 @@ public class ApiKeyServiceImpl
   }
 
   @Override
+  public int deleteApiKeys(final String domain, final OffsetDateTime expiration) {
+    return callModify(store -> store.deleteApiKeys(domain, expiration));
+  }
+
+  @Override
   public int deleteApiKeys(final PrincipalCollection principals) {
     checkCancellation();
     return callModify(store -> store.deleteApiKeys(principals));

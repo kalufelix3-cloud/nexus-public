@@ -67,4 +67,9 @@ public interface ApiKeyService
    * Remove all expired API-Keys
    */
   int deleteApiKeys(OffsetDateTime expiration);
+
+  /**
+   * Remove all expired API-Keys for the specified domain
+   */
+  int deleteApiKeys(String domain, OffsetDateTime expiration);
 }

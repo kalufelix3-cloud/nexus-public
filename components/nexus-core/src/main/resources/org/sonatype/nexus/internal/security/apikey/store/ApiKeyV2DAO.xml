@@ -77,6 +77,13 @@
        AND access_key = #{accessKey};
   </delete>
 
+  <delete id="deleteApiKeysByDomainAndExpiration">
+    DELETE
+      FROM api_key_v2
+     WHERE domain = #{domain}
+       AND created &lt; #{expiration};
+  </delete>
+
   <select id="browse" resultType="ApiKeyV2Data">
     SELECT *
       FROM api_key_v2
@@ -95,6 +102,14 @@
     SELECT *
       FROM api_key_v2
     WHERE created &lt; #{created}
+    ORDER BY created;
+  </select>
+
+  <select id="browseByDomainCreatedBefore" resultType="ApiKeyV2Data">
+    SELECT *
+      FROM api_key_v2
+    WHERE domain = #{domain}
+      AND created &lt; #{created}
     ORDER BY created;
   </select>
 

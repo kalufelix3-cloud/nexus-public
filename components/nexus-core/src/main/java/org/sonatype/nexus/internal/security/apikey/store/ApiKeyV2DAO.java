@@ -59,7 +59,7 @@ public interface ApiKeyV2DAO
    * @param domain the domain, e.g. npm keys, nuget keys
    * @param created the date created
    */
-  Collection<ApiKeyInternal> browseCreatedBefore(
+  Collection<ApiKeyInternal> browseByDomainCreatedBefore(
       @Param("domain") String domain,
       @Param("created") OffsetDateTime created);
 
@@ -90,6 +90,17 @@ public interface ApiKeyV2DAO
    * @param apiTokenData the token to remove
    */
   int deleteApiKey(ApiKeyV2Data apiTokenData);
+
+  /**
+   * Remove all API Keys in the specified domain created before the specified date (bulk delete).
+   *
+   * @param domain the domain, e.g. npm keys, nuget keys
+   * @param expiration the expiration date
+   * @return the number of deleted records
+   */
+  int deleteApiKeysByDomainAndExpiration(
+      @Param("domain") String domain,
+      @Param("expiration") OffsetDateTime expiration);
 
   /**
    * Find {@link ApiKeyInternal} record in the domain for the specified user name.
