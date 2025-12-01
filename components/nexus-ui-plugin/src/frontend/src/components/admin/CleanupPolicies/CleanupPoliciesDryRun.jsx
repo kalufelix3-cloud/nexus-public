@@ -37,11 +37,11 @@ export default function CleanupPoliciesDryRun({policyData}) {
   const criteriaSelected = (policyData.criteriaLastDownloaded || policyData.criteriaLastBlobUpdated || policyData.criteriaAssetRegex);
   const generateCSVUrl = ExtJS.urlOf('/service/rest/internal/cleanup-policies/preview/components/csv' +
     '?repository=' + repository +
-    (policyData.name ? `&name=${policyData.name}` : '') +
+    (policyData.name ? `&name=${encodeURIComponent(policyData.name)}` : '') +
     (policyData.criteriaLastBlobUpdated ? `&criteriaLastBlobUpdated=${policyData.criteriaLastBlobUpdated}` : '') +
     (policyData.criteriaLastDownloaded ? `&criteriaLastDownloaded=${policyData.criteriaLastDownloaded}` : '') +
     (policyData.criteriaReleaseType ? `&criteriaReleaseType=${policyData.criteriaReleaseType}` : '') +
-    (policyData.criteriaAssetRegex ? `&criteriaAssetRegex=${policyData.criteriaAssetRegex}` : '') +
+    (policyData.criteriaAssetRegex ? `&criteriaAssetRegex=${encodeURIComponent(policyData.criteriaAssetRegex)}` : '') +
     (policyData.retain? `&criteriaRetain=${policyData.retain}` : '') +
     (policyData.sortBy? `&criteriaSortBy=${policyData.sortBy}` : ''))
 

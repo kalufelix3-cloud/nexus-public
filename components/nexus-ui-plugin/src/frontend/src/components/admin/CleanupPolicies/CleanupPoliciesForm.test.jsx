@@ -730,11 +730,11 @@ describe('CleanupPoliciesForm', function () {
       const {dryRunRepositories, dryRunCreateCSVButton} = selectors;
       const expectedUrl = `https://testurl/service/rest/internal/cleanup-policies/preview/components/csv?
       repository=maven-central
-      &name=${EDITABLE_ITEM.name}
+      &name=${encodeURIComponent(EDITABLE_ITEM.name)}
       &criteriaLastBlobUpdated=${EDITABLE_ITEM.criteriaLastBlobUpdated}
       &criteriaLastDownloaded=${EDITABLE_ITEM.criteriaLastDownloaded}
       &criteriaReleaseType=${EDITABLE_ITEM.criteriaReleaseType}
-      &criteriaAssetRegex=${EDITABLE_ITEM.criteriaAssetRegex}
+      &criteriaAssetRegex=${encodeURIComponent(EDITABLE_ITEM.criteriaAssetRegex)}
       &criteriaRetain=${EDITABLE_ITEM.retain}
       &criteriaSortBy=${EDITABLE_ITEM.sortBy}`;
 

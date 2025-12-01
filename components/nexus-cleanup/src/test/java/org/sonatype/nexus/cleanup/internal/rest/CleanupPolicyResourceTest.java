@@ -146,4 +146,70 @@ class CleanupPolicyResourceTest
     assertThat(contentDisposition, startsWith(expectedPrefix));
     assertThat(contentDisposition, endsWith(".csv"));
   }
+
+  @Test
+  void testPreviewContentCsvWithSpecialCharactersInRegex() {
+    underTest =
+        new CleanupPolicyResource(
+            cleanupPolicyStorage,
+            formats,
+            List.of(),
+            cleanupPreviewHelper,
+            repositoryManager,
+            eventManager,
+            true,
+            csvCleanupPreviewContentWriter,
+            cleanupPolicyValidators);
+
+    // Test regex with curly braces (quantifiers)
+    Response response = underTest.previewContentCsv(
+        "test-policy",
+        repositoryName,
+        null,
+        null,
+        null,
+        "[a-zA-Z0-9]{40}",
+        null,
+        null);
+
+    assertThat(response.getStatus(), is(200));
+    String contentDisposition = response.getHeaderString("Content-Disposition");
+    assertThat(contentDisposition, not(isEmptyOrNullString()));
+    assertThat(contentDisposition, startsWith("attachment; filename=test-policy-" + repositoryName));
+    assertThat(contentDisposition, endsWith(".csv"));
+
+    // Test regex with various special characters
+    response = underTest.previewContentCsv(
+        "special-chars-policy",
+        repositoryName,
+        null,
+        null,
+        null,
+        ".*\\.(jar|war|zip)$",
+        null,
+        null);
+
+    assertThat(response.getStatus(), is(200));
+    contentDisposition = response.getHeaderString("Content-Disposition");
+    assertThat(contentDisposition, not(isEmptyOrNullString()));
+    assertThat(contentDisposition, startsWith("attachment; filename=special-chars-policy-" + repositoryName));
+    assertThat(contentDisposition, endsWith(".csv"));
+
+    // Test regex with character classes and ranges
+    response = underTest.previewContentCsv(
+        "complex-regex-policy",
+        repositoryName,
+        null,
+        null,
+        null,
+        "^[0-9]{3,5}\\.[a-z]+\\.(txt|log)$",
+        null,
+        null);
+
+    assertThat(response.getStatus(), is(200));
+    contentDisposition = response.getHeaderString("Content-Disposition");
+    assertThat(contentDisposition, not(isEmptyOrNullString()));
+    assertThat(contentDisposition, startsWith("attachment; filename=complex-regex-policy-" + repositoryName));
+    assertThat(contentDisposition, endsWith(".csv"));
+  }
 }
