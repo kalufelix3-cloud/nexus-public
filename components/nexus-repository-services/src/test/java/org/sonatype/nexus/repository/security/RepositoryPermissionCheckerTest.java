@@ -292,4 +292,56 @@ public class RepositoryPermissionCheckerTest
         .anyPermitted(subject, permissions))
             .thenReturn(hasPermission);
   }
+
+  @Test
+  public void testUserCanBrowseRepositories_allUnavailableRecipes() {
+    // Test NEXUS-49753: When all repositories have unavailable recipes, return empty list
+    // This test verifies that repositories with unavailable recipes are filtered out early
+    Configuration config1 = Mockito.mock(Configuration.class);
+    Configuration config2 = Mockito.mock(Configuration.class);
+    when(config1.getRepositoryName()).thenReturn("unavailable-repo-1");
+    when(config1.getRecipeName()).thenReturn("non-existent-recipe-1");
+    when(config2.getRepositoryName()).thenReturn("unavailable-repo-2");
+    when(config2.getRecipeName()).thenReturn("non-existent-recipe-2");
+
+    List<Configuration> result = underTest.userCanBrowseRepositories(config1, config2);
+
+    assertTrue("Should return empty list when all recipes are unavailable", result.isEmpty());
+  }
+
+  @Test
+  public void testUserHasRepositoryAdminPermissionFor_allUnavailableRecipes() {
+    // Test NEXUS-49753: When all repositories have unavailable recipes, return empty list
+    Configuration config1 = Mockito.mock(Configuration.class);
+    Configuration config2 = Mockito.mock(Configuration.class);
+    when(config1.getRepositoryName()).thenReturn("unavailable-repo-1");
+    when(config1.getRecipeName()).thenReturn("non-existent-recipe-1");
+    when(config2.getRepositoryName()).thenReturn("unavailable-repo-2");
+    when(config2.getRecipeName()).thenReturn("non-existent-recipe-2");
+
+    List<Configuration> result = underTest.userHasRepositoryAdminPermissionFor(
+        Arrays.asList(config1, config2), READ);
+
+    assertTrue("Should return empty list when all recipes are unavailable", result.isEmpty());
+  }
+
+  @Test
+  public void testUserCanBrowseRepositories_emptyFormatsAfterFiltering() {
+    // Test NEXUS-49753: Edge case where filtering results in empty formats list
+    Configuration unavailableConfig1 = Mockito.mock(Configuration.class);
+    Configuration unavailableConfig2 = Mockito.mock(Configuration.class);
+    when(unavailableConfig1.getRepositoryName()).thenReturn("unavailable-repo-1");
+    when(unavailableConfig1.getRecipeName()).thenReturn("non-existent-recipe-1");
+    when(unavailableConfig2.getRepositoryName()).thenReturn("unavailable-repo-2");
+    when(unavailableConfig2.getRecipeName()).thenReturn("non-existent-recipe-2");
+
+    // Mock selectorManager to return empty list for unavailable formats
+    when(selectorManager.browseActive(anyList(), anyList())).thenReturn(Collections.emptyList());
+
+    List<Configuration> result = underTest.userCanBrowseRepositories(unavailableConfig1, unavailableConfig2);
+
+    assertTrue("Should return empty list when all configurations have unavailable recipes", result.isEmpty());
+    // Verify that browseActive was never called since configurations were filtered out early
+    verify(selectorManager, never()).browseActive(anyList(), anyList());
+  }
 }
