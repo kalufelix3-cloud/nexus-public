@@ -31,7 +31,7 @@ public class ScheduleS3CompactTasksTaskDescriptor
 
   @Inject
   public ScheduleS3CompactTasksTaskDescriptor(
-      @Value("${s3.compact.task.scheduling.exposed:true}") final boolean exposed)
+      @Value("${s3.compact.task.scheduling.exposed:false}") final boolean exposed)
   {
     super(TYPE_ID, ScheduleS3CompactTasksTask.class, "Schedule compact blobstore tasks based on expiration policy",
         exposed, exposed, true);
