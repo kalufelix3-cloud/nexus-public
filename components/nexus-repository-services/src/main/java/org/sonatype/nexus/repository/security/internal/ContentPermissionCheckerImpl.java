@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.security.internal;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -249,34 +248,6 @@ public class ContentPermissionCheckerImpl
     return false;
   }
 
-  /**
-   * Common permission checking logic that enforces content selectors as additional restrictions.
-   * This method implements defense-in-depth security by ensuring content selectors are applied
-   * even when users have repository-wide view permissions.
-   *
-   * @param selectors the list of selector configurations to check
-   * @param hasViewPermission whether the user has repository-wide view permission
-   * @param selectorMatcher predicate to check if a selector configuration matches
-   * @return true if permission is granted, false otherwise
-   */
-  private boolean checkPermissionWithSelectors(
-      final List<SelectorConfiguration> selectors,
-      final boolean hasViewPermission,
-      final java.util.function.Predicate<SelectorConfiguration> selectorMatcher)
-  {
-    if (selectors.isEmpty()) {
-      return hasViewPermission;
-    }
-
-    // Deny access if user lacks both view permission and matching selector permissions
-    if (!hasViewPermission && selectors.stream().noneMatch(selectorMatcher)) {
-      return false;
-    }
-
-    // Enforce content selectors for all users, including those with view permission
-    return selectors.stream().anyMatch(selectorMatcher);
-  }
-
   @Override
   public boolean isPermitted(
       final String repositoryName,
@@ -284,15 +255,14 @@ public class ContentPermissionCheckerImpl
       final String action,
       final VariableSource variableSource)
   {
-    // Always fetch selectors to ensure they are applied as additional restrictions,
-    // not just as fallbacks when view permission is absent
-    var selectors = selectorManager.browse();
-    boolean hasViewPermission = isViewPermitted(repositoryName, repositoryFormat, action);
-
-    return checkPermissionWithSelectors(
-        selectors,
-        hasViewPermission,
-        config -> isContentPermitted(repositoryName, repositoryFormat, action, config, variableSource));
+    // check view perm first, if applicable, grant access
+    if (isViewPermitted(repositoryName, repositoryFormat, action)) {
+      return true;
+    }
+    // otherwise check the content selector perms
+    return selectorManager.browse()
+        .stream()
+        .anyMatch(config -> isContentPermitted(repositoryName, repositoryFormat, action, config, variableSource));
   }
 
   @Override
@@ -302,14 +272,14 @@ public class ContentPermissionCheckerImpl
       final String action,
       final VariableSource variableSource)
   {
-    // Always fetch JEXL selectors to ensure they are applied as additional restrictions
-    var selectors = selectorManager.browseJexl();
-    boolean hasViewPermission = isViewPermitted(repositoryName, repositoryFormat, action);
-
-    return checkPermissionWithSelectors(
-        selectors,
-        hasViewPermission,
-        config -> isContentPermitted(repositoryName, repositoryFormat, action, config, variableSource));
+    // check view perm first, if applicable, grant access
+    if (isViewPermitted(repositoryName, repositoryFormat, action)) {
+      return true;
+    }
+    // otherwise check the content selector perms
+    return selectorManager.browseJexl()
+        .stream()
+        .anyMatch(config -> isContentPermitted(repositoryName, repositoryFormat, action, config, variableSource));
   }
 
   @Override
@@ -323,14 +293,12 @@ public class ContentPermissionCheckerImpl
       return false;
     }
 
-    // Always fetch selectors to ensure they are applied as additional restrictions
-    var selectors = selectorManager.browseActive(repositoryNames, Collections.singletonList(repositoryFormat));
-    boolean hasViewPermission = isViewPermitted(repositoryNames, repositoryFormat, action);
-
-    return checkPermissionWithSelectors(
-        selectors,
-        hasViewPermission,
-        config -> isContentPermitted(repositoryNames, repositoryFormat, action, config, variableSource));
+    if (isViewPermitted(repositoryNames, repositoryFormat, action)) {
+      return true;
+    }
+    return selectorManager.browseActive(repositoryNames, Collections.singletonList(repositoryFormat))
+        .stream()
+        .anyMatch(config -> isContentPermitted(repositoryNames, repositoryFormat, action, config, variableSource));
   }
 
   @Override
@@ -340,14 +308,14 @@ public class ContentPermissionCheckerImpl
       final VariableSource variableSource,
       final String... actions)
   {
-    // Always fetch JEXL selectors to ensure they are applied as additional restrictions
-    var selectors = selectorManager.browseJexl();
-    boolean hasViewPermission = isViewPermitted(repositoryName, repositoryFormat, actions);
-
-    return checkPermissionWithSelectors(
-        selectors,
-        hasViewPermission,
-        config -> isContentPermittedAnyOf(repositoryName, repositoryFormat, config, variableSource, actions));
+    // check view perm first, if applicable, grant access
+    if (isViewPermitted(repositoryName, repositoryFormat, actions)) {
+      return true;
+    }
+    // otherwise check the content selector perms
+    return selectorManager.browseJexl()
+        .stream()
+        .anyMatch(config -> isContentPermittedAnyOf(repositoryName, repositoryFormat, config, variableSource, actions));
   }
 
   @Override
@@ -357,14 +325,14 @@ public class ContentPermissionCheckerImpl
       final VariableSource variableSource,
       final String... actions)
   {
-    // Always fetch selectors to ensure they are applied as additional restrictions
-    var selectors = selectorManager.browse();
-    boolean hasViewPermission = isViewPermitted(repositoryName, repositoryFormat, actions);
-
-    return checkPermissionWithSelectors(
-        selectors,
-        hasViewPermission,
-        config -> isContentPermittedAnyOf(repositoryName, repositoryFormat, config, variableSource, actions));
+    // check view perm first, if applicable, grant access
+    if (isViewPermitted(repositoryName, repositoryFormat, actions)) {
+      return true;
+    }
+    // otherwise check the content selector perms
+    return selectorManager.browse()
+        .stream()
+        .anyMatch(config -> isContentPermittedAnyOf(repositoryName, repositoryFormat, config, variableSource, actions));
   }
 
   @Override
@@ -378,13 +346,12 @@ public class ContentPermissionCheckerImpl
       return false;
     }
 
-    // Always fetch selectors to ensure they are applied as additional restrictions
-    var selectors = selectorManager.browse();
-    boolean hasViewPermission = isViewPermitted(repositoryNames, repositoryFormat, actions);
-
-    return checkPermissionWithSelectors(
-        selectors,
-        hasViewPermission,
-        config -> isContentPermittedAnyOf(repositoryNames, repositoryFormat, config, variableSource, actions));
+    if (isViewPermitted(repositoryNames, repositoryFormat, actions)) {
+      return true;
+    }
+    return selectorManager.browse()
+        .stream()
+        .anyMatch(
+            config -> isContentPermittedAnyOf(repositoryNames, repositoryFormat, config, variableSource, actions));
   }
 }
