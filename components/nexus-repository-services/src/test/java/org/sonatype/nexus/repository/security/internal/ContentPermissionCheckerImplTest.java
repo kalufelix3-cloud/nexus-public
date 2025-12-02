@@ -80,7 +80,7 @@ public class ContentPermissionCheckerImplTest
   public void testIsViewPermitted_notPermitted() throws Exception {
     assertThat(impl.isViewPermitted("repoName", "repoFormat", BreadActions.READ), is(false));
 
-    //just to make sure it was actually called, since returning false is the default behaviour
+    // just to make sure it was actually called, since returning false is the default behaviour
     verify(securityHelper)
         .anyPermitted(eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ))));
   }
@@ -112,6 +112,10 @@ public class ContentPermissionCheckerImplTest
         .anyPermitted(eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
         .thenReturn(true);
 
+    when(securityHelper
+        .anyPermitted(eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(true);
+
     when(selectorManager.browse()).thenReturn(Arrays.asList(config));
 
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
@@ -125,11 +129,16 @@ public class ContentPermissionCheckerImplTest
         .anyPermitted(eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
         .thenReturn(true);
 
+    when(securityHelper
+        .anyPermitted(eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(true);
+
     when(selectorManager.browse()).thenReturn(Arrays.asList(config));
 
     when(selectorManager.evaluate(any(), any())).thenReturn(false);
 
-    assertThat(impl.isPermitted("repoName", "repoFormat", BreadActions.READ, variableSource), is(true));
+    // Content selectors should be enforced even when user has view permission
+    assertThat(impl.isPermitted("repoName", "repoFormat", BreadActions.READ, variableSource), is(false));
   }
 
   @Test
@@ -143,10 +152,6 @@ public class ContentPermissionCheckerImplTest
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
 
     assertThat(impl.isPermitted("repoName", "repoFormat", BreadActions.READ, variableSource), is(true));
-
-    //just to validate 'view' permission didn't sneak in and authorize the above call
-    verify(securityHelper).anyPermitted(eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName",
-        Arrays.asList(BreadActions.READ))));
   }
 
   @Test
@@ -175,9 +180,10 @@ public class ContentPermissionCheckerImplTest
 
   @Test
   public void testIsViewPermittedMultipleRepositories_notPermitted() throws Exception {
-    assertThat(impl.isViewPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat", BreadActions.READ), is(false));
+    assertThat(impl.isViewPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat",
+        BreadActions.READ), is(false));
 
-    //just to make sure it was actually called, since returning false is the default behaviour
+    // just to make sure it was actually called, since returning false is the default behaviour
     verify(securityHelper)
         .anyPermitted(
             eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
@@ -233,11 +239,18 @@ public class ContentPermissionCheckerImplTest
             eq(new RepositoryViewPermission("repoFormat", "repoName2", Arrays.asList(BreadActions.READ)))))
         .thenReturn(true);
 
-    when(selectorManager.browse()).thenReturn(Arrays.asList(config));
+    when(securityHelper
+        .anyPermitted(
+            eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName2", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(true);
+
+    when(selectorManager.browseActive(any(), any())).thenReturn(Arrays.asList(config));
 
     when(selectorManager.evaluate(any(), any())).thenReturn(false);
 
-    assertThat(impl.isPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat", BreadActions.READ, variableSource), is(true));
+    // Content selectors should be enforced even when user has view permission
+    assertThat(impl.isPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat", BreadActions.READ, variableSource), is(false));
   }
 
   @Test
@@ -255,11 +268,6 @@ public class ContentPermissionCheckerImplTest
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
 
     assertThat(impl.isPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat", BreadActions.READ, variableSource), is(true));
-
-    //just to validate 'view' permission didn't sneak in and authorize the above call
-    verify(securityHelper).anyPermitted(
-        eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
-        eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName2", Arrays.asList(BreadActions.READ))));
   }
 
   @Test
@@ -275,5 +283,189 @@ public class ContentPermissionCheckerImplTest
     when(selectorManager.evaluate(any(), any())).thenReturn(false);
 
     assertThat(impl.isPermitted(Sets.newHashSet("repoName", "repoName2"), "repoFormat", BreadActions.READ, variableSource), is(false));
+  }
+
+  @Test
+  public void testIsPermittedAnyOf_noSelectors_usesViewPermission() throws Exception {
+    when(securityHelper
+        .anyPermitted(
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.BROWSE)))))
+        .thenReturn(true);
+
+    when(selectorManager.browse()).thenReturn(Collections.emptyList());
+
+    assertThat(impl.isPermittedAnyOf("repoName", "repoFormat", variableSource, BreadActions.READ, BreadActions.BROWSE), is(true));
+  }
+
+  @Test
+  public void testIsPermittedAnyOf_viewPermittedContentNotPermitted_denied() throws Exception {
+    when(securityHelper
+        .anyPermitted(
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.BROWSE)))))
+        .thenReturn(true);
+
+    when(securityHelper
+        .anyPermitted(any(RepositoryContentSelectorPermission.class), any(RepositoryContentSelectorPermission.class)))
+        .thenReturn(true);
+
+    when(selectorManager.browse()).thenReturn(Arrays.asList(config));
+
+    when(selectorManager.evaluate(any(), any())).thenReturn(false);
+
+    assertThat(impl.isPermittedAnyOf("repoName", "repoFormat", variableSource, BreadActions.READ, BreadActions.BROWSE), is(false));
+  }
+
+  @Test
+  public void testIsPermittedAnyOf_viewPermittedContentPermitted_allowed() throws Exception {
+    when(securityHelper
+        .anyPermitted(
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.BROWSE)))))
+        .thenReturn(true);
+
+    when(securityHelper
+        .anyPermitted(any(RepositoryContentSelectorPermission.class), any(RepositoryContentSelectorPermission.class)))
+        .thenReturn(true);
+
+    when(selectorManager.browse()).thenReturn(Arrays.asList(config));
+
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
+
+    assertThat(impl.isPermittedAnyOf("repoName", "repoFormat", variableSource, BreadActions.READ, BreadActions.BROWSE), is(true));
+  }
+
+  @Test
+  public void testIsPermittedJexlOnlyAnyOf_viewPermittedContentNotPermitted_denied() throws Exception {
+    when(securityHelper
+        .anyPermitted(
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.BROWSE)))))
+        .thenReturn(true);
+
+    when(securityHelper
+        .anyPermitted(any(RepositoryContentSelectorPermission.class), any(RepositoryContentSelectorPermission.class)))
+        .thenReturn(true);
+
+    when(selectorManager.browseJexl()).thenReturn(Arrays.asList(config));
+
+    when(selectorManager.evaluate(any(), any())).thenReturn(false);
+
+    assertThat(impl.isPermittedJexlOnlyAnyOf("repoName", "repoFormat", variableSource, BreadActions.READ, BreadActions.BROWSE), is(false));
+  }
+
+  @Test
+  public void testIsPermittedJexlOnlyAnyOf_viewPermittedContentPermitted_allowed() throws Exception {
+    when(securityHelper
+        .anyPermitted(
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.BROWSE)))))
+        .thenReturn(true);
+
+    when(securityHelper
+        .anyPermitted(any(RepositoryContentSelectorPermission.class), any(RepositoryContentSelectorPermission.class)))
+        .thenReturn(true);
+
+    when(selectorManager.browseJexl()).thenReturn(Arrays.asList(config));
+
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
+
+    assertThat(impl.isPermittedJexlOnlyAnyOf("repoName", "repoFormat", variableSource, BreadActions.READ, BreadActions.BROWSE), is(true));
+  }
+
+  @Test
+  public void testIsPermittedAnyOfMultipleRepositories_viewPermittedContentNotPermitted_denied() throws Exception {
+    when(securityHelper
+        .anyPermitted(
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.BROWSE))),
+            eq(new RepositoryViewPermission("repoFormat", "repoName2", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryViewPermission("repoFormat", "repoName2", Arrays.asList(BreadActions.BROWSE)))))
+        .thenReturn(true);
+
+    when(securityHelper
+        .anyPermitted(
+            any(RepositoryContentSelectorPermission.class),
+            any(RepositoryContentSelectorPermission.class),
+            any(RepositoryContentSelectorPermission.class),
+            any(RepositoryContentSelectorPermission.class)))
+        .thenReturn(true);
+
+    when(selectorManager.browse()).thenReturn(Arrays.asList(config));
+
+    when(selectorManager.evaluate(any(), any())).thenReturn(false);
+
+    assertThat(impl.isPermittedAnyOf(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat", variableSource, BreadActions.READ, BreadActions.BROWSE), is(false));
+  }
+
+  @Test
+  public void testIsPermittedAnyOfMultipleRepositories_viewPermittedContentPermitted_allowed() throws Exception {
+    when(securityHelper
+        .anyPermitted(
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.BROWSE))),
+            eq(new RepositoryViewPermission("repoFormat", "repoName2", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryViewPermission("repoFormat", "repoName2", Arrays.asList(BreadActions.BROWSE)))))
+        .thenReturn(true);
+
+    when(securityHelper
+        .anyPermitted(
+            any(RepositoryContentSelectorPermission.class),
+            any(RepositoryContentSelectorPermission.class),
+            any(RepositoryContentSelectorPermission.class),
+            any(RepositoryContentSelectorPermission.class)))
+        .thenReturn(true);
+
+    when(selectorManager.browse()).thenReturn(Arrays.asList(config));
+
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
+
+    assertThat(impl.isPermittedAnyOf(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat", variableSource, BreadActions.READ, BreadActions.BROWSE), is(true));
+  }
+
+  @Test
+  public void testIsPermittedJexlOnly_noSelectors_usesViewPermission() throws Exception {
+    when(securityHelper
+        .anyPermitted(eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(true);
+
+    when(selectorManager.browseJexl()).thenReturn(Collections.emptyList());
+
+    assertThat(impl.isPermittedJexlOnly("repoName", "repoFormat", BreadActions.READ, variableSource), is(true));
+  }
+
+  @Test
+  public void testIsPermittedJexlOnly_viewPermittedContentNotPermitted_denied() throws Exception {
+    when(securityHelper
+        .anyPermitted(eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(true);
+
+    when(securityHelper
+        .anyPermitted(eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(true);
+
+    when(selectorManager.browseJexl()).thenReturn(Arrays.asList(config));
+
+    when(selectorManager.evaluate(any(), any())).thenReturn(false);
+
+    assertThat(impl.isPermittedJexlOnly("repoName", "repoFormat", BreadActions.READ, variableSource), is(false));
+  }
+
+  @Test
+  public void testIsPermittedJexlOnly_viewPermittedContentPermitted_allowed() throws Exception {
+    when(securityHelper
+        .anyPermitted(eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(true);
+
+    when(securityHelper
+        .anyPermitted(eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(true);
+
+    when(selectorManager.browseJexl()).thenReturn(Arrays.asList(config));
+
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
+
+    assertThat(impl.isPermittedJexlOnly("repoName", "repoFormat", BreadActions.READ, variableSource), is(true));
   }
 }

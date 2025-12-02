@@ -128,13 +128,19 @@ public class BrowseNodeQueryServiceImpl
     String repositoryName = repository.getName();
     String format = repository.getFormat().getValue();
 
-    List<SelectorConfiguration> selectors = emptyList();
-    if (!hasBrowsePermission(repositoryName, format)) {
-      // user doesn't have repository-wide access so need to apply content selection
+    // Always fetch selectors to ensure content selectors are applied as additional restrictions
+    List<SelectorConfiguration> selectors;
+    try {
       selectors = selectorManager.browseActive(asList(repositoryName), asList(format));
-      if (selectors.isEmpty()) {
-        return emptyList(); // no browse permission and no selectors -> no results
-      }
+    }
+    catch (Exception e) {
+      log.error("Failed to fetch content selectors for repository {} with format {}", repositoryName, format, e);
+      selectors = emptyList();
+    }
+
+    // Only check browse permission if there are no selectors
+    if (selectors.isEmpty() && !hasBrowsePermission(repositoryName, format)) {
+      return emptyList(); // no browse permission and no selectors -> no results
     }
 
     Map<String, Object> filterParameters = new HashMap<>();
