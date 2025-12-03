@@ -417,11 +417,23 @@ export default class ExtJS {
     }, 1);
   }
 
+  static calculateTimeout() {
+    const uiSettings = ExtJS.state().getValue('uiSettings', {});
+    const statusInterval = ExtJS.hasUser()
+      ? (uiSettings.statusIntervalAuthenticated || 5)
+      : (uiSettings.statusIntervalAnonymous || 60);
+
+    return Math.max(statusInterval * 2 * 1000, 2000);
+  }
+
   /**
    * Wait for the next permission change event from ExtJS.
    * Useful after login to ensure permissions are updated before navigation.
    * 
-   * @returns {Promise<void>} Resolves when permissions change, rejects after 1s timeout
+   * The timeout is calculated based on the UI settings status interval to account for network latency
+   * and server load. Uses 2x the status interval as a buffer, with a minimum of 2 seconds.
+   * 
+   * @returns {Promise<void>} Resolves when permissions change, rejects after timeout
    */
   static waitForNextPermissionChange() {
     return new Promise((resolve, reject) => {
@@ -435,13 +447,13 @@ export default class ExtJS {
       const permissionsController = Ext.getApplication().getController('Permissions');
       permissionsController.on("changed", handleChange);
 
+      const timeoutMs = ExtJS.calculateTimeout();
+
       const timeout = setTimeout(() => {
         console.debug('removing event handler, permission changes have timed out');
-        permissionsController.un("changed", handleChange);
+        permissionsController.un('changed', handleChange);
         reject(new Error('timed out waiting for permissions to update'));
-        // TODO the timeout duration will be modified on https://sonatype.atlassian.net/browse/NEXUS-49142
-      }, 2000);
+      }, timeoutMs);
     });
   }
-
 }
