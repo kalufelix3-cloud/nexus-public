@@ -22,8 +22,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -56,6 +54,9 @@ import org.sonatype.nexus.selector.SelectorManager;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.collect.ImmutableList;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
@@ -66,7 +67,6 @@ import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH;
 import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH_CHAR;
 import static org.sonatype.nexus.repository.content.facet.ContentFacetFinder.findContentFacets;
 import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
-import org.springframework.stereotype.Component;
 
 /**
  * New-DB implementation of {@link BrowseNodeQueryService}.
@@ -260,7 +260,7 @@ public class BrowseNodeQueryServiceImpl
         Optional<FluentAsset> asset = getAssetById(repository, node.getAssetId());
 
         if (!asset.isPresent()) {
-          log.error("Could not find expected asset (id): {} ({}) in repository: {}",
+          log.debug("Could not find expected asset (id): {} ({}) in repository: {}",
               node.getPath(), node.getAssetId(), repository.getName());
           // expected an asset here but it's missing, move along to the next node
           continue;
