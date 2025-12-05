@@ -42,7 +42,9 @@ Ext.define('NX.coreui.controller.SearchTerraform', {
             readOnly: true,
             criterias: [
                 { id: 'format', value: 'terraform', hidden: true },
-                { id: 'name.raw' },
+                { id: 'assets.attributes.terraform.provider' },
+                { id: 'assets.attributes.terraform.namespace' },
+                { id: 'assets.attributes.terraform.name' },
                 { id: 'version' }
             ]
         }, me);
