@@ -23,6 +23,8 @@ import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType;
 import org.sonatype.nexus.repository.replication.PullReplicationSupport;
 import org.sonatype.nexus.repository.view.Context;
+
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.MISSING_BLOB_SKIP_NEGATIVE_CACHE;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.Status;
@@ -99,10 +101,10 @@ public class NegativeCacheHandlerTest
    * Given:
    * - request is a Replication request
    * Then:
-   *  - context is asked to proceed
-   *  - response from context is passed on
-   *  - if successful, cache is invalidated for key
-   *  - no other actions (checked by no checking of key being cached)
+   * - context is asked to proceed
+   * - response from context is passed on
+   * - if successful, cache is invalidated for key
+   * - no other actions (checked by no checking of key being cached)
    */
   @Test
   public void directlyProceedOnReplicationRequestInvalidateOnSuccess() throws Exception {
@@ -117,14 +119,15 @@ public class NegativeCacheHandlerTest
     verify(mockNegativeCacheFacet).invalidate(mockNegativeCacheKey);
     verify(mockNegativeCacheFacet, never()).get(any());
   }
+
   /**
    * Given:
    * - request is a Replication request
    * Then:
-   *  - context is asked to proceed
-   *  - response from context is passed on
-   *  - if not successful, cache is left as-is
-   *  - no other actions (checked by no checking of key being cached)
+   * - context is asked to proceed
+   * - response from context is passed on
+   * - if not successful, cache is left as-is
+   * - no other actions (checked by no checking of key being cached)
    */
   @Test
   public void directlyProceedOnReplicationRequestLeaveExistingOnFail() throws Exception {
@@ -159,7 +162,7 @@ public class NegativeCacheHandlerTest
    * - a 404 response from context for GET
    * - context (remote) is auto blocked
    * Then:
-   *  - 404 response is cached
+   * - 404 response is cached
    */
   @Test
   public void a404ResponseSkipsCacheForAutoBlockedRemote() throws Exception {
@@ -172,7 +175,7 @@ public class NegativeCacheHandlerTest
    * - a 404 response from context for GET
    * - context (remote) is manually blocked
    * Then:
-   *  - 404 response is cached
+   * - 404 response is cached
    */
   @Test
   public void a404ResponseSkipsCacheForManualBlockedRemote() throws Exception {
@@ -196,10 +199,10 @@ public class NegativeCacheHandlerTest
    * Given:
    * - cached key present
    * Then:
-   *  - cached status is returned
-   *  - context is not asked to proceed
-   *  - key is not put in cache
-   *  - key is not invalidated
+   * - cached status is returned
+   * - context is not asked to proceed
+   * - key is not put in cache
+   * - key is not invalidated
    */
   @Test
   public void returnCached404() throws Exception {
@@ -217,10 +220,10 @@ public class NegativeCacheHandlerTest
    * - no cached key present
    * - a non 404 response from context
    * Then:
-   *  - context is asked to proceed
-   *  - response from context is passed on
-   *  - key is not put in cache
-   *  - key is not invalidated
+   * - context is asked to proceed
+   * - response from context is passed on
+   * - key is not put in cache
+   * - key is not invalidated
    */
   @Test
   public void aNon404ResponsePassesThrough() throws Exception {
@@ -239,10 +242,10 @@ public class NegativeCacheHandlerTest
    * - no cached key present
    * - successful response from context
    * Then:
-   *  - context is asked to proceed
-   *  - response from context is passed on
-   *  - key is not put in cache
-   *  - key is invalidated
+   * - context is asked to proceed
+   * - response from context is passed on
+   * - key is not put in cache
+   * - key is invalidated
    */
   @Test
   public void successfulResponseInvalidatesCache() throws Exception {
@@ -285,5 +288,59 @@ public class NegativeCacheHandlerTest
     verify(mockContext).proceed();
     verify(mockNegativeCacheFacet, never()).put(any(NegativeCacheKey.class), any(Status.class));
     verify(mockNegativeCacheFacet, never()).invalidate(mockNegativeCacheKey);
+  }
+
+  /**
+   * Given:
+   * - no cached key present
+   * - a 404 response from context for GET
+   * - MISSING_BLOB_SKIP_NEGATIVE_CACHE marker is set (MissingBlobException scenario)
+   * Then:
+   * - 404 response is NOT cached (to allow retry when blob becomes available)
+   * - context is asked to proceed
+   * - response from context is passed on
+   */
+  @Test
+  public void a404ResponseIsNotCachedWhenMissingBlobMarkerIsSet() throws Exception {
+    AttributesMap contextAttributes = new AttributesMap();
+    contextAttributes.set(MISSING_BLOB_SKIP_NEGATIVE_CACHE, Boolean.TRUE);
+    when(mockContext.getAttributes()).thenReturn(contextAttributes);
+    when(mockRequest.getAction()).thenReturn(HttpMethods.GET);
+    Response contextResponse = HttpResponses.notFound("404");
+    when(mockContext.proceed()).thenReturn(contextResponse);
+    when(mockNegativeCacheFacet.get(mockNegativeCacheKey)).thenReturn(null);
+
+    Response response = underTest.handle(mockContext);
+
+    assert response == contextResponse;
+    verify(mockContext).proceed();
+    verify(mockNegativeCacheFacet, never()).put(any(NegativeCacheKey.class), any(Status.class));
+    verify(mockNegativeCacheFacet, never()).invalidate(any(NegativeCacheKey.class));
+  }
+
+  /**
+   * Given:
+   * - no cached key present
+   * - a 404 response from context for GET
+   * - MISSING_BLOB_SKIP_NEGATIVE_CACHE marker is set to FALSE
+   * Then:
+   * - 404 response IS cached (normal behavior)
+   */
+  @Test
+  public void a404ResponseIsCachedWhenMissingBlobMarkerIsFalse() throws Exception {
+    AttributesMap contextAttributes = new AttributesMap();
+    contextAttributes.set(MISSING_BLOB_SKIP_NEGATIVE_CACHE, Boolean.FALSE);
+    when(mockContext.getAttributes()).thenReturn(contextAttributes);
+    when(mockRequest.getAction()).thenReturn(HttpMethods.GET);
+    Response contextResponse = HttpResponses.notFound("404");
+    when(mockContext.proceed()).thenReturn(contextResponse);
+    when(mockNegativeCacheFacet.get(mockNegativeCacheKey)).thenReturn(null);
+
+    Response response = underTest.handle(mockContext);
+
+    assert response == contextResponse;
+    verify(mockContext).proceed();
+    verify(mockNegativeCacheFacet).put(mockNegativeCacheKey, response.getStatus());
+    verify(mockNegativeCacheFacet, never()).invalidate(any(NegativeCacheKey.class));
   }
 }

@@ -102,6 +102,9 @@ public abstract class ProxyFacetSupport
   public static final String PROXY_REMOTE_FETCH_SKIP_MARKER =
       "proxy.remote-fetch.skip";
 
+  public static final String MISSING_BLOB_SKIP_NEGATIVE_CACHE =
+      "proxy.missing-blob.skip-negative-cache";
+
   public static final String ALTERNATIVE_URLS_PATTERN = "<(.*?)>";
 
   public static final String PROXY_THROTTLED_ANALYTICS_MARKED = "nexus.analytics.proxy_throttled_requests.marked";
@@ -523,12 +526,16 @@ public abstract class ProxyFacetSupport
     catch (MissingBlobException e) {
       log.warn("Unable to find blob {} for {}, will check remote", e.getBlobRef(),
           getUrl(context));
+
+      context.getAttributes().set(MISSING_BLOB_SKIP_NEGATIVE_CACHE, TRUE);
       return null;
     }
     catch (RetryDeniedException e) {
       if (e.getCause() instanceof MissingBlobException) {
         log.warn("Unable to find blob {} for {}, will check remote", ((MissingBlobException) e.getCause()).getBlobRef(),
             getUrl(context));
+
+        context.getAttributes().set(MISSING_BLOB_SKIP_NEGATIVE_CACHE, TRUE);
         return null;
       }
       else {

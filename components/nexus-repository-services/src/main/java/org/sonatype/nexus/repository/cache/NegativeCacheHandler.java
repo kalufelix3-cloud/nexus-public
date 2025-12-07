@@ -33,6 +33,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.MISSING_BLOB_SKIP_NEGATIVE_CACHE;
 import static org.sonatype.nexus.repository.replication.PullReplicationSupport.IS_REPLICATION_REQUEST;
 
 /**
@@ -79,7 +80,7 @@ public class NegativeCacheHandler
     if (status == null) {
       response = context.proceed();
 
-      if (isNotFound(response) && !isRemoteBlocked(context)) {
+      if (isNotFound(response) && !isRemoteBlocked(context) && !skipNegativeCacheForMissingBlob(context)) {
         negativeCache.put(key, response.getStatus());
         log.debug("Couldn't find {} - adding to NFC", key);
       }
@@ -110,5 +111,12 @@ public class NegativeCacheHandler
     RemoteConnectionStatus remoteConnectionStatus = context.getRepository().facet(HttpClientFacet.class).getStatus();
     return remoteConnectionStatus.getType() == RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE ||
         remoteConnectionStatus.getType() == RemoteConnectionStatusType.BLOCKED;
+  }
+
+  private boolean skipNegativeCacheForMissingBlob(final Context context) {
+    if (context.getAttributes() == null) {
+      return false;
+    }
+    return Boolean.TRUE.equals(context.getAttributes().get(MISSING_BLOB_SKIP_NEGATIVE_CACHE));
   }
 }
