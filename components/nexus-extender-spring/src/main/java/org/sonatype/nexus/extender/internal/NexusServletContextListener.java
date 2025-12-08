@@ -19,7 +19,9 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.bootstrap.entrypoint.EditionVersionFormatter;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
 import org.sonatype.nexus.extender.NexusLifecycleManager;
 
@@ -46,16 +48,20 @@ public class NexusServletContextListener
 
   private final NexusLifecycleManager nexusLifecycleManager;
 
+  private final ApplicationVersion applicationVersion;
+
   private Phase startupPhase;
 
   @Autowired
   public NexusServletContextListener(
       final NexusEditionSelector nexusEditionSelector,
       final NexusLifecycleManager nexusLifecycleManager,
+      @Autowired(required = false) final ApplicationVersion applicationVersion,
       @Value("${" + NEXUS_LIFECYCLE_STARTUP_PHASE + ":#{null}}") final String startupPhaseValue)
   {
     this.nexusLifecycleManager = checkNotNull(nexusLifecycleManager);
     this.nexusEditionSelector = checkNotNull(nexusEditionSelector);
+    this.applicationVersion = applicationVersion; // may be null
     if (startupPhaseValue != null) {
       startupPhase = Phase.valueOf(startupPhaseValue);
     }
@@ -78,7 +84,8 @@ public class NexusServletContextListener
   public void contextDestroyed(final ServletContextEvent event) {
     // log uptime before triggering activity which may run into problems
     long uptime = ManagementFactory.getRuntimeMXBean().getUptime();
-    log.info("Uptime: {} ({})", toDurationString(uptime), nexusEditionSelector.getCurrent());
+    log.info("Uptime: {} ({})", toDurationString(uptime),
+        EditionVersionFormatter.formatEditionAndVersion(nexusEditionSelector, applicationVersion));
 
     try {
       moveToPhase(OFF);

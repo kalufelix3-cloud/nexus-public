@@ -21,12 +21,14 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
 import org.sonatype.nexus.bootstrap.entrypoint.jvm.ShutdownDelegate;
 import org.sonatype.nexus.bootstrap.spring.NexusComponentScanCompleteEvent;
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
 import org.sonatype.nexus.extender.NexusLifecycleManager;
 
 import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.base.Strings;
 import jakarta.annotation.PreDestroy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.ApplicationContext;
@@ -52,6 +54,8 @@ public class NexusLifecycleLauncher
 
   private final ShutdownDelegate shutdownDelegate;
 
+  private final ApplicationVersion applicationVersion;
+
   private Phase startupPhase;
 
   private NexusLifecycleManager nexusLifecycleManager;
@@ -59,10 +63,12 @@ public class NexusLifecycleLauncher
   public NexusLifecycleLauncher(
       final NexusEditionSelector nexusEditionSelector,
       final ShutdownDelegate shutdownDelegate,
+      @Autowired(required = false) final ApplicationVersion applicationVersion,
       @Value("${nexus.lifecycle.startupPhase:#{null}}") final String startupPhaseName)
   {
     this.nexusEditionSelector = checkNotNull(nexusEditionSelector);
     this.shutdownDelegate = checkNotNull(shutdownDelegate);
+    this.applicationVersion = applicationVersion; // may be null
     // set startup phase from properties, if available
     Optional.ofNullable(startupPhaseName)
         .filter(value -> !Strings.isNullOrEmpty(value))
@@ -77,7 +83,8 @@ public class NexusLifecycleLauncher
 
   public void stop() throws Exception {
     long uptime = ManagementFactory.getRuntimeMXBean().getUptime();
-    log.info("Stopping Nexus, Uptime: {} ({})", toDurationString(uptime), nexusEditionSelector.getCurrent());
+    log.info("Stopping Nexus, Uptime: {} ({})", toDurationString(uptime),
+        EditionVersionFormatter.formatEditionAndVersion(nexusEditionSelector, applicationVersion));
     if (nexusLifecycleManager != null) {
       nexusLifecycleManager.to(Phase.OFF);
     }
