@@ -15,8 +15,9 @@ package org.sonatype.nexus.repository.group;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -134,7 +135,7 @@ public abstract class MergingGroupHandlerSupport
       final Context context,
       final Map<Repository, Response> successfulResponses) throws IOException
   {
-    Optional<String> optEtag = computeEtag(successfulResponses.values());
+    Optional<String> optEtag = computeEtag(successfulResponses);
     Optional<Content> existing = getCached(context)
         .filter(unchanged(optEtag));
 
@@ -183,24 +184,31 @@ public abstract class MergingGroupHandlerSupport
    * Attempts to create a consistent hash derived from the responses of member repositories, we use this to identify
    * whether any members have changed their responses which allows us to avoid recomputing the values.
    */
-  private Optional<String> computeEtag(final Collection<Response> successfulResponses) {
+  private Optional<String> computeEtag(final Map<Repository, Response> successfulResponses) {
     Hasher etagDigest = etagDigester.newHasher();
 
     // If we're missing one etag the overall result isn't valid as we can't compute it
     AtomicBoolean valid = new AtomicBoolean(true);
+    List<String> reposWithoutEtag = new ArrayList<>();
 
-    successfulResponses.stream()
-        .map(Response::getPayload)
-        .map(this::etag)
-        .peek(optEtag -> valid.compareAndSet(true, optEtag.isPresent()))
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .forEach(etag -> etagDigest.putString(etag, StandardCharsets.UTF_8));
+    // Process all responses, collecting ETags and tracking repositories without them
+    for (Map.Entry<Repository, Response> entry : successfulResponses.entrySet()) {
+      Optional<String> optEtag = etag(entry.getValue().getPayload());
+      if (optEtag.isPresent()) {
+        etagDigest.putString(optEtag.get(), StandardCharsets.UTF_8);
+      }
+      else {
+        valid.set(false);
+        reposWithoutEtag.add(entry.getKey().getName());
+      }
+    }
 
     if (valid.get()) {
       return Optional.of(etagDigest.hash().toString());
     }
-    log.warn("Missing etag on response from member repository when computing metadata");
+
+    log.warn("Missing etag on response from member repositories: {} when computing metadata",
+        String.join(", ", reposWithoutEtag));
     return Optional.empty();
   }
 
