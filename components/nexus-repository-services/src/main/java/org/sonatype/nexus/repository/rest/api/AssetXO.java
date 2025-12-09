@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -207,6 +208,8 @@ public class AssetXO
       Repository repository,
       @Nullable Map<String, AssetXODescriptor> assetDescriptors)
   {
+    Configuration repoConfiguration = repository.getConfiguration();
+    String blobStoreName = String.valueOf(repoConfiguration.attributes("storage").get("blobStoreName"));
     return builder()
         .path(asset.getPath())
         .downloadUrl(repository.getUrl() + '/' + StringUtils.removeStart(asset.getPath(), "/"))
@@ -220,6 +223,7 @@ public class AssetXO
         .lastDownloaded(asset.getLastDownloaded())
         .fileSize(asset.getFileSize())
         .blobCreated(asset.getBlobCreated())
+        .blobStoreName(blobStoreName)
         .uploader(asset.getUploader())
         .uploaderIp(asset.getUploaderIp())
         .build();

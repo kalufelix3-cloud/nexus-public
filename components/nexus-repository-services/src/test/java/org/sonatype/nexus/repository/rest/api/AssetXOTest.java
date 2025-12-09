@@ -82,6 +82,36 @@ class AssetXOTest
   }
 
   @Test
+  void testFromIncludesBlobStoreName() throws Exception {
+    Repository repository = createRepositoryWithBlobStore(new HostedType(), "hosted", "my-blob-store");
+    AssetSearchResult assetSearchResult = Mockito.mock(AssetSearchResult.class);
+    when(assetSearchResult.getRepository()).thenReturn("hosted");
+    when(assetSearchResult.getPath()).thenReturn("/path/to/resource");
+    when(assetSearchResult.getId()).thenReturn("resource-id");
+    when(assetSearchResult.getFormat()).thenReturn("test-format");
+
+    AssetXO assetXO = AssetXO.from(assetSearchResult, repository, null);
+
+    assertThat(assetXO.getBlobStoreName(), is("my-blob-store"));
+  }
+
+  @Test
+  void testFromIncludesBlobCreated() throws Exception {
+    Repository repository = createRepository(new HostedType(), "hosted");
+    AssetSearchResult assetSearchResult = Mockito.mock(AssetSearchResult.class);
+    when(assetSearchResult.getRepository()).thenReturn("hosted");
+    when(assetSearchResult.getPath()).thenReturn("/path/to/resource");
+    when(assetSearchResult.getId()).thenReturn("resource-id");
+    when(assetSearchResult.getFormat()).thenReturn("test-format");
+    java.util.Date blobCreatedDate = new java.util.Date();
+    when(assetSearchResult.getBlobCreated()).thenReturn(blobCreatedDate);
+
+    AssetXO assetXO = AssetXO.from(assetSearchResult, repository, null);
+
+    assertThat(assetXO.getBlobCreated(), is(blobCreatedDate));
+  }
+
+  @Test
   void testGetExpandedAttributes_withExposedKeys() {
     Map<String, Object> attributes = new HashMap<>();
     Map<String, Object> formatAttributes = new HashMap<>();
@@ -153,6 +183,30 @@ class AssetXOTest
     Configuration configuration = new SimpleConfiguration();
     configuration.setOnline(true);
     configuration.setRepositoryName(repositoryName);
+    return configuration;
+  }
+
+  private static Repository createRepositoryWithBlobStore(
+      final Type type,
+      String repositoryName,
+      String blobStoreName) throws Exception
+  {
+    Repository repository = new RepositoryImpl(
+        Mockito.mock(EventManager.class),
+        type,
+        new Format("test-format")
+        {
+        });
+    Configuration configuration = configWithBlobStore(repositoryName, blobStoreName);
+    repository.init(configuration);
+    return repository;
+  }
+
+  private static Configuration configWithBlobStore(final String repositoryName, final String blobStoreName) {
+    Configuration configuration = new SimpleConfiguration();
+    configuration.setOnline(true);
+    configuration.setRepositoryName(repositoryName);
+    configuration.attributes("storage").set("blobStoreName", blobStoreName);
     return configuration;
   }
 
