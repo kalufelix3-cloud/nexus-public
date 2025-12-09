@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.util.HashSet;
 import java.util.List;
@@ -26,10 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.annotation.WebInitParam;
 import javax.servlet.annotation.WebServlet;
@@ -38,13 +34,11 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.extdirect.DirectComponent;
 import org.sonatype.nexus.security.authc.AntiCsrfHelper;
-import org.sonatype.nexus.servlet.XFrameOptions;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Maps.EntryTransformer;
 import com.softwarementors.extjs.djn.EncodingUtils;
@@ -54,19 +48,11 @@ import com.softwarementors.extjs.djn.config.GlobalConfiguration;
 import com.softwarementors.extjs.djn.router.RequestRouter;
 import com.softwarementors.extjs.djn.router.dispatcher.Dispatcher;
 import com.softwarementors.extjs.djn.router.processor.poll.PollRequestProcessor;
-import com.softwarementors.extjs.djn.router.processor.standard.form.FormPostRequestData;
-import com.softwarementors.extjs.djn.router.processor.standard.form.upload.FileUploadException;
 import com.softwarementors.extjs.djn.servlet.DirectJNgineServlet;
 import com.softwarementors.extjs.djn.servlet.DirectJNgineServlet.GlobalParameters;
-import org.apache.commons.fileupload.FileItemIterator;
-import org.apache.commons.fileupload.FileItemStream;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -75,8 +61,6 @@ import org.springframework.stereotype.Component;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
 import static com.softwarementors.extjs.djn.router.RequestType.FORM_UPLOAD_POST;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.servlet.XFrameOptions.DENY;
 
@@ -92,10 +76,9 @@ import static org.sonatype.nexus.servlet.XFrameOptions.DENY;
         @WebInitParam(name = GlobalParameters.JSON_REQUEST_PROCESSOR_THREAD_CLASS,
             value = "org.sonatype.nexus.extdirect.internal.ExtDirectJsonRequestProcessorThread"),
         @WebInitParam(name = GlobalParameters.GSON_BUILDER_CONFIGURATOR_CLASS,
-            value = "org.sonatype.nexus.extdirect.internal.ExtDirectGsonBuilderConfigurator"),})
+            value = "org.sonatype.nexus.extdirect.internal.ExtDirectGsonBuilderConfigurator")})
 @Component
 @ManagedLifecycle(phase = SERVICES)
-@Singleton
 public class ExtDirectServlet
     extends DirectJNgineServlet
     implements Lifecycle, ApplicationContextAware
@@ -103,8 +86,6 @@ public class ExtDirectServlet
   public static final String PREFIXED_MOUNT_POINT = "/service/extdirect/*";
 
   public static final String MOUNT_POINT = "service/extdirect";
-
-  private static final Logger log = LoggerFactory.getLogger(ExtDirectServlet.class);
 
   private final Set<Class<?>> loaded = new HashSet<>();
 
@@ -114,19 +95,15 @@ public class ExtDirectServlet
 
   private final ExtDirectDispatcher extDirectDispatcher;
 
-  private final XFrameOptions xFrameOptions;
-
-  @Inject
+  @Autowired
   public ExtDirectServlet(
       final ApplicationDirectories directories,
       final ExtDirectDispatcher extDirectDispatcher,
-      final XFrameOptions xFrameOptions,
-      @Value("${nexus.security.anticsrftoken.enabled:true}") final boolean antiCsrfTokenEnabled) throws ServletException
+      @Value("${nexus.security.anticsrftoken.enabled:true}") final boolean antiCsrfTokenEnabled)
   {
-    super(antiCsrfTokenEnabled, AntiCsrfHelper.ANTI_CSRF_TOKEN_NAME, -1);
+    super(antiCsrfTokenEnabled, AntiCsrfHelper.ANTI_CSRF_TOKEN_NAME, /* Don't allow file uploads */ 0);
     this.directories = checkNotNull(directories);
     this.extDirectDispatcher = checkNotNull(extDirectDispatcher);
-    this.xFrameOptions = checkNotNull(xFrameOptions);
   }
 
   @Override
@@ -151,29 +128,6 @@ public class ExtDirectServlet
       }
     };
 
-    try {
-      super.doPost(wrappedRequest, response);
-    }
-    catch (FileUploadException fileUploadException) {
-      try {
-        FileItemIterator fileItems = new ServletFileUpload(new DiskFileItemFactory()).getItemIterator(request);
-        String tid = getTransactionId(fileItems);
-
-        // Send the error from the exception in a json object so we may capture it on the frontend.
-        response.setContentType("text/html");
-        response.setHeader(X_FRAME_OPTIONS, xFrameOptions.getValueForPath(request.getPathInfo()));
-        response.getWriter()
-            .append("<html><body><textarea>{\"tid\":" + tid +
-                ",\"action\":\"coreui_Upload\",\"method\":\"doUpload\",\"result\":{\"success\": false,\"message\":\"" +
-                escapeHtml4(fileUploadException.getMessage()) + "\"},\"type\":\"rpc\"}</textarea></body></html>")
-            .flush();
-      }
-      catch (Exception e) {
-        log.warn("Unable to read the ext direct transaction id for upload", e);
-        throw fileUploadException;
-      }
-    }
-
     // Silence warnings about "clickjacking" (even though it doesn't actually apply to API calls)
     // note that we don't apply this logic for FORM_UPLOAD_POST as extjs means of uploading files uses a hidden iframe
     // which a value of DENY will not be allowed to load
@@ -181,21 +135,8 @@ public class ExtDirectServlet
         && !FORM_UPLOAD_POST.equals(getFromRequestContentType(request))) {
       response.setHeader(X_FRAME_OPTIONS, DENY);
     }
-  }
 
-  private String getTransactionId(
-      final FileItemIterator fileItems) throws org.apache.commons.fileupload.FileUploadException, IOException
-  {
-    String tid = null;
-    while (tid == null && fileItems.hasNext()) {
-      FileItemStream fileItemStream = fileItems.next();
-      if (StringUtils.equals(fileItemStream.getFieldName(), FormPostRequestData.TID_ELEMENT)) {
-        StringWriter writer = new StringWriter();
-        IOUtils.copy(fileItemStream.openStream(), writer, UTF_8);
-        tid = writer.toString();
-      }
-    }
-    return tid;
+    super.doPost(wrappedRequest, response);
   }
 
   @Override
@@ -225,7 +166,7 @@ public class ExtDirectServlet
     loaded.addAll(apiClasses);
 
     File apiFile = new File(directories.getTemporaryDirectory(), "nexus-extdirect/api.js");
-    return Lists.newArrayList(
+    return List.of(
         new ApiConfiguration(
             "nexus",
             apiFile.getName(),

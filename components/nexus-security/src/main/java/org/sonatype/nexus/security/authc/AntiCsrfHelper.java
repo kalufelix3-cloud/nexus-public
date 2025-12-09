@@ -24,6 +24,8 @@ import javax.ws.rs.core.MediaType;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.net.HttpHeaders;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.shiro.SecurityUtils;
@@ -42,6 +44,8 @@ public class AntiCsrfHelper
 {
   public static final String ENABLED = "nexus.security.anticsrftoken.enabled";
 
+  public static final String SEC_FETCH_SITE_HEADER_ENABLED = "nexus.security.anticsrftoken.secFetchSite.enabled";
+
   public static final String ERROR_MESSAGE_TOKEN_MISMATCH = "Anti cross-site request forgery token mismatch";
 
   public static final String ANTI_CSRF_TOKEN_NAME = "NX-ANTI-CSRF-TOKEN";
@@ -50,12 +54,16 @@ public class AntiCsrfHelper
 
   private final List<CsrfExemption> csrfExemptPaths;
 
+  private final boolean secFetchHeaderEnabled;
+
   @Inject
   public AntiCsrfHelper(
       @Value("${" + ENABLED + ":true}") final boolean enabled,
+      @Value("${" + SEC_FETCH_SITE_HEADER_ENABLED + ":true}") final boolean secFetchHeaderEnabled,
       final List<CsrfExemption> csrfExemptPaths)
   {
     this.enabled = enabled;
+    this.secFetchHeaderEnabled = secFetchHeaderEnabled;
     this.csrfExemptPaths = csrfExemptPaths;
   }
 
@@ -69,8 +77,14 @@ public class AntiCsrfHelper
     if (!enabled) {
       return true;
     }
+    boolean safeHttpMethod = isSafeHttpMethod(httpRequest);
+    if (!safeHttpMethod && isCrossSiteRequest(httpRequest)) {
+      log.debug("Blocking cross-site request header Sec-Fetch-Site:{}",
+          httpRequest.getHeader(HttpHeaders.SEC_FETCH_SITE));
+      return false;
+    }
 
-    return isSafeHttpMethod(httpRequest)
+    return safeHttpMethod
         || isMultiPartFormDataPost(httpRequest) // token is passed as a form field instead of a custom header
                                                 // and is validated in the directnjine code so we just needed
                                                 // to create the cookie above
@@ -93,6 +107,23 @@ public class AntiCsrfHelper
       return;
     }
     throw new UnauthorizedException(ERROR_MESSAGE_TOKEN_MISMATCH);
+  }
+
+  @VisibleForTesting
+  boolean isCrossSiteRequest(final HttpServletRequest request) {
+    if (!secFetchHeaderEnabled) {
+      return false;
+    }
+    String secFetchSiteHeader = request.getHeader(HttpHeaders.SEC_FETCH_SITE);
+    if (secFetchSiteHeader == null) {
+      return false;
+    }
+
+    return switch (secFetchSiteHeader) {
+      case "same-origin" -> false;
+      case "none" -> false;
+      default -> true;
+    };
   }
 
   private static boolean isSafeHttpMethod(final HttpServletRequest request) {
