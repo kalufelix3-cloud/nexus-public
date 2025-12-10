@@ -34,6 +34,36 @@ Ext.define('NX.coreui.controller.SearchTerraform', {
         var me = this,
             search = me.getController('NX.coreui.controller.Search');
 
+        search.registerCriteria([
+            {
+                id: 'assets.attributes.terraform.provider',
+                group: NX.I18n.get('SearchTerraform_Group'),
+                config: {
+                    format: 'terraform',
+                    fieldLabel: NX.I18n.get('SearchTerraform_Provider_FieldLabel'),
+                    width: 250
+                }
+            },
+            {
+                id: 'assets.attributes.terraform.namespace',
+                group: NX.I18n.get('SearchTerraform_Group'),
+                config: {
+                    format: 'terraform',
+                    fieldLabel: NX.I18n.get('SearchTerraform_Namespace_FieldLabel'),
+                    width: 250
+                }
+            },
+            {
+                id: 'assets.attributes.terraform.name',
+                group: NX.I18n.get('SearchTerraform_Group'),
+                config: {
+                    format: 'terraform',
+                    fieldLabel: NX.I18n.get('SearchTerraform_Name_FieldLabel'),
+                    width: 250
+                }
+            }
+        ], me);
+
         search.registerFilter({
             id: 'terraform',
             name: 'Terraform',
