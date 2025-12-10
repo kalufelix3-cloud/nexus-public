@@ -90,33 +90,97 @@ const updatePrivilegeUrl = (type, name) => `${privilegesUrl}/${encodeURIComponen
 
 export const URL = {privilegesUrl, singlePrivilegeUrl, updatePrivilegeUrl, createPrivilegeUrl};
 
-export const convertActionsToArray = data => {
+function areAllActionsSelected(typeDefinition, selectedActions) {
+  if (typeDefinition) {
+    const actionsField = typeDefinition.formFields?.find(field => field.id === FIELDS.ACTIONS.NAME);
+    const availableActions = actionsField?.attributes?.options || [];
+
+    // If all available actions are selected, send "ALL" (more concise)
+    const allSelected = availableActions.length > 0 && availableActions.every(action =>
+        selectedActions.includes(action)
+    );
+
+    return allSelected;
+  }
+
+  return false;
+}
+
+export const convertActionsToArray = (data, types = {}) => {
   const clonedData = clone(data);
   const fieldName = FIELDS.ACTIONS.NAME;
-  if (clonedData.hasOwnProperty(fieldName)) {
-    const actionsArr = keys(filter(v => v === true, clonedData[fieldName])).map(e => {
-      return e === 'create' ? ACTIONS.ADD : e === 'update' ? ACTIONS.EDIT : e;
-    })
+  const actionsObj = clonedData[fieldName];
 
-    clonedData[fieldName] = actionsArr;
+  if (actionsObj == null) {
+    return clonedData;
   }
+
+  const selectedActions = keys(filter(v => v === true, actionsObj));
+  const privilegeType = clonedData.type;
+  const typeDefinition = types[privilegeType];
+
+  // Check if all available actions are selected, then we can send "ALL"
+  if (areAllActionsSelected(typeDefinition, selectedActions)) {
+    clonedData[fieldName] = [ACTIONS.ALL];
+    return clonedData;
+  }
+
+  const actionsArr = selectedActions.map(e => {
+    return e === 'create' ? ACTIONS.ADD : e === 'update' ? ACTIONS.EDIT : e;
+  });
+
+  clonedData[fieldName] = actionsArr;
   return clonedData;
 };
 
-export const convertActionsToObject = data => {
+export const convertActionsToObject = (data, types = {}) => {
   const clonedData = clone(data);
   const fieldName = FIELDS.ACTIONS.NAME;
-  if (clonedData.hasOwnProperty(fieldName)) {
-    const actionsObj = Object.assign(...clonedData[fieldName].map(e => {
-      if (clonedData.type === TYPES.APPLICATION) {
-        return e === ACTIONS.ADD ? {'create': true} : e === ACTIONS.EDIT ? {'update': true} : {[e.toLowerCase()]: true};
-      } else {
-        return {[e.toLowerCase()]: true};
-      }
-    }));
+  const actions = clonedData[fieldName];
 
-    clonedData[fieldName] = actionsObj;
+  if (actions == null) {
+    return clonedData;
   }
+
+  if (actions.length === 0) {
+    clonedData[fieldName] = {};
+    return clonedData;
+  }
+
+  // Check if actions contain "ALL" or "*"
+  const hasAllAction = actions.some(action =>
+    action === ACTIONS.ALL || action === '*' || action.toUpperCase() === 'ALL'
+  );
+
+  if (hasAllAction) {
+    // Get available actions for this privilege type from form field definition
+    const privilegeType = clonedData.type;
+    const typeDefinition = types[privilegeType];
+
+    if (typeDefinition) {
+      const actionsField = typeDefinition.formFields?.find(field => field.id === fieldName);
+      const availableActions = actionsField?.attributes?.options || [];
+
+      // Expand "ALL" to all available actions
+      const actionsObj = {};
+      availableActions.forEach(action => {
+        actionsObj[action] = true;
+      });
+
+      clonedData[fieldName] = actionsObj;
+      return clonedData;
+    }
+  }
+
+  const actionsObj = Object.assign(...actions.map(e => {
+    if (clonedData.type === TYPES.APPLICATION) {
+      return e === ACTIONS.ADD ? {'create': true} : e === ACTIONS.EDIT ? {'update': true} : {[e.toLowerCase()]: true};
+    } else {
+      return {[e.toLowerCase()]: true};
+    }
+  }));
+
+  clonedData[fieldName] = actionsObj;
   return clonedData;
 };
 

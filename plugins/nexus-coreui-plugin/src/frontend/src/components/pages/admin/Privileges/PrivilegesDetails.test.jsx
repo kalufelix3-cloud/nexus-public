@@ -478,6 +478,313 @@ describe('PrivilegesDetails', function() {
     expect(updatePrivilegeUrl('repository-admin','test')).toBe('service/rest/v1/security/privileges/repository-admin/test');
     expect(createPrivilegeUrl('repository-admin')).toBe('service/rest/v1/security/privileges/repository-admin');
   });
+
+  describe('ALL Action Support', function() {
+    it('expands ALL action to all checkboxes when loading a privilege', async function() {
+      const {getActionsGroup, getActionCheckbox} = selectors;
+      const PRIVILEGE_WITH_ALL = {
+        type: TYPE_IDS.REPOSITORY_CONTENT_SELECTOR,
+        name: testName,
+        description: testDescription,
+        contentSelector: testContentSelector,
+        format: '*',
+        repository: testRepository,
+        actions: ['ALL'],
+        readOnly: false,
+      };
+
+      when(Axios.get).calledWith(singlePrivilegeUrl(testName)).mockResolvedValue({
+        data: PRIVILEGE_WITH_ALL
+      });
+
+      await renderAndWaitForLoad(testName);
+
+      const actionsGroup = getActionsGroup();
+      expect(actionsGroup).toBeInTheDocument();
+
+      // All checkboxes should be checked
+      expect(getActionCheckbox(actionsGroup, 'Browse')).toBeChecked();
+      expect(getActionCheckbox(actionsGroup, 'Read')).toBeChecked();
+      expect(getActionCheckbox(actionsGroup, 'Edit')).toBeChecked();
+      expect(getActionCheckbox(actionsGroup, 'Add')).toBeChecked();
+      expect(getActionCheckbox(actionsGroup, 'Delete')).toBeChecked();
+    });
+
+    it('expands * action to all checkboxes when loading a privilege', async function() {
+      const {getActionsGroup, getActionCheckbox} = selectors;
+      const PRIVILEGE_WITH_STAR = {
+        type: TYPE_IDS.REPOSITORY_CONTENT_SELECTOR,
+        name: testName,
+        description: testDescription,
+        contentSelector: testContentSelector,
+        format: '*',
+        repository: testRepository,
+        actions: ['*'],
+        readOnly: false,
+      };
+
+      when(Axios.get).calledWith(singlePrivilegeUrl(testName)).mockResolvedValue({
+        data: PRIVILEGE_WITH_STAR
+      });
+
+      await renderAndWaitForLoad(testName);
+
+      const actionsGroup = getActionsGroup();
+      expect(actionsGroup).toBeInTheDocument();
+
+      // All checkboxes should be checked
+      expect(getActionCheckbox(actionsGroup, 'Browse')).toBeChecked();
+      expect(getActionCheckbox(actionsGroup, 'Read')).toBeChecked();
+      expect(getActionCheckbox(actionsGroup, 'Edit')).toBeChecked();
+      expect(getActionCheckbox(actionsGroup, 'Add')).toBeChecked();
+      expect(getActionCheckbox(actionsGroup, 'Delete')).toBeChecked();
+    });
+
+    it('sends ALL when all checkboxes are selected and saved', async function() {
+      const {
+        type,
+        name,
+        description,
+        contentSelector,
+        getActionsGroup,
+        getActionCheckbox,
+        repository,
+        querySubmitButton,
+        querySavingMask,
+      } = selectors;
+
+      const PRIVILEGE_WITH_ALL_ACTIONS = {
+        type: TYPE_IDS.REPOSITORY_CONTENT_SELECTOR,
+        name: testName,
+        description: testDescription,
+        contentSelector: testContentSelector,
+        format: '*',
+        repository: testRepository,
+        actions: ['ALL'],
+      };
+
+      when(Axios.post).calledWith(EXT_URL, expect.objectContaining({method: 'readReferencesAddingEntriesForAllFormats'}))
+          .mockResolvedValue({data: TestUtils.makeExtResult(clone(REPOSITORIES))});
+      when(Axios.post).calledWith(EXT_URL, expect.objectContaining({action: 'coreui_Selector'}))
+          .mockResolvedValue({data: TestUtils.makeExtResult(clone(SELECTORS))});
+      when(Axios.post).calledWith(createPrivilegeUrl(TYPE_IDS.REPOSITORY_CONTENT_SELECTOR), PRIVILEGE_WITH_ALL_ACTIONS)
+          .mockResolvedValue({data: {}});
+
+      await renderAndWaitForLoad();
+
+      userEvent.selectOptions(type(), TYPE_IDS.REPOSITORY_CONTENT_SELECTOR);
+      await TestUtils.changeField(name, testName);
+      await TestUtils.changeField(description, testDescription);
+      userEvent.selectOptions(contentSelector(), testContentSelector);
+
+      await TestUtils.changeField(repository, 'm');
+      await waitFor(() => expect(screen.getByText(testRepository)).toBeInTheDocument());
+      userEvent.click(screen.getByText(testRepository));
+
+      const actionsGroup = getActionsGroup();
+      // Select all actions
+      userEvent.click(getActionCheckbox(actionsGroup, 'Browse'));
+      userEvent.click(getActionCheckbox(actionsGroup, 'Read'));
+      userEvent.click(getActionCheckbox(actionsGroup, 'Edit'));
+      userEvent.click(getActionCheckbox(actionsGroup, 'Add'));
+      userEvent.click(getActionCheckbox(actionsGroup, 'Delete'));
+
+      userEvent.click(querySubmitButton());
+      await waitForElementToBeRemoved(querySavingMask());
+
+      // Verify that ALL was sent instead of individual actions
+      expect(Axios.post).toHaveBeenCalledWith(
+          createPrivilegeUrl(TYPE_IDS.REPOSITORY_CONTENT_SELECTOR),
+          PRIVILEGE_WITH_ALL_ACTIONS
+      );
+      expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
+    });
+
+    it('updates privilege with ALL when all checkboxes are selected', async function() {
+      const {getActionsGroup, getActionCheckbox, querySubmitButton, querySavingMask} = selectors;
+
+      const INITIAL_PRIVILEGE = {
+        type: TYPE_IDS.REPOSITORY_CONTENT_SELECTOR,
+        name: testName,
+        description: testDescription,
+        contentSelector: testContentSelector,
+        format: '*',
+        repository: testRepository,
+        actions: ['browse', 'read'],
+        readOnly: false,
+      };
+
+      const UPDATED_PRIVILEGE = {
+        ...INITIAL_PRIVILEGE,
+        actions: ['ALL'],
+      };
+
+      when(Axios.get).calledWith(singlePrivilegeUrl(testName)).mockResolvedValue({
+        data: INITIAL_PRIVILEGE
+      });
+      Axios.put.mockResolvedValue({data: {}});
+
+      await renderAndWaitForLoad(testName);
+
+      const actionsGroup = getActionsGroup();
+
+      // Initially only browse and read should be checked
+      expect(getActionCheckbox(actionsGroup, 'Browse')).toBeChecked();
+      expect(getActionCheckbox(actionsGroup, 'Read')).toBeChecked();
+      expect(getActionCheckbox(actionsGroup, 'Edit')).not.toBeChecked();
+
+      // Select all remaining actions
+      userEvent.click(getActionCheckbox(actionsGroup, 'Edit'));
+      userEvent.click(getActionCheckbox(actionsGroup, 'Add'));
+      userEvent.click(getActionCheckbox(actionsGroup, 'Delete'));
+
+      userEvent.click(querySubmitButton());
+      await waitForElementToBeRemoved(querySavingMask());
+
+      // Verify that ALL was sent
+      expect(Axios.put).toHaveBeenCalledWith(
+          updatePrivilegeUrl(TYPE_IDS.REPOSITORY_CONTENT_SELECTOR, testName),
+          UPDATED_PRIVILEGE
+      );
+      expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
+    });
+
+    it('renders ALL action correctly in Read Only Mode', async () => {
+      const {readOnly: {actions}} = selectors;
+      const PRIVILEGE_WITH_ALL = {
+        type: TYPE_IDS.REPOSITORY_CONTENT_SELECTOR,
+        name: testName,
+        description: testDescription,
+        contentSelector: testContentSelector,
+        format: '*',
+        repository: testRepository,
+        actions: ['ALL'],
+        readOnly: true,
+      };
+
+      when(Axios.get).calledWith(singlePrivilegeUrl(testName)).mockResolvedValue({
+        data: PRIVILEGE_WITH_ALL
+      });
+
+      await renderAndWaitForLoad(testName);
+
+      // Should display all actions as text
+      expect(actions()).toHaveTextContent("Browse, Read, Edit, Add, Delete");
+    });
+
+    it('handles Script privilege with ALL action including run', async function() {
+      const {getActionsGroup, getActionCheckbox} = selectors;
+      const SCRIPT_PRIVILEGE_WITH_ALL = {
+        type: TYPE_IDS.SCRIPT,
+        name: testName,
+        description: testDescription,
+        scriptName: testScriptName,
+        actions: ['ALL'],
+        readOnly: false,
+      };
+
+      when(Axios.get).calledWith(singlePrivilegeUrl(testName)).mockResolvedValue({
+        data: SCRIPT_PRIVILEGE_WITH_ALL
+      });
+
+      await renderAndWaitForLoad(testName);
+
+      const actionsGroup = getActionsGroup();
+      expect(actionsGroup).toBeInTheDocument();
+
+      // All checkboxes including 'run' should be checked
+      expect(getActionCheckbox(actionsGroup, 'Browse')).toBeChecked();
+      expect(getActionCheckbox(actionsGroup, 'Read')).toBeChecked();
+      expect(getActionCheckbox(actionsGroup, 'Edit')).toBeChecked();
+      expect(getActionCheckbox(actionsGroup, 'Add')).toBeChecked();
+      expect(getActionCheckbox(actionsGroup, 'Delete')).toBeChecked();
+      expect(getActionCheckbox(actionsGroup, 'Run')).toBeChecked();
+    });
+
+    it('sends ALL for Script privilege when all checkboxes including run are selected', async function() {
+      const {type, name, description, scriptName, getActionsGroup, getActionCheckbox, querySubmitButton, querySavingMask} = selectors;
+
+      const SCRIPT_WITH_ALL = {
+        type: TYPE_IDS.SCRIPT,
+        name: testName,
+        description: testDescription,
+        scriptName: testScriptName,
+        actions: ['ALL'],
+      };
+
+      when(Axios.post).calledWith(createPrivilegeUrl(TYPE_IDS.SCRIPT), SCRIPT_WITH_ALL).mockResolvedValue({data: {}});
+
+      await renderAndWaitForLoad();
+
+      userEvent.selectOptions(type(), TYPE_IDS.SCRIPT);
+      await TestUtils.changeField(name, testName);
+      await TestUtils.changeField(description, testDescription);
+      await TestUtils.changeField(scriptName, testScriptName);
+
+      const actionsGroup = getActionsGroup();
+      // Select all actions including run
+      userEvent.click(getActionCheckbox(actionsGroup, 'Browse'));
+      userEvent.click(getActionCheckbox(actionsGroup, 'Read'));
+      userEvent.click(getActionCheckbox(actionsGroup, 'Edit'));
+      userEvent.click(getActionCheckbox(actionsGroup, 'Add'));
+      userEvent.click(getActionCheckbox(actionsGroup, 'Delete'));
+      userEvent.click(getActionCheckbox(actionsGroup, 'Run'));
+
+      userEvent.click(querySubmitButton());
+      await waitForElementToBeRemoved(querySavingMask());
+
+      expect(Axios.post).toHaveBeenCalledWith(createPrivilegeUrl(TYPE_IDS.SCRIPT), SCRIPT_WITH_ALL);
+      expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
+    });
+
+    it('does not send ALL if only some actions are selected', async function() {
+      const {type, name, description, contentSelector, getActionsGroup, getActionCheckbox, repository, querySubmitButton, querySavingMask} = selectors;
+
+      const PRIVILEGE_WITH_SOME_ACTIONS = {
+        type: TYPE_IDS.REPOSITORY_CONTENT_SELECTOR,
+        name: testName,
+        description: testDescription,
+        contentSelector: testContentSelector,
+        format: '*',
+        repository: testRepository,
+        actions: ['browse', 'read', 'edit'], // Only 3 out of 5
+      };
+
+      when(Axios.post).calledWith(EXT_URL, expect.objectContaining({method: 'readReferencesAddingEntriesForAllFormats'}))
+          .mockResolvedValue({data: TestUtils.makeExtResult(clone(REPOSITORIES))});
+      when(Axios.post).calledWith(EXT_URL, expect.objectContaining({action: 'coreui_Selector'}))
+          .mockResolvedValue({data: TestUtils.makeExtResult(clone(SELECTORS))});
+      when(Axios.post).calledWith(createPrivilegeUrl(TYPE_IDS.REPOSITORY_CONTENT_SELECTOR), PRIVILEGE_WITH_SOME_ACTIONS)
+          .mockResolvedValue({data: {}});
+
+      await renderAndWaitForLoad();
+
+      userEvent.selectOptions(type(), TYPE_IDS.REPOSITORY_CONTENT_SELECTOR);
+      await TestUtils.changeField(name, testName);
+      await TestUtils.changeField(description, testDescription);
+      userEvent.selectOptions(contentSelector(), testContentSelector);
+
+      await TestUtils.changeField(repository, 'm');
+      await waitFor(() => expect(screen.getByText(testRepository)).toBeInTheDocument());
+      userEvent.click(screen.getByText(testRepository));
+
+      const actionsGroup = getActionsGroup();
+      // Select only 3 actions
+      userEvent.click(getActionCheckbox(actionsGroup, 'Browse'));
+      userEvent.click(getActionCheckbox(actionsGroup, 'Read'));
+      userEvent.click(getActionCheckbox(actionsGroup, 'Edit'));
+
+      userEvent.click(querySubmitButton());
+      await waitForElementToBeRemoved(querySavingMask());
+
+      // Verify individual actions were sent, not ALL
+      expect(Axios.post).toHaveBeenCalledWith(
+          createPrivilegeUrl(TYPE_IDS.REPOSITORY_CONTENT_SELECTOR),
+          PRIVILEGE_WITH_SOME_ACTIONS
+      );
+      expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
+    });
+  });
 });
 
 function expectActionsToRender(actionsGroup, actions, selectedActions) {

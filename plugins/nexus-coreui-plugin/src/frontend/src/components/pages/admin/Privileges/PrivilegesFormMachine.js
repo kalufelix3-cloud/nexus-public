@@ -78,9 +78,10 @@ export default FormUtils.buildFormMachine({
       })
     }),
     setData: assign((_, {data: [types, privilege]}) => {
-      const data = convertActionsToObject(privilege.data);
+      const typesMap = modifyFormFields(types.data);
+      const data = convertActionsToObject(privilege.data, typesMap);
       return {
-        types: modifyFormFields(types.data),
+        types: typesMap,
         data,
         pristineData: data,
       };
@@ -104,8 +105,8 @@ export default FormUtils.buildFormMachine({
             : Promise.resolve({data: EMPTY_DATA}),
       ]);
     },
-    saveData: ({data, pristineData: {name}}) => {
-      const requestData = convertActionsToArray(data);
+    saveData: ({data, pristineData: {name}, types}) => {
+      const requestData = convertActionsToArray(data, types);
       if (isEdit(name)) {
         return Axios.put(updatePrivilegeUrl(data.type, name), requestData);
       } else {
