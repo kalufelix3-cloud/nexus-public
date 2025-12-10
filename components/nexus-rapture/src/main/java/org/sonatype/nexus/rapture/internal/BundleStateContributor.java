@@ -30,6 +30,8 @@ public class BundleStateContributor
 {
   public static final String STATE_ID = "activeBundles";
 
+  public static final String NEXUS_MODULE_PREFIX = "nexus-";
+
   private List<String> modules;
 
   private final NexusEditionSelector nexusEditionSelector;
@@ -46,8 +48,17 @@ public class BundleStateContributor
 
   private List<String> getModules() {
     if (modules == null) {
-      modules = nexusEditionSelector.getCurrent().getModules();
+      modules = nexusEditionSelector.getCurrent()
+          .getModules()
+          .stream()
+          .filter(BundleStateContributor::isInternalModule)
+          .toList();
     }
     return modules;
+  }
+
+  private static boolean isInternalModule(final String moduleName) {
+    // Filter to include only internal Nexus modules (exclude external dependencies)
+    return moduleName.startsWith(NEXUS_MODULE_PREFIX);
   }
 }
