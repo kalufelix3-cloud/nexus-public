@@ -48,6 +48,7 @@ import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.firewall.FirewallHeaderProvider;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.replication.PullReplicationSupport;
@@ -75,6 +76,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.DateUtils;
 import org.apache.http.client.utils.HttpClientUtils;
+import org.apache.http.util.EntityUtils;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.joda.time.DateTime;
@@ -113,6 +115,8 @@ public abstract class ProxyFacetSupport
 
   @VisibleForTesting
   static final String CONFIG_KEY = "proxy";
+
+  public static final String X_FIREWALL_USER_AGENT = "X-Firewall-User-Agent";
 
   @VisibleForTesting
   public static class ProxyConfig
@@ -242,6 +246,10 @@ public abstract class ProxyFacetSupport
   @Inject
   @Nullable
   private GracePeriodInterceptor gracePeriodInterceptor;
+
+  @Inject
+  @Nullable
+  private FirewallHeaderProvider firewallHeaderProvider;
 
   @VisibleForTesting
   void buildCooperation() {
@@ -610,7 +618,7 @@ public abstract class ProxyFacetSupport
     StatusLine status = response.getStatusLine();
     log.debug("Status: {}", status);
 
-    mayThrowBypassHttpErrorException(response);
+    mayThrowBypassHttpErrorException(context, response);
 
     final CacheInfo cacheInfo;
 
@@ -648,6 +656,10 @@ public abstract class ProxyFacetSupport
       if (etag != null) {
         request.addHeader(HttpHeaders.IF_NONE_MATCH, ETagHeaderUtils.quote(etag));
       }
+    }
+
+    if (firewallHeaderProvider != null) {
+      request.addHeader(X_FIREWALL_USER_AGENT, firewallHeaderProvider.originatingUserAgent(context.getRequest()));
     }
     return request;
   }
@@ -756,15 +768,44 @@ public abstract class ProxyFacetSupport
     }
   }
 
-  private void mayThrowBypassHttpErrorException(final HttpResponse httpResponse) {
+  private void mayThrowBypassHttpErrorException(final Context context, final HttpResponse httpResponse) {
     final StatusLine status = httpResponse.getStatusLine();
     if (httpResponse.containsHeader(BYPASS_HTTP_ERRORS_HEADER_NAME)) {
       log.debug("Bypass http error: {}", status);
-      ListMultimap<String, String> headers = ArrayListMultimap.create();
-      headers.put(BYPASS_HTTP_ERRORS_HEADER_NAME, BYPASS_HTTP_ERRORS_HEADER_VALUE);
+      ListMultimap<String, String> headers = buildHttpHeaders(context, httpResponse);
+      String body = getBodyFromResponse(httpResponse);
+      String contentType = httpResponse.containsHeader(HttpHeaders.CONTENT_TYPE)
+          ? httpResponse.getFirstHeader(HttpHeaders.CONTENT_TYPE).getValue()
+          : null;
       HttpClientUtils.closeQuietly(httpResponse);
-      throw new BypassHttpErrorException(status.getStatusCode(), status.getReasonPhrase(), headers);
+      throw new BypassHttpErrorException(status.getStatusCode(), status.getReasonPhrase(), headers, body, contentType);
     }
+  }
+
+  private ListMultimap<String, String> buildHttpHeaders(final Context context, final HttpResponse httpResponse) {
+    ListMultimap<String, String> headers = ArrayListMultimap.create();
+    headers.put(BYPASS_HTTP_ERRORS_HEADER_NAME, BYPASS_HTTP_ERRORS_HEADER_VALUE);
+
+    // If a firewall header provider is available, use it to determine which headers to copy
+    if (firewallHeaderProvider != null) {
+      firewallHeaderProvider.addHeaders(getRepository().getFormat().getValue(), context.getRequest(), httpResponse,
+          headers);
+    }
+
+    return headers;
+  }
+
+  private String getBodyFromResponse(final HttpResponse httpResponse) {
+    try {
+      HttpEntity entity = httpResponse.getEntity();
+      if (entity != null) {
+        return EntityUtils.toString(entity);
+      }
+    }
+    catch (IOException e) {
+      log.warn("Failed to read response body", e);
+    }
+    return null;
   }
 
   /**

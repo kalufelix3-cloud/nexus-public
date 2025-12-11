@@ -13,7 +13,9 @@
 package org.sonatype.nexus.repository.proxy;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.Charset;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
@@ -31,6 +33,7 @@ import org.sonatype.nexus.repository.view.Response;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.junit.Before;
@@ -164,7 +167,8 @@ public class ProxyHandlerTest
 
     ListMultimap<String, String> headers = ArrayListMultimap.create();
     headers.put(headerName, headerValue);
-    BypassHttpErrorException bypassException = new BypassHttpErrorException(httpStatus, errorMessage, headers);
+    BypassHttpErrorException bypassException =
+        new BypassHttpErrorException(httpStatus, errorMessage, headers, "body", "content-type");
 
     when(request.getAction()).thenReturn(HttpMethods.GET);
     doThrow(bypassException).when(proxyFacet).get(context);
@@ -174,6 +178,9 @@ public class ProxyHandlerTest
     assertStatusCode(response, httpStatus);
     assertStatusMessage(response, errorMessage);
     assertThat(response.getHeaders().get(headerName), is(headerValue));
+    try (InputStream inputStream = response.getPayload().openInputStream()) {
+      assertThat(IOUtils.toString(inputStream, Charset.defaultCharset()), is("body"));
+    }
   }
 
   private void assertStatusCode(final Response response, final int statusCode) {

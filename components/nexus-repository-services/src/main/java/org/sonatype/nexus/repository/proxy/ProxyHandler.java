@@ -17,6 +17,7 @@ import java.io.UncheckedIOException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
 import jakarta.inject.Inject;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -30,6 +31,7 @@ import org.sonatype.nexus.repository.view.Headers;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.Status;
+import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import org.springframework.context.annotation.Primary;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -77,7 +79,7 @@ public class ProxyHandler
       return buildNotFoundResponse(context);
     }
     catch (BypassHttpErrorException e) {
-      return buildHttpErrorResponce(e);
+      return buildHttpErrorResponse(e);
     }
     catch (ProxyServiceException e) {
       return HttpResponses.serviceUnavailable();
@@ -122,11 +124,16 @@ public class ProxyHandler
     }
   }
 
-  protected Response buildHttpErrorResponce(final BypassHttpErrorException proxyErrorsException) {
+  protected Response buildHttpErrorResponse(final BypassHttpErrorException proxyErrorsException) {
     return new Response.Builder()
+        .payload(getPayload(proxyErrorsException.getBody(), proxyErrorsException.getContentType()))
         .status(new Status(false, proxyErrorsException.getStatusCode(), proxyErrorsException.getReason()))
         .headers(new Headers(proxyErrorsException.getHeaders()))
         .build();
+  }
+
+  private Payload getPayload(final String body, final String contentType) {
+    return new StringPayload(body, contentType);
   }
 
   private ProxyFacet proxyFacet(final Context context) {
