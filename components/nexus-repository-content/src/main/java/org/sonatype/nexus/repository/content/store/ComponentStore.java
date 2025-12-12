@@ -325,6 +325,15 @@ public class ComponentStore<T extends ComponentDAO>
     return dao().browseVersions(repositoryId, namespace, name);
   }
 
+  @Transactional
+  public Collection<String> browseVersionsByRepoIds(
+      final String namespace,
+      final String name,
+      final Set<Integer> repositoryIds)
+  {
+    return dao().browseVersionsByRepoIds(namespace, name, repositoryIds);
+  }
+
   /**
    * Creates the given component in the content data store.
    *
@@ -365,6 +374,25 @@ public class ComponentStore<T extends ComponentDAO>
       final String version)
   {
     return dao().readCoordinate(repositoryId, namespace, name, version);
+  }
+
+  /**
+   * Retrieves a component located at the given coordinate in within the given repository ids.
+   *
+   * @param namespace the namespace of the component
+   * @param name the name of the component
+   * @param version the version of the component
+   * @param repositoryIds the repository ids containing the component
+   * @return component if it was found
+   */
+  @Transactional
+  public Optional<Component> readCoordinateInRepoIds(
+      final String namespace,
+      final String name,
+      final String version,
+      final Set<Integer> repositoryIds)
+  {
+    return dao().readCoordinateInRepoIds(namespace, name, version, repositoryIds);
   }
 
   /**

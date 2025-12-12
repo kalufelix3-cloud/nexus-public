@@ -248,6 +248,18 @@ public class FluentComponentsImpl
   }
 
   @Override
+  public Collection<String> memberVersions(final String namespace, final String name) {
+    if (!isGroupRepository(facet.repository())) {
+      throw new IllegalArgumentException(facet.repository() + " is not a group repository");
+    }
+
+    List<FluentQueryConstraint> membersConstraint = singletonList(new GroupRepositoryConstraint(MEMBERS));
+    Set<Integer> repositoryIds = getRepositoryIds(membersConstraint, facet, facet.repository());
+
+    return componentStore.browseVersionsByRepoIds(namespace, name, repositoryIds);
+  }
+
+  @Override
   public Optional<FluentComponent> find(final EntityId externalId) {
     return componentStore.readComponent(toInternalId(externalId))
         .filter(this::containedInRepository)

@@ -26,8 +26,10 @@ import org.sonatype.nexus.repository.content.search.ComponentFinder;
 import org.sonatype.nexus.repository.content.search.DefaultComponentFinder;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.search.Maven2SearchResultComponentGenerator;
+import org.sonatype.nexus.repository.types.GroupType;
 
 import static java.util.Comparator.reverseOrder;
+
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -58,6 +60,17 @@ public class Maven2ComponentFinder
       FluentComponentBuilder builder = components.name(name).namespace(namespace);
 
       String versionPrefix = version.replace("SNAPSHOT", "");
+
+      if (GroupType.NAME.equals(repository.getType().getValue())) {
+        return components.memberVersions(namespace, name)
+            .stream()
+            .filter(v -> v.startsWith(versionPrefix))
+            .filter(v -> SNAPSHOT_TIMESTAMP.matcher(v).matches())
+            .sorted(reverseOrder())
+            .map(v -> builder.version(v).findInMembers())
+            .filter(Optional::isPresent)
+            .map(Optional::get);
+      }
 
       // find timestamped versions that match the base version and fetch their components
       return components.versions(namespace, name)

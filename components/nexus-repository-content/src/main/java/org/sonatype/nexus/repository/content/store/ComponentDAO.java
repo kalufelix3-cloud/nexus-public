@@ -237,6 +237,20 @@ public interface ComponentDAO
       @Param("name") String name);
 
   /**
+   * Browse the versions of a component with the given namespace and name in the given repositories.
+   * Useful for querying all versions of a component on all members of a repo group
+   *
+   * @param namespace the namespace of the component
+   * @param name the name of the component
+   * @param repositoryIds the set of repository IDs to search across
+   * @return collection of component versions
+   */
+  Collection<String> browseVersionsByRepoIds(
+      @Param("namespace") String namespace,
+      @Param("name") String name,
+      @Param("repositoryIds") Set<Integer> repositoryIds);
+
+  /**
    * Creates the given component in the content data store.
    *
    * @param component the component to create
@@ -268,6 +282,21 @@ public interface ComponentDAO
       @Param("namespace") String namespace,
       @Param("name") String name,
       @Param("version") String version);
+
+  /**
+   * Retrieves a component located at the given coordinate in within the given repository ids.
+   *
+   * @param namespace the namespace of the component
+   * @param name the name of the component
+   * @param version the version of the component
+   * @param repositoryIds the repository ids containing the component
+   * @return component if it was found
+   */
+  Optional<Component> readCoordinateInRepoIds(
+      @Param("namespace") String namespace,
+      @Param("name") String name,
+      @Param("version") String version,
+      @Param("repositoryIds") Set<Integer> repositoryIds);
 
   /**
    * Updates the kind of the given component in the content data store.

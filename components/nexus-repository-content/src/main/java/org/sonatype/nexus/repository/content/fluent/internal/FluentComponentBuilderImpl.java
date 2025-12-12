@@ -13,17 +13,25 @@
 package org.sonatype.nexus.repository.content.fluent.internal;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
+import org.sonatype.nexus.repository.content.fluent.constraints.FluentQueryConstraint;
+import org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint;
 import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.singletonList;
+import static org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint.GroupRepositoryLocation.MEMBERS;
+import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryContentUtil.getRepositoryIds;
+import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryContentUtil.isGroupRepository;
 
 /**
  * {@link FluentComponentBuilder} implementation.
@@ -112,6 +120,19 @@ public class FluentComponentBuilderImpl
 
   private Optional<Component> findComponent() {
     return componentStore.readCoordinate(facet.contentRepositoryId(), namespace, name, version);
+  }
+
+  @Override
+  public Optional<FluentComponent> findInMembers() {
+    if (!isGroupRepository(facet.repository())) {
+      throw new IllegalArgumentException(facet.repository() + " is not a group repository");
+    }
+
+    List<FluentQueryConstraint> membersConstraint = singletonList(new GroupRepositoryConstraint(MEMBERS));
+    Set<Integer> repositoryIds = getRepositoryIds(membersConstraint, facet, facet.repository());
+
+    return componentStore.readCoordinateInRepoIds(namespace, name, version, repositoryIds)
+        .map(component -> new FluentComponentImpl(facet, component));
   }
 
   private Component createComponent() {

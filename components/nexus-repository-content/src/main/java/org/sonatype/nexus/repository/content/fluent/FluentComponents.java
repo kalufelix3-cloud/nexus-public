@@ -121,6 +121,11 @@ public interface FluentComponents
   Collection<String> versions(String namespace, String name);
 
   /**
+   * List all versions of components with the given namespace and name in for all the members in the group repository.
+   */
+  Collection<String> memberVersions(String namespace, String name);
+
+  /**
    * Find if a component exists that has the given external id.
    */
   Optional<FluentComponent> find(EntityId externalId);

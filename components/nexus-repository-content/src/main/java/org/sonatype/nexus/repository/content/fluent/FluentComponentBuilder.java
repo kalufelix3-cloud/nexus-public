@@ -66,4 +66,11 @@ public interface FluentComponentBuilder
    * Find if a component exists using the details built so far.
    */
   Optional<FluentComponent> find();
+
+  /**
+   * Find components within a group repository members
+   * 
+   * @return stream of distinct components
+   */
+  Optional<FluentComponent> findInMembers();
 }

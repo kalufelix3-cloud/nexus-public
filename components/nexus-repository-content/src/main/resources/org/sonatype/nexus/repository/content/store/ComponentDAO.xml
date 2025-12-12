@@ -80,6 +80,14 @@
     </choose>
   </sql>
 
+  <sql id="inRepositoryIdsMatch">
+    repository_id IN
+    <foreach item="repositoryId" index="index" collection="repositoryIds"
+             open="(" separator="," close=")">
+      #{repositoryId}
+    </foreach>
+  </sql>
+
   <sql id="selectComponentsBySet">
     SELECT * FROM ${format}_component WHERE <include refid="componentSetMatch"/>
     <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
@@ -279,6 +287,12 @@
     SELECT version FROM ${format}_component WHERE <include refid="componentNamespaceMatch"/> AND name = #{name};
   </select>
 
+  <select id="browseVersionsByRepoIds" resultType="String">
+    SELECT version FROM ${format}_component
+    WHERE namespace = #{namespace} AND name = #{name}
+    AND <include refid="inRepositoryIdsMatch"/>;
+  </select>
+
   <select id="browseSets" resultType="org.sonatype.nexus.repository.content.store.ComponentSetData">
     SELECT DISTINCT namespace, name FROM ${format}_component WHERE repository_id = #{repositoryId}
     <if test="continuationToken != null"> AND CONCAT(namespace, '|', name) > #{continuationToken}</if>
@@ -315,6 +329,12 @@
 
   <select id="readCoordinate" resultType="ComponentData">
     SELECT * FROM ${format}_component WHERE <include refid="componentCoordinateMatch"/>;
+  </select>
+
+  <select id="readCoordinateInRepoIds" resultType="ComponentData">
+    SELECT DISTINCT ON (namespace, name, version) * FROM ${format}_component
+    WHERE namespace = #{namespace} AND name = #{name} AND version = #{version}
+    AND <include refid="inRepositoryIdsMatch"/>
   </select>
 
   <update id="updateComponentKind">

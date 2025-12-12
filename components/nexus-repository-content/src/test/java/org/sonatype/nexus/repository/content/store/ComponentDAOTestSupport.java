@@ -781,6 +781,161 @@ public abstract class ComponentDAOTestSupport
   }
 
   /**
+   * Test browseVersionsByRepoIds method which retrieves all versions of a component
+   * across multiple repositories. This is particularly useful for group repositories
+   * where we need to aggregate versions from all member repositories.
+   */
+  protected void testBrowseVersionsByRepoIds() {
+    ContentRepositoryData contentRepository1 = generateContentRepository();
+    ContentRepositoryData contentRepository2 = generateContentRepository();
+    ContentRepositoryData contentRepository3 = generateContentRepository();
+
+    createContentRepository(contentRepository1);
+    createContentRepository(contentRepository2);
+    createContentRepository(contentRepository3);
+
+    int repo1Id = contentRepository1.repositoryId;
+    int repo2Id = contentRepository2.repositoryId;
+    int repo3Id = contentRepository3.repositoryId;
+
+    String namespace = "org.example";
+    String name = "my-component";
+
+    // Create components with same namespace/name but different versions across repositories
+    ComponentData component1Repo1 = generateComponent(repo1Id, namespace, name, "1.0.0");
+    ComponentData component2Repo1 = generateComponent(repo1Id, namespace, name, "2.0.0");
+    ComponentData component1Repo2 = generateComponent(repo2Id, namespace, name, "1.5.0");
+    ComponentData component2Repo2 = generateComponent(repo2Id, namespace, name, "3.0.0");
+    ComponentData component1Repo3 = generateComponent(repo3Id, namespace, name, "2.5.0");
+
+    // Create a different component to verify filtering works correctly
+    ComponentData differentComponent = generateComponent(repo1Id, "different.namespace", "different-name", "9.9.9");
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      ComponentDAO dao = session.access(TestComponentDAO.class);
+
+      // Test: Empty result when no components exist
+      Collection<String> versions = dao.browseVersionsByRepoIds(namespace, name, Set.of(repo1Id, repo2Id));
+      assertThat(versions, emptyIterable());
+
+      // Create components
+      dao.createComponent(component1Repo1, entityVersionEnabled);
+      dao.createComponent(component2Repo1, entityVersionEnabled);
+      dao.createComponent(component1Repo2, entityVersionEnabled);
+      dao.createComponent(component2Repo2, entityVersionEnabled);
+      dao.createComponent(component1Repo3, entityVersionEnabled);
+      dao.createComponent(differentComponent, entityVersionEnabled);
+
+      session.getTransaction().commit();
+
+      // Test: Browse versions from single repository
+      versions = dao.browseVersionsByRepoIds(namespace, name, Set.of(repo1Id));
+      assertThat(versions, hasSize(2));
+      assertThat(versions, IsIterableContainingInAnyOrder.containsInAnyOrder("1.0.0", "2.0.0"));
+
+      // Test: Browse versions from two repositories
+      versions = dao.browseVersionsByRepoIds(namespace, name, Set.of(repo1Id, repo2Id));
+      assertThat(versions, hasSize(4));
+      assertThat(versions, IsIterableContainingInAnyOrder.containsInAnyOrder("1.0.0", "2.0.0", "1.5.0", "3.0.0"));
+
+      // Test: Browse versions from all three repositories
+      versions = dao.browseVersionsByRepoIds(namespace, name, Set.of(repo1Id, repo2Id, repo3Id));
+      assertThat(versions, hasSize(5));
+      assertThat(versions, IsIterableContainingInAnyOrder.containsInAnyOrder(
+          "1.0.0", "2.0.0", "1.5.0", "3.0.0", "2.5.0"));
+
+      // Test: Browse versions from repository that doesn't have the component
+      versions = dao.browseVersionsByRepoIds(namespace, name, Set.of(repo3Id));
+      assertThat(versions, hasSize(1));
+      assertThat(versions, contains("2.5.0"));
+
+      // Test: Non-existent component returns empty collection
+      versions = dao.browseVersionsByRepoIds("non.existent", "component", Set.of(repo1Id, repo2Id));
+      assertThat(versions, emptyIterable());
+
+      // Test: Different component is not included in results
+      versions = dao.browseVersionsByRepoIds(namespace, name, Set.of(repo1Id));
+      assertThat(versions, hasSize(2));
+      assertFalse(versions.contains(differentComponent.version()));
+    }
+  }
+
+  /**
+   * Test readCoordinateInRepoIds method which retrieves a component by its coordinate
+   * (namespace, name, version) across multiple repositories. This is particularly useful
+   * for group repositories where we need to find a specific component version from member repositories.
+   */
+  protected void testReadCoordinateInRepoIds() {
+    ContentRepositoryData contentRepository1 = generateContentRepository();
+    ContentRepositoryData contentRepository2 = generateContentRepository();
+    ContentRepositoryData contentRepository3 = generateContentRepository();
+
+    createContentRepository(contentRepository1);
+    createContentRepository(contentRepository2);
+    createContentRepository(contentRepository3);
+
+    int repo1Id = contentRepository1.repositoryId;
+    int repo2Id = contentRepository2.repositoryId;
+    int repo3Id = contentRepository3.repositoryId;
+
+    String namespace = "org.example";
+    String name = "my-component";
+    String version = "1.0.0";
+
+    // Create same component in multiple repositories
+    ComponentData componentRepo1 = generateComponent(repo1Id, namespace, name, version);
+    ComponentData componentRepo2 = generateComponent(repo2Id, namespace, name, version);
+
+    // Create a different component to verify filtering works correctly
+    ComponentData differentComponent = generateComponent(repo3Id, "different.namespace", "different-name", "9.9.9");
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      ComponentDAO dao = session.access(TestComponentDAO.class);
+
+      // Test: Empty result when no components exist
+      Optional<Component> result = dao.readCoordinateInRepoIds(namespace, name, version, Set.of(repo1Id, repo2Id));
+      assertFalse(result.isPresent());
+
+      // Create components
+      dao.createComponent(componentRepo1, entityVersionEnabled);
+      dao.createComponent(componentRepo2, entityVersionEnabled);
+      dao.createComponent(differentComponent, entityVersionEnabled);
+
+      session.getTransaction().commit();
+
+      // Test: Find component in single repository
+      result = dao.readCoordinateInRepoIds(namespace, name, version, Set.of(repo1Id));
+      assertTrue(result.isPresent());
+      assertThat(result.get(), sameCoordinates(componentRepo1));
+
+      // Test: Find component across multiple repositories (returns one)
+      result = dao.readCoordinateInRepoIds(namespace, name, version, Set.of(repo1Id, repo2Id));
+      assertTrue(result.isPresent());
+      // Should match coordinates (either repo1 or repo2 component due to DISTINCT ON)
+      assertEquals(namespace, result.get().namespace());
+      assertEquals(name, result.get().name());
+      assertEquals(version, result.get().version());
+
+      // Test: Component not found in specified repo IDs
+      result = dao.readCoordinateInRepoIds(namespace, name, version, Set.of(repo3Id));
+      assertFalse(result.isPresent());
+
+      // Test: Non-existent component returns empty
+      result = dao.readCoordinateInRepoIds("non.existent", "component", "1.0.0", Set.of(repo1Id, repo2Id));
+      assertFalse(result.isPresent());
+
+      // Test: Different component is not matched
+      result = dao.readCoordinateInRepoIds(
+          differentComponent.namespace(),
+          differentComponent.name(),
+          differentComponent.version(),
+          Set.of(repo3Id));
+      assertTrue(result.isPresent());
+      assertThat(result.get(), sameCoordinates(differentComponent));
+    }
+  }
+
+  /**
    * Test browseComponentsEager which uses inline subquery instead of CTE.
    * This test ensures the query works correctly with H2 database.
    */

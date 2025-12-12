@@ -91,4 +91,16 @@ class UnversionedComponentDAOTest
   protected void testBrowseComponentsEager() {
     super.testBrowseComponentsEager();
   }
+
+  @Override
+  @Test
+  protected void testBrowseVersionsByRepoIds() {
+    super.testBrowseVersionsByRepoIds();
+  }
+
+  @Override
+  @Test
+  protected void testReadCoordinateInRepoIds() {
+    super.testReadCoordinateInRepoIds();
+  }
 }
