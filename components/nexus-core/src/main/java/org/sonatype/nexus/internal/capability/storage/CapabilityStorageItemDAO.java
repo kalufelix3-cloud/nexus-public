@@ -22,5 +22,4 @@ import org.sonatype.nexus.datastore.api.IterableDataAccess;
 public interface CapabilityStorageItemDAO
     extends IterableDataAccess<CapabilityStorageItemData>
 {
-  // no additional behaviour
 }

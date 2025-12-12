@@ -14,16 +14,17 @@ package org.sonatype.nexus.internal.capability;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import javax.validation.ValidationException;
 import javax.validation.Validator;
 
@@ -41,6 +42,8 @@ import org.sonatype.nexus.capability.CapabilityRegistryEvent.AfterLoad;
 import org.sonatype.nexus.capability.CapabilityRegistryEvent.Ready;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -55,6 +58,7 @@ import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemCreat
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemDeletedEvent;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemUpdatedEvent;
 import org.sonatype.nexus.security.UserIdHelper;
+import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
@@ -62,12 +66,16 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.Subscribe;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableCollection;
+import static java.util.UUID.fromString;
 import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.CREATE;
 import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.CREATE_NON_EXPOSED;
 import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
@@ -99,13 +107,21 @@ public class DefaultCapabilityRegistry
 
   private final Provider<Validator> validatorProvider;
 
-  private final Map<CapabilityIdentity, DefaultCapabilityReference> references;
+  @VisibleForTesting
+  final Map<CapabilityIdentity, DefaultCapabilityReference> references;
 
   private final ReentrantReadWriteLock lock;
 
   private final SecretsService secretsService;
 
   private final SecretsStore secretsStore;
+
+  /**
+   * Single-threaded executor for processing remote capability events sequentially.
+   * Event handlers submit tasks to this executor for async processing.
+   * This eliminates deadlock risk by ensuring event handlers never hold locks.
+   */
+  private ExecutorService capabilitySyncExecutor;
 
   @Inject
   DefaultCapabilityRegistry(
@@ -129,7 +145,7 @@ public class DefaultCapabilityRegistry
     this.secretsStore = checkNotNull(secretsStore);
     this.validatorProvider = checkNotNull(validatorProvider);
 
-    references = new HashMap<>();
+    references = new ConcurrentHashMap<>();
     lock = new ReentrantReadWriteLock();
   }
 
@@ -137,12 +153,29 @@ public class DefaultCapabilityRegistry
   protected void doStart() throws Exception {
     load();
 
+    // Start single-threaded executor to process remote capability events
+    capabilitySyncExecutor = Executors.newSingleThreadExecutor(
+        new NexusThreadFactory("capability-sync", "capability-sync"));
+
     // fire event when the registry is loaded and ready for use
     eventManager.post(new Ready(this));
   }
 
   @Override
   protected void doStop() throws Exception {
+    if (capabilitySyncExecutor != null) {
+      capabilitySyncExecutor.shutdown();
+      try {
+        if (!capabilitySyncExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+          capabilitySyncExecutor.shutdownNow();
+        }
+      }
+      catch (InterruptedException e) {
+        capabilitySyncExecutor.shutdownNow();
+        Thread.currentThread().interrupt();
+      }
+      capabilitySyncExecutor = null;
+    }
     super.doStop();
   }
 
@@ -207,47 +240,36 @@ public class DefaultCapabilityRegistry
     }
   }
 
+  /**
+   * Remote capability creation event handler.
+   * DEADLOCK PREVENTION: Event handler never holds locks.
+   * Submits to single-threaded executor for sequential processing.
+   */
   @Subscribe
   public void on(final CapabilityStorageItemCreatedEvent event) {
     if (!event.isLocal()) {
       CapabilityIdentity id = event.getCapabilityId();
-      if (references.containsKey(id)) {
-        log.debug("Capability {} already loaded and registered. Skipping it.", id);
-        return;
-      }
+      log.debug("Received remote capability creation event for {}", id);
 
-      CapabilityStorageItem item = capabilityStorage.getAll().get(id);
-
-      if (item == null) {
-        log.debug("Failed to locate capability with id {} in storage", id);
-        return;
-      }
-
-      if (capabilityAlreadyRegistered(item)) {
-        log.debug("Capability {}:{} already loaded and registered. Skipping it.", item.getType(), item.getProperties());
-        return;
-      }
-
-      CapabilityType type = capabilityType(item.getType());
-
-      try {
-        lock.writeLock().lock();
-
-        CapabilityDescriptor descriptor = capabilityDescriptorRegistry.get(type);
-        // Do NOT decrypt secrets automatically - capabilities must decrypt on-demand
-        doAdd(id, type, descriptor, item, item.getProperties());
-      }
-      finally {
-        lock.writeLock().unlock();
-      }
+      // Submit to executor for sequential processing
+      capabilitySyncExecutor.submit(() -> processRemoteCapabilityEvent(id));
     }
   }
 
-  private boolean capabilityAlreadyRegistered(final CapabilityStorageItem capability) {
+  @VisibleForTesting
+  boolean capabilityAlreadyRegistered(final CapabilityStorageItem capability) {
     return references.values()
         .stream()
         .anyMatch(f -> Objects.equals(f.type().toString(), capability.getType()) &&
             Objects.equals(f.properties(), capability.getProperties()));
+  }
+
+  @VisibleForTesting
+  boolean capabilityAlreadyUpToDate(final CapabilityIdentity id, final CapabilityStorageItem item) {
+    DefaultCapabilityReference reference = references.get(id);
+    return reference != null &&
+        Objects.equals(reference.properties(), item.getProperties()) &&
+        reference.isEnabled() == item.isEnabled();
   }
 
   private CapabilityReference doAdd(
@@ -312,29 +334,19 @@ public class DefaultCapabilityRegistry
     }
   }
 
+  /**
+   * Remote capability update event handler.
+   * DEADLOCK PREVENTION: Event handler never holds locks.
+   * Submits to single-threaded executor for sequential processing.
+   */
   @Subscribe
   public void on(final CapabilityStorageItemUpdatedEvent event) {
-    log.debug("Received {} capability updated event", event.getCapabilityId());
     if (!event.isLocal()) {
-      log.debug("capability updated event {} is not local", event.getCapabilityId());
       CapabilityIdentity id = event.getCapabilityId();
-      CapabilityStorageItem item = capabilityStorage.getAll().get(id);
+      log.debug("Received remote capability update event for {}", id);
 
-      if (item == null) {
-        log.debug("Failed to locate capability with id {} in storage", id);
-        return;
-      }
-
-      try {
-        lock.writeLock().lock();
-
-        DefaultCapabilityReference reference = get(id);
-        // Do NOT decrypt secrets automatically - capabilities must decrypt on-demand
-        doUpdate(reference, item, item.getProperties());
-      }
-      finally {
-        lock.writeLock().unlock();
-      }
+      // Submit to executor for sequential processing
+      capabilitySyncExecutor.submit(() -> processRemoteCapabilityEvent(id));
     }
   }
 
@@ -407,19 +419,19 @@ public class DefaultCapabilityRegistry
     }
   }
 
+  /**
+   * Remote capability delete event handler.
+   * DEADLOCK PREVENTION: Event handler never holds locks.
+   * Submits to single-threaded executor for sequential processing.
+   */
   @Subscribe
   public void on(final CapabilityStorageItemDeletedEvent event) {
     if (!event.isLocal()) {
       CapabilityIdentity id = event.getCapabilityId();
+      log.debug("Received remote capability delete event for {}", id);
 
-      try {
-        lock.writeLock().lock();
-
-        doRemove(id);
-      }
-      finally {
-        lock.writeLock().unlock();
-      }
+      // Submit to executor for sequential processing
+      capabilitySyncExecutor.submit(() -> processRemoteCapabilityEvent(id));
     }
   }
 
@@ -672,6 +684,67 @@ public class DefaultCapabilityRegistry
   }
 
   /**
+   * Processes a remote capability event by reading current state from database and syncing.
+   * Called by the single-threaded executor for sequential async processing.
+   * Uses blocking lock since we're in a dedicated thread.
+   */
+  private void processRemoteCapabilityEvent(final CapabilityIdentity id) {
+    lock.writeLock().lock();
+    try {
+      CapabilityStorageItem item = capabilityStorage.read(entityId(id)).orElse(null);
+
+      if (item == null) {
+        // Capability was deleted from database - remove from memory if present
+        log.debug("Capability {} no longer in storage, removing from memory", id);
+        if (references.containsKey(id)) {
+          doRemove(id);
+        }
+        return;
+      }
+
+      // Check if already up-to-date before doing work
+      if (capabilityAlreadyUpToDate(id, item)) {
+        log.debug("Capability {} already up-to-date, skipping sync", id);
+        return;
+      }
+
+      CapabilityType type = capabilityType(item.getType());
+      CapabilityDescriptor descriptor = capabilityDescriptorRegistry.get(type);
+
+      if (descriptor == null) {
+        log.warn("Cannot sync capability {} - unknown type {}", id, item.getType());
+        return;
+      }
+
+      syncCapabilityReference(id, item, descriptor, type);
+    }
+    finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  private void syncCapabilityReference(
+      final CapabilityIdentity id,
+      final CapabilityStorageItem item,
+      final CapabilityDescriptor descriptor,
+      final CapabilityType type)
+  {
+    Map<String, String> decryptedProps = decryptValuesIfNeeded(descriptor, item.getProperties());
+    DefaultCapabilityReference existingRef = references.get(id);
+
+    if (existingRef == null) {
+      // Create new capability
+      log.info("Syncing new capability {} from pending queue", id);
+      doAdd(id, type, descriptor, item, decryptedProps);
+    }
+    else {
+      // Update existing capability
+      log.info("Syncing updated capability {} from pending queue", id);
+      doUpdate(existingRef, item, decryptedProps);
+    }
+  }
+
+  /**
    * Re encrypts the secrets of the capability (executed by the migration task).
    *
    * @param descriptor capability descriptor
@@ -834,6 +907,10 @@ public class DefaultCapabilityRegistry
       }
     }
     return decrypted;
+  }
+
+  private static EntityId entityId(final CapabilityIdentity id) {
+    return new EntityUUID(fromString(id.toString()));
   }
 
 }

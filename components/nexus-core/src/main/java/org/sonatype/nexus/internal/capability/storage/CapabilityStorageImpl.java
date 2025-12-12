@@ -13,9 +13,7 @@
 package org.sonatype.nexus.internal.capability.storage;
 
 import java.util.Map;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import java.util.Optional;
 
 import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -29,6 +27,8 @@ import org.sonatype.nexus.internal.capability.storage.datastore.CapabilityStorag
 import org.sonatype.nexus.internal.capability.storage.datastore.CapabilityStorageItemUpdatedEventImpl;
 import org.sonatype.nexus.transaction.Transactional;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -102,6 +102,12 @@ public class CapabilityStorageImpl
         .map(CapabilityStorageItemData.class::cast)
         .ifPresent(item -> postCommitEvent(() -> new CapabilityStorageItemDeletedEventImpl(item)));
     return dao().delete(entityId(id));
+  }
+
+  @Transactional
+  @Override
+  public Optional<CapabilityStorageItem> read(final EntityId entityId) {
+    return dao().read(entityId).map(CapabilityStorageItemData.class::cast);
   }
 
   @Transactional

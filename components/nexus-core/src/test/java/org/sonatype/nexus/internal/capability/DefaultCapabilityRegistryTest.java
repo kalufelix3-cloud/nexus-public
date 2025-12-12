@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
-import jakarta.inject.Provider;
+
 import javax.validation.ValidationException;
 import javax.validation.Validator;
 
@@ -35,6 +35,7 @@ import org.sonatype.nexus.capability.CapabilityNotFoundException;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.crypto.secrets.SecretsStore;
@@ -47,6 +48,7 @@ import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemData;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import jakarta.inject.Provider;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.junit.After;
@@ -116,6 +118,9 @@ public class DefaultCapabilityRegistryTest
   @Mock
   private SecretsStore secretsStore;
 
+  @Mock
+  private PeriodicJobService periodicJobService;
+
   private DefaultCapabilityRegistry underTest;
 
   private ArgumentCaptor<CapabilityEvent> rec;
@@ -126,6 +131,8 @@ public class DefaultCapabilityRegistryTest
   private SecretsService secretsService;
 
   private MockedStatic<SecurityUtils> mockStatic;
+
+  private CapabilityFactory factory;
 
   @Before
   public final void setUpCapabilityRegistry() throws Exception {
@@ -143,7 +150,7 @@ public class DefaultCapabilityRegistryTest
     when(secretsService.from(any()))
         .thenAnswer(invocation -> secrets.get(Integer.valueOf(invocation.getArgument(0, String.class))));
 
-    final CapabilityFactory factory = mock(CapabilityFactory.class);
+    factory = mock(CapabilityFactory.class);
     when(factory.create()).thenAnswer(new Answer<Capability>()
     {
       @Override
@@ -193,7 +200,6 @@ public class DefaultCapabilityRegistryTest
     underTest = new DefaultCapabilityRegistry(
         capabilityStorage,
         capabilityFactoryRegistry,
-
         capabilityDescriptorRegistry,
         eventManager,
         achf,
@@ -827,6 +833,69 @@ public class DefaultCapabilityRegistryTest
     // password1 should have same secret ID, password2 should have new secret ID
     assertThat(updated.getProperties().get("password1"), is(secret1Id));
     assertThat(updated.getProperties().get("password2"), is(not(secret2Id)));
+  }
+
+  @Test
+  public void testCapabilityAlreadyRegistered() {
+    // Given: A registered capability
+    Map<String, String> properties = ImmutableMap.of("key", "value");
+    CapabilityIdentity id = capabilityIdentity("test-capability-id");
+
+    DefaultCapabilityReference mockRef = mock(DefaultCapabilityReference.class);
+    when(mockRef.type()).thenReturn(CAPABILITY_TYPE);
+    when(mockRef.properties()).thenReturn(properties);
+    underTest.references.put(id, mockRef);
+
+    // When: Checking if same capability is already registered
+    CapabilityStorageItem item = mock(CapabilityStorageItem.class);
+    when(item.getType()).thenReturn(CAPABILITY_TYPE.toString());
+    when(item.getProperties()).thenReturn(properties);
+
+    boolean result = underTest.capabilityAlreadyRegistered(item);
+
+    assertThat(result, is(true));
+  }
+
+  @Test
+  public void testCapabilityAlreadyUpToDate() {
+    // Given: A registered capability
+    Map<String, String> properties = ImmutableMap.of("key", "value");
+    CapabilityIdentity id = capabilityIdentity("test-capability-id");
+
+    DefaultCapabilityReference mockRef = mock(DefaultCapabilityReference.class);
+    when(mockRef.properties()).thenReturn(properties);
+    when(mockRef.isEnabled()).thenReturn(true);
+    underTest.references.put(id, mockRef);
+
+    // When: Checking if capability is up to date with same properties
+    CapabilityStorageItem item = mock(CapabilityStorageItem.class);
+    when(item.getProperties()).thenReturn(properties);
+    when(item.isEnabled()).thenReturn(true);
+
+    boolean result = underTest.capabilityAlreadyUpToDate(id, item);
+
+    assertThat(result, is(true));
+  }
+
+  @Test
+  public void testCapabilityAlreadyUpToDate_withDifferentProperties() {
+    // Given: A registered capability
+    Map<String, String> properties = ImmutableMap.of("key", "value");
+    CapabilityIdentity id = capabilityIdentity("test-capability-id");
+
+    DefaultCapabilityReference mockRef = mock(DefaultCapabilityReference.class);
+    when(mockRef.properties()).thenReturn(properties);
+    when(mockRef.isEnabled()).thenReturn(true);
+    underTest.references.put(id, mockRef);
+
+    // When: Checking if capability is up to date with different properties
+    CapabilityStorageItem item = mock(CapabilityStorageItem.class);
+    when(item.getProperties()).thenReturn(ImmutableMap.of("key", "different-value"));
+    when(item.isEnabled()).thenReturn(true);
+
+    boolean result = underTest.capabilityAlreadyUpToDate(id, item);
+
+    assertThat(result, is(false));
   }
 
   private static Subject subject(final String principal) {

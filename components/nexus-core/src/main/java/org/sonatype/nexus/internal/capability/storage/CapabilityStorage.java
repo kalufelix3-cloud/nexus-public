@@ -13,9 +13,11 @@
 package org.sonatype.nexus.internal.capability.storage;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
 import org.sonatype.nexus.capability.CapabilityIdentity;
+import org.sonatype.nexus.common.entity.EntityId;
 
 /**
  * Capability storage.
@@ -47,6 +49,14 @@ public interface CapabilityStorage
    * @return false if capability to be deleted does not exist in storage, true otherwise
    */
   boolean remove(CapabilityIdentity id);
+
+  /**
+   * Retrieves a single stored capability by its entity ID.
+   *
+   * @param entityId the entity ID to retrieve
+   * @return optional containing the capability storage item, or empty if not found
+   */
+  Optional<CapabilityStorageItem> read(EntityId entityId);
 
   /**
    * Retrieves stored capabilities.
