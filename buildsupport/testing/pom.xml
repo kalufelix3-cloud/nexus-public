@@ -31,9 +31,7 @@
     <testcontainers.version>1.19.1</testcontainers.version>
     <iq.version>1.168.0</iq.version>
 
-
     <jupiter.version>5.11.4</jupiter.version>
-    <jupiter.engine.version>1.11.4</jupiter.engine.version>
 
     <gatling.version>3.9.5</gatling.version>
   </properties>
@@ -123,15 +121,23 @@
       </dependency>
 
       <dependency>
-        <groupId>org.junit.vintage</groupId>
-        <artifactId>junit-vintage-engine</artifactId>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
         <version>${jupiter.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
 
       <dependency>
-        <groupId>org.junit.platform</groupId>
-        <artifactId>junit-platform-engine</artifactId>
-        <version>${jupiter.engine.version}</version>
+        <groupId>org.junit.vintage</groupId>
+        <artifactId>junit-vintage-engine</artifactId>
+        <version>${jupiter.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-core</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
@@ -169,18 +175,6 @@
         <groupId>net.javacrumbs.json-unit</groupId>
         <artifactId>json-unit</artifactId>
         <version>1.15.0</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.littleshoot</groupId>
-        <artifactId>littleproxy</artifactId>
-        <version>1.1.2</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.barchart.udt</groupId>
-            <artifactId>barchart-udt-bundle</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <dependency>

@@ -70,11 +70,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.littleshoot</groupId>
-      <artifactId>littleproxy</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
     </dependency>

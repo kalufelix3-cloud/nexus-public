@@ -37,9 +37,8 @@ import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.ssl.SSLContexts;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -58,39 +57,41 @@ public class HttpClientManagerImplIT
       System.getProperty("os.name"), System.getProperty("os.version"), System.getProperty("os.arch"),
       System.getProperty("java.version"));
 
-  private static Server targetServerSSL;
+  private Server targetServerSSL;
 
-  private static Server targetServer;
+  private Server targetServer;
 
   private static HeaderValidator headerValidator = new HeaderValidator(SUFFIX);
 
-  private static ValidatingProxyServer proxyServer = new ValidatingProxyServer(headerValidator);
+  private ValidatingProxyServer proxyServer = new ValidatingProxyServer(headerValidator);
 
-  private static ValidatingBehaviour httpValidatingBehaviour = new ValidatingBehaviour(headerValidator);
+  private ValidatingBehaviour httpValidatingBehaviour = new ValidatingBehaviour(headerValidator);
 
-  private static ValidatingBehaviour httpsValidatingBehaviour = new ValidatingBehaviour(headerValidator);
+  private ValidatingBehaviour httpsValidatingBehaviour = new ValidatingBehaviour(headerValidator);
 
   private HttpClientManagerImpl underTest;
 
-  @BeforeClass
-  public static void beforeClass() throws Exception {
+  @Before
+  public void beforeClass() throws Exception {
     targetServerSSL = createHeaderValidatingServerSSL().start();
     targetServer = createHeaderValidatingServer().start();
     proxyServer.start();
   }
 
-  @AfterClass
-  public static void afterClass() throws Exception {
+  @After
+  public void afterClass() throws Exception {
     targetServer.stop();
     targetServerSSL.stop();
     proxyServer.stop();
   }
 
   @Before
-  public void before() {
+  public void before() throws Exception {
     underTest = new HttpClientManagerImpl(mock(EventManager.class), mock(HttpClientConfigurationStore.class),
         () -> mock(HttpClientConfiguration.class), mock(SharedHttpClientConnectionManager.class),
         mock(DefaultsCustomizer.class));
+
+    underTest.start();
 
     resetCounts();
   }
@@ -115,7 +116,7 @@ public class HttpClientManagerImplIT
     testPrepareHttpClientBuilderHttpRequest(false, false);
   }
 
-  private void testPrepareHttpClientBuilderHttpRequest(boolean isSSL, boolean isProxy) throws Exception {
+  private void testPrepareHttpClientBuilderHttpRequest(final boolean isSSL, final boolean isProxy) throws Exception {
     // Setup
     HttpClientBuilder builder = underTest.prepare(plan -> plan.setUserAgentBase(EXPECTED_USER_AGENT));
     builder.setConnectionManager(null);
@@ -154,19 +155,12 @@ public class HttpClientManagerImplIT
       assertThat(httpValidatingBehaviour.getSuccessCount(), equalTo(1));
     }
     if (isProxy) {
-      if (isSSL) {
-        // Only one filterable request in SSL (CONNECT) without using MITM
-        assertThat(proxyServer.getSuccessCount(), equalTo(1));
-      }
-      else {
-        // Two filterable requests in non-SSL (initiate and real request)
-        assertThat(proxyServer.getSuccessCount(), equalTo(2));
-      }
+      assertThat(proxyServer.getSuccessCount(), equalTo(1));
     }
   }
 
   private void setSSL(
-      HttpClientBuilder builder) throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException
+      final HttpClientBuilder builder) throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException
   {
     SSLContext sslContext = SSLContexts.custom()
         .loadTrustMaterial(this.getClass().getClassLoader().getResource("testkeystore"), "password".toCharArray(),
@@ -177,14 +171,14 @@ public class HttpClientManagerImplIT
     builder.setSSLSocketFactory(sslsf);
   }
 
-  private static Server createHeaderValidatingServerSSL() {
+  private Server createHeaderValidatingServerSSL() {
     return Server.server()
         .withKeystore(HttpClientManagerImplIT.class.getClassLoader().getResource("testkeystore").getFile(), "password")
         .serve("")
         .withBehaviours(httpsValidatingBehaviour);
   }
 
-  private static Server createHeaderValidatingServer() {
+  private Server createHeaderValidatingServer() {
     return Server.server().serve("").withBehaviours(httpValidatingBehaviour);
   }
 
