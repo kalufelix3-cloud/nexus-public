@@ -42,6 +42,14 @@ class H2SearchColumn
   }
 
   /**
+   * @param columnName the database column name that will also be used for sorting
+   * @param tokenized whether this column contains tokenized data that always requires LIKE queries
+   */
+  H2SearchColumn(final String columnName, final boolean tokenized) {
+    this(columnName, columnName, tokenized);
+  }
+
+  /**
    * @param columnName the database column name for matches
    * @param sortColumnName the database column name that will be used for sorting
    * @param tokenized whether this column contains tokenized data that always requires LIKE queries

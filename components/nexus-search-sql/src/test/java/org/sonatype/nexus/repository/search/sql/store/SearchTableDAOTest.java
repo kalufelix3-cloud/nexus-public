@@ -479,7 +479,6 @@ public class SearchTableDAOTest
     });
   }
 
-  @Disabled("NEXUS-49881")
   @Test
   public void testTagsTsVectorLowercase() {
     searchDAO.saveBatch(GENERATED_DATA);
