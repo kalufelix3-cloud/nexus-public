@@ -18,11 +18,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import org.sonatype.nexus.repository.search.sql.query.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.sql.query.SqlSearchQueryConditionGroup;
@@ -37,6 +34,8 @@ import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -228,6 +227,16 @@ public class SearchStore
   @Transactional
   public boolean repositoryNeedsReindex(final String repositoryName) {
     return !dao().hasRepositoryEntries(repositoryName);
+  }
+
+  /**
+   * Get distinct repositories from search tables
+   *
+   * @return a list of unique repositories wrapped in {@link SearchRepositoryData}
+   */
+  @Transactional
+  public List<SearchRepositoryData> getSearchRepositories() {
+    return dao().getSearchRepositories();
   }
 
   /**

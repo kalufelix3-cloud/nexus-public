@@ -13,11 +13,7 @@
 package org.sonatype.nexus.repository.search.sql.index;
 
 import java.util.Collection;
-
 import javax.annotation.Priority;
-import jakarta.inject.Inject;
-
-import org.sonatype.nexus.repository.search.sql.store.SearchStore;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -29,8 +25,10 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.search.SearchFacet;
+import org.sonatype.nexus.repository.search.sql.store.SearchStore;
 
 import com.google.common.base.Stopwatch;
+import jakarta.inject.Inject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Primary;
@@ -133,5 +131,21 @@ public class SqlSearchFacetImpl
   public void purge(final Collection<EntityId> componentIds) {
     log.debug("Purging... {}", componentIds);
     sqlSearchIndexService.purge(componentIds, getRepository());
+  }
+
+  /**
+   * Deletes all search records for the repository.
+   */
+  @Override
+  protected void doDelete() {
+    Repository repository = getRepository();
+    String repositoryFormat = repository.getFormat().getValue();
+    String repositoryName = repository.getName();
+    Integer repositoryId = repository.facet(ContentFacet.class).contentRepositoryId();
+
+    log.debug("deleting search records for repository: {} ({})", repositoryName, repositoryFormat);
+
+    store.deleteAllForRepository(repositoryId, repositoryFormat);
+    store.deleteAllSearchAssets(repositoryId, repositoryFormat);
   }
 }

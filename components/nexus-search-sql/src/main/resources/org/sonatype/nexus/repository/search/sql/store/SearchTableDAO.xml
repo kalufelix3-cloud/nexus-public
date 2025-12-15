@@ -779,5 +779,19 @@
   <select id="hasRepositoryEntries" resultType="boolean">
     SELECT EXISTS(SELECT 1 FROM search_components WHERE search_repository_name = #{repositoryName} LIMIT 1)
   </select>
+
+  <select id="getSearchRepositories" resultMap="SearchRepositoryData">
+    SELECT DISTINCT format, search_repository_name, repository_id
+    FROM search_components;
+  </select>
+
+  <resultMap id="SearchRepositoryData"
+             type="org.sonatype.nexus.repository.search.sql.store.SearchRepositoryData">
+    <constructor>
+      <arg column="search_repository_name" javaType="string"/>
+      <arg column="repository_id" javaType="int"/>
+      <arg column="format" javaType="string"/>
+    </constructor>
+  </resultMap>
 </mapper>
 

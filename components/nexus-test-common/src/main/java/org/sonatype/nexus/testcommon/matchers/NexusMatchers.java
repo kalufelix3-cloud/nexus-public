@@ -109,6 +109,28 @@ public class NexusMatchers
     };
   }
 
+  /**
+   * Matches {@link ILoggingEvent} instances formatted messages with the provided {@link Matcher<String>}
+   *
+   * @param messageMatcher the matcher to match the logging event's message with
+   */
+  public static Matcher<ILoggingEvent> formattedMessage(final Matcher<String> messageMatcher) {
+    return new TypeSafeMatcher<ILoggingEvent>()
+    {
+      @Override
+      public void describeTo(final Description description) {
+        description.appendText("an log event with message matching ")
+            .appendText(" ")
+            .appendDescriptionOf(messageMatcher);
+      }
+
+      @Override
+      protected boolean matchesSafely(final ILoggingEvent item) {
+        return messageMatcher.matches(item.getFormattedMessage());
+      }
+    };
+  }
+
   /*
    * Creates a {@link Matcher} for {@link Stream}. Note that the stream cannot have been consumed,
    * and that the matcher is a termainl operation for the Stream.

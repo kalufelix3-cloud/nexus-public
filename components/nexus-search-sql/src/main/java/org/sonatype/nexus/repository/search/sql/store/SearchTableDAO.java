@@ -143,4 +143,11 @@ public interface SearchTableDAO
    * @return {@code true} if any records exists
    */
   boolean hasRepositoryEntries(@Param("repositoryName") final String repositoryName);
+
+  /**
+   * Get all the unique repositories in the search tables.
+   *
+   * @return list of unique repositories wrapped in {@link SearchRepositoryData}
+   */
+  List<SearchRepositoryData> getSearchRepositories();
 }
