@@ -62,6 +62,8 @@ public class GroupHandler
   public static final String INSUFFICIENT_LICENSE =
       "Deploying to groups is a PRO-licensed feature. See https://links.sonatype.com/product-nexus-repository";
 
+  public static final String IQ_MEMBER_REPO_NAME = "IQ-Member-Repository";
+
   /**
    * Request-context state container for set of repositories already dispatched to.
    */
@@ -154,6 +156,9 @@ public class GroupHandler
       final Response response = view.dispatch(request, context);
       log.trace("Member {} response {}", member, response.getStatus());
       if (isValidResponse(response)) {
+        if (ProxyType.NAME.equals(member.getType().getValue())) {
+          context.setAttribute(IQ_MEMBER_REPO_NAME, member.getName());
+        }
         return response;
       }
     }

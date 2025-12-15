@@ -16,7 +16,9 @@ import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.group.GroupHandler.DispatchedRepositories;
+import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
@@ -31,9 +33,13 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.group.GroupHandler.IQ_MEMBER_REPO_NAME;
 import static org.sonatype.nexus.repository.group.GroupHandler.USE_DISPATCHED_RESPONSE;
 import static org.sonatype.nexus.repository.http.HttpResponses.forbidden;
 import static org.sonatype.nexus.repository.http.HttpResponses.notFound;
@@ -167,5 +173,75 @@ public class GroupHandlerTest
   private void assertGetFirstNotFound(final List<Repository> repositories) throws Exception {
     Response response = underTest.getFirst(context, repositories, new DispatchedRepositories());
     assertThat(response.getStatus().getCode(), is(NOT_FOUND));
+  }
+
+  @Test
+  public void setsRespondingRepositoryAttributeWhenMemberRespondsSuccessfully() throws Exception {
+    Response ok1 = ok();
+    setupDispatch(ok1, ok());
+
+    underTest.getFirst(context, asList(proxy1, proxy2), new DispatchedRepositories());
+
+    verify(context).setAttribute(eq(IQ_MEMBER_REPO_NAME), eq("Proxy 1"));
+  }
+
+  @Test
+  public void setsRespondingRepositoryAttributeForSecondMemberWhenFirstFails() throws Exception {
+    Response ok2 = ok();
+    setupDispatch(notFound(), ok2);
+
+    underTest.getFirst(context, asList(proxy1, proxy2), new DispatchedRepositories());
+
+    verify(context).setAttribute(eq(IQ_MEMBER_REPO_NAME), eq("Proxy 2"));
+  }
+
+  @Test
+  public void doesNotSetRespondingRepositoryAttributeWhenNoMemberRespondsSuccessfully() throws Exception {
+    setupDispatch(notFound(), notFound());
+
+    underTest.getFirst(context, asList(proxy1, proxy2), new DispatchedRepositories());
+
+    verify(context, times(0)).setAttribute(eq(IQ_MEMBER_REPO_NAME), eq("Proxy 1"));
+    verify(context, times(0)).setAttribute(eq(IQ_MEMBER_REPO_NAME), eq("Proxy 2"));
+  }
+
+  @Test
+  public void setsRespondingRepositoryAttributeForUseDispatchedResponse() throws Exception {
+    Response forbidden1 = forbidden();
+    forbidden1.getAttributes().set(USE_DISPATCHED_RESPONSE, true);
+    setupDispatch(forbidden1, ok());
+
+    underTest.getFirst(context, asList(proxy1, proxy2), new DispatchedRepositories());
+
+    verify(context).setAttribute(eq(IQ_MEMBER_REPO_NAME), eq("Proxy 1"));
+  }
+
+  @Test
+  public void setsRespondingRepositoryAttributeForBypassHttpErrorsHeader() throws Exception {
+    Response forbidden = forbidden();
+    forbidden.getHeaders().set(BYPASS_HTTP_ERRORS_HEADER_NAME, BYPASS_HTTP_ERRORS_HEADER_VALUE);
+    setupDispatch(forbidden, ok());
+
+    underTest.getFirst(context, asList(proxy1, proxy2), new DispatchedRepositories());
+
+    verify(context).setAttribute(eq(IQ_MEMBER_REPO_NAME), eq("Proxy 1"));
+  }
+
+  @Test
+  public void doesNotSetRespondingRepositoryAttributeForHostedMember() throws Exception {
+    Repository hosted = mock(Repository.class);
+    Type hostedType = mock(Type.class);
+    when(hostedType.getValue()).thenReturn(HostedType.NAME);
+    when(hosted.getType()).thenReturn(hostedType);
+    when(hosted.getName()).thenReturn("Hosted 1");
+    ViewFacet hostedViewFacet = mock(ViewFacet.class);
+    when(hosted.facet(ViewFacet.class)).thenReturn(hostedViewFacet);
+
+    Response ok = ok();
+    when(hostedViewFacet.dispatch(request, context)).thenReturn(ok);
+
+    underTest.getFirst(context, asList(hosted), new DispatchedRepositories());
+
+    verify(context, times(0)).setAttribute(eq(IQ_MEMBER_REPO_NAME), any());
   }
 }
