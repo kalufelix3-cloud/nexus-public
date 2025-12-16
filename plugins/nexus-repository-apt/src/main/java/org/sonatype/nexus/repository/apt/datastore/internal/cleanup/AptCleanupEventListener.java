@@ -32,9 +32,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUpdatedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.types.HostedType;
-import org.sonatype.nexus.scheduling.events.TaskEventStoppedDone;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -49,21 +47,16 @@ public class AptCleanupEventListener
 {
   private static final Logger log = LoggerFactory.getLogger(AptCleanupEventListener.class);
 
-  private static final String CLEANUP_TASK_TYPE_ID = "repository.cleanup";
-
   private static final int METADATA_UPDATE_DELAY_SECONDS = 2;
 
   private static final int SHUTDOWN_TIMEOUT_SECONDS = 30;
-
-  private final RepositoryManager repositoryManager;
 
   private final ScheduledExecutorService executor;
 
   private final ConcurrentMap<String, Boolean> pendingUpdates;
 
   @Autowired
-  public AptCleanupEventListener(final RepositoryManager repositoryManager) {
-    this.repositoryManager = repositoryManager;
+  public AptCleanupEventListener() {
     this.executor = Executors.newSingleThreadScheduledExecutor(r -> {
       Thread t = new Thread(r, "apt-metadata-updater");
       t.setDaemon(true);
@@ -115,17 +108,6 @@ public class AptCleanupEventListener
         scheduleMetadataUpdate(repository);
       }
     });
-  }
-
-  @Subscribe
-  public void onTaskDone(final TaskEventStoppedDone event) {
-    if (CLEANUP_TASK_TYPE_ID.equals(event.getTaskInfo().getTypeId())) {
-      repositoryManager.browse().forEach(repository -> {
-        if (isAptHostedRepository(repository)) {
-          scheduleMetadataUpdate(repository);
-        }
-      });
-    }
   }
 
   private void scheduleMetadataUpdate(final Repository repository) {
