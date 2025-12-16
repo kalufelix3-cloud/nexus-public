@@ -177,7 +177,7 @@ export default class ValidationUtils {
   }
 
   static validateLength(value, length) {
-    if (value.length > length) {
+    if (value?.length > length) {
       return UIStrings.ERROR.MAX_CHARS(length);
     }
     return null;

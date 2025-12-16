@@ -14,6 +14,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import UIStrings from '../constants/UIStrings';
 import ValidationUtils from './ValidationUtils';
 
 describe('ValidationUtils', () => {
@@ -73,6 +74,26 @@ describe('ValidationUtils', () => {
       expect(ValidationUtils.isEmail('valid@email')).toBeTruthy();
       expect(ValidationUtils.isEmail('valid@email.com')).toBeTruthy();
       expect(ValidationUtils.isEmail('valid@email.s')).toBeTruthy();
+    });
+  });
+  describe('validateLength', () => {
+    it('allows null', () => {
+      expect(ValidationUtils.validateLength(null, 10)).toBeNull();
+    });
+    it('allows undefined', () => {
+      expect(ValidationUtils.validateLength(undefined, 10)).toBeNull();
+    });
+    it('allows empty string', () => {
+      expect(ValidationUtils.validateLength('', 10)).toBeNull();
+    });
+    it('rejects value longer than length', () => {
+      expect(ValidationUtils.validateLength('12345678901', 10)).toBe(UIStrings.ERROR.MAX_CHARS(10));
+    });
+    it('allows value equal to length', () => {
+      expect(ValidationUtils.validateLength('1234567890', 10)).toBeNull();
+    });
+    it('allows value shorter than length', () => {
+      expect(ValidationUtils.validateLength('123456789', 10)).toBeNull();
     });
   });
 });
