@@ -13,7 +13,7 @@
 
 import React from 'react';
 import GlobalHeader from './GlobalHeader';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, cleanup } from '@testing-library/react';
 
 import { ExtJS } from '@sonatype/nexus-ui-plugin';
 import { UIRouter, UIView, useCurrentStateAndParams } from '@uirouter/react';
@@ -631,6 +631,37 @@ describe('GlobalHeader', () => {
       expect(router.stateService.reload).not.toHaveBeenCalled();
       expect(ExtJS.refresh).toHaveBeenCalled();
     });
+
+    it('triggers onRefreshClick else case - calls refreshReactPage when not on ExtJS page', async () => {
+      // This test explicitly verifies the else branch: when ExtJS.isExtJsRendered() returns false
+      const { router } = renderComponent();
+
+      // Wait for initial navigation to complete
+      await screen.findByRole('heading', { name: 'Welcome Mock' });
+
+      // Spy on router methods to verify refreshReactPage is called
+      const reloadSpy = jest.spyOn(router.stateService, 'reload');
+      const goSpy = jest.spyOn(router.stateService, 'go');
+
+      // Mock ExtJS methods to ensure we hit the else branch
+      jest.spyOn(ExtJS, 'isExtJsRendered').mockReturnValue(false); // This ensures else case
+      const extJsRefreshSpy = jest.spyOn(ExtJS, 'refresh').mockReturnValue(null);
+
+      const banner = screen.getByRole('banner');
+      const refreshButton = await assertButtonVisibleIn(banner, 'Refresh');
+
+      // Click the refresh button - this should trigger onRefreshClick -> else case -> refreshReactPage(router)
+      await userEvent.click(refreshButton);
+
+      // Verify else case behavior:
+      // 1. ExtJS.refresh should NOT be called (we're in the else branch)
+      expect(extJsRefreshSpy).not.toHaveBeenCalled();
+
+      // 2. Router method was called (either reload or go)
+      const routerWasCalled = reloadSpy.mock.calls.length > 0 || goSpy.mock.calls.length > 0;
+      expect(routerWasCalled).toBe(true);
+    });
+
   });
 
   function renderComponent() {

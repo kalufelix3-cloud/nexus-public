@@ -34,6 +34,7 @@ import LoginAndUserButton from './LogInAndUserProfileMenu';
 import Search from './Search';
 import SystemStatus from './SystemStatus';
 import {ThemeSelector} from "@sonatype/nexus-ui-plugin/src/frontend/src";
+import { refreshReactPage } from '../../routerConfig/routerUtils';
 
 export default function GlobalHeader() {
   const COMMUNITY = "COMMUNITY";
@@ -86,7 +87,7 @@ export default function GlobalHeader() {
       if (ExtJS.isExtJsRendered()) {
         ExtJS.refresh();
       } else {
-        router.stateService.reload();
+        refreshReactPage(router);
       }
     });
   }

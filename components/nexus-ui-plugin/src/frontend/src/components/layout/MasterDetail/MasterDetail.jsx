@@ -32,7 +32,10 @@ export default function MasterDetail({className, children, path, ...attrs}) {
 
   const classes = classNames('nxrm-master-detail', className);
   const isMasterRoute = pathname === '';
-  const itemId = isMasterRoute ? '' : pathname.substring(1);
+  // Re-encode itemId after browser decoding to handle special characters (/, ?, &, #, +, spaces)
+  // Pattern: encodeURIComponent(decodeURIComponent(x)) ensures consistent encoding regardless
+  // of whether the input is already encoded or decoded
+  const itemId = isMasterRoute ? '' : encodeURIComponent(decodeURIComponent(pathname.substring(1)));
 
   if (!currentPath?.includes(path)) {
     return null;
@@ -43,7 +46,9 @@ export default function MasterDetail({className, children, path, ...attrs}) {
   }
 
   function onEdit(itemId) {
-    window.location.hash = `${path}:${itemId}`;
+    // Ensure itemId is properly encoded to handle special characters like slashes
+    const encodedItemId = encodeURIComponent(decodeURIComponent(itemId));
+    window.location.hash = `${path}:${encodedItemId}`;
   }
 
   function onDone(doneResponse) {
