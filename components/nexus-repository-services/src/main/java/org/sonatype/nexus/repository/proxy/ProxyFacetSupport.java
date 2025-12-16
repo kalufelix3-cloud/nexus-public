@@ -500,6 +500,12 @@ public abstract class ProxyFacetSupport
         // trace because the blocked status of a repo is typically discoverable in the UI and other log messages
         log.trace(logMessage, exception, repositoryName, contextUrl, statusLine, exception);
       }
+      else if (exception instanceof BypassHttpErrorException) {
+        // debug because these are expected exceptions (e.g., 401 Unauthorized from Docker Hub)
+        if (log.isDebugEnabled()) {
+          log.debug(logMessage, exception, repositoryName, contextUrl, statusLine, exception);
+        }
+      }
       else if (log.isDebugEnabled()) {
         log.warn(logMessage, exception, repositoryName, contextUrl, statusLine, exception);
       }

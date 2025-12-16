@@ -621,4 +621,19 @@ public class ProxyFacetSupportTest
     verify(eventManager, never()).post(any(ProxyThrottledRequestEvent.class));
   }
 
+  @Test
+  public void testBypassHttpErrorExceptionLoggedAtDebugLevel() throws IOException {
+    com.google.common.collect.ListMultimap<String, String> headers =
+        com.google.common.collect.ArrayListMultimap.create();
+    BypassHttpErrorException bypassException = new BypassHttpErrorException(401, "Unauthorized", headers);
+
+    try {
+      underTest.logContentOrThrow(null, cachedContext, statusLine, bypassException);
+      fail("Expected BypassHttpErrorException to be thrown");
+    }
+    catch (BypassHttpErrorException expected) {
+      // Expected - BypassHttpErrorException should be logged at DEBUG level and then thrown
+    }
+  }
+
 }
