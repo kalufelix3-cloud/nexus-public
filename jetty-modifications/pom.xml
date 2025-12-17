@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-parent</artifactId>
-    <version>3.88.0-01</version>
+    <version>3.88.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.sonatype.nexus.jetty</groupId>
@@ -41,7 +41,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-jetty</artifactId>
         <type>pom</type>
-        <version>3.88.0-01</version>
+        <version>3.88.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
