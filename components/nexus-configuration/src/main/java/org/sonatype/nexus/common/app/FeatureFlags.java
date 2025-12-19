@@ -32,9 +32,6 @@ public class FeatureFlags
   /* Composer format is temporarily hidden behind the feature flag. Default value: false */
   public static final String COMPOSER_FORMAT_ENABLED = "nexus.format.composer.enabled";
 
-  /* Terraform format is temporarily hidden behind the feature flag. Default value: false */
-  public static final String TERRAFORM_PROXY_ENABLED = "nexus.format.terraform.enabled";
-
   /* Terraform Hosted repository type is hidden behind the feature flag. Default value: false */
   public static final String TERRAFORM_HOSTED_ENABLED = "nexus.format.terraform.hosted.enabled";
 
