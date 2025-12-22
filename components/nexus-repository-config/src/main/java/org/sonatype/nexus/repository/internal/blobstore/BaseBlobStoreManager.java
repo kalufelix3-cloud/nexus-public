@@ -164,11 +164,35 @@ public abstract class BaseBlobStoreManager
       configurations = store.list();
     }
 
+    // Capture the context classloader from the main thread to propagate to worker threads.
+    // This ensures parallel stream worker threads have access to application classes (e.g., JAXB).
+    ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+
     log.info("Restoring {} BlobStores", configurations.size());
-    configurations.parallelStream().forEach(this::restoreBlobStore);
+    configurations.parallelStream().forEach(config -> {
+      Thread currentThread = Thread.currentThread();
+      ClassLoader originalClassLoader = currentThread.getContextClassLoader();
+      currentThread.setContextClassLoader(contextClassLoader);
+      try {
+        restoreBlobStore(config);
+      }
+      finally {
+        currentThread.setContextClassLoader(originalClassLoader);
+      }
+    });
 
     log.info("Starting {} BlobStores", stores.size());
-    stores.entrySet().parallelStream().forEach(this::startBlobStore);
+    stores.entrySet().parallelStream().forEach(entry -> {
+      Thread currentThread = Thread.currentThread();
+      ClassLoader originalClassLoader = currentThread.getContextClassLoader();
+      currentThread.setContextClassLoader(contextClassLoader);
+      try {
+        startBlobStore(entry);
+      }
+      finally {
+        currentThread.setContextClassLoader(originalClassLoader);
+      }
+    });
 
     log.info("Completed initialization");
   }
