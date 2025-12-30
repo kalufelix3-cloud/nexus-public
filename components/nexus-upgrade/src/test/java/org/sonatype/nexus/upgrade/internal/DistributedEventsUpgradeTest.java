@@ -13,80 +13,32 @@
 package org.sonatype.nexus.upgrade.internal;
 
 import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.testdb.DataSessionRule;
+import org.sonatype.goodies.testsupport.Test5Support;
+import org.sonatype.nexus.testdb.DataSessionConfiguration;
+import org.sonatype.nexus.testdb.DatabaseExtension;
+import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
-public class DistributedEventsUpgradeTest
-    extends TestSupport
+@ExtendWith(DatabaseExtension.class)
+class DistributedEventsUpgradeTest
+    extends Test5Support
 {
-  public static final String TABLE_NAME = "distributed_events";
-
-  @Rule
-  public DataSessionRule sessionRule = new DataSessionRule(DEFAULT_DATASTORE_NAME);
-
-  @Before
-  public void setup() throws SQLException {
-    try (Connection conn = sessionRule.openConnection("nexus")) {
-      conn.prepareCall("CREATE TABLE distributed_events ( foo varchar );").execute();
-    }
-  }
+  @DataSessionConfiguration(daos = {})
+  TestDataSessionSupplier supplier;
 
   @Test
-  public void shouldSkipMigrationWhenClusterEnabled() throws Exception {
-    DistributedEventsUpgrade underTest = new DistributedEventsUpgrade(true);
-    try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
-      assertThat(underTest.tableExists(conn, TABLE_NAME), is(true));
-
+  void shouldBeNoOp() throws Exception {
+    DistributedEventsUpgrade underTest = new DistributedEventsUpgrade();
+    try (Connection conn = supplier.openConnection()) {
       Connection spyConn = spy(conn);
       underTest.migrate(spyConn);
       verifyNoInteractions(spyConn);
-
-      assertThat(underTest.tableExists(conn, TABLE_NAME), is(true));
     }
-  }
-
-  @Test
-  public void shouldDropTableWhenClusteringDisabled() throws Exception {
-    DistributedEventsUpgrade underTest = new DistributedEventsUpgrade(false);
-    try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
-      assertThat(underTest.tableExists(conn, TABLE_NAME), is(true));
-
-      underTest.migrate(conn);
-
-      assertThat(underTest.tableExists(conn, TABLE_NAME), is(false));
-    }
-  }
-
-  @Test
-  public void shouldNotFailWhenTableMissing() throws Exception {
-    DistributedEventsUpgrade underTest = new DistributedEventsUpgrade(false);
-    try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
-      dropTable(conn);
-      // sanity check
-      assertThat(underTest.tableExists(conn, TABLE_NAME), is(false));
-
-      underTest.migrate(conn);
-
-      // sonar is dumb, the test here is that we don't blow up
-      assertThat(underTest.tableExists(conn, TABLE_NAME), is(false));
-    }
-  }
-
-  private void dropTable(final Connection connection) throws Exception {
-    Statement stmt = connection.createStatement();
-    stmt.executeUpdate("DROP TABLE IF EXISTS " + TABLE_NAME);
   }
 }

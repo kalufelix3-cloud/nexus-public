@@ -14,17 +14,19 @@ package org.sonatype.nexus.upgrade.internal;
 
 import java.sql.Connection;
 
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * An upgrade that manages the events table
+ * No-op upgrade step.
+ *
+ * Previously dropped distributed_events table when clustering was disabled.
+ * Now that distributed_events table is always created (regardless of HA mode),
+ * this step is no longer needed.
  *
  * @since 3.38
  */
@@ -34,28 +36,13 @@ public class DistributedEventsUpgrade
     extends ComponentSupport
     implements RepeatableDatabaseMigrationStep
 {
-  private final boolean clusterEnabled;
-
-  @Inject
-  public DistributedEventsUpgrade(
-      @Value("${nexus.datastore.clustered.enabled:false}") final boolean clusterEnabled)
-  {
-    this.clusterEnabled = clusterEnabled;
-  }
-
   @Override
   public Integer getChecksum() {
-    return clusterEnabled ? 1 : 0;
+    return 1;
   }
 
   @Override
   public void migrate(final Connection connection) throws Exception {
-    if (clusterEnabled) {
-      log.debug("Cluster enabled, skipping");
-      return;
-    }
-
-    log.debug("Dropping distributed event table");
-    runStatement(connection, "DROP TABLE IF EXISTS distributed_events");
+    // No-op: distributed_events table is now always present regardless of HA mode (NEXUS-49804)
   }
 }
