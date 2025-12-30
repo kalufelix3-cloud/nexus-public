@@ -39,6 +39,7 @@ import PreEmptiveAuthConfiguration from './facets/PreEmptiveAuthConfiguration';
 import AptDistributionConfiguration from './facets/AptDistributionConfiguration';
 import AptSigningConfiguration from './facets/AptSigningConfiguration';
 import AptFlatConfiguration from './facets/AptFlatConfiguration';
+import TerraformSigningConfiguration from './facets/TerraformSigningConfiguration';
 
 import {genericDefaultValues} from './RepositoryFormDefaultValues';
 import {
@@ -360,7 +361,29 @@ const repositoryFormats = {
     validators: (data) => ({
       ...genericValidators.group(data)
     })
-  }
+  },
+    terraform_hosted: {
+        facets: [TerraformSigningConfiguration, ...genericFacets.hosted],
+        defaultValues: {
+            ...genericDefaultValues.hosted,
+            terraformSigning: null
+        },
+        validators: (data) => {
+            const baseValidators = genericValidators.hosted(data);
+
+            // Only validate signing fields if terraformSigning exists (signing is enabled)
+            if (data.terraformSigning) {
+                return {
+                    ...baseValidators,
+                    terraformSigning: {
+                        keypair: ValidationUtils.validateNotBlank(data.terraformSigning?.keypair)
+                    }
+                };
+            }
+
+            return baseValidators;
+        }
+    }
 };
 
 export const getFacets = (format, type) =>

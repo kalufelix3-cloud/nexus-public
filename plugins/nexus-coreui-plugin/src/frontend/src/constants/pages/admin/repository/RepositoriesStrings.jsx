@@ -193,6 +193,21 @@ export default {
           }
         }
       },
+        TERRAFORM: {
+            CAPTION: 'Terraform Settings',
+            SIGNING: {
+                CAPTION: 'GPG Signing',
+                KEY: {
+                    LABEL: 'Signing Key',
+                    SUBLABEL: 'PGP signing key pair (armored private key e.g., gpg --export-secret-key --armor)',
+                    PLACEHOLDER: '-----BEGIN PGP PRIVATE KEY BLOCK-----\n...\n-----END PGP PRIVATE KEY BLOCK-----'
+                },
+                PASSPHRASE: {
+                    LABEL: 'Passphrase',
+                    SUBLABEL: 'Passphrase to access PGP signing key (leave empty if key has no passphrase)'
+                }
+            }
+        },
       NPM: {
         REMOVE_QUARANTINED: {
           LABEL: 'Remove Quarantined Versions',
