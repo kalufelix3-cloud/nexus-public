@@ -13,12 +13,15 @@
 package org.sonatype.nexus.repository.search.sql.store;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -61,6 +64,7 @@ import org.junit.jupiter.api.Test;
 
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -134,8 +138,13 @@ public class SearchTableDAOTest
     for (int i = 0; i < TABLE_RECORDS_TO_GENERATE; i++) {
       Component component = generatedComponents().get(i);
       AssetBlob blob = generatedAssetBlobs().get(i);
-
-      SearchRecordData tableData = new SearchRecordData();
+      SearchRecordData tableData;
+      if (isOnH2()) {
+        tableData = new SearchRecordData(false);
+      }
+      else {
+        tableData = new SearchRecordData(true);
+      }
       // PK
       tableData.setRepositoryId(repository.contentRepositoryId());
       tableData.setComponentId(internalComponentId(component));
@@ -500,6 +509,54 @@ public class SearchTableDAOTest
     assertThat(results, hasSize(GENERATED_DATA.size()));
   }
 
+  @Test
+  public void testBatchSavedFormatForPaths() {
+    Iterator<SearchRecordData> iterator = GENERATED_DATA.iterator();
+    int count = 0;
+    while (iterator.hasNext()) {
+      SearchRecordData searchRecordData = iterator.next();
+      searchRecordData.addPath(String.format("/org/sonatype/test/file_%s.jar", count));
+      count++;
+    }
+    searchDAO.saveBatch(GENERATED_DATA);
+    session.getTransaction().commit();
+    List<String> savedPaths = getSavedPaths();
+    assertThat(savedPaths, hasSize(GENERATED_DATA.size()));
+
+    // Verify the format of saved paths based on database type
+    for (int i = 0; i < savedPaths.size(); i++) {
+      String expectedPath = String.format("/org/sonatype/test/file_%s.jar", i);
+      if (isOnH2()) {
+        // H2: paths are stored as array of strings (JSON)
+        assertThat(savedPaths.get(i), is("[\"" + expectedPath + "\"]"));
+      }
+      else {
+        // PostgreSQL: paths are stored wrapped in curly braces (VARCHAR)
+        assertThat(savedPaths.get(i), is("{'" + expectedPath + "'}"));
+      }
+    }
+  }
+
+  @Test
+  public void testSavedFormatForPaths() {
+    SearchRecordData searchRecordData = GENERATED_DATA.getFirst();
+    searchRecordData.addPath("/org/sonatype/test/file_1.jar");
+    searchDAO.save(searchRecordData);
+    session.getTransaction().commit();
+    List<String> savedPaths = getSavedPaths();
+    assertThat(savedPaths, hasSize(1));
+
+    // Verify the format of saved paths based on database type
+    if (isOnH2()) {
+      // H2: paths are stored as array of strings (JSON)
+      assertThat(savedPaths, contains("[\"/org/sonatype/test/file_1.jar\"]"));
+    }
+    else {
+      // PostgreSQL: paths are stored wrapped in curly braces (VARCHAR)
+      assertThat(savedPaths, contains("{'/org/sonatype/test/file_1.jar'}"));
+    }
+  }
+
   private void assertEntityVersionsAreSameAsSearchTableDataToSave() {
     ComponentDAO componentDAO = session.access(TestComponentDAO.class);
     Optional<Component> savedComponent1 = componentDAO.readComponent(internalComponentId(generatedComponents().get(0)));
@@ -567,5 +624,27 @@ public class SearchTableDAOTest
         .searchFilter(filterFormat)
         .searchFilterValues(formatValues)
         .build();
+  }
+
+  private boolean isOnH2() {
+    return conditionBuilder instanceof H2SearchConditionFactory;
+  }
+
+  private List<String> getSavedPaths() {
+    List<String> paths = new ArrayList<>();
+    try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME);
+        Statement statement = conn.createStatement();
+        ResultSet resultSet = statement.executeQuery("SELECT paths FROM search_components")) {
+      while (resultSet.next()) {
+        String pathValue = resultSet.getString("paths");
+        if (pathValue != null) {
+          paths.add(pathValue);
+        }
+      }
+    }
+    catch (SQLException e) {
+      throw new RuntimeException("Failed to query paths from search_components", e);
+    }
+    return paths;
   }
 }

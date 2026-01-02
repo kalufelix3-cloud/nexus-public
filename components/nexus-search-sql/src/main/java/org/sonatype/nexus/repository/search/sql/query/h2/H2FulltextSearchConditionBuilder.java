@@ -124,11 +124,11 @@ public class H2FulltextSearchConditionBuilder
 
     if (term instanceof ExactTerm) {
       // Exact match - wrap in % for contains search
-      likePattern = "%" + escapeLike(value) + "%";
+      likePattern = "%" + maybeHandleJsonExactTerm(column, escapeLike(value)) + "%";
     }
     else if (term instanceof WildcardTerm) {
       // Wildcard - convert * to % for SQL LIKE
-      likePattern = "%" + escapeLike(value).replace("*", "%") + "%";
+      likePattern = "%" + maybeHandleJsonWildCardTerm(column, escapeLike(value).replace("*", "%")) + "%";
     }
     else if (term instanceof LenientTerm) {
       // Lenient - treat as contains
@@ -153,5 +153,52 @@ public class H2FulltextSearchConditionBuilder
         .replace("\\", "\\\\") // Escape backslash first
         .replace("%", "\\%") // Escape percent
         .replace("_", "\\_"); // Escape underscore
+  }
+
+  private String maybeHandleJsonExactTerm(final H2SearchColumn column, final String value) {
+    return addJsonDelimitersIfNeeded(column, value, JsonQuotingMode.EXACT);
+  }
+
+  private String maybeHandleJsonWildCardTerm(final H2SearchColumn column, final String value) {
+    return addJsonDelimitersIfNeeded(column, value, JsonQuotingMode.WILDCARD);
+  }
+
+  /**
+   * Quoting mode for JSON column matching.
+   */
+  private enum JsonQuotingMode
+  {
+    /**
+     * Match exact JSON array element
+     */
+    EXACT,
+
+    /**
+     * Match JSON array element by prefix
+     */
+    WILDCARD
+  }
+
+  /**
+   * Adds JSON string delimiters to prevent incorrect substring matching in JSON columns.
+   *
+   * @param column the search column
+   * @param value the search value
+   * @param mode the quoting mode to apply
+   * @return the value with JSON delimiters if column is JSON, otherwise unchanged
+   */
+  private String addJsonDelimitersIfNeeded(
+      final H2SearchColumn column,
+      final String value,
+      final JsonQuotingMode mode)
+  {
+    if (!column.isJsonColumn()) {
+      return value;
+    }
+
+    return switch (mode) {
+      case EXACT -> "\"" + value + "\"";
+      case WILDCARD -> "\"" + value;
+    };
   }
 }

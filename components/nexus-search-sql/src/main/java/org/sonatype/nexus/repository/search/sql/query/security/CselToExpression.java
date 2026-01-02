@@ -206,8 +206,8 @@ public abstract class CselToExpression
    * The database column that it checks is a VARCHAR containing one or more paths.
    *
    * Format varies by database:
-   * - PostgresSQL: {'/foo/bar'} {'/baz/qux'} (brace-delimited with quotes)
-   * - H2: '/foo/bar' '/baz/qux' (no braces)
+   * - PostgresSQL: {'/foo/bar'} {'/baz/qux'}
+   * - H2: ["/foo/bar","/baz/qux"]
    *
    */
   protected SelectorExpressionBuilder transformMatchesOperator(

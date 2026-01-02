@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
@@ -246,6 +247,30 @@ class SearchRecordDataTest
       int byteLength = entry.getBytes(StandardCharsets.UTF_8).length;
       assertThat("Entry exceeds byte limit: " + byteLength, byteLength, lessThanOrEqualTo(2046));
     }
+  }
+
+  @Test
+  void testAddPathWithPostgreSQLEscaping() {
+    underTest.addPath("path");
+    underTest.addPath("PATH");
+    underTest.addPath("test\\bar");
+    underTest.addPath("te'st");
+
+    assertThat(underTest.getPaths(), containsInAnyOrder("'path'", "'test\\\\bar'", "'te\\'st'"));
+  }
+
+  @Test
+  void testAddPathWithH2NoEscaping() {
+    SearchRecordData h2RecordData = new SearchRecordData(false);
+
+    h2RecordData.addPath("path");
+    h2RecordData.addPath("PATH");
+    h2RecordData.addPath("test\\bar");
+    h2RecordData.addPath("te'st");
+
+    // only needs to lowercase the path because the escaping will be done by the Object mapper for JSON type
+    // (ListHandlerType)
+    assertThat(h2RecordData.getPaths(), containsInAnyOrder("path", "test\\bar", "te'st"));
   }
 
   private void assertTokens(final String token, final String... entries) {

@@ -86,8 +86,8 @@ public class H2SearchDB
     columns.put(SHA256, new H2SearchColumn(addComponentPrefix("sha256"), true));
     columns.put(SHA512, new H2SearchColumn(addComponentPrefix("sha512"), true));
 
-    columns.put(TAGS, new H2SearchColumn(addComponentPrefix("tags"), true));
-    columns.put(PATHS, new H2SearchColumn(addComponentPrefix("paths"), true));
+    columns.put(TAGS, new H2SearchColumn(addComponentPrefix("tags"), true, true));
+    columns.put(PATHS, new H2SearchColumn(addComponentPrefix("paths"), true, true));
     columns.put(UPLOADERS, new H2SearchColumn(addComponentPrefix("uploaders"), true));
     columns.put(UPLOADER_IPS, new H2SearchColumn(addComponentPrefix("uploader_ips"), true));
 

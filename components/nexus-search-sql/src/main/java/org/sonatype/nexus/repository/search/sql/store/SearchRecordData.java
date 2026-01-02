@@ -509,7 +509,8 @@ public class SearchRecordData
   @Override
   public void addPath(final String path) {
     if (isNotBlank(path)) {
-      this.paths.add(tsEscape(path));
+      String pathValue = usePostgreSQLFormat ? tsEscape(path) : path.toLowerCase();
+      this.paths.add(pathValue);
     }
   }
 

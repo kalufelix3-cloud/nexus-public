@@ -26,6 +26,8 @@ class H2SearchColumn
 
   private final boolean tokenized;
 
+  private final boolean jsonColumn;
+
   /**
    * @param columnName the database column name that will also be used for sorting
    */
@@ -58,6 +60,20 @@ class H2SearchColumn
     this.columnName = columnName;
     this.sortColumnName = Optional.ofNullable(sortColumnName);
     this.tokenized = tokenized;
+    this.jsonColumn = false;
+  }
+
+  /**
+   * @param columnName the database column name for matches
+   * @param tokenized whether this column contains tokenized data that always requires LIKE queries
+   * @param jsonColumn whether this column contains json data that always requires special handling for exact match
+   *          queries
+   */
+  H2SearchColumn(final String columnName, final boolean tokenized, final boolean jsonColumn) {
+    this.columnName = columnName;
+    this.sortColumnName = Optional.ofNullable(columnName);
+    this.tokenized = tokenized;
+    this.jsonColumn = jsonColumn;
   }
 
   String getColumnName() {
@@ -80,5 +96,12 @@ class H2SearchColumn
    */
   boolean supportsTextSearch() {
     return true;
+  }
+
+  /**
+   * Returns whether this column contains json data that always requires special handling for exact match queries
+   */
+  boolean isJsonColumn() {
+    return jsonColumn;
   }
 }

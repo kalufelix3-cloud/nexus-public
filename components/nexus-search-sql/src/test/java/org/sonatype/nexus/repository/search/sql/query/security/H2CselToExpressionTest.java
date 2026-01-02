@@ -36,7 +36,7 @@ class H2CselToExpressionTest
 
     // "paths_alias ~ :param_0"
     assertPredicate((SqlPredicate) builder.build(), SearchField.FORMAT_FIELD_1, Operand.REGEX,
-        new ExactTerm("(^|)(woof)(|$)"));
+        new ExactTerm("(\\[\"|,\")(woof)(\",|\"\\])"));
 
     reset();
 
@@ -44,7 +44,7 @@ class H2CselToExpressionTest
     script.childrenAccept(underTest, builder);
 
     assertPredicate((SqlPredicate) builder.build(), SearchField.FORMAT_FIELD_1, Operand.REGEX,
-        new ExactTerm("(^|)(woof)(|$)"));
+        new ExactTerm("(\\[\"|,\")(woof)(\",|\"\\])"));
 
     reset();
 
@@ -52,7 +52,7 @@ class H2CselToExpressionTest
     script.childrenAccept(underTest, builder);
 
     assertPredicate((SqlPredicate) builder.build(), SearchField.FORMAT_FIELD_1, Operand.REGEX,
-        new ExactTerm("(^|)woof(|$)"));
+        new ExactTerm("(\\[\"|,\")woof(\",|\"\\])"));
 
     reset();
 
@@ -60,7 +60,7 @@ class H2CselToExpressionTest
     script.childrenAccept(underTest, builder);
 
     assertPredicate((SqlPredicate) builder.build(), SearchField.FORMAT_FIELD_1, Operand.REGEX,
-        new ExactTerm("(^|)woof"));
+        new ExactTerm("(\\[\"|,\")woof"));
 
     reset();
 
@@ -69,7 +69,7 @@ class H2CselToExpressionTest
     script.childrenAccept(underTest, builder);
 
     assertPredicate((SqlPredicate) builder.build(), SearchField.FORMAT_FIELD_1, Operand.REGEX,
-        new ExactTerm("(^|)/woof|/woof/foo"));
+        new ExactTerm("(\\[\"|,\")/woof|/woof/foo"));
   }
 
   @Test
@@ -79,7 +79,7 @@ class H2CselToExpressionTest
     script.childrenAccept(underTest, builder);
 
     assertPredicate((SqlPredicate) builder.build(), SearchField.FORMAT_FIELD_1, Operand.REGEX,
-        new ExactTerm("(^|)(?!/test).*(|$)"));
+        new ExactTerm("(\\[\"|,\")(?!/test).*(\",|\"\\])"));
 
     reset();
 
@@ -89,7 +89,7 @@ class H2CselToExpressionTest
 
     // Should preserve the nested parentheses structure
     assertPredicate((SqlPredicate) builder.build(), SearchField.FORMAT_FIELD_1, Operand.REGEX,
-        new ExactTerm("(^|)(?!(/com/customer/(nested))).*(|$)"));
+        new ExactTerm("(\\[\"|,\")(?!(/com/customer/(nested))).*(\",|\"\\])"));
 
     reset();
 
@@ -98,7 +98,7 @@ class H2CselToExpressionTest
     script.childrenAccept(underTest, builder);
 
     assertPredicate((SqlPredicate) builder.build(), SearchField.FORMAT_FIELD_1, Operand.REGEX,
-        new ExactTerm("(^|)((?!(/com/customer/(nested))).*)(|$)"));
+        new ExactTerm("(\\[\"|,\")((?!(/com/customer/(nested))).*)(\",|\"\\])"));
 
     reset();
 
@@ -107,7 +107,7 @@ class H2CselToExpressionTest
     script.childrenAccept(underTest, builder);
 
     assertPredicate((SqlPredicate) builder.build(), SearchField.FORMAT_FIELD_1, Operand.REGEX,
-        new ExactTerm("(^|)(?=(.*test.*))(?!(.*debug.*)).*(|$)"));
+        new ExactTerm("(\\[\"|,\")(?=(.*test.*))(?!(.*debug.*)).*(\",|\"\\])"));
 
     reset();
 
@@ -116,7 +116,7 @@ class H2CselToExpressionTest
     script.childrenAccept(underTest, builder);
 
     assertPredicate((SqlPredicate) builder.build(), SearchField.FORMAT_FIELD_1, Operand.REGEX,
-        new ExactTerm("(^|)/(com|org|(net|io))/.*(|$)"));
+        new ExactTerm("(\\[\"|,\")/(com|org|(net|io))/.*(\",|\"\\])"));
 
     reset();
 
@@ -125,6 +125,6 @@ class H2CselToExpressionTest
     script.childrenAccept(underTest, builder);
 
     assertPredicate((SqlPredicate) builder.build(), SearchField.FORMAT_FIELD_1, Operand.REGEX,
-        new ExactTerm("(^|)(?!(/com/test)).*"));
+        new ExactTerm("(\\[\"|,\")(?!(/com/test)).*"));
   }
 }
