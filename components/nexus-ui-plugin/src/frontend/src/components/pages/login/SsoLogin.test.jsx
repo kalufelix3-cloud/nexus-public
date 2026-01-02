@@ -52,7 +52,8 @@ describe('SsoLogin', () => {
     it('renders button when SAML is enabled', () => {
       mockUseState
         .mockReturnValueOnce(true)  // samlEnabled
-        .mockReturnValueOnce(false); // oauth2Enabled
+        .mockReturnValueOnce(false) // oauth2Enabled
+        .mockReturnValueOnce('/');  // contextPath
 
       render(<SsoLogin />);
       expect(screen.getByRole('button', { name: /continue with sso/i })).toBeInTheDocument();
@@ -61,7 +62,8 @@ describe('SsoLogin', () => {
     it('renders button when OAuth2 is enabled', () => {
       mockUseState
         .mockReturnValueOnce(false) // samlEnabled
-        .mockReturnValueOnce(true);  // oauth2Enabled
+        .mockReturnValueOnce(true)  // oauth2Enabled
+        .mockReturnValueOnce('/');  // contextPath
 
       render(<SsoLogin />);
       expect(screen.getByRole('button', { name: /continue with sso/i })).toBeInTheDocument();
@@ -70,7 +72,8 @@ describe('SsoLogin', () => {
     it('renders button when both SAML and OAuth2 are enabled', () => {
       mockUseState
         .mockReturnValueOnce(true) // samlEnabled
-        .mockReturnValueOnce(true);  // oauth2Enabled
+        .mockReturnValueOnce(true) // oauth2Enabled
+        .mockReturnValueOnce('/');  // contextPath
 
       render(<SsoLogin />);
       expect(screen.getByRole('button', { name: /continue with sso/i })).toBeInTheDocument();
@@ -81,7 +84,8 @@ describe('SsoLogin', () => {
     beforeEach(() => {
       mockUseState
         .mockReturnValueOnce(true)  // samlEnabled
-        .mockReturnValueOnce(false); // oauth2Enabled
+        .mockReturnValueOnce(false) // oauth2Enabled
+        .mockReturnValueOnce('/');  // contextPath
     });
 
     it('has correct attributes', () => {
@@ -103,7 +107,8 @@ describe('SsoLogin', () => {
     it('redirects to /saml with empty hash parameter', async () => {
       mockUseState
         .mockReturnValueOnce(true)  // samlEnabled
-        .mockReturnValueOnce(false); // oauth2Enabled
+        .mockReturnValueOnce(false) // oauth2Enabled
+        .mockReturnValueOnce('/');  // contextPath
       mockRouterParams.returnTo = undefined;
 
       render(<SsoLogin />);
@@ -119,7 +124,8 @@ describe('SsoLogin', () => {
     it('redirects to /saml with hash parameter', async () => {
       mockUseState
           .mockReturnValueOnce(true)  // samlEnabled
-          .mockReturnValueOnce(false); // oauth2Enabled
+          .mockReturnValueOnce(false) // oauth2Enabled
+          .mockReturnValueOnce('/');  // contextPath
       mockRouterParams.returnTo = '#admin/repository/repositories';
 
       render(<SsoLogin />);
@@ -131,13 +137,48 @@ describe('SsoLogin', () => {
         expect(window.location.assign).toHaveBeenCalledWith('/saml?hash=%23admin%2Frepository%2Frepositories');
       });
     });
+
+    it('redirects to context path + /saml when context path is set', async () => {
+      mockUseState
+          .mockReturnValueOnce(true)      // samlEnabled
+          .mockReturnValueOnce(false)     // oauth2Enabled
+          .mockReturnValueOnce('/nexus'); // contextPath
+      mockRouterParams.returnTo = undefined;
+
+      render(<SsoLogin />);
+      const button = screen.getByRole('button');
+
+      fireEvent.click(button);
+
+      await waitFor(() => {
+        expect(window.location.assign).toHaveBeenCalledWith('/nexus/saml?');
+      });
+    });
+
+    it('redirects to context path + /saml with hash parameter when context path is set', async () => {
+      mockUseState
+          .mockReturnValueOnce(true)      // samlEnabled
+          .mockReturnValueOnce(false)     // oauth2Enabled
+          .mockReturnValueOnce('/nexus'); // contextPath
+      mockRouterParams.returnTo = '#admin/repository/repositories';
+
+      render(<SsoLogin />);
+      const button = screen.getByRole('button');
+
+      fireEvent.click(button);
+
+      await waitFor(() => {
+        expect(window.location.assign).toHaveBeenCalledWith('/nexus/saml?hash=%23admin%2Frepository%2Frepositories');
+      });
+    });
   });
 
   describe('OAuth2 redirect', () => {
     it('redirects to /oidc/login with empty hash parameter', async () => {
       mockUseState
         .mockReturnValueOnce(false) // samlEnabled
-        .mockReturnValueOnce(true);  // oauth2Enabled
+        .mockReturnValueOnce(true)  // oauth2Enabled
+        .mockReturnValueOnce('/');  // contextPath
       mockRouterParams.returnTo = undefined;
 
       render(<SsoLogin />);
@@ -152,8 +193,9 @@ describe('SsoLogin', () => {
 
     it('redirects to /oidc/login with hash parameter', async () => {
       mockUseState
-          .mockReturnValueOnce(false)  // samlEnabled
-          .mockReturnValueOnce(true); // oauth2Enabled
+          .mockReturnValueOnce(false) // samlEnabled
+          .mockReturnValueOnce(true)  // oauth2Enabled
+          .mockReturnValueOnce('/');  // contextPath
       mockRouterParams.returnTo = '#admin/repository/repositories';
 
       render(<SsoLogin />);
@@ -165,13 +207,48 @@ describe('SsoLogin', () => {
         expect(window.location.assign).toHaveBeenCalledWith('/oidc/login?hash=%23admin%2Frepository%2Frepositories');
       });
     });
+
+    it('redirects to context path + /oidc/login when context path is set', async () => {
+      mockUseState
+          .mockReturnValueOnce(false)     // samlEnabled
+          .mockReturnValueOnce(true)      // oauth2Enabled
+          .mockReturnValueOnce('/nexus'); // contextPath
+      mockRouterParams.returnTo = undefined;
+
+      render(<SsoLogin />);
+      const button = screen.getByRole('button');
+
+      fireEvent.click(button);
+
+      await waitFor(() => {
+        expect(window.location.assign).toHaveBeenCalledWith('/nexus/oidc/login?');
+      });
+    });
+
+    it('redirects to context path + /oidc/login with hash parameter when context path is set', async () => {
+      mockUseState
+          .mockReturnValueOnce(false)     // samlEnabled
+          .mockReturnValueOnce(true)      // oauth2Enabled
+          .mockReturnValueOnce('/nexus'); // contextPath
+      mockRouterParams.returnTo = '#admin/repository/repositories';
+
+      render(<SsoLogin />);
+      const button = screen.getByRole('button');
+
+      fireEvent.click(button);
+
+      await waitFor(() => {
+        expect(window.location.assign).toHaveBeenCalledWith('/nexus/oidc/login?hash=%23admin%2Frepository%2Frepositories');
+      });
+    });
   });
 
   describe('SAML priority', () => {
     it('prefers SAML when both SAML and OAuth2 are enabled', async () => {
       mockUseState
-        .mockReturnValueOnce(true)  // samlEnabled
-        .mockReturnValueOnce(true);  // oauth2Enabled
+        .mockReturnValueOnce(true) // samlEnabled
+        .mockReturnValueOnce(true) // oauth2Enabled
+        .mockReturnValueOnce('/');  // contextPath
       mockRouterParams.returnTo = undefined;
 
       render(<SsoLogin />);
@@ -189,7 +266,8 @@ describe('SsoLogin', () => {
     beforeEach(() => {
       mockUseState
         .mockReturnValueOnce(true)  // samlEnabled
-        .mockReturnValueOnce(false); // oauth2Enabled
+        .mockReturnValueOnce(false) // oauth2Enabled
+        .mockReturnValueOnce('/');  // contextPath
     });
 
     it('is keyboard accessible', () => {
@@ -206,7 +284,8 @@ describe('SsoLogin', () => {
     beforeEach(() => {
       mockUseState
         .mockReturnValueOnce(true)  // samlEnabled
-        .mockReturnValueOnce(false); // oauth2Enabled
+        .mockReturnValueOnce(false) // oauth2Enabled
+        .mockReturnValueOnce('/');  // contextPath
     });
 
     it('has analytics attribute', () => {
@@ -222,7 +301,8 @@ describe('SsoLogin', () => {
     it('calls window.location.assign when clicked', () => {
       mockUseState
         .mockReturnValueOnce(true)  // samlEnabled
-        .mockReturnValueOnce(false); // oauth2Enabled
+        .mockReturnValueOnce(false) // oauth2Enabled
+        .mockReturnValueOnce('/');  // contextPath
 
       render(<SsoLogin />);
       const button = screen.getByRole('button');
@@ -236,7 +316,8 @@ describe('SsoLogin', () => {
     it('prevents multiple redirects on rapid clicks', () => {
       mockUseState
         .mockReturnValueOnce(true)  // samlEnabled
-        .mockReturnValueOnce(false); // oauth2Enabled
+        .mockReturnValueOnce(false) // oauth2Enabled
+        .mockReturnValueOnce('/');  // contextPath
 
       render(<SsoLogin />);
       const button = screen.getByRole('button');
@@ -255,7 +336,8 @@ describe('SsoLogin', () => {
     it('handles returnTo with special characters', async () => {
       mockUseState
           .mockReturnValueOnce(true)  // samlEnabled
-          .mockReturnValueOnce(false); // oauth2Enabled
+          .mockReturnValueOnce(false) // oauth2Enabled
+          .mockReturnValueOnce('/');  // contextPath
 
       useRouter.mockReturnValue({
         globals: {
@@ -280,7 +362,8 @@ describe('SsoLogin', () => {
     beforeEach(() => {
       mockUseState
         .mockReturnValueOnce(true)  // samlEnabled
-        .mockReturnValueOnce(false); // oauth2Enabled
+        .mockReturnValueOnce(false) // oauth2Enabled
+        .mockReturnValueOnce('/');  // contextPath
     });
 
     it('always focuses button on mount', async () => {

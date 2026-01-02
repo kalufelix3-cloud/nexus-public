@@ -28,6 +28,8 @@ const { SSO_BUTTON, SSO_BUTTON_LOADING } = UIStrings;
 export default function SsoLogin() {
   const samlEnabled = ExtJS.useState(() => ExtJS.state().getValue('samlEnabled', false));
   const oauth2Enabled = ExtJS.useState(() => ExtJS.state().getValue('oauth2Enabled', false));
+  const contextPath = ExtJS.useState(() => ExtJS.state().getValue('nexus-context-path', ''));
+  const contextPrefix = contextPath === '/' ? '' : contextPath;
   const [isRedirecting, setIsRedirecting] = useState(false);
   const router = useRouter();
 
@@ -36,9 +38,9 @@ export default function SsoLogin() {
 
     let basePath = '';
     if (samlEnabled) {
-      basePath = '/saml';
+      basePath = `${contextPrefix}/saml`;
     } else if (oauth2Enabled) {
-      basePath = '/oidc/login';
+      basePath = `${contextPrefix}/oidc/login`;
     } else {
       throw new Error('No SSO method is enabled');
     }
