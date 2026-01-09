@@ -544,7 +544,8 @@ public class S3BlobStore
       final Duration blobsOlderThan)
   {
     OffsetDateTime date = OffsetDateTime.now().minus(blobsOlderThan);
-    log.info("Begin deleted blobs processing before {}", date);
+    String blobStoreName = blobStoreConfiguration.getName();
+    log.info("Begin deleted blobs processing for blob store '{}' before {}", blobStoreName, date);
     // only process each blob once (in-use blobs may be re-added to the index)
     try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
       int numBlobs = deletedBlobIndex.count(date);
@@ -563,8 +564,8 @@ public class S3BlobStore
           log.debug("Still in use to deferring");
         }
 
-        progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
-            counter.incrementAndGet(), numBlobs);
+        progressLogger.info("Blob store '{}' - Elapsed time: {}, processed: {}/{}", blobStoreName,
+            progressLogger.getElapsed(), counter.incrementAndGet(), numBlobs);
       });
     }
   }
@@ -997,8 +998,38 @@ public class S3BlobStore
 
   @Override
   public BlobAttributes loadBlobAttributes(final BlobId blobId) throws IOException {
-    S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath(blobId));
-    return blobAttributes.load() ? blobAttributes : null;
+    String attributePath = attributePath(blobId);
+    S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath);
+
+    try {
+      return blobAttributes.load() ? blobAttributes : null;
+    }
+    catch (IOException e) {
+      // NEXUS-50152 Fix: Distinguish between transient S3 errors and actual corruption
+      // Do NOT delete properties files here - let the repair task handle deletion
+
+      // Check if object exists - if not, return null (normal for missing properties)
+      if (!s3.doesObjectExist(getConfiguredBucket(), attributePath)) {
+        log.debug("Properties file {} for blob {} does not exist in S3 (normal for new blobs or after deletion)",
+            attributePath, blobId);
+        return null;
+      }
+
+      // File exists but couldn't be loaded - likely transient S3 error
+      // Be conservative: DO NOT delete on I/O errors as they may be temporary
+      log.warn("Transient S3 error reading properties file {} for blob {}: {}", attributePath, blobId, e.getMessage());
+
+      // Propagate the IOException to indicate the file is temporarily unavailable
+      throw e;
+    }
+    catch (IllegalArgumentException | IllegalStateException e) {
+      // These exceptions indicate actual corruption (parsing errors, invalid data, etc.)
+      // Do NOT delete here - let the repair task handle deletion
+      log.warn("Corrupt properties file detected for blob {} at {}: {}", blobId, attributePath, e.getMessage());
+
+      // Return null to allow reconciliation task to recreate
+      return null;
+    }
   }
 
   @Nullable
