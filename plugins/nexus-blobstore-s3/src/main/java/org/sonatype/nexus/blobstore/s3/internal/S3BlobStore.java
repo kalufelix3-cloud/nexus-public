@@ -1012,18 +1012,28 @@ public class S3BlobStore
     try {
       return blobAttributes.load() ? blobAttributes : null;
     }
-    catch (IOException | IllegalArgumentException | IllegalStateException e) {
-      log.warn("Corrupt properties file detected for blob {} at {}. Attempting deletion. Error: {}",
-          blobId, attributePath, e.getMessage());
+    catch (IOException e) {
+      // NEXUS-50152 Fix: Distinguish between transient S3 errors and actual corruption
+      // Do NOT delete properties files here - let the repair task handle deletion
 
-      try {
-        s3.deleteObject(getConfiguredBucket(), attributePath);
-        log.debug("Deleted corrupt properties file for blob {}", blobId);
+      // Check if object exists - if not, return null (normal for missing properties)
+      if (!s3.doesObjectExist(getConfiguredBucket(), attributePath)) {
+        log.debug("Properties file {} for blob {} does not exist in S3 (normal for new blobs or after deletion)",
+            attributePath, blobId);
+        return null;
       }
-      catch (Exception deleteException) {
-        log.warn("Could not delete corrupt properties file for blob {} (will be overwritten): {}",
-            blobId, deleteException.getMessage());
-      }
+
+      // File exists but couldn't be loaded - likely transient S3 error
+      // Be conservative: DO NOT delete on I/O errors as they may be temporary
+      log.warn("Transient S3 error reading properties file {} for blob {}: {}", attributePath, blobId, e.getMessage());
+
+      // Propagate the IOException to indicate the file is temporarily unavailable
+      throw e;
+    }
+    catch (IllegalArgumentException | IllegalStateException e) {
+      // These exceptions indicate actual corruption (parsing errors, invalid data, etc.)
+      // Do NOT delete here - let the repair task handle deletion
+      log.warn("Corrupt properties file detected for blob {} at {}: {}", blobId, attributePath, e.getMessage());
 
       // Return null to allow reconciliation task to recreate
       return null;

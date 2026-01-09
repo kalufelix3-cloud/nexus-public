@@ -1301,22 +1301,29 @@ public class FileBlobStore
     try {
       return blobAttributes.load() ? blobAttributes : null;
     }
-    catch (Exception e) {
-      log.warn("Corrupt properties file detected for blob {} at {}. Attempting deletion. Error: {}",
-          blobId, attributePath, e.getMessage());
+    catch (IOException e) {
+      // NEXUS-50152 Fix: Distinguish between transient I/O errors and actual corruption
+      // Do NOT delete properties files here - let the repair task handle deletion
 
-      try {
-        boolean deleted = fileOperations.delete(attributePath);
-        if (deleted) {
-          log.warn("Successfully deleted corrupt properties file for blob {}", blobId);
-        }
-        else {
-          log.debug("Corrupt properties file for blob {} did not exist or was already deleted", blobId);
-        }
+      // Check if file exists - if not, it's normal (new blobs or after deletion)
+      if (!fileOperations.exists(attributePath)) {
+        log.debug("Properties file {} for blob {} does not exist (normal for new blobs or after deletion)",
+            attributePath, blobId);
+        return null;
       }
-      catch (IOException deleteException) {
-        log.error("Failed to delete corrupt properties file for blob {}", blobId, deleteException);
-      }
+
+      // File exists but couldn't be loaded - this could be transient (locked, NFS issue, etc.)
+      // Be conservative: DO NOT delete on I/O errors as they may be temporary
+      log.warn("Error reading properties file {} for blob {}: {}", attributePath, blobId, e.getMessage());
+
+      // Propagate the IOException to indicate the file is temporarily unavailable
+      // This allows calling code to retry or handle appropriately
+      throw e;
+    }
+    catch (RuntimeException e) {
+      // Runtime exceptions (IllegalArgumentException, etc.) likely indicate actual corruption
+      // Do NOT delete here - let the repair task handle deletion
+      log.warn("Corrupt properties file detected for blob {} at {}: {}", blobId, attributePath, e.getMessage());
 
       // Return null so it's treated as "missing" by reconciliation task
       return null;
