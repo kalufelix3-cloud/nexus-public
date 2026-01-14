@@ -93,7 +93,7 @@ import com.google.common.hash.HashCode;
 import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.AgeFileFilter;
-import org.apache.commons.lang3.time.DateUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -939,8 +939,7 @@ public class FileBlobStore
       final Duration blobsOlderThan)
   {
     OffsetDateTime date = OffsetDateTime.now().minus(blobsOlderThan);
-    String blobStoreName = getBlobStoreConfiguration().getName();
-    log.info("Begin deleted blobs processing for blob store '{}' before {}", blobStoreName, date);
+    log.info("Begin deleted blobs processing before {}", date);
 
     // only process each blob once (in-use blobs may be re-added to the index)
     try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS)) {
@@ -959,8 +958,8 @@ public class FileBlobStore
           log.debug("Still in use to deferring");
         }
 
-        progressLogger.info("Blob store '{}' - Elapsed time: {}, processed: {}/{}", blobStoreName,
-            progressLogger.getElapsed(), counter.incrementAndGet(), numBlobs);
+        progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
+            counter.incrementAndGet(), numBlobs);
       });
       // once done removing stuff, clean any empty directories left around in the directpath area
       pruneEmptyDirectories(progressLogger, contentDir.resolve(DIRECT_PATH_ROOT));
@@ -987,8 +986,7 @@ public class FileBlobStore
 
   @VisibleForTesting
   void doCompactWithoutDeletedBlobIndex(@Nullable final BlobStoreUsageChecker inUseChecker) throws IOException {
-    String blobStoreName = getBlobStoreConfiguration().getName();
-    log.info("Begin deleted blobs processing for blob store '{}' without deleted blob index", blobStoreName);
+    log.info("Begin deleted blobs processing without deleted blob index");
     // clear the deleted blob index ahead of time, so we won't lose deletes that may occur while the compact is being
     // performed
     blobDeletionIndex.deleteAllRecords();
@@ -1053,9 +1051,7 @@ public class FileBlobStore
         blobDeletionIndex.createRecord(blobId);
       }
       else {
-        String blobStoreName = getBlobStoreConfiguration().getName();
-        progressLogger.info("Blob store '{}' - Elapsed time: {}, processed: {}", blobStoreName,
-            progressLogger.getElapsed(), count.incrementAndGet());
+        progressLogger.info("Elapsed time: {}, processed: {}", progressLogger.getElapsed(), count.incrementAndGet());
       }
     }
     else {
@@ -1289,39 +1285,8 @@ public class FileBlobStore
 
   @Override
   protected BlobAttributes loadBlobAttributes(final BlobId blobId) throws IOException {
-    Path attributePath = attributePath(blobId);
-    FileBlobAttributes blobAttributes = new FileBlobAttributes(attributePath);
-
-    try {
-      return blobAttributes.load() ? blobAttributes : null;
-    }
-    catch (IOException e) {
-      // NEXUS-50152 Fix: Distinguish between transient I/O errors and actual corruption
-      // Do NOT delete properties files here - let the repair task handle deletion
-
-      // Check if file exists - if not, it's normal (new blobs or after deletion)
-      if (!fileOperations.exists(attributePath)) {
-        log.debug("Properties file {} for blob {} does not exist (normal for new blobs or after deletion)",
-            attributePath, blobId);
-        return null;
-      }
-
-      // File exists but couldn't be loaded - this could be transient (locked, NFS issue, etc.)
-      // Be conservative: DO NOT delete on I/O errors as they may be temporary
-      log.warn("Error reading properties file {} for blob {}: {}", attributePath, blobId, e.getMessage());
-
-      // Propagate the IOException to indicate the file is temporarily unavailable
-      // This allows calling code to retry or handle appropriately
-      throw e;
-    }
-    catch (RuntimeException e) {
-      // Runtime exceptions (IllegalArgumentException, etc.) likely indicate actual corruption
-      // Do NOT delete here - let the repair task handle deletion
-      log.warn("Corrupt properties file detected for blob {} at {}: {}", blobId, attributePath, e.getMessage());
-
-      // Return null so it's treated as "missing" by reconciliation task
-      return null;
-    }
+    FileBlobAttributes blobAttributes = new FileBlobAttributes(attributePath(blobId));
+    return blobAttributes.load() ? blobAttributes : null;
   }
 
   @Nullable
@@ -1331,8 +1296,7 @@ public class FileBlobStore
     try {
       FileBlobAttributes blobAttributes = new FileBlobAttributes(blobPath);
       if (!blobAttributes.load()) {
-        log.debug("Attempt to access blob attributes file {} for blob {} (file temporarily unavailable or deleted)",
-            attributePath(blobId), blobId);
+        log.warn("Attempt to access non-existent blob attributes file {} for blob {}", attributePath(blobId), blobId);
         return null;
       }
       else {
